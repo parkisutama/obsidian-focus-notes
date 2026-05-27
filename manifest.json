@@ -1,0 +1,9 @@
+{
+    "id": "focus-notes",
+    "name": "Focus Notes",
+    "version": "1.2.0",
+    "minAppVersion": "1.4.0",
+    "description": "TickTick-style focus timer with mood (Russell's Circumplex), somatic-first signals, an expanded reflection modal with mini-CBT guidance, structured session logging, per-session target override, date grouping, and live log preview.",
+    "author": "Parkis",
+    "isDesktopOnly": false
+}

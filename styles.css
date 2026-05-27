@@ -1,0 +1,2462 @@
+/* ===========================================================================
+ * Focus Notes — sidebar styling.
+ * Every color and spacing token comes from Obsidian's theme variables, so the
+ * panel adapts to light/dark and any user theme without further tweaking.
+ * =========================================================================*/
+
+.focus-notes-view {
+    overflow-y: auto;
+}
+
+.focus-notes-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 12px;
+}
+
+/* ---- Mode menu --------------------------------------------------------- */
+
+.focus-notes-mode-row {
+    display: flex;
+    justify-content: center;
+}
+
+.focus-notes-mode-button {
+    min-width: 128px;
+    height: 30px;
+    padding: 0 18px;
+    border-radius: 999px;
+    justify-content: center;
+    text-align: center;
+    font-size: var(--font-ui-small);
+    color: var(--text-muted);
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    box-shadow: none;
+}
+
+.focus-notes-mode-button:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+
+.focus-notes-mode-button:focus-visible {
+    box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.focus-notes-mode-locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ---- Focus input ------------------------------------------------------- */
+
+.focus-notes-focus-row {
+    display: flex;
+}
+.focus-notes-focus-input {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+}
+
+.focus-notes-duration-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -4px;
+    margin-bottom: 4px;
+    color: var(--text-faint);
+    opacity: 0.82;
+}
+.focus-notes-duration-control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 28px;
+}
+.focus-notes-duration-input {
+    width: 48px;
+    min-height: 26px;
+    height: 26px;
+    padding: 0 8px;
+    text-align: center;
+    font-size: var(--font-ui-smaller);
+    line-height: 26px;
+}
+.focus-notes-duration-suffix {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    font-size: var(--font-ui-smaller);
+    line-height: 1;
+    color: var(--text-faint);
+}
+
+/* ---- Circular display ------------------------------------------------- */
+
+.focus-notes-circle-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 2px;
+}
+.focus-notes-circle-svg {
+    width: 100%;
+    max-width: 220px;
+    height: auto;
+}
+.focus-notes-track {
+    fill: none;
+    stroke: var(--background-modifier-border);
+    stroke-width: 4;
+}
+.focus-notes-progress {
+    fill: none;
+    stroke: var(--interactive-accent);
+    stroke-width: 4;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.25s linear;
+}
+.focus-notes-progress--idle {
+    stroke: var(--background-modifier-border);
+}
+.focus-notes-time {
+    fill: var(--text-normal);
+    font-family: var(--font-interface);
+    font-size: 28px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    dominant-baseline: middle;
+}
+.focus-notes-label {
+    fill: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    dominant-baseline: middle;
+}
+
+/* ---- Action buttons --------------------------------------------------- */
+
+.focus-notes-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 2px;
+}
+
+.focus-notes-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s, background-color 0.15s, opacity 0.15s;
+}
+.focus-notes-icon-btn:hover {
+    transform: translateY(-1px);
+}
+.focus-notes-icon-btn:active {
+    transform: translateY(0);
+}
+
+.focus-notes-btn-primary {
+    width: 56px;
+    height: 56px;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+.focus-notes-btn-primary:hover {
+    background: var(--interactive-accent-hover);
+}
+.focus-notes-btn-primary .svg-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.focus-notes-btn-secondary {
+    width: 40px;
+    height: 40px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+}
+.focus-notes-btn-secondary:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+.focus-notes-btn-secondary .svg-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.focus-notes-hidden {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* ---- Collapsible sections (target / recent) --------------------------- */
+
+.focus-notes-section {
+    border-top: 1px solid var(--background-modifier-border);
+    padding-top: 10px;
+}
+.focus-notes-section > summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+    padding: 4px 0;
+}
+.focus-notes-section > summary::-webkit-details-marker {
+    display: none;
+}
+.focus-notes-section-title {
+    flex: 1;
+    font-size: var(--font-ui-small);
+    font-weight: 600;
+    color: var(--text-normal);
+}
+.focus-notes-section-title::before {
+    content: "▸ ";
+    color: var(--text-faint);
+    font-size: 10px;
+}
+.focus-notes-section[open] .focus-notes-section-title::before {
+    content: "▾ ";
+}
+.focus-notes-section-refresh {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.focus-notes-section-refresh:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+.focus-notes-section-refresh .svg-icon {
+    width: 14px;
+    height: 14px;
+}
+.focus-notes-section-body {
+    padding: 8px 0 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.focus-notes-target-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.focus-notes-target-label {
+    width: 64px;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+.focus-notes-target-input {
+    flex: 1;
+    padding: 4px 8px;
+    font-size: var(--font-ui-smaller);
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+}
+.focus-notes-target-reset {
+    align-self: flex-end;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    text-decoration: none;
+    margin-top: 2px;
+}
+.focus-notes-target-reset:hover {
+    color: var(--text-accent);
+    text-decoration: underline;
+}
+
+/* ---- Recent entries list --------------------------------------------- */
+
+.focus-notes-recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.focus-notes-recent-item {
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: var(--background-secondary);
+    cursor: pointer;
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+/* MarkdownRenderer wraps `- foo` in <ul><li><p>foo</p></li></ul>. We collapse
+   the wrappers so each entry reads as one tight row, and suppress the default
+   disc bullet — the row background already provides separation, and the
+   bullet would just steal sidebar width. */
+.focus-notes-recent-item ul,
+.focus-notes-recent-item ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.focus-notes-recent-item li {
+    list-style: none;
+    margin: 0;
+}
+.focus-notes-recent-item p {
+    margin: 0;
+}
+
+.focus-notes-recent-item:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+.focus-notes-recent-empty {
+    padding: 6px 8px;
+    color: var(--text-faint);
+    font-size: var(--font-ui-smaller);
+    font-style: italic;
+}
+
+/* ---- Modal styling ---------------------------------------------------- */
+
+.focus-notes-modal-summary {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+    font-size: var(--font-ui-small);
+    color: var(--text-muted);
+    font-family: var(--font-monospace);
+    line-height: 1.5;
+}
+.focus-notes-modal-target {
+    color: var(--text-faint);
+    font-size: var(--font-ui-smaller);
+    margin-top: 4px;
+    word-break: break-all;
+}
+.focus-notes-modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+/* ---- Settings help block --------------------------------------------- */
+
+.focus-notes-help ul {
+    padding-left: 18px;
+    margin-top: 4px;
+}
+.focus-notes-help li code {
+    background: var(--background-secondary);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+/* ============================================================================
+ * v3 additions: mood picker, log modal sections, group-by-date controls.
+ * Uses Obsidian theme variables throughout so light/dark/custom themes
+ * inherit correctly. No hard-coded colors.
+ * ========================================================================== */
+
+/* ---- Wide log modal -------------------------------------------------------- */
+.modal:has(.focus-notes-modal-wide) {
+    --dialog-max-width: 720px;
+}
+.focus-notes-modal-wide {
+    max-width: 720px;
+}
+.focus-notes-modal-section {
+    margin-top: 18px;
+}
+.focus-notes-modal-label {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.focus-notes-modal-desc {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    margin-bottom: 8px;
+}
+
+/* ---- Related links row ----------------------------------------------------- */
+.focus-notes-links-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+.focus-notes-links-input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 8px;
+    background: var(--background-modifier-form-field);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    color: var(--text-normal);
+}
+.focus-notes-links-add {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    background: var(--interactive-normal);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-normal);
+}
+.focus-notes-links-add:hover {
+    background: var(--interactive-hover);
+}
+
+/* ---- Group-by-date controls in the live target panel ---------------------- */
+.focus-notes-group-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+.focus-notes-group-label {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+.focus-notes-group-level {
+    margin-left: auto;
+    padding: 2px 6px;
+    font-size: var(--font-ui-smaller);
+    background: var(--background-modifier-form-field);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 3px;
+    color: var(--text-normal);
+}
+.focus-notes-group-level:disabled {
+    opacity: 0.4;
+}
+
+/* ---- Mood picker container ------------------------------------------------- */
+.fn-mood-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    padding: 12px;
+    background: var(--background-secondary);
+}
+
+/* ---- Mode tabs (By feeling / By body) ------------------------------------- */
+.fn-mood-mode-row {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    padding-bottom: 8px;
+}
+.fn-mood-mode-tab {
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px 4px 0 0;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: var(--font-ui-small);
+}
+.fn-mood-mode-tab:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+.fn-mood-mode-tab.active {
+    color: var(--text-on-accent);
+    background: var(--interactive-accent);
+    border-color: var(--interactive-accent);
+}
+
+/* ---- Mood body container --------------------------------------------------- */
+.fn-mood-body {
+    min-height: 120px;
+}
+
+/* ---- Quadrant grid (by feeling, step 1) ----------------------------------- */
+.fn-quadrant-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.fn-quadrant-card {
+    padding: 12px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 80ms ease, border-color 80ms ease;
+}
+.fn-quadrant-card:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--interactive-accent);
+}
+.fn-quadrant-axis {
+    font-size: 1.4em;
+    line-height: 1;
+}
+.fn-quadrant-name {
+    font-weight: 600;
+    margin-top: 4px;
+}
+.fn-quadrant-desc {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* ---- Region grid (by body, step 1) ---------------------------------------- */
+.fn-region-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.fn-region-card {
+    padding: 10px 6px;
+    text-align: center;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 80ms ease, border-color 80ms ease;
+}
+.fn-region-card:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--interactive-accent);
+}
+.fn-region-emoji {
+    font-size: 1.6em;
+    line-height: 1;
+}
+.fn-region-name {
+    margin-top: 4px;
+    font-size: var(--font-ui-smaller);
+}
+
+/* ---- Sensation list (by body, step 2) ------------------------------------- */
+.fn-mood-step-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 8px 0;
+}
+.fn-mood-step-title {
+    font-weight: 600;
+}
+.fn-mood-step-subtitle {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+.fn-sensation-list {
+    display: flex;
+    flex-direction: column;
+}
+.fn-sensation-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    cursor: pointer;
+}
+.fn-sensation-row:hover {
+    background: var(--background-modifier-hover);
+}
+.fn-sensation-text {
+    flex: 1;
+}
+.fn-sensation-arrow {
+    color: var(--text-muted);
+}
+
+/* ---- Disambiguation question + split layout (by body, step 3) ------------- */
+.fn-mood-question {
+    background: var(--background-primary);
+    border-left: 3px solid var(--interactive-accent);
+    padding: 8px 10px;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: 10px;
+}
+.fn-mood-question-label {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.fn-mood-question-text {
+    font-style: italic;
+    margin-top: 2px;
+}
+.fn-mood-no-split {
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+/* ============================================================================
+ * Focus Timeline
+ * ========================================================================== */
+
+.focus-timeline-view {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.focus-timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+}
+
+.focus-timeline-title {
+    font-weight: 700;
+    color: var(--text-normal);
+}
+
+.focus-timeline-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.focus-timeline-source-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+}
+
+.focus-timeline-source-toggle-icon {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border: 1.6px solid currentColor;
+    border-radius: 3px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.focus-timeline-source-toggle-icon::before {
+    content: "";
+    position: absolute;
+    top: -1.6px;
+    bottom: -1.6px;
+    left: 4px;
+    width: 1.6px;
+    background: currentColor;
+}
+
+.focus-timeline-source-toggle:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.focus-timeline-source-toggle--active {
+    color: var(--interactive-accent);
+    background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+    border-color: color-mix(in srgb, var(--interactive-accent) 50%, var(--background-modifier-border));
+}
+
+.focus-timeline-weekly-open-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+}
+
+.focus-timeline-weekly-open-button:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.focus-timeline-weekly-open-icon {
+    width: 14px;
+    height: 14px;
+    border: 1.6px solid currentColor;
+    border-radius: 3px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.focus-timeline-weekly-open-icon::before {
+    content: "";
+    position: absolute;
+    right: -2px;
+    top: -2px;
+    width: 7px;
+    height: 7px;
+    border-top: 1.6px solid currentColor;
+    border-right: 1.6px solid currentColor;
+}
+
+.focus-timeline-weekly-open-icon::after {
+    content: "";
+    position: absolute;
+    right: 1px;
+    top: 1px;
+    width: 7px;
+    height: 1.6px;
+    border-radius: 999px;
+    background: currentColor;
+    transform: rotate(-45deg);
+    transform-origin: right center;
+}
+
+.focus-timeline-weekly-open-button--hidden,
+.focus-timeline-mode-select--hidden {
+    display: none;
+}
+
+.focus-timeline-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.focus-timeline-week-label {
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.focus-timeline-small-button,
+.focus-timeline-mode-select {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-secondary);
+    color: var(--text-normal);
+    font-size: var(--font-ui-smaller);
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.focus-timeline-small-button:hover {
+    background: var(--background-modifier-hover);
+}
+
+.focus-timeline-body {
+    min-height: 0;
+    flex: 1;
+    display: flex;
+    position: relative;
+    background: var(--background-primary);
+}
+
+.focus-timeline-day-mode .focus-timeline-body {
+    flex-direction: column;
+}
+
+.focus-timeline-multi-day-mode .focus-timeline-body {
+    flex-direction: row;
+}
+
+.focus-timeline-sidebar {
+    width: 230px;
+    flex: 0 0 230px;
+    border-right: 1px solid var(--background-modifier-border);
+    padding: 10px;
+    overflow-y: auto;
+    background: var(--background-secondary);
+}
+
+.focus-timeline-day-mode .focus-timeline-sidebar {
+    width: auto;
+    max-height: 172px;
+    flex: 0 0 auto;
+    border-right: none;
+    border-bottom: 1px solid var(--background-modifier-border);
+    overflow-y: auto;
+}
+
+.focus-timeline-multi-day-mode .focus-timeline-sidebar {
+    width: 250px;
+    flex-basis: 250px;
+}
+
+.focus-timeline-sidebar-collapsed {
+    width: 72px;
+    flex-basis: 72px;
+}
+
+.focus-timeline-multi-day-mode .focus-timeline-sidebar-collapsed {
+    width: 0;
+    flex-basis: 0;
+    padding: 0;
+    border-right: none;
+    overflow: visible;
+    background: transparent;
+}
+
+.focus-timeline-day-mode .focus-timeline-sidebar-collapsed {
+    width: 0;
+    max-height: 0;
+    flex-basis: 0;
+    padding: 0;
+    border-bottom: none;
+    overflow: hidden;
+}
+
+.focus-timeline-sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    font-size: var(--font-ui-small);
+}
+
+.focus-timeline-source-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.focus-timeline-day-mode .focus-timeline-source-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.focus-timeline-source-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    border-left: 3px solid var(--focus-timeline-source-color);
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: var(--background-primary);
+}
+
+.focus-timeline-day-mode .focus-timeline-source-row {
+    width: min(260px, 100%);
+    flex: 1 1 180px;
+}
+
+.focus-timeline-source-label {
+    min-width: 0;
+}
+
+.focus-timeline-source-name {
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.focus-timeline-source-path {
+    color: var(--text-faint);
+    font-size: var(--font-ui-smaller);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.focus-timeline-source-count {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+
+.focus-timeline-main {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.focus-timeline-day-mode .focus-timeline-main {
+    min-height: 0;
+}
+
+/* ---- Google Calendar-style timeline grid --------------------------------- */
+
+.ftl-root {
+    --ftl-scrollbar-width: 0px;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Sticky day-name header */
+.ftl-header {
+    display: flex;
+    flex-shrink: 0;
+    padding-right: var(--ftl-scrollbar-width);
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.ftl-corner {
+    width: 52px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--background-modifier-border);
+}
+
+.ftl-day-header {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 4px;
+    border-right: 1px solid var(--background-modifier-border);
+    gap: 1px;
+}
+
+.ftl-day-weekday {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+}
+
+.ftl-day-header--today .ftl-day-weekday {
+    color: var(--interactive-accent);
+    font-weight: 700;
+}
+
+.ftl-day-num {
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text-normal);
+    line-height: 1;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.ftl-day-num--today {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    font-weight: 700;
+}
+
+.ftl-day-month {
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* All-day strip */
+.ftl-allday-row {
+    display: flex;
+    flex-shrink: 0;
+    padding-right: var(--ftl-scrollbar-width);
+    box-sizing: border-box;
+    min-height: 28px;
+    border-bottom: 2px solid var(--background-modifier-border);
+    background: var(--background-primary);
+}
+
+.ftl-allday-label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 6px;
+    font-size: 9px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ftl-allday-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 3px 4px;
+    border-right: 1px solid var(--background-modifier-border);
+    align-content: flex-start;
+}
+
+/* Scrollable time grid */
+.ftl-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+}
+
+.ftl-canvas {
+    display: flex;
+    flex-direction: row;
+    height: 1440px;
+    position: relative;
+}
+
+/* Time gutter */
+.ftl-time-col {
+    width: 52px;
+    flex-shrink: 0;
+    position: relative;
+    border-right: 1px solid var(--background-modifier-border);
+}
+
+.ftl-hour-label {
+    position: absolute;
+    right: 6px;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+/* Columns area */
+.ftl-col-area {
+    flex: 1;
+    position: relative;
+    display: flex;
+    min-width: 0;
+}
+
+.ftl-hour-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--background-modifier-border);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.ftl-half-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: color-mix(in srgb, var(--background-modifier-border) 45%, transparent);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Day columns */
+.ftl-day-col {
+    flex: 1 0 60px;
+    min-width: 0;
+    position: relative;
+    border-right: 1px solid var(--background-modifier-border);
+}
+
+.ftl-day-col--today {
+    background: color-mix(in srgb, var(--interactive-accent) 4%, var(--background-primary));
+}
+
+/* Current time indicator */
+.ftl-now-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #ea4335;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.ftl-now-dot {
+    position: absolute;
+    left: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ea4335;
+}
+
+/* Event blocks */
+.ftl-block {
+    position: absolute;
+    border-radius: 5px;
+    padding: 5px 8px;
+    box-sizing: border-box;
+    overflow: hidden;
+    cursor: pointer;
+    text-align: left;
+    z-index: 1;
+    transition: filter 80ms ease, box-shadow 80ms ease;
+    border: none;
+}
+
+.ftl-block:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+}
+
+.ftl-event.ftl-block {
+    background: color-mix(in srgb, var(--ftl-color) 18%, var(--background-primary));
+    border-left: 3px solid var(--ftl-color);
+    box-shadow: none;
+}
+
+.ftl-task.ftl-block {
+    background: color-mix(in srgb, var(--ftl-color) 10%, var(--background-primary));
+    border-left: 3px solid var(--ftl-color);
+    outline: none;
+}
+
+.ftl-completed.ftl-block {
+    opacity: 0.45;
+}
+
+.ftl-block-time {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 3px;
+}
+
+.ftl-block-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    min-width: 0;
+    width: 100%;
+    line-height: 1.18;
+    height: 100%;
+}
+
+.ftl-block-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    text-align: left;
+}
+
+.ftl-block-title {
+    font-size: 11px;
+    font-weight: 650;
+    color: var(--text-normal);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    line-height: 1.18;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.ftl-block--roomy .ftl-block-title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+}
+
+.ftl-block--compact {
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.ftl-block--compact .ftl-block-body {
+    align-items: center;
+}
+
+.ftl-block--compact .ftl-block-title {
+    font-size: 10.5px;
+}
+
+.ftl-block--medium .ftl-block-title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+}
+
+.ftl-block-source {
+    font-size: 10px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+}
+
+/* Point items (single-time events) */
+.ftl-point {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    min-height: 22px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--ftl-color) 10%, var(--background-primary));
+    border-left: 3px solid var(--ftl-color);
+    font-size: 11px;
+    cursor: pointer;
+    text-align: left;
+    transform: translateY(-50%);
+    z-index: 1;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+    transition: background 80ms ease;
+}
+
+.ftl-event.ftl-point {
+    background: color-mix(in srgb, var(--ftl-color) 15%, var(--background-primary));
+}
+
+.ftl-point:hover {
+    z-index: 2;
+    background: var(--background-modifier-hover);
+}
+
+.ftl-point-text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--text-normal);
+    font-weight: 600;
+    min-width: 0;
+    flex: 1;
+}
+
+/* Task / event bullet */
+.ftl-bullet {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 10px;
+    height: 10px;
+    border: 1.6px solid color-mix(in srgb, var(--ftl-color) 75%, var(--text-normal));
+    border-radius: 50%;
+    background: var(--background-primary);
+    box-sizing: border-box;
+    margin-top: 1px;
+}
+
+.ftl-bullet--sm {
+    width: 8px;
+    height: 8px;
+}
+
+.ftl-completed .ftl-bullet {
+    background: var(--ftl-color);
+}
+
+/* Due chips in all-day row */
+.ftl-due-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--ftl-color) 14%, var(--background-primary));
+    border-left: 3px solid var(--ftl-color);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-normal);
+    max-width: 100%;
+    box-sizing: border-box;
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+    transition: filter 80ms ease;
+}
+
+.ftl-due-chip:hover {
+    filter: brightness(1.08);
+}
+
+.ftl-task.ftl-due-chip {
+    background: color-mix(in srgb, var(--ftl-color) 10%, var(--background-primary));
+    outline: none;
+}
+
+.ftl-due-text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+/* Pending overdue tasks badge */
+.ftl-pending-wrap {
+    position: relative;
+    max-width: 100%;
+}
+
+.ftl-pending-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    max-width: 100%;
+    height: 24px;
+    padding: 0 9px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--text-muted) 22%, var(--background-primary));
+    color: var(--text-normal);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.16);
+}
+
+.ftl-pending-btn:hover {
+    filter: brightness(1.1);
+}
+
+.ftl-pending-btn-check {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #6aa84f;
+    border-radius: 50%;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+}
+
+.ftl-pending-btn-text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.ftl-pending-preview {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    width: min(420px, 76vw);
+    max-height: min(520px, 68vh);
+    overflow-y: auto;
+    padding: 26px 28px 20px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--background-secondary) 68%, var(--background-primary));
+    box-shadow: var(--shadow-l);
+}
+
+.ftl-pending-open .ftl-pending-preview {
+    display: block;
+}
+
+.ftl-allday-col:last-child .ftl-pending-preview {
+    right: auto;
+}
+
+.ftl-pending-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.ftl-pending-title {
+    font-size: 1.45em;
+    font-weight: 500;
+    color: var(--text-normal);
+    line-height: 1.2;
+}
+
+.ftl-pending-subtitle {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    margin-top: 4px;
+}
+
+.ftl-pending-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.ftl-pending-close span,
+.ftl-pending-close::before,
+.ftl-pending-close::after {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 14px;
+    height: 1.6px;
+    border-radius: 999px;
+    background: currentColor;
+    content: "";
+}
+
+.ftl-pending-close::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.ftl-pending-close::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.ftl-pending-close span {
+    display: none;
+}
+
+.ftl-pending-close:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.ftl-pending-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    min-height: 56px;
+    height: auto;
+    padding: 8px 6px;
+    border: none;
+    border-radius: 8px;
+    background: transparent !important;
+    color: var(--text-normal);
+    text-align: left;
+    cursor: pointer;
+    box-shadow: none;
+    line-height: normal;
+    justify-content: flex-start;
+    white-space: normal;
+}
+
+.ftl-pending-row:hover {
+    background: var(--background-modifier-hover) !important;
+}
+
+.ftl-pending-check {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    border: 2px solid var(--text-muted);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.ftl-pending-body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.ftl-pending-name {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.28;
+    color: var(--text-normal);
+    width: 100%;
+}
+
+.ftl-pending-meta {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.25;
+}
+
+.ftl-pending-more {
+    padding: 8px 8px 2px 44px;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    font-weight: 600;
+}
+
+.focus-timeline-empty {
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+    padding: 10px;
+}
+
+@media (max-width: 720px) {
+    .focus-timeline-header,
+    .focus-timeline-body {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .focus-timeline-sidebar,
+    .focus-timeline-sidebar-collapsed {
+        width: auto;
+        flex-basis: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--background-modifier-border);
+    }
+
+    .focus-timeline-sidebar-collapsed {
+        width: 0;
+        max-height: 0;
+        flex-basis: 0;
+        padding: 0;
+        border-bottom: none;
+        overflow: hidden;
+    }
+}
+.fn-mood-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.fn-mood-split-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.fn-mood-split-label {
+    font-weight: 600;
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* ---- Mood card (used by all flows) ---------------------------------------- */
+.fn-mood-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+.fn-mood-split .fn-mood-grid {
+    grid-template-columns: 1fr;
+}
+.fn-mood-card {
+    padding: 8px 10px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 80ms ease, border-color 80ms ease;
+}
+.fn-mood-card:hover {
+    background: var(--background-modifier-hover);
+}
+.fn-mood-card.selected {
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 1px var(--interactive-accent) inset;
+}
+.fn-mood-card-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.fn-mood-card-emoji {
+    font-size: 1.2em;
+    line-height: 1;
+}
+.fn-mood-card-name {
+    font-weight: 600;
+}
+.fn-mood-card-def {
+    margin-top: 4px;
+    font-size: var(--font-ui-smaller);
+    color: var(--text-normal);
+    line-height: 1.4;
+}
+.fn-mood-card-action {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--background-modifier-border);
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    line-height: 1.35;
+}
+.fn-mood-card-action-label {
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* ---- Back button ---------------------------------------------------------- */
+.fn-mood-back {
+    align-self: flex-start;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0 0 8px 0;
+    font-size: var(--font-ui-smaller);
+}
+.fn-mood-back:hover {
+    color: var(--text-normal);
+}
+
+/* ---- Selection summary chip ----------------------------------------------- */
+.fn-mood-summary {
+    border-top: 1px solid var(--background-modifier-border);
+    padding-top: 8px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+}
+.fn-mood-summary-empty {
+    color: var(--text-faint);
+    font-size: var(--font-ui-smaller);
+    font-style: italic;
+}
+.fn-mood-summary-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-radius: 999px;
+    font-size: var(--font-ui-small);
+}
+.fn-mood-summary-emoji {
+    font-size: 1em;
+}
+.fn-mood-summary-name {
+    font-weight: 600;
+}
+.fn-mood-summary-clear {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    opacity: 0.8;
+    margin-left: 4px;
+}
+.fn-mood-summary-clear:hover {
+    opacity: 1;
+}
+
+/* ============================================================================
+ * v1.2 additions: reflection layout fixes + expanded reflection modal.
+ * ========================================================================== */
+
+/* ---- Reflection section in main log modal --------------------------------- */
+.fn-reflection-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.fn-reflection-expand {
+    background: transparent;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+.fn-reflection-expand:hover {
+    color: var(--text-normal);
+    border-color: var(--interactive-accent);
+    background: var(--background-modifier-hover);
+}
+.fn-reflection-inline-textarea {
+    width: 100%;
+    min-height: 96px;
+    padding: 8px;
+    background: var(--background-modifier-form-field);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    color: var(--text-normal);
+    font-family: inherit;
+    font-size: var(--font-text);
+    line-height: 1.5;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+/* ---- Expanded reflection modal -------------------------------------------- */
+.modal:has(.focus-notes-reflection-modal) {
+    --dialog-max-width: 760px;
+}
+.focus-notes-reflection-modal {
+    max-width: 760px;
+}
+
+/* Mood reminder card at top of reflection modal. Uses the same visual
+   vocabulary as mood cards in the picker (border, padding, accent edge),
+   but with extra room for somatic hints and the quick action. */
+.fn-reflection-mood-card {
+    border: 1px solid var(--background-modifier-border);
+    border-left: 4px solid var(--interactive-accent);
+    border-radius: 6px;
+    padding: 12px 14px;
+    background: var(--background-secondary);
+    margin-bottom: 16px;
+}
+.fn-reflection-mood-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+.fn-reflection-mood-emoji {
+    font-size: 1.6em;
+    line-height: 1.1;
+}
+.fn-reflection-mood-title {
+    flex: 1;
+}
+.fn-reflection-mood-name {
+    font-weight: 700;
+    font-size: var(--font-ui-medium);
+}
+.fn-reflection-mood-quadrant {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+.fn-reflection-mood-def {
+    margin: 6px 0 10px 0;
+    line-height: 1.45;
+    color: var(--text-normal);
+}
+.fn-reflection-mood-somatic {
+    margin: 8px 0;
+    padding-top: 8px;
+    border-top: 1px dashed var(--background-modifier-border);
+}
+.fn-reflection-mood-somatic-label {
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: var(--font-ui-smaller);
+    margin-bottom: 4px;
+}
+.fn-reflection-mood-somatic-list {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+    line-height: 1.5;
+}
+.fn-reflection-mood-action {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--background-modifier-border);
+    font-size: var(--font-ui-small);
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+.fn-reflection-mood-action-label {
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: var(--font-ui-smaller);
+}
+
+/* ---- Big writing area inside the reflection modal ------------------------- */
+.fn-reflection-write {
+    margin-bottom: 16px;
+}
+.fn-reflection-write-label {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    margin-bottom: 6px;
+}
+.fn-reflection-textarea {
+    width: 100%;
+    padding: 12px;
+    background: var(--background-modifier-form-field);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    color: var(--text-normal);
+    font-family: inherit;
+    font-size: var(--font-text);
+    line-height: 1.55;
+    resize: vertical;
+    box-sizing: border-box;
+}
+.fn-reflection-textarea:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+}
+
+/* ---- Collapsible CBT panels ----------------------------------------------- */
+.fn-reflection-collapsible {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    margin-top: 10px;
+    background: var(--background-primary);
+}
+.fn-reflection-collapsible[open] {
+    background: var(--background-secondary);
+}
+.fn-reflection-collapsible-summary {
+    padding: 10px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-normal);
+    list-style: none;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.fn-reflection-collapsible-summary::-webkit-details-marker {
+    display: none;
+}
+.fn-reflection-collapsible-summary::after {
+    content: "▸";
+    color: var(--text-muted);
+    transition: transform 120ms ease;
+}
+.fn-reflection-collapsible[open] .fn-reflection-collapsible-summary::after {
+    transform: rotate(90deg);
+}
+.fn-reflection-collapsible-summary:hover {
+    color: var(--text-accent);
+}
+.fn-reflection-collapsible-body {
+    padding: 4px 14px 14px 14px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+/* ---- CBT prompt list ------------------------------------------------------ */
+.fn-cbt-prompts {
+    margin: 8px 0 0 0;
+    padding-left: 24px;
+}
+.fn-cbt-prompt-item {
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+.fn-cbt-prompt-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+}
+.fn-cbt-prompt-label {
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: var(--font-ui-smaller);
+    flex-shrink: 0;
+}
+.fn-cbt-prompt-question {
+    color: var(--text-normal);
+}
+.fn-cbt-prompt-hint {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    line-height: 1.45;
+    margin-top: 2px;
+}
+
+/* ---- Cognitive distortions list ------------------------------------------- */
+.fn-distortions-intro {
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+.fn-distortions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+.fn-distortion-row {
+    padding: 8px 10px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+}
+.fn-distortion-name {
+    font-weight: 600;
+    color: var(--text-normal);
+    margin-bottom: 2px;
+}
+.fn-distortion-example {
+    color: var(--text-accent);
+    font-style: italic;
+    font-size: var(--font-ui-small);
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+.fn-distortion-desc {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    line-height: 1.45;
+}
+
+/* ===========================================================================
+ * Event & Task Creation Modal (Google-Calendar style)
+ * =========================================================================*/
+
+.fn-gcal-modal {
+    width: 560px !important;
+    max-width: 96vw !important;
+}
+
+.fn-gcal-content {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---- Title input -------------------------------------------------------- */
+
+.fn-gcal-title-input {
+    width: 100%;
+    padding: 20px 20px 12px;
+    border: none;
+    border-bottom: 2px solid var(--background-modifier-border);
+    background: transparent;
+    color: var(--text-normal);
+    font-size: 22px;
+    font-weight: 400;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.fn-gcal-title-input:focus {
+    border-bottom-color: var(--interactive-accent);
+}
+
+.fn-gcal-title-input::placeholder {
+    color: var(--text-faint);
+}
+
+/* ---- Tabs --------------------------------------------------------------- */
+
+.fn-gcal-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 12px 20px 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.fn-gcal-tab {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    margin-bottom: -1px;
+}
+
+.fn-gcal-tab:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.fn-gcal-tab--active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.fn-gcal-tab--active:hover {
+    background: var(--interactive-accent-hover);
+    color: var(--text-on-accent);
+}
+
+/* ---- Body --------------------------------------------------------------- */
+
+.fn-gcal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.fn-gcal-tab-section {
+    /* no extra styles needed */
+}
+
+/* ---- Row layout (icon + content) --------------------------------------- */
+
+.fn-gcal-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 20px;
+}
+
+.fn-gcal-row-icon {
+    width: 20px;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+}
+
+.fn-gcal-row-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.fn-gcal-row-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ---- Field label ------------------------------------------------------- */
+
+.fn-gcal-field-label {
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+/* ---- Date / time inputs ------------------------------------------------ */
+
+.fn-gcal-datetime-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fn-gcal-datetime-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fn-gcal-date-input,
+.fn-gcal-time-input {
+    padding: 5px 9px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+    cursor: pointer;
+}
+
+.fn-gcal-date-input:focus,
+.fn-gcal-time-input:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+}
+
+.fn-gcal-time-range {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fn-gcal-time-sep {
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+}
+
+/* ---- All-day / checkbox rows ------------------------------------------- */
+
+.fn-gcal-allday-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fn-gcal-allday-row label {
+    font-size: var(--font-ui-small);
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.fn-gcal-checkbox {
+    cursor: pointer;
+    accent-color: var(--interactive-accent);
+}
+
+/* ---- Description textarea ---------------------------------------------- */
+
+.fn-gcal-desc-input {
+    width: 100%;
+    min-height: 64px;
+    padding: 8px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+    resize: vertical;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.fn-gcal-desc-input:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+}
+
+.fn-gcal-desc-input::placeholder {
+    color: var(--text-faint);
+}
+
+/* ---- Hub note ----------------------------------------------------------- */
+
+.fn-gcal-hub-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fn-gcal-hub-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.fn-gcal-hub-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fn-gcal-hub-option label {
+    font-size: var(--font-ui-small);
+    color: var(--text-normal);
+    cursor: pointer;
+}
+
+.fn-gcal-radio {
+    cursor: pointer;
+    accent-color: var(--interactive-accent);
+}
+
+.fn-gcal-hub-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.fn-gcal-hub-input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+}
+
+.fn-gcal-hub-input:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+}
+
+.fn-gcal-hub-pick-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: var(--font-ui-small);
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-normal);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.fn-gcal-hub-pick-btn:hover {
+    background: var(--background-modifier-hover);
+}
+
+/* ---- Save-to section --------------------------------------------------- */
+
+.fn-gcal-saveto-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fn-gcal-saveto-fields {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fn-gcal-saveto-file {
+    flex: 2;
+    min-width: 180px;
+    padding: 6px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+}
+
+.fn-gcal-saveto-heading {
+    flex: 1;
+    min-width: 120px;
+    padding: 6px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+}
+
+.fn-gcal-saveto-file:focus,
+.fn-gcal-saveto-heading:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+}
+
+.fn-gcal-pos-row {
+    margin-top: 2px;
+}
+
+/* ---- Footer buttons ---------------------------------------------------- */
+
+.fn-gcal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px 18px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.fn-gcal-btn-discard {
+    padding: 7px 18px;
+    border-radius: 6px;
+    font-size: var(--font-ui-small);
+    background: transparent;
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.fn-gcal-btn-discard:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.fn-gcal-btn-save {
+    padding: 7px 22px;
+    border-radius: 6px;
+    font-size: var(--font-ui-small);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* ---- Timeline icon buttons (add, weekly, source-toggle) ---------------- */
+
+.focus-timeline-add-button,
+.focus-timeline-weekly-open-button,
+.focus-timeline-source-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.focus-timeline-add-button {
+    background: var(--interactive-accent);
+    border-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.focus-timeline-add-button:hover {
+    background: var(--interactive-accent-hover);
+    border-color: var(--interactive-accent-hover);
+}
+
+.focus-timeline-weekly-open-button:hover,
+.focus-timeline-source-toggle:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.focus-timeline-source-toggle--active {
+    background: var(--background-modifier-active-hover);
+    color: var(--text-normal);
+}
+
+.focus-timeline-add-button svg,
+.focus-timeline-weekly-open-button svg,
+.focus-timeline-source-toggle svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+/* ---- Multiple reminders ------------------------------------------------ */
+
+.fn-gcal-reminders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 6px;
+}
+
+.fn-gcal-reminder-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fn-gcal-remind-del-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.fn-gcal-remind-del-btn:hover {
+    background: var(--background-modifier-error);
+    color: var(--text-on-accent);
+    border-color: var(--background-modifier-error);
+}
+
+.fn-gcal-remind-del-btn svg {
+    width: 12px;
+    height: 12px;
+}
+
+.fn-gcal-add-remind-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: var(--font-ui-smaller);
+    background: transparent;
+    border: 1px dashed var(--background-modifier-border);
+    color: var(--text-muted);
+    cursor: pointer;
+    align-self: flex-start;
+}
+
+.fn-gcal-add-remind-btn:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--interactive-accent);
+    color: var(--interactive-accent);
+}
+
+/* ---- Hub note "also write" row ---------------------------------------- */
+
+.fn-gcal-hub-also {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+/* ---- Utility ----------------------------------------------------------- */
+
+.fn-gcal-hidden {
+    display: none !important;
+}
