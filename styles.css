@@ -1988,7 +1988,7 @@
 }
 
 .fn-gcal-content {
-    padding: 0;
+    padding: 42px 0 0;
     display: flex;
     flex-direction: column;
 }
@@ -1997,7 +1997,7 @@
 
 .fn-gcal-title-input {
     width: 100%;
-    padding: 20px 20px 12px;
+    padding: 0 20px 12px;
     border: none;
     border-bottom: 2px solid var(--background-modifier-border);
     background: transparent;
@@ -2006,6 +2006,11 @@
     font-weight: 400;
     outline: none;
     box-sizing: border-box;
+}
+
+.modal.fn-gcal-modal .modal-close-button {
+    top: 10px;
+    right: 14px;
 }
 
 .fn-gcal-title-input:focus {
@@ -2455,8 +2460,1074 @@
     border-top: 1px solid var(--background-modifier-border);
 }
 
+/* ---- Chip group (hub note mode selector, replaces radio group) --------- */
+
+.fn-chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.fn-chip-option {
+    flex: 0 0 auto;
+    padding: 5px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    cursor: pointer;
+}
+
+.fn-chip-option--active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.fn-chip-option:hover:not(.fn-chip-option--active) {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.fn-chip-option:active:not(.fn-chip-option--active) {
+    opacity: 0.75;
+}
+
+/* ---- Toggle row (mobile sheet checkbox replacement) -------------------- */
+
+.fn-mobile-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 0;
+    border: none;
+    background: transparent;
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+    cursor: pointer;
+    text-align: left;
+    gap: 12px;
+    border-radius: 0;
+}
+
+.fn-mobile-toggle-row:active {
+    opacity: 0.65;
+}
+
+.fn-mobile-toggle-label {
+    flex: 1;
+    min-width: 0;
+}
+
+.fn-mobile-toggle-indicator {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-muted);
+}
+
+.fn-mobile-toggle-row--on .fn-mobile-toggle-indicator {
+    color: var(--interactive-accent);
+}
+
+.fn-mobile-toggle-indicator svg {
+    width: 20px;
+    height: 20px;
+}
+
 /* ---- Utility ----------------------------------------------------------- */
 
 .fn-gcal-hidden {
     display: none !important;
+}
+
+.fn-mobile-sheet-open {
+    overflow: hidden;
+}
+
+.fn-mobile-sheet {
+    position: fixed;
+    inset: 0;
+    height: var(--fn-gcal-viewport-height, 100dvh);
+    padding-top: var(--fn-gcal-viewport-top, 0px);
+    z-index: var(--layer-modal, 1000);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    box-sizing: border-box;
+}
+
+.fn-mobile-sheet-content {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+}
+
+.fn-mobile-sheet-header {
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: calc(8px + env(safe-area-inset-top)) 10px 0 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+}
+
+.fn-mobile-sheet-header .fn-gcal-title-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 0 9px;
+    border-bottom: 0;
+    font-size: 17px;
+    line-height: 1.25;
+}
+
+.fn-mobile-sheet-close {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin-bottom: 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.fn-mobile-sheet-close:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.fn-mobile-sheet-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.fn-mobile-sheet .fn-gcal-tabs {
+    flex: 0 0 auto;
+    gap: 4px;
+    padding: 8px 12px 0;
+}
+
+.fn-mobile-sheet .fn-gcal-tab {
+    flex: 1 1 0;
+    min-height: 34px;
+    padding: 5px 10px;
+    border-radius: 6px 6px 0 0;
+}
+
+.fn-mobile-sheet .fn-gcal-body {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 4px 0 108px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+.fn-mobile-sheet .fn-gcal-row {
+    gap: 0;
+    padding: 7px 12px;
+}
+
+.fn-mobile-sheet .fn-gcal-row-icon {
+    display: none;
+}
+
+.fn-mobile-sheet .fn-gcal-field-label {
+    margin-bottom: 3px;
+    font-size: 0.72em;
+}
+
+.fn-mobile-sheet .fn-gcal-datetime-wrap,
+.fn-mobile-sheet .fn-gcal-hub-wrap,
+.fn-mobile-sheet .fn-gcal-saveto-wrap,
+.fn-mobile-sheet .fn-gcal-reminders-list {
+    gap: 4px;
+}
+
+/* Date+time chips flow in a single flex row */
+.fn-mobile-sheet .fn-gcal-datetime-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    width: 100%;
+}
+
+/* Let time-range children flow directly into the parent flex row */
+.fn-mobile-sheet .fn-gcal-time-range {
+    display: contents;
+}
+
+.fn-mobile-sheet .fn-gcal-hub-input-row,
+.fn-mobile-sheet .fn-gcal-saveto-fields {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    width: 100%;
+}
+
+/* Reminder row: chips + delete button in a flex row */
+.fn-mobile-sheet .fn-gcal-reminder-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    width: 100%;
+}
+
+/* Date/time inputs styled as pill chips */
+.fn-mobile-sheet .fn-gcal-date-input,
+.fn-mobile-sheet .fn-gcal-time-input {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    min-height: 34px;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-normal);
+    font-size: var(--font-ui-smaller);
+    text-align: center;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.fn-mobile-sheet .fn-gcal-date-input:focus,
+.fn-mobile-sheet .fn-gcal-time-input:focus {
+    border-color: var(--interactive-accent);
+    background: var(--background-primary);
+}
+
+/* Full-width inputs that are NOT chips */
+.fn-mobile-sheet .fn-gcal-hub-input,
+.fn-mobile-sheet .fn-gcal-saveto-file,
+.fn-mobile-sheet .fn-gcal-saveto-heading,
+.fn-mobile-sheet .fn-gcal-desc-input,
+.fn-mobile-sheet .fn-gcal-hub-pick-btn,
+.fn-mobile-sheet .fn-gcal-add-remind-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    box-sizing: border-box;
+}
+
+.fn-mobile-sheet .fn-gcal-desc-input {
+    min-height: 56px;
+}
+
+/* Show the "—" separator between time chips */
+.fn-mobile-sheet .fn-gcal-time-sep {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    padding: 0 2px;
+    align-self: center;
+}
+
+.fn-mobile-sheet .fn-gcal-allday-row,
+.fn-mobile-sheet .fn-gcal-hub-option {
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+}
+
+.fn-mobile-sheet .fn-gcal-allday-row label,
+.fn-mobile-sheet .fn-gcal-hub-option label {
+    line-height: 1.3;
+}
+
+.fn-mobile-sheet .fn-gcal-checkbox,
+.fn-mobile-sheet .fn-gcal-radio {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* Delete button in reminder row: compact auto-width */
+.fn-mobile-sheet .fn-gcal-remind-del-btn {
+    width: auto;
+    height: 34px;
+    flex: 0 0 auto;
+}
+
+.fn-mobile-sheet .fn-gcal-footer {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+}
+
+.fn-mobile-sheet .fn-gcal-btn-discard,
+.fn-mobile-sheet .fn-gcal-btn-save {
+    width: 100%;
+    min-height: 36px;
+    padding: 6px 12px;
+}
+
+body.is-mobile .modal.fn-gcal-modal {
+    position: fixed !important;
+    top: calc(var(--fn-gcal-viewport-top, 0px) + 6px) !important;
+    bottom: auto !important;
+    left: 6px !important;
+    right: 6px !important;
+    width: auto !important;
+    max-width: none !important;
+    height: calc(var(--fn-gcal-viewport-height, 100dvh) - 12px) !important;
+    max-height: calc(var(--fn-gcal-viewport-height, 100dvh) - 12px) !important;
+    margin: 0 !important;
+    transform: none !important;
+}
+
+body.is-mobile .modal.fn-gcal-modal .modal-content {
+    height: 100%;
+    max-height: 100%;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    overscroll-behavior: contain;
+}
+
+body.is-mobile .fn-gcal-content {
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    overflow: hidden;
+    padding-top: 32px;
+}
+
+body.is-mobile .fn-gcal-title-input {
+    flex: 0 0 auto;
+    padding: 0 38px 8px 12px;
+    font-size: 17px;
+    line-height: 1.25;
+}
+
+body.is-mobile .modal.fn-gcal-modal .modal-close-button {
+    top: 4px !important;
+    right: 6px !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    border-radius: 14px !important;
+    font-size: 16px !important;
+    line-height: 28px !important;
+}
+
+body.is-mobile .fn-gcal-tabs {
+    flex: 0 0 auto;
+    gap: 4px;
+    padding: 6px 12px 0;
+}
+
+body.is-mobile .fn-gcal-tab {
+    flex: 1;
+    min-height: 32px;
+    padding: 4px 10px;
+    border-radius: 7px 7px 0 0;
+}
+
+body.is-mobile .fn-gcal-body {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 4px 0 96px;
+    -webkit-overflow-scrolling: touch;
+}
+
+body.is-mobile .fn-gcal-row {
+    gap: 0;
+    padding: 7px 12px;
+}
+
+body.is-mobile .fn-gcal-row-icon {
+    display: none;
+}
+
+body.is-mobile .fn-gcal-field-label {
+    margin-bottom: 3px;
+    font-size: 0.72em;
+}
+
+body.is-mobile .fn-gcal-datetime-wrap,
+body.is-mobile .fn-gcal-hub-wrap,
+body.is-mobile .fn-gcal-saveto-wrap,
+body.is-mobile .fn-gcal-reminders-list {
+    gap: 4px;
+}
+
+body.is-mobile .fn-gcal-datetime-row,
+body.is-mobile .fn-gcal-time-range {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    width: 100%;
+}
+
+body.is-mobile .fn-gcal-hub-input-row,
+body.is-mobile .fn-gcal-saveto-fields,
+body.is-mobile .fn-gcal-reminder-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    width: 100%;
+}
+
+body.is-mobile .fn-gcal-datetime-row > .fn-gcal-date-input,
+body.is-mobile .fn-gcal-datetime-row > .fn-gcal-time-range {
+    grid-column: 1 / -1;
+}
+
+body.is-mobile .fn-gcal-date-input,
+body.is-mobile .fn-gcal-time-input,
+body.is-mobile .fn-gcal-hub-input,
+body.is-mobile .fn-gcal-saveto-file,
+body.is-mobile .fn-gcal-saveto-heading,
+body.is-mobile .fn-gcal-desc-input,
+body.is-mobile .fn-gcal-hub-pick-btn,
+body.is-mobile .fn-gcal-add-remind-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 34px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    box-sizing: border-box;
+}
+
+body.is-mobile .fn-gcal-desc-input {
+    min-height: 52px;
+}
+
+body.is-mobile .fn-gcal-time-sep {
+    display: none;
+}
+
+body.is-mobile .fn-gcal-allday-row,
+body.is-mobile .fn-gcal-hub-option {
+    align-items: flex-start;
+    line-height: 1.25;
+    gap: 7px;
+}
+
+body.is-mobile .fn-gcal-checkbox,
+body.is-mobile .fn-gcal-radio {
+    margin-top: 2px;
+    flex: 0 0 auto;
+}
+
+body.is-mobile .fn-gcal-remind-del-btn {
+    width: 100%;
+    height: 30px;
+}
+
+body.is-mobile .fn-gcal-footer {
+    flex: 0 0 auto;
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    background: var(--background-primary);
+    z-index: 1;
+}
+
+body.is-mobile .fn-gcal-btn-discard,
+body.is-mobile .fn-gcal-btn-save {
+    width: 100%;
+    min-height: 34px;
+    padding: 6px 12px;
+}
+
+/* ---- Mobile modal layout ------------------------------------------------ */
+
+@media (max-width: 640px) {
+    .modal:has(.focus-notes-modal-wide),
+    .modal:has(.focus-notes-reflection-modal),
+    .modal.fn-gcal-modal {
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        max-height: calc(100dvh - 16px);
+        margin: 8px;
+    }
+
+    .modal.fn-gcal-modal {
+        position: fixed !important;
+        top: calc(var(--fn-gcal-viewport-top, 0px) + 6px) !important;
+        bottom: auto !important;
+        left: 6px !important;
+        right: 6px !important;
+        width: auto !important;
+        max-width: none !important;
+        height: calc(var(--fn-gcal-viewport-height, 100dvh) - 12px) !important;
+        max-height: calc(var(--fn-gcal-viewport-height, 100dvh) - 12px) !important;
+        margin: 0 !important;
+        transform: none !important;
+    }
+
+    .modal:has(.focus-notes-modal-wide) .modal-content,
+    .modal:has(.focus-notes-reflection-modal) .modal-content {
+        max-height: calc(100dvh - 16px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .modal.fn-gcal-modal .modal-content {
+        height: calc(var(--fn-gcal-viewport-height, 100dvh) - 16px);
+        max-height: calc(var(--fn-gcal-viewport-height, 100dvh) - 16px);
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        overscroll-behavior: contain;
+    }
+
+    .focus-notes-modal-wide,
+    .focus-notes-reflection-modal {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .focus-notes-modal-wide .setting-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .focus-notes-modal-wide .setting-item-info,
+    .focus-notes-modal-wide .setting-item-control {
+        width: 100%;
+        margin: 0;
+    }
+
+    .focus-notes-links-row,
+    .fn-reflection-head,
+    .focus-notes-modal-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .focus-notes-links-add,
+    .focus-notes-modal-buttons button,
+    .fn-reflection-expand {
+        width: 100%;
+        min-height: 40px;
+    }
+
+    .fn-mood-picker {
+        padding: 10px;
+    }
+
+    .fn-mood-mode-row,
+    .fn-quadrant-grid,
+    .fn-region-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .fn-mood-mode-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .fn-reflection-mood-head {
+        gap: 8px;
+    }
+
+    .fn-reflection-textarea {
+        min-height: 220px;
+    }
+
+    .fn-distortions-list {
+        max-height: 240px;
+    }
+
+    .fn-gcal-modal {
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+    }
+
+    .fn-gcal-content {
+        height: 100%;
+        max-height: none;
+        min-height: 0;
+        overflow: hidden;
+        padding-top: 30px;
+    }
+
+    .fn-gcal-title-input {
+        flex: 0 0 auto;
+        padding: 0 48px 8px 12px;
+        font-size: 17px;
+        line-height: 1.25;
+    }
+
+    .modal.fn-gcal-modal .modal-close-button {
+        top: 4px !important;
+        right: 6px !important;
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        min-height: 28px !important;
+        padding: 0 !important;
+        border-radius: 14px !important;
+        font-size: 16px !important;
+        line-height: 28px !important;
+    }
+
+    .fn-gcal-tabs {
+        flex: 0 0 auto;
+        gap: 4px;
+        padding: 6px 12px 0;
+    }
+
+    .fn-gcal-tab {
+        flex: 1;
+        min-height: 32px;
+        padding: 4px 10px;
+        border-radius: 7px 7px 0 0;
+    }
+
+    .fn-gcal-body {
+        min-height: 0;
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 4px 0 96px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .fn-gcal-row {
+        gap: 0;
+        padding: 7px 12px;
+    }
+
+    .fn-gcal-row-icon {
+        display: none;
+    }
+
+    .fn-gcal-field-label {
+        margin-bottom: 3px;
+        font-size: 0.72em;
+    }
+
+    .fn-gcal-datetime-wrap,
+    .fn-gcal-hub-wrap,
+    .fn-gcal-saveto-wrap,
+    .fn-gcal-reminders-list {
+        gap: 4px;
+    }
+
+    .fn-gcal-datetime-row,
+    .fn-gcal-time-range {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .fn-gcal-hub-input-row,
+    .fn-gcal-saveto-fields,
+    .fn-gcal-reminder-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .fn-gcal-datetime-row > .fn-gcal-date-input,
+    .fn-gcal-datetime-row > .fn-gcal-time-range {
+        grid-column: 1 / -1;
+    }
+
+    .fn-gcal-date-input,
+    .fn-gcal-time-input,
+    .fn-gcal-hub-input,
+    .fn-gcal-saveto-file,
+    .fn-gcal-saveto-heading,
+    .fn-gcal-desc-input,
+    .fn-gcal-hub-pick-btn,
+    .fn-gcal-add-remind-btn {
+        width: 100%;
+        min-width: 0;
+        min-height: 34px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        box-sizing: border-box;
+    }
+
+    .fn-gcal-desc-input {
+        min-height: 52px;
+    }
+
+    .fn-gcal-time-sep {
+        display: none;
+    }
+
+    .fn-gcal-allday-row,
+    .fn-gcal-hub-option {
+        align-items: flex-start;
+        line-height: 1.25;
+        gap: 7px;
+    }
+
+    .fn-gcal-checkbox,
+    .fn-gcal-radio {
+        margin-top: 2px;
+        flex: 0 0 auto;
+    }
+
+    .fn-gcal-remind-del-btn {
+        width: 100%;
+        height: 30px;
+    }
+
+    .fn-gcal-footer {
+        flex: 0 0 auto;
+        position: static;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+        background: var(--background-primary);
+        z-index: 1;
+    }
+
+    .fn-gcal-btn-discard,
+    .fn-gcal-btn-save {
+        width: 100%;
+        min-height: 34px;
+        padding: 6px 12px;
+    }
+}
+
+/* Keep the custom sheet isolated from the legacy mobile Modal fallbacks above. */
+.fn-mobile-sheet .fn-mobile-sheet-content.fn-gcal-content {
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+}
+
+.fn-mobile-sheet .fn-mobile-sheet-header {
+    flex: 0 0 auto;
+    padding: calc(8px + env(safe-area-inset-top)) 10px 0 12px;
+}
+
+.fn-mobile-sheet .fn-mobile-sheet-header .fn-gcal-title-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 0 9px;
+    border-bottom: 0;
+    font-size: 17px;
+    line-height: 1.25;
+}
+
+.fn-mobile-sheet .fn-gcal-tabs {
+    flex: 0 0 auto;
+    gap: 4px;
+    padding: 8px 12px 0;
+}
+
+.fn-mobile-sheet .fn-gcal-tab {
+    flex: 1 1 0;
+    min-height: 34px;
+    padding: 5px 10px;
+    border-radius: 6px 6px 0 0;
+}
+
+.fn-mobile-sheet .fn-gcal-body {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 4px 0 108px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+.fn-mobile-sheet .fn-gcal-footer {
+    flex: 0 0 auto;
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    z-index: auto;
+}
+
+/* Mobile event/task form: bottom sheet, not fullscreen. */
+.fn-mobile-sheet {
+    display: flex;
+    align-items: flex-end;
+    justify-content: stretch;
+    height: 100dvh;
+    padding: 0 0 var(--fn-gcal-keyboard-inset, 0px);
+    background: rgba(0, 0, 0, 0.32);
+}
+
+.fn-mobile-sheet .fn-mobile-task-content.fn-gcal-content {
+    width: 100%;
+    height: auto;
+    max-height: min(calc(100dvh - var(--fn-gcal-keyboard-inset, 0px) - 14px), 78dvh);
+    min-height: 0;
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+    border-radius: 18px 18px 0 0;
+    border: 1px solid var(--background-modifier-border);
+    border-bottom: 0;
+    background: var(--background-primary);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.28);
+}
+
+.fn-mobile-sheet-handle {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 5px;
+    margin: 8px auto 4px;
+    border-radius: 999px;
+    background: var(--background-modifier-border);
+}
+
+.fn-mobile-task-topbar {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 14px 6px;
+}
+
+.fn-mobile-task-topbar .fn-mobile-sheet-close {
+    flex: 0 0 auto;
+    min-width: 64px;
+    min-height: 36px;
+    padding: 5px 16px;
+    margin: 0;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 999px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+    font-weight: 500;
+}
+
+.fn-mobile-task-save {
+    min-width: 64px;
+    min-height: 36px;
+    padding: 5px 16px;
+    border-radius: 999px;
+    font-size: var(--font-ui-small);
+    font-weight: 600;
+}
+
+.fn-mobile-sheet .fn-mobile-task-body.fn-gcal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 6px 0 calc(14px + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+.fn-mobile-sheet .fn-mobile-title-input.fn-gcal-title-input {
+    width: 100%;
+    padding: 6px 20px 10px;
+    border-bottom: 0;
+    font-size: 24px;
+    line-height: 1.2;
+    font-weight: 500;
+}
+
+.fn-mobile-sheet .fn-gcal-tabs {
+    padding: 0 20px 8px;
+    gap: 5px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    overflow-x: auto;
+}
+
+.fn-mobile-sheet .fn-gcal-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 32px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: var(--font-ui-smaller);
+    text-align: center;
+}
+
+.fn-mobile-sheet .fn-mobile-primary-section {
+    padding-top: 8px;
+}
+
+.fn-mobile-sheet .fn-gcal-row {
+    padding: 8px 20px;
+}
+
+.fn-mobile-sheet .fn-gcal-desc-input {
+    min-height: 72px;
+}
+
+.fn-mobile-advanced-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.fn-mobile-disclosure {
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.fn-mobile-disclosure-summary {
+    min-height: 46px;
+    display: grid;
+    grid-template-columns: 28px 1fr 24px;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.fn-mobile-disclosure-summary::-webkit-details-marker {
+    display: none;
+}
+
+.fn-mobile-disclosure-icon,
+.fn-mobile-disclosure-chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.fn-mobile-disclosure-icon svg,
+.fn-mobile-disclosure-chevron svg {
+    width: 19px;
+    height: 19px;
+}
+
+.fn-mobile-disclosure[open] .fn-mobile-disclosure-chevron {
+    transform: rotate(180deg);
+}
+
+.fn-mobile-disclosure-label {
+    min-width: 0;
+    color: var(--text-normal);
+    font-size: var(--font-ui-medium);
+}
+
+.fn-mobile-disclosure-content {
+    padding: 0 0 10px;
+}
+
+.fn-mobile-disclosure-content > .fn-gcal-row {
+    padding-top: 0;
+}
+
+.fn-mobile-disclosure-content .fn-gcal-field-label {
+    display: none;
+}
+
+.fn-mobile-sheet .fn-gcal-hub-option,
+.fn-mobile-sheet .fn-gcal-allday-row {
+    min-height: 32px;
+}
+
+@media (max-height: 560px) {
+    .fn-mobile-sheet .fn-mobile-task-content.fn-gcal-content {
+        max-height: calc(100dvh - var(--fn-gcal-keyboard-inset, 0px) - 8px);
+        border-radius: 14px 14px 0 0;
+    }
+
+    .fn-mobile-sheet .fn-mobile-title-input.fn-gcal-title-input {
+        font-size: 20px;
+        padding-top: 4px;
+        padding-bottom: 10px;
+    }
+
+    .fn-mobile-sheet .fn-gcal-desc-input {
+        min-height: 52px;
+    }
+}
+
+.fn-mobile-sheet.fn-mobile-keyboard-open .fn-mobile-task-content.fn-gcal-content {
+    max-height: calc(100dvh - max(var(--fn-gcal-keyboard-inset, 0px), 39vh) - 8px);
+}
+
+.fn-mobile-sheet.fn-mobile-keyboard-open {
+    padding-bottom: max(var(--fn-gcal-keyboard-inset, 0px), 39vh);
+}
+
+.fn-mobile-sheet.fn-mobile-keyboard-open .fn-mobile-sheet-handle {
+    margin-top: 5px;
+    margin-bottom: 2px;
+}
+
+.fn-mobile-sheet.fn-mobile-keyboard-open .fn-mobile-task-topbar {
+    padding-top: 2px;
+    padding-bottom: 3px;
+}
+
+.fn-mobile-sheet.fn-mobile-keyboard-open .fn-mobile-task-save,
+.fn-mobile-sheet.fn-mobile-keyboard-open .fn-mobile-sheet-close {
+    min-height: 30px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    font-size: var(--font-ui-smaller);
+}
+
+.fn-mobile-sheet.fn-mobile-keyboard-open .fn-mobile-title-input.fn-gcal-title-input {
+    font-size: 20px;
+    padding-top: 3px;
+    padding-bottom: 7px;
+}
+
+.fn-mobile-sheet.fn-mobile-keyboard-open .fn-gcal-tabs {
+    padding-bottom: 6px;
+}
+
+.fn-mobile-sheet.fn-mobile-keyboard-open .fn-gcal-row {
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+/* Shrink description when keyboard is open and not focused */
+.fn-mobile-sheet.fn-mobile-keyboard-open .fn-gcal-desc-input:not(:focus) {
+    min-height: 38px;
+    max-height: 38px;
+    overflow: hidden;
+    resize: none;
 }

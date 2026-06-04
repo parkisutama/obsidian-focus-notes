@@ -7,7 +7,7 @@ import { TargetResolver } from "./TargetResolver";
 import { RecentEntriesReader } from "./RecentEntriesReader";
 import { FocusNotesSettingsTab } from "./SettingsTab";
 import { loadState, saveState } from "./StateStore";
-import { EventTaskModal } from "./EventTaskModal";
+import { openEventTaskForm } from "./EventTaskModal";
 
 /**
  * Plugin shell.
@@ -72,12 +72,12 @@ export default class FocusNotesPlugin extends Plugin {
             id: "create-event-task",
             name: "Create event or task",
             callback: () => {
-                new EventTaskModal(
+                openEventTaskForm(
                     this.app,
                     () => this.settings,
                     () => this.saveSettings(),
                     new Date()
-                ).open();
+                );
             }
         });
 

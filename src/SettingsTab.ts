@@ -421,5 +421,103 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     })
             );
+
+        new Setting(containerEl)
+            .setName("Folder catatan detail")
+            .setDesc(
+                "Folder tempat catatan detail event/task dibuat (file ketiga yang memiliki frontmatter lengkap). " +
+                    "Dibuat otomatis jika belum ada."
+            )
+            .addText(text =>
+                text
+                    .setPlaceholder("Notes")
+                    .setValue(this.plugin.settings.eventTask.detailNotesFolder)
+                    .onChange(async v => {
+                        this.plugin.settings.eventTask.detailNotesFolder = v.trim() || "Notes";
+                        await this.plugin.saveSettings();
+                    })
+            );
+
+        containerEl.createEl("h4", { text: "Template catatan detail" });
+
+        containerEl.createEl("p", {
+            cls: "setting-item-description",
+            text:
+                "Template untuk catatan detail event/task (file ketiga). " +
+                "Dibuat saat checkbox 'Buat catatan detail' dicentang di modal. " +
+                "Token: {{title}}, {{date}}, {{start}}, {{end}}, {{due}}, {{remind}}, {{description}}."
+        });
+
+        new Setting(containerEl)
+            .setName("Template catatan detail event")
+            .setDesc("Isi body catatan detail untuk event.")
+            .addTextArea(area => {
+                area.setValue(this.plugin.settings.eventTask.eventNoteTemplate).onChange(async v => {
+                    this.plugin.settings.eventTask.eventNoteTemplate = v;
+                    await this.plugin.saveSettings();
+                });
+                area.inputEl.rows = 5;
+                area.inputEl.style.width = "100%";
+            });
+
+        new Setting(containerEl)
+            .setName("Template catatan detail task")
+            .setDesc("Isi body catatan detail untuk task.")
+            .addTextArea(area => {
+                area.setValue(this.plugin.settings.eventTask.taskNoteTemplate).onChange(async v => {
+                    this.plugin.settings.eventTask.taskNoteTemplate = v;
+                    await this.plugin.saveSettings();
+                });
+                area.inputEl.rows = 5;
+                area.inputEl.style.width = "100%";
+            });
+
+        new Setting(containerEl)
+            .setName("Format field 'related'")
+            .setDesc(
+                "Nilai field related pada frontmatter catatan detail — mengarah ke daily note target. " +
+                    "{{date}} = tanggal event/task, {{targetFile}} = path file tujuan. Kosongkan untuk menghilangkan field ini."
+            )
+            .addText(text =>
+                text
+                    .setPlaceholder("[[{{date}}]]")
+                    .setValue(this.plugin.settings.eventTask.relatedFieldFormat)
+                    .onChange(async v => {
+                        this.plugin.settings.eventTask.relatedFieldFormat = v.trim();
+                        await this.plugin.saveSettings();
+                    })
+            );
+
+        containerEl.createEl("h4", { text: "Fields frontmatter catatan detail" });
+
+        new Setting(containerEl)
+            .setName("Sertakan field 'status'")
+            .setDesc("Tambah status: scheduled (event) / open (task) ke frontmatter catatan detail.")
+            .addToggle(toggle =>
+                toggle.setValue(this.plugin.settings.eventTask.includeStatus).onChange(async v => {
+                    this.plugin.settings.eventTask.includeStatus = v;
+                    await this.plugin.saveSettings();
+                })
+            );
+
+        new Setting(containerEl)
+            .setName("Sertakan field 'priority' (task)")
+            .setDesc("Tambah priority: medium ke frontmatter catatan detail task.")
+            .addToggle(toggle =>
+                toggle.setValue(this.plugin.settings.eventTask.includePriority).onChange(async v => {
+                    this.plugin.settings.eventTask.includePriority = v;
+                    await this.plugin.saveSettings();
+                })
+            );
+
+        new Setting(containerEl)
+            .setName("Sertakan field 'tags'")
+            .setDesc("Tambah tags: [event] atau [task] ke frontmatter catatan detail.")
+            .addToggle(toggle =>
+                toggle.setValue(this.plugin.settings.eventTask.includeTags).onChange(async v => {
+                    this.plugin.settings.eventTask.includeTags = v;
+                    await this.plugin.saveSettings();
+                })
+            );
     }
 }

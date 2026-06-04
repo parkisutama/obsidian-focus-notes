@@ -8,7 +8,7 @@ import { TimelineLayout } from "./TimelineLayout";
 import { TimelineSourceSidebar, TimelineSourceSummary } from "./TimelineSourceSidebar";
 import { FocusNotesSettings } from "./types";
 import { addDays, formatDayKey, getIsoWeek, startOfDay, startOfWeek } from "./utils";
-import { EventTaskModal } from "./EventTaskModal";
+import { openEventTaskForm } from "./EventTaskModal";
 
 export const VIEW_TYPE_FOCUS_TIMELINE = "focus-timeline-view";
 
@@ -113,13 +113,13 @@ export class TimelineView extends ItemView {
         });
         setIcon(addBtn, "plus");
         addBtn.addEventListener("click", () => {
-            new EventTaskModal(
+            openEventTaskForm(
                 this.app,
                 this.getSettings,
                 this.saveSettings,
                 this.anchorDate,
                 () => void this.refreshIndex()
-            ).open();
+            );
         });
 
         this.sourceToggleButton = controls.createEl("button", {
