@@ -1,5 +1,8 @@
 node_modules/
 main.js
 .env
+.claude/
+.codex
+*:Zone.Identifier
 *.log
 .DS_Store

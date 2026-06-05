@@ -38,7 +38,7 @@ Di `src/EventTaskModal.ts`:
 Build terakhir lolos dengan:
 
 ```bash
-env OBSIDIAN_VAULT_PLUGIN_PATH= npm run build
+env OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run build
 ```
 
 ## Kenapa kemungkinan masih gagal
@@ -177,10 +177,10 @@ Langkah kecil yang realistis:
   - `src/SettingsTab.ts`
   - `src/types.ts`
 - Screenshot Windows yang disebut user tidak terbaca dari environment Codex, jadi troubleshooting harus berbasis kode dan feedback user.
-- Build normal `npm run build` bisa gagal bila `.env` mengisi `OBSIDIAN_VAULT_PLUGIN_PATH` ke path vault yang read-only dari sandbox. Gunakan:
+- Build normal `pnpm run build` bisa gagal bila `.env` mengisi `OBSIDIAN_VAULT_PLUGIN_PATH` ke path vault yang read-only dari sandbox. Gunakan:
 
 ```bash
-env OBSIDIAN_VAULT_PLUGIN_PATH= npm run build
+env OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run build
 ```
 
 ## Acceptance criteria untuk fix berikutnya

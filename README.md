@@ -11,8 +11,9 @@ The mood tracker is the most distinctive piece: you can pick by feeling (quadran
 ```bash
 git clone <this-folder> obsidian-focus-notes
 cd obsidian-focus-notes
-npm install
-npm run build
+corepack enable
+pnpm install
+pnpm run build
 ```
 
 This produces `main.js` next to `manifest.json` and `styles.css`. Copy those three files into your vault at:
