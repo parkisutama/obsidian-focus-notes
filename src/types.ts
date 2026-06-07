@@ -14,6 +14,8 @@ export type DisplayMode = "pomodoro" | "timer" | "stopwatch";
 export type EngineMode = "countdown" | "stopwatch";
 export type TimerStatus = "idle" | "running" | "paused" | "completed";
 export type InsertPosition = "start" | "end";
+export type StressLevel = "low" | "normal" | "medium" | "high";
+export type EmotionCategory = "pleasant" | "neutral" | "unpleasant";
 export type { TimelineMode } from "./ScheduledItemTypes";
 import type { TimelineMode } from "./ScheduledItemTypes";
 
@@ -150,7 +152,11 @@ export interface SessionRecord {
     task: string;
     /** Reflection and notes — single field, head/heart/hand is just guidance. */
     notes: string;
-    /** Selected mood key from MoodReference, or null if user skipped. */
+    /** Selected stress level from Emotional Wellbeing, or null if skipped. */
+    stressLevel: StressLevel | null;
+    /** Unpleasant / Neutral / Pleasant category from Emotional Wellbeing. */
+    emotionCategory: EmotionCategory | null;
+    /** Specific emotion state from MoodReference, or null if user skipped. */
     moodKey: string | null;
     /**
      * Comma-separated wikilinks added in the modal's Related field.
@@ -187,9 +193,9 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
     // Grouped mode still keeps {{date}} in the bullet because the timeline
     // parser is intentionally line-based and does not infer dates from headings.
     logFormatFlat:
-        "- {{date}} {{startTime}} - {{endTime}} {{task}}\n    - focus: {{duration}} · {{mode}}\n    - {{moodEmoji}} {{moodName}} — {{notes}}\n    - {{links}}",
+        "- {{date}} {{startTime}} - {{endTime}} {{task}}\n    - focus: {{duration}} · {{mode}}\n    - {{wellbeing}}\n    - {{notes}}\n    - {{links}}",
     logFormatGrouped:
-        "- {{date}} {{startTime}} - {{endTime}} {{task}}\n    - focus: {{duration}} · {{mode}}\n    - {{moodEmoji}} {{moodName}} — {{notes}}\n    - {{links}}",
+        "- {{date}} {{startTime}} - {{endTime}} {{task}}\n    - focus: {{duration}} · {{mode}}\n    - {{wellbeing}}\n    - {{notes}}\n    - {{links}}",
 
     autoOpenLogModal: true,
     playSound: true,

@@ -620,6 +620,91 @@
     margin-bottom: 8px;
 }
 
+/* ---- Emotional Wellbeing picker ------------------------------------------- */
+.fn-wellbeing-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    padding: 12px;
+    background: var(--background-secondary);
+}
+.fn-wellbeing-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.fn-wellbeing-group-label {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.fn-wellbeing-segment-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+}
+.fn-wellbeing-segment {
+    min-width: 0;
+    padding: 7px 8px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: var(--font-ui-small);
+}
+.fn-wellbeing-segment:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+.fn-wellbeing-segment.active {
+    color: var(--text-on-accent);
+    background: var(--interactive-accent);
+    border-color: var(--interactive-accent);
+}
+.fn-wellbeing-states {
+    min-height: 34px;
+}
+.fn-wellbeing-state-empty {
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+}
+.fn-wellbeing-state-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.fn-wellbeing-state-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 8px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 999px;
+    color: var(--text-normal);
+    cursor: pointer;
+    font-size: var(--font-ui-small);
+    line-height: 1.2;
+}
+.fn-wellbeing-state-chip:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--interactive-accent);
+}
+.fn-wellbeing-state-chip.selected {
+    background: color-mix(in srgb, var(--interactive-accent) 14%, var(--background-primary));
+    border-color: var(--interactive-accent);
+}
+.fn-wellbeing-state-emoji {
+    line-height: 1;
+}
+.fn-wellbeing-state-name {
+    white-space: nowrap;
+}
+
 /* ============================================================================
  * Focus Timeline
  * ========================================================================== */

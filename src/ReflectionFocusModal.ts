@@ -1,15 +1,25 @@
 import { App, Modal } from "obsidian";
 import { getMood } from "./MoodReference";
 import { CBT_PROMPTS, COGNITIVE_DISTORTIONS } from "./CognitiveDistortions";
+import { EmotionCategory, StressLevel } from "./types";
+import {
+    getEmotionCategoryLabel,
+    getStressLevelLabel
+} from "./EmotionalWellbeingReference";
+
+export interface ReflectionWellbeingContext {
+    stressLevel: StressLevel | null;
+    emotionCategory: EmotionCategory | null;
+    emotionKey: string | null;
+}
 
 /**
  * Expanded reflection modal — opened from the main LogModal when the user
  * clicks "Open expanded".
  *
  * Layout, top to bottom:
- *   1. Mood reminder card — what the user just selected, so they don't have
- *      to scroll back to remember the definition or somatic signals while
- *      writing. Top three somatic hints visible without unfolding anything.
+ *   1. Emotional Wellbeing card — the stress level and emotion context the
+ *      user selected in the parent log modal.
  *   2. Big textarea — the actual writing space. ~14 rows by default.
  *   3. Collapsible "CBT prompts" — six questions as scaffolding, written
  *      as bullets the user reads. NOT form fields. The user writes all
@@ -19,7 +29,7 @@ import { CBT_PROMPTS, COGNITIVE_DISTORTIONS } from "./CognitiveDistortions";
  *      example quote and a one-line description.
  *
  * The contract with the parent LogModal:
- *   - Constructor takes the current notes and the selected moodKey.
+ *   - Constructor takes the current notes and the selected wellbeing context.
  *   - onClose passes the (possibly edited) notes back to the parent.
  *   - Cancel returns the original notes unchanged. Save commits.
  *
@@ -39,7 +49,7 @@ export class ReflectionFocusModal extends Modal {
     constructor(
         app: App,
         private initialText: string,
-        private moodKey: string | null,
+        private wellbeing: ReflectionWellbeingContext,
         private onResolve: (text: string | null) => void
     ) {
         super(app);
@@ -53,43 +63,33 @@ export class ReflectionFocusModal extends Modal {
 
         contentEl.createEl("h2", { text: "Reflection" });
 
-        // ---- 1. Mood reminder card --------------------------------------
-        // Visible only when a mood was actually selected. When the user
-        // skipped mood selection, the card slot just doesn't render — no
-        // "no mood" placeholder, since that would add noise without value.
-        const mood = getMood(this.moodKey);
-        if (mood) {
+        // ---- 1. Emotional Wellbeing reminder card -----------------------
+        const mood = getMood(this.wellbeing.emotionKey);
+        const stressLabel = getStressLevelLabel(this.wellbeing.stressLevel);
+        const emotionCategoryLabel = getEmotionCategoryLabel(this.wellbeing.emotionCategory);
+        if (stressLabel || emotionCategoryLabel || mood) {
             const reminder = contentEl.createDiv({ cls: "fn-reflection-mood-card" });
             const header = reminder.createDiv({ cls: "fn-reflection-mood-head" });
-            header.createSpan({ cls: "fn-reflection-mood-emoji", text: mood.emoji });
+            header.createSpan({ cls: "fn-reflection-mood-emoji", text: mood?.emoji ?? " " });
             const headText = header.createDiv({ cls: "fn-reflection-mood-title" });
-            headText.createDiv({ cls: "fn-reflection-mood-name", text: mood.name });
-            headText.createDiv({
-                cls: "fn-reflection-mood-quadrant",
-                text: this.formatQuadrant(mood.quadrant)
-            });
-
-            reminder.createDiv({
-                cls: "fn-reflection-mood-def",
-                text: mood.definition
-            });
-
-            const somaticBlock = reminder.createDiv({ cls: "fn-reflection-mood-somatic" });
-            somaticBlock.createDiv({
-                cls: "fn-reflection-mood-somatic-label",
-                text: "What the body is doing"
-            });
-            const somaticList = somaticBlock.createEl("ul", { cls: "fn-reflection-mood-somatic-list" });
-            for (const hint of mood.somaticHints) {
-                somaticList.createEl("li", { text: hint });
+            headText.createDiv({ cls: "fn-reflection-mood-name", text: "Emotional Wellbeing" });
+            if (stressLabel) {
+                headText.createDiv({
+                    cls: "fn-reflection-mood-quadrant",
+                    text: `Stress: ${stressLabel}`
+                });
             }
-
-            const action = reminder.createDiv({ cls: "fn-reflection-mood-action" });
-            action.createSpan({
-                cls: "fn-reflection-mood-action-label",
-                text: "Quick action: "
-            });
-            action.appendText(mood.quickAction);
+            if (mood) {
+                reminder.createDiv({
+                    cls: "fn-reflection-mood-def",
+                    text: `Emotion: ${mood.name}${emotionCategoryLabel ? ` (${emotionCategoryLabel})` : ""}`
+                });
+            } else if (emotionCategoryLabel) {
+                reminder.createDiv({
+                    cls: "fn-reflection-mood-def",
+                    text: `Emotion: ${emotionCategoryLabel}`
+                });
+            }
         }
 
         // ---- 2. Big textarea --------------------------------------------
@@ -102,8 +102,8 @@ export class ReflectionFocusModal extends Modal {
             cls: "fn-reflection-textarea",
             attr: {
                 placeholder:
-                    "What happened, what your body told you, what you were thinking, " +
-                    "what would be a kinder and more accurate description…"
+                    "What happened, what shifted your stress or emotion, " +
+                    "and what would be a kinder and more accurate description..."
             }
         });
         textarea.value = this.initialText;
@@ -125,7 +125,7 @@ export class ReflectionFocusModal extends Modal {
         // the panel by default there would feel like the modal is asking the
         // user to fix something that isn't broken. Same logic for the
         // distortions panel below.
-        const defaultOpen = mood?.valence === "unpleasant";
+        const defaultOpen = this.wellbeing.emotionCategory === "unpleasant";
 
         const promptsDetails = contentEl.createEl("details", {
             cls: "fn-reflection-collapsible"
@@ -205,24 +205,5 @@ export class ReflectionFocusModal extends Modal {
         this.resolved = true;
         this.onResolve(this.currentText);
         this.close();
-    }
-
-    private formatQuadrant(quadrant: string): string {
-        // Convert internal keys like "high-pleasant" to the human label
-        // shown on quadrant cards in the picker. Inline mapping (rather
-        // than re-importing QUADRANTS) because the labels are short and
-        // tied to display, not to the data model.
-        switch (quadrant) {
-            case "high-pleasant":
-                return "Activated · Pleasant";
-            case "high-unpleasant":
-                return "Activated · Unpleasant";
-            case "low-pleasant":
-                return "Calm · Pleasant";
-            case "low-unpleasant":
-                return "Calm · Unpleasant";
-            default:
-                return quadrant;
-        }
     }
 }

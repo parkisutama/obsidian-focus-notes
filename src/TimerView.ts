@@ -528,6 +528,8 @@ export class TimerView extends ItemView {
                                     : this.parseMinutes() * 60,
                             task: result.task,
                             notes: result.notes,
+                            stressLevel: result.stressLevel,
+                            emotionCategory: result.emotionCategory,
                             moodKey: result.moodKey,
                             links: result.links
                         };

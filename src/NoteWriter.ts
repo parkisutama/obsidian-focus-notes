@@ -2,6 +2,10 @@ import { App, TFile, moment, normalizePath } from "obsidian";
 import { FocusNotesSettings, FocusTarget, SessionRecord } from "./types";
 import { isTFile } from "./utils";
 import { getMood } from "./MoodReference";
+import {
+    getEmotionCategoryLabel,
+    getStressLevelLabel
+} from "./EmotionalWellbeingReference";
 
 /**
  * Writes a SessionRecord into the chosen note.
@@ -36,6 +40,9 @@ export class NoteWriter {
         const dateStr = endMom.format(this.settings.dailyNoteFormat);
 
         const mood = getMood(record.moodKey);
+        const stressLabel = getStressLevelLabel(record.stressLevel);
+        const emotionCategoryLabel = getEmotionCategoryLabel(record.emotionCategory);
+        const wellbeing = this.formatWellbeing(stressLabel, emotionCategoryLabel, mood);
         const links = record.links.trim();
 
         // split/join is safer than a regex because user-supplied notes may
@@ -52,7 +59,17 @@ export class NoteWriter {
             "{{mode}}": record.mode,
             "{{task}}": record.task.trim() || "(untitled)",
             "{{notes}}": record.notes.trim(),
+            "{{wellbeing}}": wellbeing,
+            "{{stressLevel}}": record.stressLevel ?? "",
+            "{{stressLabel}}": stressLabel,
+            "{{emotionCategory}}": record.emotionCategory ?? "",
+            "{{emotionCategoryName}}": emotionCategoryLabel,
+            "{{emotionKey}}": mood?.key ?? "",
+            "{{emotionName}}": mood?.name ?? "",
+            "{{emotionEmoji}}": mood?.emoji ?? "",
+            "{{emotionTag}}": mood ? `#emotion/${mood.key}` : "",
             // Mood — empty strings when the user skipped mood selection.
+            // Kept as compatibility aliases for older user templates.
             "{{moodKey}}": mood?.key ?? "",
             "{{moodName}}": mood?.name ?? "",
             "{{moodEmoji}}": mood?.emoji ?? "",
@@ -100,6 +117,22 @@ export class NoteWriter {
                 return true;
             })
             .join("\n");
+    }
+
+    private formatWellbeing(
+        stressLabel: string,
+        emotionCategoryLabel: string,
+        mood: ReturnType<typeof getMood>
+    ): string {
+        const parts: string[] = [];
+        if (stressLabel) parts.push(`stress ${stressLabel}`);
+        if (mood) {
+            const category = emotionCategoryLabel ? ` (${emotionCategoryLabel})` : "";
+            parts.push(`emotion ${mood.emoji} ${mood.name}${category}`);
+        } else if (emotionCategoryLabel) {
+            parts.push(`emotion ${emotionCategoryLabel}`);
+        }
+        return parts.length > 0 ? `Emotional Wellbeing: ${parts.join(" · ")}` : "";
     }
 
     private formatDuration(seconds: number): string {

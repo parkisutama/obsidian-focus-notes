@@ -1,6 +1,6 @@
 import { App, FuzzySuggestModal, Modal, Notice, Setting, TFile } from "obsidian";
-import { DisplayMode, FocusTarget } from "./types";
-import { MoodPicker } from "./MoodPicker";
+import { DisplayMode, EmotionCategory, FocusTarget, StressLevel } from "./types";
+import { EmotionalWellbeingPicker } from "./EmotionalWellbeingPicker";
 import { FileSuggest } from "./Suggesters";
 import { isTFile } from "./utils";
 import { ReflectionFocusModal } from "./ReflectionFocusModal";
@@ -8,6 +8,8 @@ import { ReflectionFocusModal } from "./ReflectionFocusModal";
 export interface LogModalResult {
     task: string;
     notes: string;
+    stressLevel: StressLevel | null;
+    emotionCategory: EmotionCategory | null;
     moodKey: string | null;
     /** Comma-or-space-separated wikilinks. Stored as the user typed it. */
     links: string;
@@ -28,7 +30,7 @@ export interface LogModalContext {
  *   1. What are you doing      — single line, FileSuggest. If the user picks
  *                                a file, the value becomes [[FileName]] so it
  *                                renders as a link in the bullet.
- *   2. Mood                    — MoodPicker, two flows (by-feeling and by-body).
+ *   2. Emotional Wellbeing     — stress level + simple emotion category/state.
  *   3. Reflection and notes    — single textarea. The "head/heart/hand" prompt
  *                                lives in the placeholder as a reminder, not as
  *                                separate fields, so day-to-day logging stays
@@ -44,6 +46,8 @@ export interface LogModalContext {
 export class LogModal extends Modal {
     private task: string;
     private notes = "";
+    private stressLevel: StressLevel | null = null;
+    private emotionCategory: EmotionCategory | null = null;
     private moodKey: string | null = null;
     private links = "";
     private resolved = false;
@@ -108,29 +112,34 @@ export class LogModal extends Modal {
                 });
             });
 
-        // ---- 2. Mood -------------------------------------------------------
-        const moodSection = contentEl.createDiv({ cls: "focus-notes-modal-section" });
-        moodSection.createEl("div", { cls: "focus-notes-modal-label", text: "Mood" });
-        moodSection.createEl("div", {
-            cls: "focus-notes-modal-desc",
-            text:
-                "Pick by feeling or by body sensation. The body view helps when the " +
-                "mind hasn't named the state yet."
+        // ---- 2. Emotional Wellbeing ---------------------------------------
+        const wellbeingSection = contentEl.createDiv({ cls: "focus-notes-modal-section" });
+        wellbeingSection.createEl("div", {
+            cls: "focus-notes-modal-label",
+            text: "Emotional Wellbeing"
         });
-        new MoodPicker(moodSection, key => (this.moodKey = key));
+        wellbeingSection.createEl("div", {
+            cls: "focus-notes-modal-desc",
+            text: "Keep it light: choose stress level, then Unpleasant, Neutral, or Pleasant."
+        });
+        new EmotionalWellbeingPicker(wellbeingSection, value => {
+            this.stressLevel = value.stressLevel;
+            this.emotionCategory = value.emotionCategory;
+            this.moodKey = value.emotionKey;
+        });
 
         // ---- 3. Reflection and notes ---------------------------------------
         // Rendered as a full-width section (not an Obsidian Setting row),
         // because the Setting layout puts the textarea in a 20%-wide column
         // alongside the description — too cramped for actual reflective
-        // writing. Same shape as the Mood and Related-links sections below.
+        // writing. Same shape as the Wellbeing and Related-links sections below.
         const reflectionSection = contentEl.createDiv({ cls: "focus-notes-modal-section" });
         const reflectionHead = reflectionSection.createDiv({ cls: "fn-reflection-head" });
         reflectionHead.createDiv({
             cls: "focus-notes-modal-label",
             text: "Reflection and notes"
         });
-        // "Open expanded" button — opens ReflectionFocusModal with mood
+        // "Open expanded" button — opens ReflectionFocusModal with wellbeing
         // reminder + CBT guidance for users who want the scaffolding while
         // writing. The inline textarea below is preserved so quick logging
         // stays one click away.
@@ -141,14 +150,14 @@ export class LogModal extends Modal {
         reflectionSection.createDiv({
             cls: "focus-notes-modal-desc",
             text:
-                "Anything — task progress, body signals, ideas, blockers, what triggered the mood. " +
+                "Anything — task progress, ideas, blockers, or what affected your wellbeing. " +
                 "Open expanded for CBT prompts and a thought-record view."
         });
         const reflectionTextarea = reflectionSection.createEl("textarea", {
             cls: "fn-reflection-inline-textarea",
             attr: {
                 placeholder:
-                    "Head: what did your mind do?  •  Heart: what did your body / feelings tell you?  •  Hand: what did you actually produce?"
+                    "What happened? What shifted your stress or emotion? What did you produce?"
             }
         });
         reflectionTextarea.rows = 6;
@@ -157,12 +166,21 @@ export class LogModal extends Modal {
         });
         expandBtn.addEventListener("click", evt => {
             evt.preventDefault();
-            new ReflectionFocusModal(this.app, this.notes, this.moodKey, result => {
-                if (result !== null) {
-                    this.notes = result;
-                    reflectionTextarea.value = result;
+            new ReflectionFocusModal(
+                this.app,
+                this.notes,
+                {
+                    stressLevel: this.stressLevel,
+                    emotionCategory: this.emotionCategory,
+                    emotionKey: this.moodKey
+                },
+                result => {
+                    if (result !== null) {
+                        this.notes = result;
+                        reflectionTextarea.value = result;
+                    }
                 }
-            }).open();
+            ).open();
         });
 
         // ---- 4. Related links ----------------------------------------------
@@ -230,6 +248,8 @@ export class LogModal extends Modal {
         this.onSubmit({
             task: this.task,
             notes: this.notes,
+            stressLevel: this.stressLevel,
+            emotionCategory: this.emotionCategory,
             moodKey: this.moodKey,
             links: this.links
         });

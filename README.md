@@ -1,10 +1,10 @@
 # Focus Notes
 
-Focus timer for Obsidian, with structured session logging that includes mood (Russell's Circumplex Model) and somatic-first signal tracking. Three modes — Pomodoro, Timer, Stopwatch — in a circular minimalist sidebar.
+Focus timer for Obsidian, with structured session logging that includes a lightweight Emotional Wellbeing check-in. Three modes — Pomodoro, Timer, Stopwatch — in a circular minimalist sidebar.
 
-Use it for any focused activity: 25-minute pomodoros, a 10-minute meditation, an open-ended reading session. Each completion (or manual stop) opens a log modal that captures what you were doing, the mood the session left you in, a free-form reflection, and any related notes — then writes a templated entry into the heading and file you've chosen.
+Use it for any focused activity: 25-minute pomodoros, a 10-minute meditation, an open-ended reading session. Each completion (or manual stop) opens a log modal that captures what you were doing, stress level, emotion, a free-form reflection, and any related notes — then writes a templated entry into the heading and file you've chosen.
 
-The mood tracker is the most distinctive piece: you can pick by feeling (quadrant → mood) or by body sensation (region → sensation → disambiguation question → mood). Both flows draw from the same 39-mood reference, with definitions and 2-minute quick actions visible on every card.
+The wellbeing check-in stays intentionally small: stress is Low / Normal / Medium / High, and emotion is Unpleasant / Neutral / Pleasant with optional emotion-state chips drawn from the existing mood reference.
 
 ## Install (manual)
 
@@ -74,17 +74,15 @@ Timeline behavior:
 Four sections, top to bottom:
 
 1. **What are you doing?** — free text or a `[[note link]]`. Pick from the suggester to wrap as a wikilink automatically. (The sidebar's input shows the same prompt without the suggester — quick capture, no list.)
-2. **Mood** — pick by feeling or by body. The two flows converge on the same mood entry; pick the route that matches how you're noticing.
-   - **By feeling**: quadrant (activated/calm × pleasant/unpleasant) → mood. Each card shows the definition and a 2-minute quick action.
-   - **By body**: region (Chest, Shoulders, Jaw, Breath, Stomach, Legs, Eyes, Hands) → sensation → candidate moods. When the candidates split cleanly along one of three meta-axes (valence, direction, attention quality), the picker surfaces a disambiguation question above the cards.
-3. **Reflection and notes** — full-width textarea. The placeholder hints "head / heart / hand" as a thinking prompt — but the field stays free-form so logging stays fast. Click **Open expanded ↗** to launch the focus reflection modal (see below).
+2. **Emotional Wellbeing** — choose stress level, then Unpleasant, Neutral, or Pleasant. Optional emotion-state chips let you capture a more specific state without the old by-feeling/by-body flow.
+3. **Reflection and notes** — full-width textarea. The placeholder asks what happened, what shifted stress or emotion, and what you produced. Click **Open expanded ↗** to launch the focus reflection modal (see below).
 4. **Related links** — text input plus an `+ Add note` button that opens a fuzzy file picker; selections append `[[Name]]` to the field. You can also type freely.
 
 ## Expanded reflection modal
 
 Click **Open expanded ↗** on the reflection field to open a focused writing space. Three things visible at once:
 
-- **Mood reminder card** — the mood you just selected, with quadrant, definition, top three somatic signals, and the 2-minute quick action. Saves you scrolling back to remember what `apathetic` actually means.
+- **Emotional Wellbeing card** — the stress level and emotion context you just selected.
 - **Big writing area** — full-width textarea, ~14 rows. The same `notes` field as the inline textarea — whatever you type here replaces the inline value when you hit "Save reflection".
 - **Two collapsible reference panels**:
   - **Mini-CBT prompts** — six questions as bullets you can read while writing: Intensity (1–10), Trigger, Automatic thought, Pattern check, Evidence for and against, Balanced view. *Reference, not form fields.* You write your answers in the textarea above, in any order, skipping anything that doesn't fit.
@@ -153,7 +151,7 @@ Settings hold the *defaults* — the sidebar's per-session override always wins 
 
 Time / session: `{{date}}`, `{{startTime}}`, `{{endTime}}`, `{{startISO}}`, `{{endISO}}`, `{{duration}}`, `{{durationMinutes}}`, `{{durationSeconds}}`, `{{mode}}`, `{{task}}`, `{{notes}}`.
 
-Mood: `{{moodKey}}` (canonical lowercase, e.g. `anxious`, `in-flow`), `{{moodName}}` (display, e.g. `Anxious`), `{{moodEmoji}}`, `{{moodTag}}` (Dataview-friendly `#mood/anxious`), `{{moodKeywords}}` (all keywords as `#tag` list).
+Emotional Wellbeing: `{{wellbeing}}`, `{{stressLevel}}`, `{{stressLabel}}`, `{{emotionCategory}}`, `{{emotionCategoryName}}`, `{{emotionKey}}`, `{{emotionName}}`, `{{emotionEmoji}}`, `{{emotionTag}}`. Legacy mood aliases still work: `{{moodKey}}`, `{{moodName}}`, `{{moodEmoji}}`, `{{moodTag}}`, `{{moodKeywords}}`.
 
 Related: `{{links}}`.
 
@@ -167,7 +165,7 @@ Related: `{{links}}`.
 
 **Dedicated log file with date grouping.** Group-by-date ON, target a permanent file like `Logs/Focus 2026.md` with heading `## Sessions`. Each new day creates its own `### [[YYYY-MM-DD]]` sub-heading; the recent feed walks them automatically.
 
-**Mood pattern review.** Use Dataview to count `#mood/anxious`, `#mood/satisfied`, etc. across files. Recurring patterns are more diagnostic than any single entry — see the included `interstitial-mood-reference.md` for what each pattern signals.
+**Wellbeing pattern review.** Use Dataview to count `#emotion/anxious`, `#emotion/satisfied`, stress levels, or emotion categories across files. Recurring patterns are more diagnostic than any single entry.
 
 ## Architecture
 
@@ -183,14 +181,12 @@ ScheduledItemQuery      — range/source/completed/pending filtering
 TimelineLayout          — render model for blocks, points, due chips
 TimelineView            — separate planner view with sidebar and Day/Weekly View grid
 CircularDisplay         — SVG ring + centered time/label
-MoodReference           — 39 moods × (definition, somatic, quick action,
-                          healing note) + 8 body regions × sensations × disamb
-MoodPicker              — by-feeling and by-body flows, three-question
-                          disambiguation engine
+MoodReference           — existing emotion-state catalog used by wellbeing chips
+EmotionalWellbeingPicker — stress level + Unpleasant/Neutral/Pleasant emotion UI
 CognitiveDistortions    — 6 CBT prompts + 10 distortion patterns (data only)
-ReflectionFocusModal    — mood reminder + big textarea + collapsible CBT
+ReflectionFocusModal    — wellbeing reminder + big textarea + collapsible CBT
                           reference panels
-LogModal                — what-are-you-doing + mood + reflection + links
+LogModal                — what-are-you-doing + wellbeing + reflection + links
 TimerView               — composes the above; owns per-session target override
 StateStore              — external state file at .obsidian/focus-notes-state.json
 SettingsTab             — defaults
