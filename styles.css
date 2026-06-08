@@ -2640,9 +2640,11 @@
     height: var(--fn-gcal-viewport-height, 100dvh);
     padding-top: var(--fn-gcal-viewport-top, 0px);
     z-index: var(--layer-modal, 1000);
-    background: var(--background-primary);
+    background: rgba(0, 0, 0, 0.48);
     color: var(--text-normal);
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
 .fn-mobile-sheet-content {
@@ -2784,13 +2786,13 @@
     flex: 0 0 auto;
     width: auto;
     min-width: 0;
-    min-height: 34px;
-    padding: 4px 14px;
+    min-height: 42px;
+    padding: 4px 16px;
     border-radius: 999px;
     background: var(--background-secondary);
     border: 1px solid var(--background-modifier-border);
     color: var(--text-normal);
-    font-size: var(--font-ui-smaller);
+    font-size: var(--font-ui-small);
     text-align: center;
     cursor: pointer;
     box-sizing: border-box;
@@ -2811,10 +2813,19 @@
 .fn-mobile-sheet .fn-gcal-add-remind-btn {
     width: 100%;
     min-width: 0;
-    min-height: 36px;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    min-height: 44px;
+    padding-top: 6px;
+    padding-bottom: 6px;
     box-sizing: border-box;
+}
+
+/* Chip group buttons: adequate touch target on mobile */
+.fn-mobile-sheet .fn-chip-option {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 18px;
 }
 
 .fn-mobile-sheet .fn-gcal-desc-input {
@@ -2853,9 +2864,10 @@
 
 /* Delete button in reminder row: compact auto-width */
 .fn-mobile-sheet .fn-gcal-remind-del-btn {
-    width: auto;
-    height: 34px;
+    width: 42px;
+    height: 42px;
     flex: 0 0 auto;
+    border-radius: 999px;
 }
 
 .fn-mobile-sheet .fn-gcal-footer {
@@ -3418,8 +3430,8 @@ body.is-mobile .fn-gcal-btn-save {
 .fn-mobile-task-topbar .fn-mobile-sheet-close {
     flex: 0 0 auto;
     min-width: 64px;
-    min-height: 36px;
-    padding: 5px 16px;
+    min-height: 40px;
+    padding: 6px 18px;
     margin: 0;
     border: 1px solid var(--background-modifier-border);
     border-radius: 999px;
@@ -3431,8 +3443,8 @@ body.is-mobile .fn-gcal-btn-save {
 
 .fn-mobile-task-save {
     min-width: 64px;
-    min-height: 36px;
-    padding: 5px 16px;
+    min-height: 40px;
+    padding: 6px 18px;
     border-radius: 999px;
     font-size: var(--font-ui-small);
     font-weight: 600;
@@ -3548,7 +3560,7 @@ body.is-mobile .fn-gcal-btn-save {
 
 .fn-mobile-sheet .fn-gcal-hub-option,
 .fn-mobile-sheet .fn-gcal-allday-row {
-    min-height: 32px;
+    min-height: 44px;
 }
 
 @media (max-height: 560px) {

@@ -396,14 +396,14 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         containerEl.createEl("p", {
             cls: "setting-item-description",
             text:
-                "Saat membuat event atau task lewat modal, pilih folder untuk catatan hub dan heading default tujuan."
+                "Configure folders and default target heading used when creating events or tasks."
         });
 
         new Setting(containerEl)
-            .setName("Folder catatan hub")
+            .setName("Hub notes folder")
             .setDesc(
-                "Folder tempat catatan hub baru dibuat saat memilih 'Buat catatan baru'. " +
-                    "Folder dibuat otomatis jika belum ada."
+                "Folder where new hub notes are created when choosing 'New note'. " +
+                    "Created automatically if it doesn't exist."
             )
             .addText(text =>
                 text
@@ -416,10 +416,10 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Heading default target")
+            .setName("Default target heading")
             .setDesc(
-                "Heading di file tujuan tempat baris event/task disisipkan. " +
-                    "Kosongkan untuk langsung append ke akhir file."
+                "Heading in the target file where event/task lines are inserted. " +
+                    "Leave empty to append at end of file."
             )
             .addText(text =>
                 text
@@ -432,10 +432,10 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Folder catatan detail")
+            .setName("Detail notes folder")
             .setDesc(
-                "Folder tempat catatan detail event/task dibuat (file ketiga yang memiliki frontmatter lengkap). " +
-                    "Dibuat otomatis jika belum ada."
+                "Folder where event/task detail notes are created (the third file, with full frontmatter). " +
+                    "Created automatically if it doesn't exist."
             )
             .addText(text =>
                 text
@@ -447,19 +447,19 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     })
             );
 
-        containerEl.createEl("h4", { text: "Template catatan detail" });
+        containerEl.createEl("h4", { text: "Detail note templates" });
 
         containerEl.createEl("p", {
             cls: "setting-item-description",
             text:
-                "Template untuk catatan detail event/task (file ketiga). " +
-                "Dibuat saat checkbox 'Buat catatan detail' dicentang di modal. " +
-                "Token: {{title}}, {{date}}, {{start}}, {{end}}, {{due}}, {{remind}}, {{description}}."
+                "Templates for event/task detail notes (the third file). " +
+                "Created when 'Create a detail note' is checked in the modal. " +
+                "Tokens: {{title}}, {{date}}, {{start}}, {{end}}, {{due}}, {{remind}}, {{description}}."
         });
 
         new Setting(containerEl)
-            .setName("Template catatan detail event")
-            .setDesc("Isi body catatan detail untuk event.")
+            .setName("Event detail note template")
+            .setDesc("Body template for event detail notes.")
             .addTextArea(area => {
                 area.setValue(this.plugin.settings.eventTask.eventNoteTemplate).onChange(async v => {
                     this.plugin.settings.eventTask.eventNoteTemplate = v;
@@ -470,8 +470,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             });
 
         new Setting(containerEl)
-            .setName("Template catatan detail task")
-            .setDesc("Isi body catatan detail untuk task.")
+            .setName("Task detail note template")
+            .setDesc("Body template for task detail notes.")
             .addTextArea(area => {
                 area.setValue(this.plugin.settings.eventTask.taskNoteTemplate).onChange(async v => {
                     this.plugin.settings.eventTask.taskNoteTemplate = v;
@@ -482,10 +482,10 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             });
 
         new Setting(containerEl)
-            .setName("Format field 'related'")
+            .setName("Format of 'related' field")
             .setDesc(
-                "Nilai field related pada frontmatter catatan detail — mengarah ke daily note target. " +
-                    "{{date}} = tanggal event/task, {{targetFile}} = path file tujuan. Kosongkan untuk menghilangkan field ini."
+                "Value of the related field in detail note frontmatter — points to the target daily note. " +
+                    "{{date}} = event/task date, {{targetFile}} = target file path. Leave empty to omit this field."
             )
             .addText(text =>
                 text
@@ -497,11 +497,11 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     })
             );
 
-        containerEl.createEl("h4", { text: "Fields frontmatter catatan detail" });
+        containerEl.createEl("h4", { text: "Detail note frontmatter fields" });
 
         new Setting(containerEl)
-            .setName("Sertakan field 'status'")
-            .setDesc("Tambah status: scheduled (event) / open (task) ke frontmatter catatan detail.")
+            .setName("Include 'status' field")
+            .setDesc("Adds status: scheduled (event) / open (task) to the detail note frontmatter.")
             .addToggle(toggle =>
                 toggle.setValue(this.plugin.settings.eventTask.includeStatus).onChange(async v => {
                     this.plugin.settings.eventTask.includeStatus = v;
@@ -510,8 +510,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Sertakan field 'priority' (task)")
-            .setDesc("Tambah priority: medium ke frontmatter catatan detail task.")
+            .setName("Include 'priority' field (task)")
+            .setDesc("Adds priority: medium to the task detail note frontmatter.")
             .addToggle(toggle =>
                 toggle.setValue(this.plugin.settings.eventTask.includePriority).onChange(async v => {
                     this.plugin.settings.eventTask.includePriority = v;
@@ -520,8 +520,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Sertakan field 'tags'")
-            .setDesc("Tambah tags: [event] atau [task] ke frontmatter catatan detail.")
+            .setName("Include 'tags' field")
+            .setDesc("Adds tags: [event] or [task] to the detail note frontmatter.")
             .addToggle(toggle =>
                 toggle.setValue(this.plugin.settings.eventTask.includeTags).onChange(async v => {
                     this.plugin.settings.eventTask.includeTags = v;
