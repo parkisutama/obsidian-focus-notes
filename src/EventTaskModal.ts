@@ -6,7 +6,7 @@ import {
     TFile,
     setIcon
 } from "obsidian";
-import { FocusNotesSettings, InsertPosition } from "./types";
+import { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
 import { EventRecord, HubNoteRef, EventTaskRecord, EventTaskWriter, TaskRecord } from "./EventTaskWriter";
 import { FileSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
@@ -555,6 +555,9 @@ export class EventTaskModal extends Modal {
             }
         }
 
+        const record = this.buildRecord(hubNoteRef);
+        const resolvedTargetFile = this.resolveTargetFile(record);
+
         // Create detail note (third file) if requested — needs hub path first
         let detailNoteRef: HubNoteRef | null = null;
         if (this.detailNoteEnabled) {
@@ -563,9 +566,9 @@ export class EventTaskModal extends Modal {
                 try {
                     const detailFile = await writer.createDetailNote(
                         detailName,
-                        this.buildRecord(hubNoteRef),
+                        record,
                         this.detailNoteFolder.trim() || settings.eventTask.detailNotesFolder,
-                        this.targetFile.trim(),
+                        resolvedTargetFile,
                         hubNoteFilePath
                     );
                     detailNoteRef = { title: this.title.trim(), path: detailFile.path };
@@ -577,12 +580,11 @@ export class EventTaskModal extends Modal {
             }
         }
 
-        const record = this.buildRecord(hubNoteRef);
         const heading = this.targetHeading.trim();
         const pos = this.targetPosition;
 
         try {
-            await writer.write(record, this.targetFile.trim(), heading, pos, detailNoteRef);
+            await writer.write(record, resolvedTargetFile, heading, pos, detailNoteRef);
 
             // Also write to hub note:
             // The main link in the hub's line points BACK to target (not hub itself),
@@ -590,7 +592,7 @@ export class EventTaskModal extends Modal {
             if (this.writeToHubNote && hubNoteFilePath) {
                 const targetRef: HubNoteRef = {
                     title: this.title.trim(),
-                    path: this.targetFile.trim()
+                    path: resolvedTargetFile
                 };
                 const hubRecord = { ...record, hubNoteRef: targetRef } as EventTaskRecord;
                 await writer.write(hubRecord, hubNoteFilePath, heading, pos, detailNoteRef);
@@ -647,6 +649,18 @@ export class EventTaskModal extends Modal {
             hubNoteRef
         };
         return record;
+    }
+
+    protected resolveTargetFile(record: EventTaskRecord): string {
+        const when = record.kind === "event"
+            ? record.start
+            : record.due ?? record.timebox?.start ?? this.anchorDate;
+        const target: FocusTarget = {
+            file: this.targetFile.trim(),
+            heading: this.targetHeading.trim(),
+            position: this.targetPosition
+        };
+        return new TargetResolver(this.app, this.getSettings()).resolve(target, when).file;
     }
 
     // =========================================================================

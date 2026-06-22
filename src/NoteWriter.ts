@@ -1,6 +1,6 @@
 import { App, TFile, moment, normalizePath } from "obsidian";
 import { FocusNotesSettings, FocusTarget, SessionRecord } from "./types";
-import { isTFile } from "./utils";
+import { ensureFolderPath, isTFile } from "./utils";
 import { getMood } from "./MoodReference";
 import {
     getEmotionCategoryLabel,
@@ -164,11 +164,7 @@ export class NoteWriter {
         const parts = path.split("/");
         if (parts.length > 1) {
             const dir = parts.slice(0, -1).join("/");
-            if (!this.app.vault.getAbstractFileByPath(dir)) {
-                await this.app.vault.createFolder(dir).catch(() => {
-                    /* race tolerant: folder may exist already. */
-                });
-            }
+            await ensureFolderPath(this.app, dir);
         }
         return this.app.vault.create(path, "");
     }

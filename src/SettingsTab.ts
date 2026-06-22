@@ -64,14 +64,16 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.useDailyNotesAsDefault)
                     .onChange(async v => {
                         this.plugin.settings.useDailyNotesAsDefault = v;
+                        this.plugin.settings.liveTarget.file = "";
                         await this.plugin.saveSettings();
+                        this.display();
                     })
             );
 
         new Setting(containerEl)
             .setName("Default file (template)")
             .setDesc(
-                "Used when Daily Notes integration is off, or as the manual fallback. " +
+                "Used when Daily Notes integration is off. " +
                     "Supports {{date}} and {{date:FORMAT}} tokens, e.g. Logs/{{date:YYYY/MM}}.md"
             )
             .addText(text => {
@@ -79,8 +81,10 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.defaultTarget.file)
                     .onChange(async v => {
                         this.plugin.settings.defaultTarget.file = v.trim();
+                        this.plugin.settings.liveTarget.file = "";
                         await this.plugin.saveSettings();
                     });
+                text.setDisabled(this.plugin.settings.useDailyNotesAsDefault);
                 new FileSuggest(this.app, text.inputEl);
             });
 
@@ -96,6 +100,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.defaultTarget.heading)
                     .onChange(async v => {
                         this.plugin.settings.defaultTarget.heading = v.trim();
+                        this.plugin.settings.liveTarget.heading = "";
                         await this.plugin.saveSettings();
                     })
             );
@@ -109,6 +114,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.defaultTarget.position)
                     .onChange(async v => {
                         this.plugin.settings.defaultTarget.position = v as InsertPosition;
+                        this.plugin.settings.liveTarget.position = v as InsertPosition;
                         await this.plugin.saveSettings();
                     })
             );

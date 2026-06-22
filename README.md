@@ -141,8 +141,8 @@ The reflection modal is *cancel-safe*: closing without "Save reflection" preserv
 Settings hold the *defaults* — the sidebar's per-session override always wins for that session.
 
 - **Pomodoro / Timer minutes** — default durations.
-- **Use Daily Notes plugin settings** — when on, the default file auto-derives from the core Daily Notes plugin's folder + format. Off → use the manual template below.
-- **Default file / heading / insert position** — fallback target. New installs use `Journal/{{date:YYYY-MM-DD}}.md` under `## Focus timeline` so completed timer sessions are also valid timeline events.
+- **Use Daily Notes plugin settings** — when on, the default file auto-derives from the core Daily Notes plugin's folder + format, and the manual file template is inactive. Off → use the manual template below.
+- **Default file / heading / insert position** — fallback target when Daily Notes integration is off. New installs use `Journal/{{date:YYYY-MM-DD}}.md` under `## Focus timeline` so completed timer sessions are also valid timeline events.
 - **Daily-note date format** — Moment.js format for the bare `{{date}}` token.
 - **Group entries under date sub-headings** — global default for the sidebar's group toggle.
 - **Date sub-heading level / template** — `## / ### / ####` and the text template (default `[[{{date}}]]`).

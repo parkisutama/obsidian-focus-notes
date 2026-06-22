@@ -58,6 +58,7 @@ export class TimerView extends ItemView {
     private primaryBtn!: HTMLButtonElement;
     private stopBtn!: HTMLButtonElement;
     private targetFileInput!: HTMLInputElement;
+    private targetResolvedPreviewEl!: HTMLElement;
     private targetHeadingInput!: HTMLInputElement;
     private targetPositionSelect!: HTMLSelectElement;
     private targetGroupToggle!: HTMLInputElement;
@@ -249,7 +250,8 @@ export class TimerView extends ItemView {
         // File row
         const fileRow = body.createDiv({ cls: "focus-notes-target-row" });
         fileRow.createEl("label", { text: "File", cls: "focus-notes-target-label" });
-        this.targetFileInput = fileRow.createEl("input", {
+        const fileCell = fileRow.createDiv({ cls: "focus-notes-target-cell" });
+        this.targetFileInput = fileCell.createEl("input", {
             type: "text",
             cls: "focus-notes-target-input",
             attr: { placeholder: "Path or template, e.g. Daily/{{date:YYYY-MM-DD}}.md" }
@@ -257,7 +259,11 @@ export class TimerView extends ItemView {
         new FileSuggest(this.app, this.targetFileInput);
         this.targetFileInput.addEventListener("input", () => {
             this.getSettings().liveTarget.file = this.targetFileInput.value.trim();
+            this.updateTargetResolvedPreview();
             persistTargetEdit();
+        });
+        this.targetResolvedPreviewEl = fileCell.createDiv({
+            cls: "focus-notes-target-resolved"
         });
 
         // Heading row — uses the file-aware HeadingSuggest so it autocompletes
@@ -331,8 +337,8 @@ export class TimerView extends ItemView {
         });
         this.targetGroupToggle = groupToggle;
 
-        // Reset to default link — copies defaults *into* liveTarget so the
-        // user has a seeded starting point they can keep editing.
+        // Reset to default clears live overrides so later Settings changes
+        // keep flowing into this sidebar target.
         const resetLink = body.createEl("a", {
             text: "Reset to default",
             cls: "focus-notes-target-reset",
@@ -340,11 +346,10 @@ export class TimerView extends ItemView {
         });
         resetLink.addEventListener("click", evt => {
             evt.preventDefault();
-            const def = this.buildResolver().getDefaultTarget();
             this.getSettings().liveTarget = {
-                file: def.file,
-                heading: def.heading,
-                position: def.position
+                file: "",
+                heading: "",
+                position: this.getSettings().defaultTarget.position
             };
             void this.saveSettings();
             this.syncTargetInputs();
@@ -433,6 +438,13 @@ export class TimerView extends ItemView {
         this.targetGroupToggle.checked = s.groupByDate;
         this.targetGroupLevelSelect.value = String(s.dateSubHeadingLevel);
         this.targetGroupLevelSelect.disabled = !s.groupByDate;
+        this.updateTargetResolvedPreview();
+    }
+
+    private updateTargetResolvedPreview(): void {
+        if (!this.targetResolvedPreviewEl) return;
+        const resolved = this.buildResolver().resolve(this.activeTarget());
+        this.targetResolvedPreviewEl.setText(resolved.file ? `Today: ${resolved.file}` : "");
     }
 
     // ---------------------------------------------------------------------

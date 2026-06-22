@@ -1,6 +1,6 @@
 import { App, TFile, normalizePath } from "obsidian";
 import { EventTaskSettings, InsertPosition } from "./types";
-import { isTFile } from "./utils";
+import { ensureFolderPath, isTFile } from "./utils";
 
 /** Reference to a hub note, used to build a markdown link. */
 export interface HubNoteRef {
@@ -110,7 +110,7 @@ export class EventTaskWriter {
         if (normalFolder) {
             const existing = this.app.vault.getAbstractFileByPath(normalFolder);
             if (!existing) {
-                await this.app.vault.createFolder(normalFolder).catch(() => {});
+                await ensureFolderPath(this.app, normalFolder);
             } else if (isTFile(existing)) {
                 // The path resolves to a file, not a folder — fall back to vault root
                 return normalizePath(`${safeName}.md`);
@@ -302,9 +302,7 @@ export class EventTaskWriter {
         const parts = path.split("/");
         if (parts.length > 1) {
             const dir = parts.slice(0, -1).join("/");
-            if (!this.app.vault.getAbstractFileByPath(dir)) {
-                await this.app.vault.createFolder(dir).catch(() => {});
-            }
+            await ensureFolderPath(this.app, dir);
         }
         return this.app.vault.create(path, "");
     }

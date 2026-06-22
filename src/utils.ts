@@ -1,4 +1,4 @@
-import type { TFile } from "obsidian";
+import type { App, TFile } from "obsidian";
 
 /**
  * Property-based TFile detector.
@@ -17,6 +17,24 @@ import type { TFile } from "obsidian";
 export function isTFile(f: unknown): f is TFile {
     if (!f || typeof f !== "object") return false;
     return "extension" in f && "stat" in f;
+}
+
+export async function ensureFolderPath(app: App, folderPath: string): Promise<void> {
+    const parts = folderPath.split("/").filter(Boolean);
+    let current = "";
+
+    for (const part of parts) {
+        current = current ? `${current}/${part}` : part;
+        const existing = app.vault.getAbstractFileByPath(current);
+        if (isTFile(existing)) {
+            throw new Error(`Target folder path contains a file: ${current}`);
+        }
+        if (!existing) {
+            await app.vault.createFolder(current).catch(() => {
+                /* race tolerant: folder may exist already. */
+            });
+        }
+    }
 }
 
 export function startOfDay(date: Date): Date {
