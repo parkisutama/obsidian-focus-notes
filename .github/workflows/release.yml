@@ -46,6 +46,9 @@ jobs:
             exit 1
           fi
 
+      - name: Check and build plugin
+        run: pnpm run check:ci
+
       - name: Package plugin zip
         run: pnpm run package:plugin
 
