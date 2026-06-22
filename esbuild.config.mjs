@@ -55,17 +55,24 @@ const copyToVaultPlugin = {
                 console.log(`Created vault plugin directory: ${resolvedVaultPath}`);
             }
 
+            let copiedCount = 0;
+
             for (const file of filesToCopy) {
                 if (!fs.existsSync(file)) {
                     console.log(`Build artifact not found, skipping: ${file}`);
                     continue;
                 }
 
-                fs.copyFileSync(file, path.join(resolvedVaultPath, file));
-                console.log(`Copied ${file} to vault.`);
+                try {
+                    fs.copyFileSync(file, path.join(resolvedVaultPath, file));
+                    copiedCount += 1;
+                    console.log(`Copied ${file} to vault.`);
+                } catch (error) {
+                    console.warn(`Unable to copy ${file} to vault: ${error.message}`);
+                }
             }
 
-            console.log("Build artifacts copied to Obsidian vault.");
+            console.log(`Copied ${copiedCount}/${filesToCopy.length} build artifacts to Obsidian vault.`);
         });
     }
 };

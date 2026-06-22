@@ -46,6 +46,9 @@ jobs:
             exit 1
           fi
 
+      - name: Package plugin zip
+        run: pnpm run package:plugin
+
       - name: Create or update GitHub release
         uses: softprops/action-gh-release@v2
         with:
@@ -53,5 +56,6 @@ jobs:
             manifest.json
             main.js
             styles.css
+            focus-notes.zip
           fail_on_unmatched_files: true
           make_latest: true

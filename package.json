@@ -6,7 +6,14 @@
     "main": "main.js",
     "scripts": {
         "dev": "node esbuild.config.mjs",
-        "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+        "lint": "node scripts/verify-version-metadata.mjs",
+        "typecheck": "tsc --noEmit --skipLibCheck",
+        "test": "node --test",
+        "build": "pnpm run typecheck && node esbuild.config.mjs production",
+        "verify:artifacts": "node scripts/verify-build-artifacts.mjs",
+        "package:plugin": "node scripts/package-plugin.mjs",
+        "check": "pnpm run lint && pnpm run typecheck && pnpm run test",
+        "check:ci": "pnpm run check && pnpm run build && pnpm run verify:artifacts"
     },
     "keywords": ["obsidian", "focus", "pomodoro", "timer", "stopwatch", "logger"],
     "author": "Parkis",
