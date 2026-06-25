@@ -8,7 +8,7 @@ import {
 } from "obsidian";
 import { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
 import { EventRecord, HubNoteRef, EventTaskRecord, EventTaskWriter, TaskRecord } from "./EventTaskWriter";
-import { FileSuggest } from "./Suggesters";
+import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { isTFile } from "./utils";
 
@@ -449,6 +449,7 @@ export class EventTaskModal extends Modal {
         folderEl.addEventListener("input", () => {
             this.detailNoteFolder = folderEl.value;
         });
+        new FolderSuggest(this.app, folderEl);
     }
 
     // ---- Save to ------------------------------------------------------------

@@ -1,4 +1,4 @@
-import { App, TFile, AbstractInputSuggest } from "obsidian";
+import { App, TFile, TFolder, AbstractInputSuggest } from "obsidian";
 import { isTFile } from "./utils";
 
 /**
@@ -26,6 +26,32 @@ export class FileSuggest extends AbstractInputSuggest<TFile> {
 
     selectSuggestion(file: TFile): void {
         this.inputEl.value = file.path;
+        this.inputEl.trigger("input");
+        this.close();
+    }
+}
+
+/** Vault folder path suggester. */
+export class FolderSuggest extends AbstractInputSuggest<TFolder> {
+    constructor(app: App, private inputEl: HTMLInputElement) {
+        super(app, inputEl);
+    }
+
+    getSuggestions(query: string): TFolder[] {
+        const lower = query.toLowerCase();
+        return this.app.vault
+            .getAllLoadedFiles()
+            .filter((file): file is TFolder => file instanceof TFolder)
+            .filter(folder => folder.path !== "/" && folder.path.toLowerCase().includes(lower))
+            .slice(0, 20);
+    }
+
+    renderSuggestion(folder: TFolder, el: HTMLElement): void {
+        el.setText(folder.path);
+    }
+
+    selectSuggestion(folder: TFolder): void {
+        this.inputEl.value = folder.path;
         this.inputEl.trigger("input");
         this.close();
     }

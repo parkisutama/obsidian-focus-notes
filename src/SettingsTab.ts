@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type FocusNotesPlugin from "./main";
 import { InsertPosition, TimelineMode } from "./types";
-import { FileSuggest } from "./Suggesters";
+import { FileSuggest, FolderSuggest } from "./Suggesters";
 
 export class FocusNotesSettingsTab extends PluginSettingTab {
     constructor(app: App, private plugin: FocusNotesPlugin) {
@@ -411,15 +411,16 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 "Folder where new hub notes are created when choosing 'New note'. " +
                     "Created automatically if it doesn't exist."
             )
-            .addText(text =>
+            .addText(text => {
                 text
                     .setPlaceholder("Notes")
                     .setValue(this.plugin.settings.eventTask.hubNotesFolder)
                     .onChange(async v => {
                         this.plugin.settings.eventTask.hubNotesFolder = v.trim() || "Notes";
                         await this.plugin.saveSettings();
-                    })
-            );
+                    });
+                new FolderSuggest(this.app, text.inputEl);
+            });
 
         new Setting(containerEl)
             .setName("Default target heading")
@@ -443,15 +444,16 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 "Folder where event/task detail notes are created (the third file, with full frontmatter). " +
                     "Created automatically if it doesn't exist."
             )
-            .addText(text =>
+            .addText(text => {
                 text
                     .setPlaceholder("Notes")
                     .setValue(this.plugin.settings.eventTask.detailNotesFolder)
                     .onChange(async v => {
                         this.plugin.settings.eventTask.detailNotesFolder = v.trim() || "Notes";
                         await this.plugin.saveSettings();
-                    })
-            );
+                    });
+                new FolderSuggest(this.app, text.inputEl);
+            });
 
         containerEl.createEl("h4", { text: "Detail note templates" });
 
