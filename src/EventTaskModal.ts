@@ -3,6 +3,7 @@ import {
     FuzzySuggestModal,
     Modal,
     Notice,
+    Platform,
     TFile,
     setIcon
 } from "obsidian";
@@ -11,6 +12,7 @@ import { EventRecord, HubNoteRef, EventTaskRecord, EventTaskWriter, TaskRecord }
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { isTFile } from "./utils";
+import { shouldUseMobileForm } from "./MobileFormPolicy";
 
 type ItemKind = "event" | "task";
 type HubMode = "none" | "link" | "create";
@@ -27,16 +29,12 @@ export function openEventTaskForm(
     anchorDate: Date = new Date(),
     onComplete: () => void = () => {}
 ): void {
-    if (isMobileFormViewport()) {
+    if (shouldUseMobileForm(Platform.isMobile, window.innerWidth)) {
         new EventTaskMobileSheet(app, getSettings, saveSettings, anchorDate, onComplete).open();
         return;
     }
 
     new EventTaskModal(app, getSettings, saveSettings, anchorDate, onComplete).open();
-}
-
-function isMobileFormViewport(): boolean {
-    return document.body.hasClass("is-mobile") || window.innerWidth <= 640;
 }
 
 export class EventTaskModal extends Modal {
@@ -174,7 +172,7 @@ export class EventTaskModal extends Modal {
         const titleInput = container.createEl("input", {
             type: "text",
             cls: "fn-gcal-title-input",
-            attr: { placeholder: "Add title" }
+            attr: { placeholder: "Add title", "aria-label": "Title" }
         });
         titleInput.addEventListener("input", () => {
             this.setTitleValue(titleInput.value);
@@ -235,14 +233,14 @@ export class EventTaskModal extends Modal {
         const wrap = content.createDiv({ cls: "fn-gcal-datetime-wrap" });
 
         const mainRow = wrap.createDiv({ cls: "fn-gcal-datetime-row" });
-        const dateEl = this.makeDateInput(mainRow, this.eventDate);
+        const dateEl = this.makeDateInput(mainRow, this.eventDate, "Event date");
         dateEl.addEventListener("change", () => (this.eventDate = dateEl.value));
 
         this.eventTimeRowEl = mainRow.createDiv({ cls: "fn-gcal-time-range" });
-        const startEl = this.makeTimeInput(this.eventTimeRowEl, this.eventStartTime);
+        const startEl = this.makeTimeInput(this.eventTimeRowEl, this.eventStartTime, "Start time");
         startEl.addEventListener("change", () => (this.eventStartTime = startEl.value));
         this.eventTimeRowEl.createSpan({ cls: "fn-gcal-time-sep", text: "—" });
-        const endEl = this.makeTimeInput(this.eventTimeRowEl, this.eventEndTime);
+        const endEl = this.makeTimeInput(this.eventTimeRowEl, this.eventEndTime, "End time");
         endEl.addEventListener("change", () => (this.eventEndTime = endEl.value));
 
         this.makeCheckboxRow(wrap, "All day", "fn-gcal-allday", checked => {
@@ -254,16 +252,21 @@ export class EventTaskModal extends Modal {
     // ---- Task section -------------------------------------------------------
 
     protected renderTaskSection(container: HTMLElement): void {
-        // TENGGAT
+        this.renderTaskDueSection(container);
+        this.renderTaskTimeboxSection(container);
+        this.renderTaskRemindersSection(container);
+    }
+
+    protected renderTaskDueSection(container: HTMLElement): void {
         const dueContent = this.makeRow(container, "calendar");
         const dueWrap = dueContent.createDiv();
         dueWrap.createDiv({ cls: "fn-gcal-field-label", text: "Due date (optional)" });
 
         const dueDateRow = dueWrap.createDiv({ cls: "fn-gcal-datetime-row" });
-        const dueDateEl = this.makeDateInput(dueDateRow, this.taskDueDate);
+        const dueDateEl = this.makeDateInput(dueDateRow, this.taskDueDate, "Due date");
         dueDateEl.addEventListener("change", () => (this.taskDueDate = dueDateEl.value));
 
-        this.taskDueTimeEl = this.makeTimeInput(dueDateRow, this.taskDueTime);
+        this.taskDueTimeEl = this.makeTimeInput(dueDateRow, this.taskDueTime, "Due time");
         this.taskDueTimeEl.addClass("fn-gcal-hidden");
         this.taskDueTimeEl.addEventListener("change", () => (this.taskDueTime = this.taskDueTimeEl.value));
 
@@ -271,8 +274,9 @@ export class EventTaskModal extends Modal {
             this.taskDueHasTime = checked;
             this.taskDueTimeEl.toggleClass("fn-gcal-hidden", !checked);
         });
+    }
 
-        // TIMEBOX (start – end)
+    protected renderTaskTimeboxSection(container: HTMLElement): void {
         const timeboxContent = this.makeRow(container, "timer");
         const timeboxWrap = timeboxContent.createDiv();
         this.makeCheckboxRow(timeboxWrap, "Timebox (start – end)", "fn-gcal-timebox", checked => {
@@ -280,15 +284,16 @@ export class EventTaskModal extends Modal {
             this.taskTimeboxRowEl.toggleClass("fn-gcal-hidden", !checked);
         });
         this.taskTimeboxRowEl = timeboxWrap.createDiv({ cls: "fn-gcal-datetime-row fn-gcal-hidden" });
-        this.taskTimeboxDateEl = this.makeDateInput(this.taskTimeboxRowEl, this.taskTimeboxDate);
+        this.taskTimeboxDateEl = this.makeDateInput(this.taskTimeboxRowEl, this.taskTimeboxDate, "Timebox date");
         this.taskTimeboxDateEl.addEventListener("change", () => (this.taskTimeboxDate = this.taskTimeboxDateEl.value));
-        this.taskTimeboxStartEl = this.makeTimeInput(this.taskTimeboxRowEl, this.taskTimeboxStartTime);
+        this.taskTimeboxStartEl = this.makeTimeInput(this.taskTimeboxRowEl, this.taskTimeboxStartTime, "Timebox start time");
         this.taskTimeboxStartEl.addEventListener("change", () => (this.taskTimeboxStartTime = this.taskTimeboxStartEl.value));
         this.taskTimeboxRowEl.createSpan({ cls: "fn-gcal-time-sep", text: "—" });
-        this.taskTimeboxEndEl = this.makeTimeInput(this.taskTimeboxRowEl, this.taskTimeboxEndTime);
+        this.taskTimeboxEndEl = this.makeTimeInput(this.taskTimeboxRowEl, this.taskTimeboxEndTime, "Timebox end time");
         this.taskTimeboxEndEl.addEventListener("change", () => (this.taskTimeboxEndTime = this.taskTimeboxEndEl.value));
+    }
 
-        // PENGINGAT (dynamic list)
+    protected renderTaskRemindersSection(container: HTMLElement): void {
         const remindContent = this.makeRow(container, "bell");
         const remindWrap = remindContent.createDiv();
         remindWrap.createDiv({ cls: "fn-gcal-field-label", text: "Reminders" });
@@ -311,12 +316,15 @@ export class EventTaskModal extends Modal {
         this.reminders.push({ date, time });
 
         const row = this.remindersListEl.createDiv({ cls: "fn-gcal-reminder-row" });
-        const dateEl = this.makeDateInput(row, date);
+        const dateEl = this.makeDateInput(row, date, "Reminder date");
         dateEl.addEventListener("change", () => (this.reminders[idx].date = dateEl.value));
-        const timeEl = this.makeTimeInput(row, time);
+        const timeEl = this.makeTimeInput(row, time, "Reminder time");
         timeEl.addEventListener("change", () => (this.reminders[idx].time = timeEl.value));
 
-        const delBtn = row.createEl("button", { cls: "fn-gcal-remind-del-btn", attr: { type: "button" } });
+        const delBtn = row.createEl("button", {
+            cls: "fn-gcal-remind-del-btn",
+            attr: { type: "button", "aria-label": "Remove reminder" }
+        });
         setIcon(delBtn, "x");
         delBtn.addEventListener("click", evt => {
             evt.preventDefault();
@@ -332,7 +340,7 @@ export class EventTaskModal extends Modal {
         const content = this.makeRow(container, "align-left");
         const textarea = content.createEl("textarea", {
             cls: "fn-gcal-desc-input",
-            attr: { placeholder: "Add description or attachment..." }
+            attr: { placeholder: "Add description or attachment...", "aria-label": "Description" }
         });
         textarea.rows = 3;
         textarea.addEventListener("input", () => (this.description = textarea.value));
@@ -350,7 +358,7 @@ export class EventTaskModal extends Modal {
         this.hubInputEl = hubInputRow.createEl("input", {
             type: "text",
             cls: "fn-gcal-hub-input",
-            attr: { placeholder: "Search notes..." }
+            attr: { placeholder: "Search notes...", "aria-label": "Related note" }
         });
         this.hubInputEl.addEventListener("input", () => {
             if (this.hubMode === "link") this.hubLinkPath = this.hubInputEl.value;
@@ -420,6 +428,10 @@ export class EventTaskModal extends Modal {
                 pickBtn.toggleClass("fn-gcal-hidden", value === "create");
                 this.hubAlsoRowEl.toggleClass("fn-gcal-hidden", !showInput);
                 this.hubInputEl.placeholder = value === "link" ? "Search notes..." : "New note name";
+                this.hubInputEl.setAttribute(
+                    "aria-label",
+                    value === "link" ? "Related note" : "New related note name"
+                );
                 if (value === "create") {
                     this.hubInputEl.value = this.title;
                     this.hubCreateName = this.title;
@@ -454,7 +466,7 @@ export class EventTaskModal extends Modal {
         this.detailNoteInputEl = this.detailNoteRowEl.createEl("input", {
             type: "text",
             cls: "fn-gcal-saveto-heading",
-            attr: { placeholder: "Detail note name..." }
+            attr: { placeholder: "Detail note name...", "aria-label": "Detail note name" }
         });
         this.detailNoteInputEl.addEventListener("input", () => {
             this.detailNoteName = this.detailNoteInputEl.value;
@@ -463,7 +475,10 @@ export class EventTaskModal extends Modal {
         const folderEl = this.detailNoteRowEl.createEl("input", {
             type: "text",
             cls: "fn-gcal-saveto-file",
-            attr: { placeholder: "Folder (e.g. Notes/Events)" }
+            attr: {
+                placeholder: "Folder (e.g. Notes/Events)",
+                "aria-label": "Detail note folder"
+            }
         });
         folderEl.value = this.detailNoteFolder;
         folderEl.addEventListener("input", () => {
@@ -483,7 +498,7 @@ export class EventTaskModal extends Modal {
         const fileEl = fields.createEl("input", {
             type: "text",
             cls: "fn-gcal-saveto-file",
-            attr: { placeholder: "Journal/2026-05-27.md" }
+            attr: { placeholder: "Journal/2026-05-27.md", "aria-label": "Save to file" }
         });
         fileEl.value = this.targetFile;
         fileEl.addEventListener("input", () => (this.targetFile = fileEl.value));
@@ -492,7 +507,7 @@ export class EventTaskModal extends Modal {
         const headingEl = fields.createEl("input", {
             type: "text",
             cls: "fn-gcal-saveto-heading",
-            attr: { placeholder: "Heading (optional)" }
+            attr: { placeholder: "Heading (optional)", "aria-label": "Save under heading" }
         });
         headingEl.value = this.targetHeading;
         headingEl.addEventListener("input", () => (this.targetHeading = headingEl.value));
@@ -500,6 +515,10 @@ export class EventTaskModal extends Modal {
         this.makeCheckboxRow(wrap, "Insert at top (not bottom)", "fn-gcal-pos-start", checked => {
             this.targetPosition = checked ? "start" : "end";
         }, this.targetPosition === "start");
+    }
+
+    protected getTargetFileSummary(): string {
+        return this.targetFile || "No destination selected";
     }
 
     // ---- Buttons ------------------------------------------------------------
@@ -694,17 +713,21 @@ export class EventTaskModal extends Modal {
         initial: T,
         onChange: (value: T) => void
     ): void {
-        const group = container.createDiv({ cls: "fn-chip-group" });
+        const group = container.createDiv({ cls: "fn-chip-group", attr: { role: "group" } });
         options.forEach(({ value, label }) => {
             const btn = group.createEl("button", {
                 cls: "fn-chip-option" + (value === initial ? " fn-chip-option--active" : ""),
-                attr: { type: "button" }
+                attr: { type: "button", "aria-pressed": String(value === initial) }
             });
             btn.textContent = label;
             btn.addEventListener("click", () => {
                 group.querySelectorAll<HTMLElement>(".fn-chip-option")
-                    .forEach(el => el.removeClass("fn-chip-option--active"));
+                    .forEach(el => {
+                        el.removeClass("fn-chip-option--active");
+                        el.setAttribute("aria-pressed", "false");
+                    });
                 btn.addClass("fn-chip-option--active");
+                btn.setAttribute("aria-pressed", "true");
                 onChange(value);
             });
         });
@@ -717,14 +740,22 @@ export class EventTaskModal extends Modal {
         return row.createDiv({ cls: "fn-gcal-row-content" });
     }
 
-    protected makeDateInput(container: HTMLElement, value: string): HTMLInputElement {
-        const el = container.createEl("input", { type: "date", cls: "fn-gcal-date-input" });
+    protected makeDateInput(container: HTMLElement, value: string, label = "Date"): HTMLInputElement {
+        const el = container.createEl("input", {
+            type: "date",
+            cls: "fn-gcal-date-input",
+            attr: { "aria-label": label }
+        });
         el.value = value;
         return el;
     }
 
-    protected makeTimeInput(container: HTMLElement, value: string): HTMLInputElement {
-        const el = container.createEl("input", { type: "time", cls: "fn-gcal-time-input" });
+    protected makeTimeInput(container: HTMLElement, value: string, label = "Time"): HTMLInputElement {
+        const el = container.createEl("input", {
+            type: "time",
+            cls: "fn-gcal-time-input",
+            attr: { "aria-label": label }
+        });
         el.value = value;
         return el;
     }
@@ -834,9 +865,11 @@ export class EventTaskMobileSheet extends EventTaskModal {
     private sheetEl: HTMLElement | null = null;
     private sheetContentEl: HTMLElement | null = null;
     private cleanupSheetEvents: (() => void) | null = null;
+    private contextLabelEl: HTMLElement | null = null;
+    private taskOptionsEl: HTMLElement | null = null;
 
     open(): void {
-        if (this.sheetEl) return;
+        if (this.sheetEl || document.querySelector(".fn-mobile-sheet")) return;
 
         const sheet = document.body.createDiv({ cls: "fn-mobile-sheet" });
         const content = sheet.createDiv({ cls: "fn-mobile-sheet-content" });
@@ -892,6 +925,8 @@ export class EventTaskMobileSheet extends EventTaskModal {
         this.sheetEl?.remove();
         this.sheetEl = null;
         this.sheetContentEl = null;
+        this.contextLabelEl = null;
+        this.taskOptionsEl = null;
         document.body.removeClass("fn-mobile-sheet-open");
         if (!this.resolved) this.resolved = true;
     }
@@ -913,6 +948,12 @@ export class EventTaskMobileSheet extends EventTaskModal {
             this.close();
         });
 
+        this.contextLabelEl = topbar.createDiv({
+            cls: "fn-mobile-task-context",
+            text: "New event",
+            attr: { "aria-live": "polite" }
+        });
+
         const saveButton = topbar.createEl("button", {
             cls: "fn-mobile-task-save mod-cta",
             text: "Save",
@@ -927,13 +968,42 @@ export class EventTaskMobileSheet extends EventTaskModal {
         this.eventSectionEl = body.createDiv({ cls: "fn-gcal-tab-section fn-mobile-primary-section" });
         this.taskSectionEl = body.createDiv({ cls: "fn-gcal-tab-section fn-mobile-primary-section fn-gcal-hidden" });
         this.renderEventSection(this.eventSectionEl);
-        this.renderTaskSection(this.taskSectionEl);
+        this.renderTaskDueSection(this.taskSectionEl);
         this.renderDescription(body);
 
         const advanced = body.createDiv({ cls: "fn-mobile-advanced-list" });
-        this.renderMobileDisclosure(advanced, "Related note", "link", container => this.renderHubNote(container));
-        this.renderMobileDisclosure(advanced, "Detail note", "file-text", container => this.renderDetailNote(container));
-        this.renderMobileDisclosure(advanced, "Save to", "folder", container => this.renderSaveTo(container), true);
+        this.renderMobileDisclosure(
+            advanced,
+            "More options",
+            "sliders-horizontal",
+            options => {
+                this.taskOptionsEl = options.createDiv({ cls: "fn-mobile-task-options fn-gcal-hidden" });
+                this.renderMobileDisclosure(
+                    this.taskOptionsEl,
+                    "Timebox",
+                    "timer",
+                    container => this.renderTaskTimeboxSection(container)
+                );
+                this.renderMobileDisclosure(
+                    this.taskOptionsEl,
+                    "Reminders",
+                    "bell",
+                    container => this.renderTaskRemindersSection(container)
+                );
+                this.renderMobileDisclosure(options, "Related note", "link", container => this.renderHubNote(container));
+                this.renderMobileDisclosure(options, "Detail note", "file-text", container => this.renderDetailNote(container));
+                this.renderMobileDisclosure(
+                    options,
+                    "Save to",
+                    "folder",
+                    container => this.renderSaveTo(container),
+                    false,
+                    () => this.getTargetFileSummary()
+                );
+            },
+            false,
+            () => "Notes, details, and destination"
+        );
 
         this.setupMobileViewportSupport(contentEl, viewportVariableTarget);
     }
@@ -942,7 +1012,7 @@ export class EventTaskMobileSheet extends EventTaskModal {
         const titleInput = container.createEl("input", {
             type: "text",
             cls: "fn-gcal-title-input fn-mobile-title-input",
-            attr: { placeholder: "Add title" }
+            attr: { placeholder: "Add title", "aria-label": "Title" }
         });
         titleInput.addEventListener("input", () => {
             this.setTitleValue(titleInput.value);
@@ -955,6 +1025,39 @@ export class EventTaskMobileSheet extends EventTaskModal {
         });
     }
 
+    protected renderTabs(container: HTMLElement): void {
+        const tabs = container.createDiv({
+            cls: "fn-gcal-tabs",
+            attr: { role: "group", "aria-label": "Item type" }
+        });
+        const eventBtn = tabs.createEl("button", {
+            cls: "fn-gcal-tab fn-gcal-tab--active",
+            text: "Event",
+            attr: { type: "button", "aria-pressed": "true" }
+        });
+        const taskBtn = tabs.createEl("button", {
+            cls: "fn-gcal-tab",
+            text: "Task",
+            attr: { type: "button", "aria-pressed": "false" }
+        });
+
+        const activate = (kind: ItemKind): void => {
+            this.kind = kind;
+            const isEvent = kind === "event";
+            eventBtn.toggleClass("fn-gcal-tab--active", isEvent);
+            taskBtn.toggleClass("fn-gcal-tab--active", !isEvent);
+            eventBtn.setAttribute("aria-pressed", String(isEvent));
+            taskBtn.setAttribute("aria-pressed", String(!isEvent));
+            this.eventSectionEl.toggleClass("fn-gcal-hidden", !isEvent);
+            this.taskSectionEl.toggleClass("fn-gcal-hidden", isEvent);
+            this.taskOptionsEl?.toggleClass("fn-gcal-hidden", isEvent);
+            this.contextLabelEl?.setText(isEvent ? "New event" : "New task");
+        };
+
+        eventBtn.addEventListener("click", () => activate("event"));
+        taskBtn.addEventListener("click", () => activate("task"));
+    }
+
     protected makeCheckboxRow(
         container: HTMLElement,
         label: string,
@@ -965,7 +1068,7 @@ export class EventTaskMobileSheet extends EventTaskModal {
         let checked = initial;
         const row = container.createEl("button", {
             cls: "fn-mobile-toggle-row" + (initial ? " fn-mobile-toggle-row--on" : ""),
-            attr: { type: "button" }
+            attr: { type: "button", "aria-pressed": String(initial) }
         });
         row.createSpan({ cls: "fn-mobile-toggle-label", text: label });
         const indicator = row.createSpan({ cls: "fn-mobile-toggle-indicator" });
@@ -974,8 +1077,10 @@ export class EventTaskMobileSheet extends EventTaskModal {
         row.addEventListener("click", () => {
             checked = !checked;
             row.toggleClass("fn-mobile-toggle-row--on", checked);
+            row.setAttribute("aria-pressed", String(checked));
             indicator.empty();
             setIcon(indicator, checked ? "check-circle-2" : "circle");
+            dummy.checked = checked;
             onChange(checked);
         });
 
@@ -994,19 +1099,27 @@ export class EventTaskMobileSheet extends EventTaskModal {
         label: string,
         icon: string,
         renderContent: (container: HTMLElement) => void,
-        open = false
+        open = false,
+        getSummary?: () => string
     ): void {
         const details = container.createEl("details", { cls: "fn-mobile-disclosure" });
         details.open = open;
         const summary = details.createEl("summary", { cls: "fn-mobile-disclosure-summary" });
         const iconEl = summary.createSpan({ cls: "fn-mobile-disclosure-icon" });
         setIcon(iconEl, icon);
-        summary.createSpan({ cls: "fn-mobile-disclosure-label", text: label });
+        const labelWrap = summary.createSpan({ cls: "fn-mobile-disclosure-label-wrap" });
+        labelWrap.createSpan({ cls: "fn-mobile-disclosure-label", text: label });
+        const summaryText = getSummary
+            ? labelWrap.createSpan({ cls: "fn-mobile-disclosure-value", text: getSummary() })
+            : null;
         const chevron = summary.createSpan({ cls: "fn-mobile-disclosure-chevron" });
         setIcon(chevron, "chevron-down");
 
         const content = details.createDiv({ cls: "fn-mobile-disclosure-content" });
         renderContent(content);
+        if (summaryText && getSummary) {
+            details.addEventListener("toggle", () => summaryText.setText(getSummary()));
+        }
     }
 }
 
