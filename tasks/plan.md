@@ -52,6 +52,7 @@ Automated gates and real Obsidian acceptance
 - [x] Move the sheet below Android system chrome with workspace measurement and a tested fallback.
 - [x] Remove the duplicate centered header title that collided with system UI.
 - [x] Replace large cards and full-width type tabs with compact Google Calendar-inspired rows and chips.
+- [x] Reduce chip visual height and remove cumulative disclosure indentation after the second device review.
 - [ ] Repeat real-device acceptance with keyboard closed and open.
 
 ### Phase 2: Foundation verification

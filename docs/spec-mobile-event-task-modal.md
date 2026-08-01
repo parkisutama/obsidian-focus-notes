@@ -51,6 +51,7 @@ Less-frequent fields remain available through compact disclosure rows and do not
 
 - Title input, visually prominent but no larger than needed.
 - Event/Task chip control with proper selected state.
+- Chips use a compact 36px visual height with restrained padding; they must not read as full-width tabs or thick cards.
 - Event: date, start, end, and All day in compact icon-led rows without large cards.
 - Task: due date with optional time; Timebox and Reminders remain opt-in.
 - Description is a compact auto-growing textarea with a bounded maximum height.
@@ -62,6 +63,7 @@ Less-frequent fields remain available through compact disclosure rows and do not
   - Detail note.
   - Save to.
 - Each subsection exposes its current summary when collapsed, such as the resolved target filename for `Save to`.
+- Nested option summaries keep their icons on the same leading column as the parent summary instead of accumulating indentation.
 - Opening one subsection must not hide or discard values entered in another subsection.
 
 ### Keyboard behavior

@@ -36,7 +36,7 @@ body.fn-mobile-event-screen-open {
     flex: 0 0 auto;
     width: 44px;
     height: 5px;
-    margin: 8px auto 2px;
+    margin: 7px auto 1px;
     border-radius: 999px;
     background: var(--background-modifier-border);
 }
@@ -47,14 +47,14 @@ body.fn-mobile-event-screen-open {
     grid-template-columns: 44px minmax(0, 1fr) auto;
     align-items: center;
     gap: 8px;
-    min-height: 48px;
+    min-height: 44px;
     padding: 0 16px 2px;
     background: var(--background-primary);
 }
 
 .fn-mobile-event-screen .fn-mobile-event-cancel,
 .fn-mobile-event-screen .fn-mobile-event-save {
-    min-height: 44px;
+    min-height: 40px;
     margin: 0;
     padding: 6px 10px;
     font-size: var(--font-ui-small);
@@ -71,9 +71,9 @@ body.fn-mobile-event-screen-open {
 
 .fn-mobile-event-screen .fn-mobile-event-save {
     grid-column: 3;
-    min-width: 88px;
-    padding-right: 18px;
-    padding-left: 18px;
+    min-width: 80px;
+    padding-right: 16px;
+    padding-left: 16px;
     border-radius: 999px;
     font-weight: 600;
 }
@@ -83,31 +83,31 @@ body.fn-mobile-event-screen-open {
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 4px 20px calc(24px + env(safe-area-inset-bottom));
+    padding: 2px 18px calc(20px + env(safe-area-inset-bottom));
     overscroll-behavior: contain;
     scroll-padding: 16px 0 calc(24px + env(safe-area-inset-bottom));
     -webkit-overflow-scrolling: touch;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-title {
-    width: calc(100% - 54px);
-    min-height: 64px;
-    margin: 0 0 12px 54px;
-    padding: 8px 0;
+    width: calc(100% - 50px);
+    min-height: 52px;
+    margin: 0 0 8px 50px;
+    padding: 4px 0;
     border: 0;
     border-radius: 0;
     background: transparent;
     box-shadow: none;
     color: var(--text-normal);
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 500;
     line-height: 1.25;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-kind {
     display: flex;
-    gap: 8px;
-    margin: 0 0 14px 54px;
+    gap: 6px;
+    margin: 0 0 8px 50px;
     overflow-x: auto;
 }
 
@@ -115,31 +115,56 @@ body.fn-mobile-event-screen-open {
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: minmax(0, 1fr);
-    gap: 4px;
-    padding: 3px;
-    border-radius: 9px;
-    background: var(--background-secondary);
+    gap: 2px;
+    padding: 0;
+    background: transparent;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-kind-button,
 .fn-mobile-event-screen .fn-mobile-event-segment {
-    min-width: 76px;
+    position: relative;
+    isolation: isolate;
     min-height: 44px;
     margin: 0;
-    padding: 6px 8px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 10px;
+    padding: 3px 10px;
+    border: 0;
+    border-radius: 0;
     background: transparent;
     box-shadow: none;
     color: var(--text-muted);
     font-size: var(--font-ui-small);
 }
 
+.fn-mobile-event-screen .fn-mobile-event-kind-button::before,
+.fn-mobile-event-screen .fn-mobile-event-segment::before {
+    content: "";
+    position: absolute;
+    inset: 4px 0;
+    z-index: -1;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 7px;
+    background: transparent;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-kind-button {
+    min-width: 72px;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-segment {
+    min-width: 0;
+    font-size: var(--font-ui-smaller);
+}
+
 .fn-mobile-event-screen .fn-mobile-event-kind-button.is-active,
 .fn-mobile-event-screen .fn-mobile-event-segment.is-active {
+    background: transparent;
+    color: var(--text-normal);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-kind-button.is-active::before,
+.fn-mobile-event-screen .fn-mobile-event-segment.is-active::before {
     border-color: transparent;
     background: var(--background-modifier-active-hover);
-    color: var(--text-normal);
 }
 
 .fn-mobile-event-screen .fn-mobile-event-primary,
@@ -155,9 +180,9 @@ body.fn-mobile-event-screen-open {
 .fn-mobile-event-screen .fn-mobile-event-field-row {
     display: grid;
     grid-template-columns: 34px minmax(0, 1fr);
-    gap: 20px;
+    gap: 16px;
     align-items: start;
-    padding: 14px 0;
+    padding: 10px 0;
     border-bottom: 1px solid var(--background-modifier-border);
 }
 
@@ -166,7 +191,7 @@ body.fn-mobile-event-screen-open {
     align-items: center;
     justify-content: center;
     width: 34px;
-    height: 44px;
+    height: 40px;
     color: var(--text-muted);
 }
 
@@ -184,7 +209,7 @@ body.fn-mobile-event-screen-open {
 .fn-mobile-event-screen .fn-mobile-event-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 6px;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-input,
@@ -193,12 +218,13 @@ body.fn-mobile-event-screen-open {
 .fn-mobile-event-screen .fn-mobile-event-pick {
     width: 100%;
     min-width: 0;
-    min-height: 44px;
+    min-height: 40px;
     box-sizing: border-box;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-input {
-    padding: 6px 0;
+    height: 40px;
+    padding: 3px 0;
     border: 0;
     border-radius: 0;
     background: transparent;
@@ -206,9 +232,9 @@ body.fn-mobile-event-screen-open {
 }
 
 .fn-mobile-event-screen .fn-mobile-event-description {
-    min-height: 52px;
-    max-height: 120px;
-    padding: 6px 0;
+    min-height: 48px;
+    max-height: 96px;
+    padding: 3px 0;
     border: 0;
     background: transparent;
     box-shadow: none;
@@ -219,7 +245,7 @@ body.fn-mobile-event-screen-open {
     display: flex;
     align-items: center;
     gap: 10px;
-    min-height: 44px;
+    min-height: 40px;
     color: var(--text-normal);
     font-size: var(--font-ui-small);
 }
@@ -240,7 +266,7 @@ body.fn-mobile-event-screen-open {
     grid-template-columns: 34px minmax(0, 1fr) 24px;
     align-items: center;
     gap: 10px;
-    min-height: 64px;
+    min-height: 56px;
     cursor: pointer;
     list-style: none;
 }
@@ -271,7 +297,7 @@ body.fn-mobile-event-screen-open {
     display: flex;
     flex-direction: column;
     min-width: 0;
-    font-size: var(--font-ui-medium);
+    font-size: var(--font-ui-small);
 }
 
 .fn-mobile-event-screen .fn-mobile-event-summary-text small {
@@ -283,7 +309,12 @@ body.fn-mobile-event-screen-open {
 }
 
 .fn-mobile-event-screen .fn-mobile-event-disclosure-content {
-    padding: 0 0 12px 54px;
+    padding: 0 0 8px 50px;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-disclosure-content > .fn-mobile-event-disclosure,
+.fn-mobile-event-screen .fn-mobile-event-task-options > .fn-mobile-event-disclosure {
+    margin-left: -50px;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-task-options {
@@ -327,9 +358,6 @@ body.fn-mobile-event-screen-open {
         padding-left: 10px;
     }
 
-    .fn-mobile-event-screen .fn-mobile-event-disclosure-content {
-        padding-left: 24px;
-    }
 }
 
 .focus-notes-wrap {
