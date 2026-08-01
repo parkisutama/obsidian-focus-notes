@@ -1,8 +1,18 @@
 import type { EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
-import type { InsertPosition } from "./types";
+import type { InboxSettings, InboxTargetMode, InsertPosition } from "./types";
 
-export type EventTaskKind = "event" | "task";
+export type EventTaskKind = "inbox" | "event" | "task";
 export type HubMode = "none" | "link" | "create";
+
+export interface InboxRecord {
+    kind: "inbox";
+    capturedAt: Date;
+    defaultTitle: string;
+    title: string;
+    body: string;
+}
+
+export type CaptureRecord = EventTaskRecord | InboxRecord;
 
 export interface ReminderEntry {
     date: string;
@@ -15,15 +25,30 @@ export interface EventTaskFormDefaults {
     position: InsertPosition;
     hubNotesFolder: string;
     detailNotesFolder: string;
+    inbox?: InboxSettings;
 }
 
 export function formatLocalDate(date: Date): string {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+export function formatLocalDateTime(date: Date): string {
+    return `${formatLocalDate(date)} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
 /** Renderer-independent values entered in the event/task form. */
 export class EventTaskFormState {
     kind: EventTaskKind = "event";
+
+    readonly inboxCapturedAt: Date;
+    readonly inboxDefaultTitle: string;
+    inboxTitle: string;
+    inboxBody = "";
+    inboxTargetMode: InboxTargetMode;
+    inboxHeading: string;
+    inboxPosition: InsertPosition;
+    inboxPeopleFoldersOverride: string[] = [];
+    inboxPlaceFoldersOverride: string[] = [];
 
     eventDate: string;
     eventStartTime: string;
@@ -55,6 +80,20 @@ export class EventTaskFormState {
     targetPosition: InsertPosition;
 
     constructor(anchorDate: Date, defaults: EventTaskFormDefaults) {
+        const inboxDefaults = defaults.inbox ?? {
+            defaultTargetMode: "daily-note",
+            heading: "Inbox",
+            position: "end",
+            peopleFolders: ["People"],
+            placeFolders: ["Place"]
+        };
+        this.inboxCapturedAt = new Date(anchorDate.getTime());
+        this.inboxDefaultTitle = formatLocalDateTime(this.inboxCapturedAt);
+        this.inboxTitle = this.inboxDefaultTitle;
+        this.inboxTargetMode = inboxDefaults.defaultTargetMode;
+        this.inboxHeading = inboxDefaults.heading;
+        this.inboxPosition = inboxDefaults.position;
+
         const hour = anchorDate.getHours();
         const endHour = Math.min(hour + 1, 23);
         this.eventDate = formatLocalDate(anchorDate);
@@ -85,6 +124,10 @@ export class EventTaskFormState {
             };
         }
 
+        if (this.kind === "inbox") {
+            throw new Error("Inbox captures must use buildInboxRecord().");
+        }
+
         const reminders = this.reminders
             .filter(reminder => reminder.date)
             .map(reminder => this.parseDateTime(reminder.date, reminder.time || "09:00"));
@@ -106,6 +149,16 @@ export class EventTaskFormState {
             reminders,
             description: this.description,
             hubNoteRef
+        };
+    }
+
+    buildInboxRecord(): InboxRecord {
+        return {
+            kind: "inbox",
+            capturedAt: new Date(this.inboxCapturedAt.getTime()),
+            defaultTitle: this.inboxDefaultTitle,
+            title: this.inboxTitle.trim(),
+            body: this.inboxBody
         };
     }
 

@@ -1,5 +1,5 @@
 import { App, normalizePath } from "obsidian";
-import { FocusNotesSettings, DEFAULT_SETTINGS } from "./types";
+import { FocusNotesSettings, mergeSettingsWithDefaults } from "./types";
 
 /**
  * Where persistent settings live.
@@ -24,43 +24,6 @@ function statePath(app: App): string {
 }
 
 /**
- * Three-way merge for nested objects.
- * Ensures missing keys in saved data fall back to defaults without blowing
- * away other saved fields. Critical when adding new fields in future versions.
- */
-function mergeWithDefaults(saved: Partial<FocusNotesSettings>): FocusNotesSettings {
-    return {
-        ...DEFAULT_SETTINGS,
-        ...saved,
-        defaultTarget: {
-            ...DEFAULT_SETTINGS.defaultTarget,
-            ...((saved.defaultTarget ?? {}) as Partial<typeof DEFAULT_SETTINGS.defaultTarget>)
-        },
-        liveTarget: {
-            ...DEFAULT_SETTINGS.liveTarget,
-            ...((saved.liveTarget ?? {}) as Partial<typeof DEFAULT_SETTINGS.liveTarget>)
-        },
-        timeline: {
-            ...DEFAULT_SETTINGS.timeline,
-            ...((saved.timeline ?? {}) as Partial<typeof DEFAULT_SETTINGS.timeline>),
-            sourceFolders: saved.timeline?.sourceFolders ?? DEFAULT_SETTINGS.timeline.sourceFolders,
-            sourceVisibility: {
-                ...DEFAULT_SETTINGS.timeline.sourceVisibility,
-                ...(saved.timeline?.sourceVisibility ?? {})
-            },
-            sourceColors: {
-                ...DEFAULT_SETTINGS.timeline.sourceColors,
-                ...(saved.timeline?.sourceColors ?? {})
-            }
-        },
-        eventTask: {
-            ...DEFAULT_SETTINGS.eventTask,
-            ...((saved.eventTask ?? {}) as Partial<typeof DEFAULT_SETTINGS.eventTask>)
-        }
-    };
-}
-
-/**
  * Load settings, with one-time migration from the legacy data.json location.
  *
  * Migration logic: if the external file does not exist but the plugin has a
@@ -80,21 +43,21 @@ export async function loadState(
         if (await adapter.exists(path)) {
             const raw = await adapter.read(path);
             const parsed = JSON.parse(raw) as Partial<FocusNotesSettings>;
-            return mergeWithDefaults(parsed);
+            return mergeSettingsWithDefaults(parsed);
         }
     } catch (err) {
         console.error(
             "[Focus Notes] Could not parse state file, falling back to defaults. The corrupted file is left untouched so it can be recovered.",
             err
         );
-        return { ...DEFAULT_SETTINGS };
+        return mergeSettingsWithDefaults({});
     }
 
     // External file missing — try migrating from legacy data.json.
     try {
         const legacy = (await legacyLoad()) as Partial<FocusNotesSettings> | null;
         if (legacy && typeof legacy === "object") {
-            const merged = mergeWithDefaults(legacy);
+            const merged = mergeSettingsWithDefaults(legacy);
             await saveState(app, merged);
             return merged;
         }
@@ -104,7 +67,7 @@ export async function loadState(
     }
 
     // First install or no legacy data — write defaults so the file exists.
-    const fresh = { ...DEFAULT_SETTINGS };
+    const fresh = mergeSettingsWithDefaults({});
     await saveState(app, fresh);
     return fresh;
 }

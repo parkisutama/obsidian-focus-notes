@@ -104,6 +104,9 @@ export interface FocusNotesSettings {
 
     /** Event & task creation settings. */
     eventTask: EventTaskSettings;
+
+    /** Inbox quick-capture settings. */
+    inbox: InboxSettings;
 }
 
 export interface FocusTimelineSettings {
@@ -138,6 +141,21 @@ export interface EventTaskSettings {
     includePriority: boolean;
     /** Include `tags` field in detail note frontmatter. */
     includeTags: boolean;
+}
+
+export type InboxTargetMode = "daily-note" | "event-task-target";
+
+export interface InboxSettings {
+    /** Default destination strategy for Inbox captures. */
+    defaultTargetMode: InboxTargetMode;
+    /** Heading text without leading # characters. */
+    heading: string;
+    /** Where a new capture is inserted inside the Inbox heading. */
+    position: InsertPosition;
+    /** Recursive vault folders used for People mention suggestions. */
+    peopleFolders: string[];
+    /** Recursive vault folders used for Place mention suggestions. */
+    placeFolders: string[];
 }
 
 /** What gets passed to NoteWriter when a session ends. */
@@ -222,5 +240,56 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         includeStatus: true,
         includePriority: true,
         includeTags: true
+    },
+    inbox: {
+        defaultTargetMode: "daily-note",
+        heading: "Inbox",
+        position: "end",
+        peopleFolders: ["People"],
+        placeFolders: ["Place"]
     }
 };
+
+/**
+ * Merge persisted state with current defaults without sharing mutable arrays.
+ * Kept independent of Obsidian runtime APIs so migrations are unit-testable.
+ */
+export function mergeSettingsWithDefaults(
+    saved: Partial<FocusNotesSettings>
+): FocusNotesSettings {
+    return {
+        ...DEFAULT_SETTINGS,
+        ...saved,
+        defaultTarget: {
+            ...DEFAULT_SETTINGS.defaultTarget,
+            ...((saved.defaultTarget ?? {}) as Partial<typeof DEFAULT_SETTINGS.defaultTarget>)
+        },
+        liveTarget: {
+            ...DEFAULT_SETTINGS.liveTarget,
+            ...((saved.liveTarget ?? {}) as Partial<typeof DEFAULT_SETTINGS.liveTarget>)
+        },
+        timeline: {
+            ...DEFAULT_SETTINGS.timeline,
+            ...((saved.timeline ?? {}) as Partial<typeof DEFAULT_SETTINGS.timeline>),
+            sourceFolders: [...(saved.timeline?.sourceFolders ?? DEFAULT_SETTINGS.timeline.sourceFolders)],
+            sourceVisibility: {
+                ...DEFAULT_SETTINGS.timeline.sourceVisibility,
+                ...(saved.timeline?.sourceVisibility ?? {})
+            },
+            sourceColors: {
+                ...DEFAULT_SETTINGS.timeline.sourceColors,
+                ...(saved.timeline?.sourceColors ?? {})
+            }
+        },
+        eventTask: {
+            ...DEFAULT_SETTINGS.eventTask,
+            ...((saved.eventTask ?? {}) as Partial<typeof DEFAULT_SETTINGS.eventTask>)
+        },
+        inbox: {
+            ...DEFAULT_SETTINGS.inbox,
+            ...((saved.inbox ?? {}) as Partial<typeof DEFAULT_SETTINGS.inbox>),
+            peopleFolders: [...(saved.inbox?.peopleFolders ?? DEFAULT_SETTINGS.inbox.peopleFolders)],
+            placeFolders: [...(saved.inbox?.placeFolders ?? DEFAULT_SETTINGS.inbox.placeFolders)]
+        }
+    };
+}

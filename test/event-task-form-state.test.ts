@@ -2,6 +2,59 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { EventTaskFormState } from "../src/EventTaskFormState.ts";
 
+test("initializes an immutable Inbox capture independently of Event and Task", () => {
+    const anchorDate = new Date(2026, 7, 1, 15, 40, 37);
+    const state = new EventTaskFormState(anchorDate, {
+        file: "Daily/{{date}}.md",
+        heading: "Schedule",
+        position: "end",
+        hubNotesFolder: "Hub",
+        detailNotesFolder: "Details",
+        inbox: {
+            defaultTargetMode: "daily-note",
+            heading: "Inbox",
+            position: "start",
+            peopleFolders: ["People"],
+            placeFolders: ["Place"]
+        }
+    });
+
+    assert.equal(state.inboxDefaultTitle, "2026-08-01 15:40");
+    assert.equal(state.inboxTitle, "2026-08-01 15:40");
+    assert.equal(state.inboxCapturedAt.getTime(), anchorDate.getTime());
+    assert.equal(state.inboxTargetMode, "daily-note");
+    assert.equal(state.inboxHeading, "Inbox");
+    assert.equal(state.inboxPosition, "start");
+    assert.deepEqual(state.inboxPeopleFoldersOverride, []);
+    assert.deepEqual(state.inboxPlaceFoldersOverride, []);
+
+    state.kind = "task";
+    state.kind = "inbox";
+
+    assert.equal(state.inboxCapturedAt.getTime(), anchorDate.getTime());
+    assert.equal(state.inboxDefaultTitle, "2026-08-01 15:40");
+});
+
+test("builds an Inbox record without changing the EventTask record contract", () => {
+    const state = new EventTaskFormState(new Date(2026, 7, 1, 15, 40), {
+        file: "Daily.md",
+        heading: "Schedule",
+        position: "end",
+        hubNotesFolder: "Hub",
+        detailNotesFolder: "Details"
+    });
+    state.inboxTitle = "  Hubungi vendor  ";
+    state.inboxBody = "Catatan #follow-up";
+
+    assert.deepEqual(state.buildInboxRecord(), {
+        kind: "inbox",
+        capturedAt: new Date(2026, 7, 1, 15, 40),
+        defaultTitle: "2026-08-01 15:40",
+        title: "Hubungi vendor",
+        body: "Catatan #follow-up"
+    });
+});
+
 test("builds the same default event record independently of a renderer", () => {
     const anchorDate = new Date(2026, 7, 1, 14, 30);
     const state = new EventTaskFormState(anchorDate, {

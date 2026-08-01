@@ -6,14 +6,14 @@
 
 **Acceptance criteria:**
 
-- [ ] `EventTaskRecord` remains Event/Task and `CaptureRecord` adds Inbox explicitly.
-- [ ] Old saved settings gain Inbox defaults with independent People/Place arrays.
-- [ ] One form session retains its original Inbox capture timestamp across chip changes.
+- [x] `EventTaskRecord` remains Event/Task and `CaptureRecord` adds Inbox explicitly.
+- [x] Old saved settings gain Inbox defaults with independent People/Place arrays.
+- [x] One form session retains its original Inbox capture timestamp across chip changes.
 
 **Verification:**
 
-- [ ] Add state and settings migration tests.
-- [ ] Run `pnpm test` and `pnpm run typecheck`.
+- [x] Add state and settings migration tests.
+- [x] Run `pnpm test` and `pnpm run typecheck`.
 
 **Dependencies:** None.
 
