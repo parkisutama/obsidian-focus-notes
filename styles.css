@@ -8,6 +8,288 @@
     overflow-y: auto;
 }
 
+/* Independent fullscreen mobile event/task screen. */
+body.fn-mobile-event-screen-open {
+    overflow: hidden;
+}
+
+.fn-mobile-event-screen {
+    position: fixed;
+    top: var(--fn-mobile-screen-top, 0px);
+    right: 0;
+    left: 0;
+    z-index: var(--layer-modal, 1000);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: var(--fn-mobile-screen-height, 100dvh);
+    min-height: 240px;
+    overflow: hidden;
+    box-sizing: border-box;
+    background: var(--background-primary);
+    color: var(--text-normal);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-header {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(64px, auto) minmax(0, 1fr) minmax(64px, auto);
+    align-items: center;
+    gap: 8px;
+    min-height: 52px;
+    padding: calc(4px + env(safe-area-inset-top)) 12px 4px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-cancel,
+.fn-mobile-event-screen .fn-mobile-event-save {
+    min-width: 64px;
+    min-height: 44px;
+    margin: 0;
+    padding: 6px 10px;
+    font-size: var(--font-ui-small);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-context {
+    min-width: 0;
+    overflow: hidden;
+    font-size: var(--font-ui-small);
+    font-weight: 600;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 12px 12px calc(24px + env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
+    scroll-padding: 16px 0 calc(24px + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-title {
+    width: 100%;
+    min-height: 48px;
+    margin: 0 0 10px;
+    padding: 8px 4px;
+    border: 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-normal);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.25;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-kind,
+.fn-mobile-event-screen .fn-mobile-event-segmented {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 4px;
+    padding: 3px;
+    border-radius: 9px;
+    background: var(--background-secondary);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-kind {
+    margin-bottom: 10px;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-kind-button,
+.fn-mobile-event-screen .fn-mobile-event-segment {
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    padding: 6px 8px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-kind-button.is-active,
+.fn-mobile-event-screen .fn-mobile-event-segment.is-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-primary,
+.fn-mobile-event-screen .fn-mobile-event-card,
+.fn-mobile-event-screen .fn-mobile-event-disclosure-content,
+.fn-mobile-event-screen .fn-mobile-event-conditional,
+.fn-mobile-event-screen .fn-mobile-event-reminders {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-card {
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    background: var(--background-secondary);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-label {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    font-weight: 600;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-input,
+.fn-mobile-event-screen .fn-mobile-event-description,
+.fn-mobile-event-screen .fn-mobile-event-secondary-action,
+.fn-mobile-event-screen .fn-mobile-event-pick {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    box-sizing: border-box;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-input {
+    padding: 7px 9px;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-description {
+    min-height: 64px;
+    max-height: 144px;
+    padding: 9px;
+    resize: vertical;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-toggle input[type="checkbox"] {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-disclosure {
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-summary {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) 24px;
+    align-items: center;
+    gap: 10px;
+    min-height: 52px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-summary::-webkit-details-marker {
+    display: none;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-summary-icon,
+.fn-mobile-event-screen .fn-mobile-event-summary-chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-summary-icon svg,
+.fn-mobile-event-screen .fn-mobile-event-summary-chevron svg {
+    width: 18px;
+    height: 18px;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-disclosure[open] > .fn-mobile-event-summary .fn-mobile-event-summary-chevron {
+    transform: rotate(180deg);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-summary-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    font-size: var(--font-ui-medium);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-summary-text small {
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-disclosure-content {
+    padding: 0 0 12px 34px;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-task-options {
+    display: flex;
+    flex-direction: column;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-related-input {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-pick {
+    width: auto;
+    min-width: 64px;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-reminder {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px;
+    gap: 6px;
+    align-items: center;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-remove {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    padding: 8px;
+}
+
+@media (max-width: 360px) {
+    .fn-mobile-event-screen .fn-mobile-event-header {
+        padding-right: 8px;
+        padding-left: 8px;
+    }
+
+    .fn-mobile-event-screen .fn-mobile-event-body {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .fn-mobile-event-screen .fn-mobile-event-disclosure-content {
+        padding-left: 24px;
+    }
+}
+
 .focus-notes-wrap {
     display: flex;
     flex-direction: column;
@@ -2592,276 +2874,27 @@
     opacity: 0.75;
 }
 
-/* ---- Toggle row (mobile sheet checkbox replacement) -------------------- */
-
-.fn-mobile-toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    min-height: 44px;
-    padding: 8px 0;
-    border: none;
-    background: transparent;
-    color: var(--text-normal);
-    font-size: var(--font-ui-small);
-    cursor: pointer;
-    text-align: left;
-    gap: 12px;
-    border-radius: 0;
-}
-
-.fn-mobile-toggle-row:active {
-    opacity: 0.65;
-}
-
-.fn-mobile-toggle-label {
-    flex: 1;
-    min-width: 0;
-}
-
-.fn-mobile-toggle-indicator {
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    color: var(--text-muted);
-}
-
-.fn-mobile-toggle-row--on .fn-mobile-toggle-indicator {
-    color: var(--interactive-accent);
-}
-
-.fn-mobile-toggle-indicator svg {
-    width: 20px;
-    height: 20px;
-}
-
 /* ---- Utility ----------------------------------------------------------- */
 
 .fn-gcal-hidden {
     display: none !important;
 }
 
-.fn-mobile-sheet-open {
-    overflow: hidden;
-}
-
-body.is-mobile .modal.fn-gcal-modal {
-    position: fixed !important;
-    top: calc(var(--fn-gcal-viewport-top, 0px) + 6px) !important;
-    bottom: auto !important;
-    left: 6px !important;
-    right: 6px !important;
-    width: auto !important;
-    max-width: none !important;
-    height: calc(var(--fn-gcal-viewport-height, 100dvh) - 12px) !important;
-    max-height: calc(var(--fn-gcal-viewport-height, 100dvh) - 12px) !important;
-    margin: 0 !important;
-    transform: none !important;
-}
-
-body.is-mobile .modal.fn-gcal-modal .modal-content {
-    height: 100%;
-    max-height: 100%;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    overscroll-behavior: contain;
-}
-
-body.is-mobile .fn-gcal-content {
-    height: 100%;
-    min-height: 0;
-    max-height: none;
-    overflow: hidden;
-    padding-top: 32px;
-}
-
-body.is-mobile .fn-gcal-title-input {
-    flex: 0 0 auto;
-    padding: 0 38px 8px 12px;
-    font-size: 17px;
-    line-height: 1.25;
-}
-
-body.is-mobile .modal.fn-gcal-modal .modal-close-button {
-    top: 4px !important;
-    right: 6px !important;
-    width: 28px !important;
-    height: 28px !important;
-    min-width: 28px !important;
-    min-height: 28px !important;
-    padding: 0 !important;
-    border-radius: 14px !important;
-    font-size: 16px !important;
-    line-height: 28px !important;
-}
-
-body.is-mobile .fn-gcal-tabs {
-    flex: 0 0 auto;
-    gap: 4px;
-    padding: 6px 12px 0;
-}
-
-body.is-mobile .fn-gcal-tab {
-    flex: 1;
-    min-height: 32px;
-    padding: 4px 10px;
-    border-radius: 7px 7px 0 0;
-}
-
-body.is-mobile .fn-gcal-body {
-    min-height: 0;
-    flex: 1 1 auto;
-    overflow-y: auto;
-    padding: 4px 0 96px;
-    -webkit-overflow-scrolling: touch;
-}
-
-body.is-mobile .fn-gcal-row {
-    gap: 0;
-    padding: 7px 12px;
-}
-
-body.is-mobile .fn-gcal-row-icon {
-    display: none;
-}
-
-body.is-mobile .fn-gcal-field-label {
-    margin-bottom: 3px;
-    font-size: 0.72em;
-}
-
-body.is-mobile .fn-gcal-datetime-wrap,
-body.is-mobile .fn-gcal-hub-wrap,
-body.is-mobile .fn-gcal-saveto-wrap,
-body.is-mobile .fn-gcal-reminders-list {
-    gap: 4px;
-}
-
-body.is-mobile .fn-gcal-datetime-row,
-body.is-mobile .fn-gcal-time-range {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: stretch;
-    width: 100%;
-}
-
-body.is-mobile .fn-gcal-hub-input-row,
-body.is-mobile .fn-gcal-saveto-fields,
-body.is-mobile .fn-gcal-reminder-row {
-    display: grid;
-    grid-template-columns: 1fr;
-    align-items: stretch;
-    width: 100%;
-}
-
-body.is-mobile .fn-gcal-datetime-row > .fn-gcal-date-input,
-body.is-mobile .fn-gcal-datetime-row > .fn-gcal-time-range {
-    grid-column: 1 / -1;
-}
-
-body.is-mobile .fn-gcal-date-input,
-body.is-mobile .fn-gcal-time-input,
-body.is-mobile .fn-gcal-hub-input,
-body.is-mobile .fn-gcal-saveto-file,
-body.is-mobile .fn-gcal-saveto-heading,
-body.is-mobile .fn-gcal-desc-input,
-body.is-mobile .fn-gcal-hub-pick-btn,
-body.is-mobile .fn-gcal-add-remind-btn {
-    width: 100%;
-    min-width: 0;
-    min-height: 34px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-    box-sizing: border-box;
-}
-
-body.is-mobile .fn-gcal-desc-input {
-    min-height: 52px;
-}
-
-body.is-mobile .fn-gcal-time-sep {
-    display: none;
-}
-
-body.is-mobile .fn-gcal-allday-row,
-body.is-mobile .fn-gcal-hub-option {
-    align-items: flex-start;
-    line-height: 1.25;
-    gap: 7px;
-}
-
-body.is-mobile .fn-gcal-checkbox,
-body.is-mobile .fn-gcal-radio {
-    margin-top: 2px;
-    flex: 0 0 auto;
-}
-
-body.is-mobile .fn-gcal-remind-del-btn {
-    width: 100%;
-    height: 30px;
-}
-
-body.is-mobile .fn-gcal-footer {
-    flex: 0 0 auto;
-    position: static;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-    background: var(--background-primary);
-    z-index: 1;
-}
-
-body.is-mobile .fn-gcal-btn-discard,
-body.is-mobile .fn-gcal-btn-save {
-    width: 100%;
-    min-height: 34px;
-    padding: 6px 12px;
-}
-
 /* ---- Mobile modal layout ------------------------------------------------ */
 
 @media (max-width: 640px) {
     .modal:has(.focus-notes-modal-wide),
-    .modal:has(.focus-notes-reflection-modal),
-    .modal.fn-gcal-modal {
+    .modal:has(.focus-notes-reflection-modal) {
         width: calc(100vw - 16px) !important;
         max-width: calc(100vw - 16px) !important;
         max-height: calc(100dvh - 16px);
         margin: 8px;
     }
 
-    .modal.fn-gcal-modal {
-        position: fixed !important;
-        top: calc(var(--fn-gcal-viewport-top, 0px) + 6px) !important;
-        bottom: auto !important;
-        left: 6px !important;
-        right: 6px !important;
-        width: auto !important;
-        max-width: none !important;
-        height: calc(var(--fn-gcal-viewport-height, 100dvh) - 12px) !important;
-        max-height: calc(var(--fn-gcal-viewport-height, 100dvh) - 12px) !important;
-        margin: 0 !important;
-        transform: none !important;
-    }
-
     .modal:has(.focus-notes-modal-wide) .modal-content,
     .modal:has(.focus-notes-reflection-modal) .modal-content {
         max-height: calc(100dvh - 16px);
         overflow-y: auto;
-        overscroll-behavior: contain;
-    }
-
-    .modal.fn-gcal-modal .modal-content {
-        height: calc(var(--fn-gcal-viewport-height, 100dvh) - 16px);
-        max-height: calc(var(--fn-gcal-viewport-height, 100dvh) - 16px);
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
         overscroll-behavior: contain;
     }
 
@@ -2923,543 +2956,4 @@ body.is-mobile .fn-gcal-btn-save {
     .fn-distortions-list {
         max-height: 240px;
     }
-
-    .fn-gcal-modal {
-        width: calc(100vw - 16px) !important;
-        max-width: calc(100vw - 16px) !important;
-    }
-
-    .fn-gcal-content {
-        height: 100%;
-        max-height: none;
-        min-height: 0;
-        overflow: hidden;
-        padding-top: 30px;
-    }
-
-    .fn-gcal-title-input {
-        flex: 0 0 auto;
-        padding: 0 48px 8px 12px;
-        font-size: 17px;
-        line-height: 1.25;
-    }
-
-    .modal.fn-gcal-modal .modal-close-button {
-        top: 4px !important;
-        right: 6px !important;
-        width: 28px !important;
-        height: 28px !important;
-        min-width: 28px !important;
-        min-height: 28px !important;
-        padding: 0 !important;
-        border-radius: 14px !important;
-        font-size: 16px !important;
-        line-height: 28px !important;
-    }
-
-    .fn-gcal-tabs {
-        flex: 0 0 auto;
-        gap: 4px;
-        padding: 6px 12px 0;
-    }
-
-    .fn-gcal-tab {
-        flex: 1;
-        min-height: 32px;
-        padding: 4px 10px;
-        border-radius: 7px 7px 0 0;
-    }
-
-    .fn-gcal-body {
-        min-height: 0;
-        flex: 1 1 auto;
-        overflow-y: auto;
-        padding: 4px 0 96px;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .fn-gcal-row {
-        gap: 0;
-        padding: 7px 12px;
-    }
-
-    .fn-gcal-row-icon {
-        display: none;
-    }
-
-    .fn-gcal-field-label {
-        margin-bottom: 3px;
-        font-size: 0.72em;
-    }
-
-    .fn-gcal-datetime-wrap,
-    .fn-gcal-hub-wrap,
-    .fn-gcal-saveto-wrap,
-    .fn-gcal-reminders-list {
-        gap: 4px;
-    }
-
-    .fn-gcal-datetime-row,
-    .fn-gcal-time-range {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        align-items: stretch;
-        width: 100%;
-    }
-
-    .fn-gcal-hub-input-row,
-    .fn-gcal-saveto-fields,
-    .fn-gcal-reminder-row {
-        display: grid;
-        grid-template-columns: 1fr;
-        align-items: stretch;
-        width: 100%;
-    }
-
-    .fn-gcal-datetime-row > .fn-gcal-date-input,
-    .fn-gcal-datetime-row > .fn-gcal-time-range {
-        grid-column: 1 / -1;
-    }
-
-    .fn-gcal-date-input,
-    .fn-gcal-time-input,
-    .fn-gcal-hub-input,
-    .fn-gcal-saveto-file,
-    .fn-gcal-saveto-heading,
-    .fn-gcal-desc-input,
-    .fn-gcal-hub-pick-btn,
-    .fn-gcal-add-remind-btn {
-        width: 100%;
-        min-width: 0;
-        min-height: 34px;
-        padding-top: 4px;
-        padding-bottom: 4px;
-        box-sizing: border-box;
-    }
-
-    .fn-gcal-desc-input {
-        min-height: 52px;
-    }
-
-    .fn-gcal-time-sep {
-        display: none;
-    }
-
-    .fn-gcal-allday-row,
-    .fn-gcal-hub-option {
-        align-items: flex-start;
-        line-height: 1.25;
-        gap: 7px;
-    }
-
-    .fn-gcal-checkbox,
-    .fn-gcal-radio {
-        margin-top: 2px;
-        flex: 0 0 auto;
-    }
-
-    .fn-gcal-remind-del-btn {
-        width: 100%;
-        height: 30px;
-    }
-
-    .fn-gcal-footer {
-        flex: 0 0 auto;
-        position: static;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-        background: var(--background-primary);
-        z-index: 1;
-    }
-
-    .fn-gcal-btn-discard,
-    .fn-gcal-btn-save {
-        width: 100%;
-        min-height: 34px;
-        padding: 6px 12px;
-    }
-}
-
-/* Mobile event/task form: bottom sheet, not fullscreen. */
-.fn-mobile-sheet {
-    position: fixed;
-    top: var(--fn-gcal-viewport-top, 0px);
-    right: 0;
-    bottom: auto;
-    left: 0;
-    display: flex;
-    align-items: flex-end;
-    justify-content: stretch;
-    height: var(--fn-gcal-viewport-height, 100dvh);
-    z-index: var(--layer-modal, 1000);
-    background: rgba(0, 0, 0, 0.32);
-    color: var(--text-normal);
-    box-sizing: border-box;
-}
-
-.fn-mobile-sheet .fn-mobile-task-content.fn-gcal-content {
-    width: 100%;
-    height: auto;
-    max-height: min(calc(100% - 12px), 78dvh);
-    min-height: 0;
-    margin-top: auto;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 0;
-    border-radius: 18px 18px 0 0;
-    border: 1px solid var(--background-modifier-border);
-    border-bottom: 0;
-    background: var(--background-primary);
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.28);
-}
-
-.fn-mobile-sheet .fn-mobile-sheet-handle {
-    flex: 0 0 auto;
-    width: 44px;
-    height: 5px;
-    margin: 8px auto 4px;
-    border-radius: 999px;
-    background: var(--background-modifier-border);
-}
-
-.fn-mobile-sheet .fn-mobile-task-topbar {
-    flex: 0 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    padding: calc(4px + env(safe-area-inset-top)) 12px 6px;
-}
-
-.fn-mobile-sheet .fn-mobile-task-topbar .fn-mobile-sheet-close {
-    flex: 0 0 72px;
-    min-width: 72px;
-    min-height: 44px;
-    padding: 6px 12px;
-    margin: 0;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 999px;
-    background: var(--background-secondary);
-    color: var(--text-muted);
-    font-size: var(--font-ui-small);
-    font-weight: 500;
-}
-
-.fn-mobile-sheet .fn-mobile-task-context {
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    color: var(--text-muted);
-    font-size: var(--font-ui-small);
-    font-weight: 600;
-    text-align: center;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.fn-mobile-sheet .fn-mobile-task-save {
-    flex: 0 0 72px;
-    min-width: 72px;
-    min-height: 44px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: var(--font-ui-small);
-    font-weight: 600;
-}
-
-.fn-mobile-sheet .fn-mobile-task-body.fn-gcal-body {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    padding: 4px 0 calc(16px + env(safe-area-inset-bottom));
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-}
-
-.fn-mobile-sheet .fn-mobile-title-input.fn-gcal-title-input {
-    width: 100%;
-    padding: 8px 16px 10px;
-    border-bottom: 0;
-    font-size: 22px;
-    line-height: 1.2;
-    font-weight: 500;
-}
-
-.fn-mobile-sheet .fn-gcal-tabs {
-    padding: 0 16px 8px;
-    gap: 6px;
-    border-bottom: 1px solid var(--background-modifier-border);
-    overflow-x: auto;
-}
-
-.fn-mobile-sheet .fn-gcal-tab {
-    flex: 1 1 0;
-    min-width: 0;
-    min-height: 44px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: var(--font-ui-smaller);
-    text-align: center;
-}
-
-.fn-mobile-sheet .fn-mobile-primary-section {
-    padding-top: 8px;
-}
-
-.fn-mobile-sheet .fn-gcal-row {
-    gap: 0;
-    padding: 6px 16px;
-}
-
-.fn-mobile-sheet .fn-gcal-row-icon {
-    display: none;
-}
-
-.fn-mobile-sheet .fn-gcal-field-label {
-    margin-bottom: 4px;
-    font-size: var(--font-ui-smaller);
-}
-
-.fn-mobile-sheet .fn-gcal-datetime-wrap,
-.fn-mobile-sheet .fn-gcal-hub-wrap,
-.fn-mobile-sheet .fn-gcal-saveto-wrap,
-.fn-mobile-sheet .fn-gcal-reminders-list {
-    gap: 6px;
-}
-
-.fn-mobile-sheet .fn-gcal-datetime-row,
-.fn-mobile-sheet .fn-gcal-time-range {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-
-.fn-mobile-sheet .fn-gcal-datetime-row > .fn-gcal-date-input,
-.fn-mobile-sheet .fn-gcal-datetime-row > .fn-gcal-time-input,
-.fn-mobile-sheet .fn-gcal-datetime-row > .fn-gcal-time-range {
-    grid-column: 1 / -1;
-}
-
-.fn-mobile-sheet .fn-gcal-date-input,
-.fn-mobile-sheet .fn-gcal-time-input,
-.fn-mobile-sheet .fn-gcal-hub-input,
-.fn-mobile-sheet .fn-gcal-saveto-file,
-.fn-mobile-sheet .fn-gcal-saveto-heading,
-.fn-mobile-sheet .fn-gcal-hub-pick-btn,
-.fn-mobile-sheet .fn-gcal-add-remind-btn {
-    width: 100%;
-    min-width: 0;
-    min-height: 44px;
-    box-sizing: border-box;
-}
-
-.fn-mobile-sheet .fn-gcal-date-input,
-.fn-mobile-sheet .fn-gcal-time-input {
-    -webkit-appearance: none;
-    appearance: none;
-    padding: 6px 10px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    background: var(--background-secondary);
-    color: var(--text-normal);
-    text-align: center;
-}
-
-.fn-mobile-sheet .fn-gcal-time-sep {
-    display: none;
-}
-
-.fn-mobile-sheet .fn-gcal-hub-input-row,
-.fn-mobile-sheet .fn-gcal-saveto-fields {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
-    width: 100%;
-}
-
-.fn-mobile-sheet .fn-gcal-reminder-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-
-.fn-mobile-sheet .fn-gcal-remind-del-btn {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    border-radius: 8px;
-}
-
-.fn-mobile-sheet .fn-chip-option {
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.fn-mobile-sheet .fn-gcal-desc-input {
-    width: 100%;
-    min-width: 0;
-    min-height: 52px;
-    max-height: 144px;
-    field-sizing: content;
-    box-sizing: border-box;
-}
-
-.fn-mobile-sheet .fn-mobile-advanced-list {
-    display: flex;
-    flex-direction: column;
-    border-top: 1px solid var(--background-modifier-border);
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure {
-    border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure-summary {
-    min-height: 48px;
-    display: grid;
-    grid-template-columns: 28px 1fr 24px;
-    align-items: center;
-    gap: 12px;
-    padding: 0 16px;
-    cursor: pointer;
-    list-style: none;
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure-summary::-webkit-details-marker {
-    display: none;
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure-icon,
-.fn-mobile-sheet .fn-mobile-disclosure-chevron {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure-icon svg,
-.fn-mobile-sheet .fn-mobile-disclosure-chevron svg {
-    width: 19px;
-    height: 19px;
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure[open] > .fn-mobile-disclosure-summary .fn-mobile-disclosure-chevron {
-    transform: rotate(180deg);
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure-label-wrap {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure-label {
-    color: var(--text-normal);
-    font-size: var(--font-ui-medium);
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure-value {
-    overflow: hidden;
-    color: var(--text-muted);
-    font-size: var(--font-ui-smaller);
-    line-height: 1.2;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure-content {
-    padding: 0 0 10px;
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure-content > .fn-gcal-row {
-    padding-top: 0;
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure-content > .fn-mobile-disclosure,
-.fn-mobile-sheet .fn-mobile-task-options > .fn-mobile-disclosure {
-    margin-left: 16px;
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure-content > .fn-mobile-disclosure:last-child,
-.fn-mobile-sheet .fn-mobile-task-options > .fn-mobile-disclosure:last-child {
-    border-bottom: 0;
-}
-
-.fn-mobile-sheet .fn-mobile-disclosure-content .fn-gcal-field-label {
-    display: none;
-}
-
-.fn-mobile-sheet .fn-gcal-hub-option,
-.fn-mobile-sheet .fn-gcal-allday-row {
-    min-height: 44px;
-}
-
-@media (max-height: 560px) {
-    .fn-mobile-sheet .fn-mobile-task-content.fn-gcal-content {
-        max-height: calc(100% - 8px);
-        border-radius: 14px 14px 0 0;
-    }
-
-    .fn-mobile-sheet .fn-mobile-title-input.fn-gcal-title-input {
-        font-size: 20px;
-        padding-top: 4px;
-        padding-bottom: 10px;
-    }
-
-    .fn-mobile-sheet .fn-gcal-desc-input {
-        min-height: 52px;
-    }
-}
-
-.fn-mobile-sheet.fn-mobile-keyboard-open .fn-mobile-task-content.fn-gcal-content {
-    max-height: calc(100% - 4px);
-    border-radius: 12px 12px 0 0;
-}
-
-.fn-mobile-sheet.fn-mobile-keyboard-open .fn-mobile-sheet-handle {
-    margin-top: 5px;
-    margin-bottom: 2px;
-}
-
-.fn-mobile-sheet.fn-mobile-keyboard-open .fn-mobile-task-topbar {
-    padding-top: 2px;
-    padding-bottom: 3px;
-}
-
-.fn-mobile-sheet.fn-mobile-keyboard-open .fn-mobile-task-save,
-.fn-mobile-sheet.fn-mobile-keyboard-open .fn-mobile-sheet-close {
-    min-height: 44px;
-}
-
-.fn-mobile-sheet.fn-mobile-keyboard-open .fn-mobile-title-input.fn-gcal-title-input {
-    font-size: 19px;
-    padding-top: 3px;
-    padding-bottom: 7px;
-}
-
-.fn-mobile-sheet.fn-mobile-keyboard-open .fn-gcal-tabs {
-    padding-bottom: 6px;
-}
-
-.fn-mobile-sheet.fn-mobile-keyboard-open .fn-gcal-row {
-    padding-top: 6px;
-    padding-bottom: 6px;
-}
-
-/* Shrink description when keyboard is open and not focused */
-.fn-mobile-sheet.fn-mobile-keyboard-open .fn-gcal-desc-input:not(:focus) {
-    min-height: 44px;
-    max-height: 44px;
-    overflow: hidden;
-    resize: none;
 }

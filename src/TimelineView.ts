@@ -118,7 +118,8 @@ export class TimelineView extends ItemView {
                 this.getSettings,
                 this.saveSettings,
                 this.anchorDate,
-                () => void this.refreshIndex()
+                () => void this.refreshIndex(),
+                this
             );
         });
 

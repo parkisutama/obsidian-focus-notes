@@ -76,7 +76,9 @@ export default class FocusNotesPlugin extends Plugin {
                     this.app,
                     () => this.settings,
                     () => this.saveSettings(),
-                    new Date()
+                    new Date(),
+                    undefined,
+                    this
                 );
             }
         });

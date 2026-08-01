@@ -2,7 +2,7 @@
 
 ## Task 1: Use public mobile detection and a deterministic sheet lifecycle
 
-**Description:** Replace DOM-class-only mobile detection with `Platform.isMobile` plus a narrow viewport preview fallback. Make opening and closing the custom sheet idempotent and prove that global handlers and DOM are removed.
+**Description:** Use `Platform.isMobile` plus a narrow viewport preview fallback. Make opening and closing the custom screen idempotent and ensure registered handlers and DOM are removed.
 
 **Acceptance criteria:**
 
@@ -27,7 +27,7 @@
 
 ## Task 2: Build the compact capture-first mobile composition
 
-**Description:** Reorder the mobile-only renderer so persistent actions, title, type, primary scheduling fields, and description form the visible capture flow. Put Related note, Detail note, and Save to inside one collapsed `More options` container without unmounting their state.
+**Description:** Keep persistent actions, title, type, primary scheduling fields, and description in the visible mobile flow. Put Related note, Detail note, and Save to inside one collapsed `More options` container without unmounting their state.
 
 **Acceptance criteria:**
 
@@ -76,13 +76,13 @@
 
 ## Task 4: Consolidate and refine adaptive mobile styling
 
-**Description:** Replace overlapping mobile-sheet rules with one scoped source of truth. Implement compact spacing, 44px touch targets, adaptive bottom-sheet/full-height behavior, safe areas, and keyboard-aware scrolling without changing desktop styling.
+**Description:** Replace obsolete mobile-sheet rules with one fullscreen source of truth. Implement compact spacing, 44px touch targets, safe areas, and visual-viewport scrolling without changing desktop styling.
 
 **Acceptance criteria:**
 
-- [x] All redesigned selectors are scoped below `.fn-mobile-sheet`.
+- [x] All redesigned selectors are scoped below `.fn-mobile-event-screen`.
 - [ ] Controls have at least 44px touch targets and no horizontal overflow at 360px width.
-- [x] The sheet expands toward fullscreen when available height is short or the keyboard is open.
+- [x] The screen remains top-anchored and resizes only its scrollable body when the keyboard opens.
 
 **Verification:**
 
@@ -101,7 +101,7 @@
 
 ## Task 5: Complete real Obsidian mobile acceptance
 
-**Description:** Exercise the final sheet in Obsidian at approximately 390x844 and 360x640, including software-keyboard behavior and every optional workflow. Record automated evidence separately from user/operator acceptance.
+**Description:** Exercise the final screen in Obsidian at approximately 390x844 and 360x640, including software-keyboard behavior and every optional workflow. Record automated evidence separately from user/operator acceptance.
 
 **Acceptance criteria:**
 

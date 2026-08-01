@@ -2,7 +2,7 @@
 
 ## Status
 
-The first implementation failed real-mobile acceptance because the keyboard compressed the inherited bottom-sheet layout. Further layout work is paused while the shared form state and save boundaries are separated from the renderers.
+The first implementation failed real-mobile acceptance because the keyboard compressed the inherited bottom-sheet layout. Shared state and submission boundaries are now separated; the approved replacement is an independent fullscreen mobile renderer.
 
 ## Objective
 
@@ -20,8 +20,9 @@ Less-frequent fields remain available through compact disclosure rows and do not
 
 ## Assumptions
 
-- The current custom `EventTaskMobileSheet` is retained only during a behavior-preserving quality refactor. Its inheritance from `EventTaskModal` is not an approved final architecture.
-- A single scrollable sheet is preferable to a multi-step wizard for fast capture.
+- Desktop continues to use `EventTaskModal extends Modal`.
+- Mobile uses an independent `EventTaskMobileScreen extends Component`; it must not inherit desktop rendering or viewport behavior.
+- A single scrollable screen is preferable to a multi-step wizard for fast capture.
 - Event defaults remain date plus start/end time; Task defaults remain due date, with timebox and reminders optional.
 - `Related note`, `Detail note`, and `Save to` remain supported. `Save to` starts collapsed because its defaults are already resolved.
 - Existing writer behavior, settings, templates, and desktop modal are out of scope.
@@ -33,15 +34,14 @@ Less-frequent fields remain available through compact disclosure rows and do not
 - Detect the actual Obsidian mobile UI with the public `Platform.isMobile` API. A viewport-width check may still select the responsive preview on desktop, but it must not replace platform detection.
 - Build custom UI with Obsidian's `HTMLElement.createEl()` helpers and plugin-owned class names.
 - Use Obsidian CSS variables for colors, borders, backgrounds, and typography compatibility across themes.
-- Global and DOM listeners must be detached when the sheet closes. If the custom sheet is moved to a `Component`, use `registerDomEvent()`/`unload()`; otherwise keep one explicit, idempotent cleanup path.
-- The official `Modal` API provides `open()`, `close()`, `onOpen()`, and `onClose()` and notes that mobile modals animate on screen. The current project-specific sheet bypasses that container because the prior Modal layout was not reliable with the software keyboard. This is an intentional exception, not an official Obsidian UI pattern, and therefore requires real mobile acceptance.
+- Global and DOM listeners are owned by `Component` through `registerDomEvent()` and unload with the screen or its parent plugin/view.
+- The official `Modal` API remains the desktop path. The project-specific mobile screen bypasses that container because the prior Modal layout was not reliable with the software keyboard. This is an intentional exception, not an official Obsidian UI pattern, and therefore requires real mobile acceptance.
 - Avoid hardcoded inline styling. Runtime-only viewport measurements may be passed through narrowly scoped CSS custom properties because their values cannot be known statically; all visual rules remain in `styles.css`.
 
 ## Mobile Information Architecture
 
 ### Persistent top bar
 
-- Compact drag handle.
 - `Cancel` action on the left.
 - Context title (`New event` or `New task`) centered or visually grouped with the type selector.
 - `Save` primary action on the right.
@@ -67,7 +67,8 @@ Less-frequent fields remain available through compact disclosure rows and do not
 ### Keyboard behavior
 
 - The focused field must remain visible above the software keyboard.
-- The sheet uses the actual `visualViewport` inset when available and does not assume a fixed keyboard percentage.
+- The screen is anchored to the top of the actual `visualViewport`; keyboard changes resize only the scrollable body below the fixed header.
+- The renderer does not use bottom alignment, a backdrop, a drag handle, or a `78dvh` height cap.
 - The scroll position must not jump when focus moves between fields.
 - Save and Cancel remain reachable without requiring the keyboard to be dismissed manually.
 
@@ -86,18 +87,20 @@ Less-frequent fields remain available through compact disclosure rows and do not
 - TypeScript and the Obsidian API.
 - Shared form state: `src/EventTaskFormState.ts`.
 - Shared submission orchestration: `src/EventTaskSubmission.ts`.
-- Desktop and temporary mobile renderers: `src/EventTaskModal.ts`.
-- Shared styling: `styles.css`; mobile changes remain under `.fn-mobile-sheet` to avoid desktop regressions.
+- Desktop renderer and entry point: `src/EventTaskModal.ts`.
+- Independent mobile renderer: `src/EventTaskMobileScreen.ts`.
+- Mobile viewport policy: `src/MobileViewport.ts`.
+- Shared styling: `styles.css`; mobile changes remain under `.fn-mobile-event-screen` to avoid desktop regressions.
 - Unit tests: `test/` using Node's built-in test runner.
 - Design specification: `docs/spec-mobile-event-task-modal.md`.
 
 ## Code Style
 
-Reuse the existing render-helper style and keep mobile-only behavior in `EventTaskMobileSheet`:
+Keep mobile-only rendering inside `EventTaskMobileScreen` and use plugin-owned classes:
 
 ```ts
 const summary = details.createEl("summary", {
-    cls: "fn-mobile-disclosure-summary",
+    cls: "fn-mobile-event-summary",
     attr: { "aria-label": label }
 });
 ```
@@ -126,7 +129,7 @@ OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run build
 - Unit-test any extracted state, summary, or responsive decision helpers.
 - Run the complete lint, typecheck, test, and production build gates.
 - Perform real Obsidian acceptance at approximately 390x844 and one shorter viewport near 360x640.
-- On both sizes, test Event and Task, long title, keyboard-open description, each optional disclosure, folder/file suggesters, Save, Cancel, backdrop dismissal, and Escape where available.
+- On both sizes, test Event and Task, long title, keyboard-open description, each optional disclosure, folder/file suggesters, Save, Cancel, and Escape where available.
 - Confirm no runtime errors in the Obsidian developer console.
 - Desktop behavior remains a separate regression check; static build success is not desktop acceptance.
 
@@ -165,11 +168,6 @@ OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run build
 - No mobile rule changes the desktop modal.
 - Tests, typecheck, lint, and production build pass.
 - Real-device or Obsidian mobile acceptance is recorded separately from automated verification.
-
-## Open Questions
-
-1. Should `Save to` be collapsed by default as proposed, or remain open so the destination is always visible?
-2. Should the mobile sheet keep its current 78vh bottom-sheet height, or expand close to fullscreen when content or keyboard requires it?
 
 ## Official References
 

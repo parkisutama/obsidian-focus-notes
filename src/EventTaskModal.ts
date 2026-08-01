@@ -1,5 +1,6 @@
 import {
     App,
+    Component,
     FuzzySuggestModal,
     Modal,
     Notice,
@@ -9,8 +10,9 @@ import {
 } from "obsidian";
 import { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
 import { EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
-import { EventTaskFormState, EventTaskKind, HubMode, formatLocalDate } from "./EventTaskFormState";
+import { EventTaskFormState, HubMode, formatLocalDate } from "./EventTaskFormState";
 import { submitEventTask } from "./EventTaskSubmission";
+import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { isTFile } from "./utils";
@@ -21,10 +23,11 @@ export function openEventTaskForm(
     getSettings: () => FocusNotesSettings,
     saveSettings: () => Promise<void>,
     anchorDate: Date = new Date(),
-    onComplete: () => void = () => {}
+    onComplete: () => void = () => {},
+    owner?: Component
 ): void {
     if (shouldUseMobileForm(Platform.isMobile, window.innerWidth)) {
-        new EventTaskMobileSheet(app, getSettings, saveSettings, anchorDate, onComplete).open();
+        new EventTaskMobileScreen(app, getSettings, anchorDate, onComplete).open(owner);
         return;
     }
 
@@ -51,8 +54,6 @@ export class EventTaskModal extends Modal {
     private remindersListEl!: HTMLElement;
     private detailNoteRowEl!: HTMLElement;
     private detailNoteInputEl!: HTMLInputElement;
-    protected cleanupMobileViewportSupport: (() => void) | null = null;
-
     constructor(
         app: App,
         private getSettings: () => FocusNotesSettings,
@@ -78,17 +79,15 @@ export class EventTaskModal extends Modal {
         this.modalEl.addClass("fn-gcal-modal");
         const { contentEl } = this;
         contentEl.empty();
-        this.renderForm(contentEl, this.modalEl);
+        this.renderForm(contentEl);
     }
 
     onClose(): void {
-        this.cleanupMobileViewportSupport?.();
-        this.cleanupMobileViewportSupport = null;
         this.contentEl.empty();
         if (!this.resolved) this.resolved = true;
     }
 
-    protected renderForm(contentEl: HTMLElement, viewportVariableTarget: HTMLElement): void {
+    protected renderForm(contentEl: HTMLElement): void {
         contentEl.addClass("fn-gcal-content");
 
         this.renderTitle(contentEl);
@@ -105,7 +104,6 @@ export class EventTaskModal extends Modal {
         this.renderDetailNote(body);
         this.renderSaveTo(body);
         this.renderButtons(contentEl);
-        this.setupMobileViewportSupport(contentEl, viewportVariableTarget);
     }
 
     // =========================================================================
@@ -614,344 +612,6 @@ export class EventTaskModal extends Modal {
         return cb;
     }
 
-    protected setupMobileViewportSupport(rootEl: HTMLElement, variableTargetEl: HTMLElement): void {
-        const viewport = window.visualViewport;
-        const body = rootEl.querySelector<HTMLElement>(".fn-gcal-body");
-        let focusInsideEditable = false;
-        const isEditable = (el: Element | null): boolean => {
-            return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement;
-        };
-        const updateHeight = (): void => {
-            const height = viewport?.height ?? window.innerHeight;
-            const offsetTop = viewport?.offsetTop ?? 0;
-            const keyboardInset = viewport
-                ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
-                : 0;
-            variableTargetEl.style.setProperty("--fn-gcal-viewport-height", `${Math.max(240, height)}px`);
-            variableTargetEl.style.setProperty("--fn-gcal-viewport-top", `${Math.max(0, offsetTop)}px`);
-            variableTargetEl.style.setProperty("--fn-gcal-keyboard-inset", `${keyboardInset}px`);
-            variableTargetEl.toggleClass("fn-mobile-keyboard-open", focusInsideEditable || keyboardInset > 80);
-        };
-        const keepFocusedFieldVisible = (event?: Event): void => {
-            const target = event?.target;
-            const active = target instanceof HTMLElement ? target : document.activeElement;
-            if (!body || !(active instanceof HTMLElement) || !rootEl.contains(active)) return;
-
-            window.setTimeout(() => {
-                const bodyRect = body.getBoundingClientRect();
-                const activeRect = active.getBoundingClientRect();
-                const bottomOverflow = activeRect.bottom - bodyRect.bottom + 72;
-                const topOverflow = bodyRect.top - activeRect.top + 24;
-
-                if (bottomOverflow > 0) {
-                    body.scrollTop += bottomOverflow;
-                } else if (topOverflow > 0) {
-                    body.scrollTop -= topOverflow;
-                }
-
-                if (bottomOverflow > 0 || topOverflow > 0) {
-                    active.scrollIntoView({ block: "center", inline: "nearest" });
-                }
-            }, 120);
-        };
-        const onFocusIn = (event: FocusEvent): void => {
-            focusInsideEditable = isEditable(event.target instanceof Element ? event.target : null);
-            updateHeight();
-            keepFocusedFieldVisible(event);
-        };
-        const onFocusOut = (): void => {
-            window.setTimeout(() => {
-                focusInsideEditable = rootEl.contains(document.activeElement) && isEditable(document.activeElement);
-                updateHeight();
-            }, 80);
-        };
-
-        updateHeight();
-        window.addEventListener("resize", updateHeight);
-        rootEl.addEventListener("focusin", onFocusIn);
-        rootEl.addEventListener("focusout", onFocusOut);
-        viewport?.addEventListener("resize", updateHeight);
-        viewport?.addEventListener("scroll", updateHeight);
-        viewport?.addEventListener("resize", keepFocusedFieldVisible);
-        viewport?.addEventListener("scroll", keepFocusedFieldVisible);
-
-        this.cleanupMobileViewportSupport = () => {
-            window.removeEventListener("resize", updateHeight);
-            rootEl.removeEventListener("focusin", onFocusIn);
-            rootEl.removeEventListener("focusout", onFocusOut);
-            viewport?.removeEventListener("resize", updateHeight);
-            viewport?.removeEventListener("scroll", updateHeight);
-            viewport?.removeEventListener("resize", keepFocusedFieldVisible);
-            viewport?.removeEventListener("scroll", keepFocusedFieldVisible);
-            variableTargetEl.style.removeProperty("--fn-gcal-viewport-height");
-            variableTargetEl.style.removeProperty("--fn-gcal-viewport-top");
-            variableTargetEl.style.removeProperty("--fn-gcal-keyboard-inset");
-            variableTargetEl.removeClass("fn-mobile-keyboard-open");
-        };
-    }
-
-}
-
-export class EventTaskMobileSheet extends EventTaskModal {
-    private sheetEl: HTMLElement | null = null;
-    private sheetContentEl: HTMLElement | null = null;
-    private cleanupSheetEvents: (() => void) | null = null;
-    private contextLabelEl: HTMLElement | null = null;
-    private taskOptionsEl: HTMLElement | null = null;
-
-    open(): void {
-        if (this.sheetEl || document.querySelector(".fn-mobile-sheet")) return;
-
-        const sheet = document.body.createDiv({ cls: "fn-mobile-sheet" });
-        const content = sheet.createDiv({ cls: "fn-mobile-sheet-content" });
-        this.sheetEl = sheet;
-        this.sheetContentEl = content;
-        document.body.addClass("fn-mobile-sheet-open");
-
-        const onKeyDown = (event: KeyboardEvent): void => {
-            if (event.key !== "Escape" || this.resolved) return;
-            event.preventDefault();
-            this.resolved = true;
-            this.close();
-        };
-        const dismissKeyboard = (): void => {
-            const active = document.activeElement;
-            if (active instanceof HTMLElement && sheet.contains(active)) {
-                active.blur();
-            }
-            sheet.removeClass("fn-mobile-keyboard-open");
-            sheet.style.setProperty("--fn-gcal-keyboard-inset", "0px");
-        };
-        const onPointerDown = (event: PointerEvent): void => {
-            const target = event.target;
-            if (!(target instanceof Element)) return;
-            // Tap directly on the backdrop (outside sheet content) → dismiss
-            if (target === sheet && !this.resolved) {
-                this.resolved = true;
-                this.close();
-                return;
-            }
-            const isEditableTarget =
-                target instanceof HTMLInputElement ||
-                target instanceof HTMLTextAreaElement ||
-                target instanceof HTMLSelectElement ||
-                Boolean(target.closest("input, textarea, select"));
-            if (!isEditableTarget) dismissKeyboard();
-        };
-        window.addEventListener("keydown", onKeyDown);
-        sheet.addEventListener("pointerdown", onPointerDown);
-        this.cleanupSheetEvents = () => {
-            window.removeEventListener("keydown", onKeyDown);
-            sheet.removeEventListener("pointerdown", onPointerDown);
-        };
-
-        this.renderForm(content, sheet);
-    }
-
-    close(): void {
-        this.cleanupMobileViewportSupport?.();
-        this.cleanupMobileViewportSupport = null;
-        this.cleanupSheetEvents?.();
-        this.cleanupSheetEvents = null;
-        this.sheetEl?.remove();
-        this.sheetEl = null;
-        this.sheetContentEl = null;
-        this.contextLabelEl = null;
-        this.taskOptionsEl = null;
-        document.body.removeClass("fn-mobile-sheet-open");
-        if (!this.resolved) this.resolved = true;
-    }
-
-    protected renderForm(contentEl: HTMLElement, viewportVariableTarget: HTMLElement): void {
-        contentEl.addClass("fn-gcal-content");
-        contentEl.addClass("fn-mobile-task-content");
-        contentEl.createDiv({ cls: "fn-mobile-sheet-handle" });
-
-        const topbar = contentEl.createDiv({ cls: "fn-mobile-task-topbar" });
-        const closeButton = topbar.createEl("button", {
-            cls: "fn-mobile-sheet-close",
-            text: "Cancel",
-            attr: { type: "button", "aria-label": "Cancel", title: "Cancel" }
-        });
-        closeButton.addEventListener("click", () => {
-            if (this.resolved) return;
-            this.resolved = true;
-            this.close();
-        });
-
-        this.contextLabelEl = topbar.createDiv({
-            cls: "fn-mobile-task-context",
-            text: "New event",
-            attr: { "aria-live": "polite" }
-        });
-
-        const saveButton = topbar.createEl("button", {
-            cls: "fn-mobile-task-save mod-cta",
-            text: "Save",
-            attr: { type: "button" }
-        });
-        saveButton.addEventListener("click", () => void this.submit());
-
-        const body = contentEl.createDiv({ cls: "fn-gcal-body fn-mobile-task-body" });
-        this.renderTitle(body);
-        this.renderTabs(body);
-
-        this.eventSectionEl = body.createDiv({ cls: "fn-gcal-tab-section fn-mobile-primary-section" });
-        this.taskSectionEl = body.createDiv({ cls: "fn-gcal-tab-section fn-mobile-primary-section fn-gcal-hidden" });
-        this.renderEventSection(this.eventSectionEl);
-        this.renderTaskDueSection(this.taskSectionEl);
-        this.renderDescription(body);
-
-        const advanced = body.createDiv({ cls: "fn-mobile-advanced-list" });
-        this.renderMobileDisclosure(
-            advanced,
-            "More options",
-            "sliders-horizontal",
-            options => {
-                this.taskOptionsEl = options.createDiv({ cls: "fn-mobile-task-options fn-gcal-hidden" });
-                this.renderMobileDisclosure(
-                    this.taskOptionsEl,
-                    "Timebox",
-                    "timer",
-                    container => this.renderTaskTimeboxSection(container)
-                );
-                this.renderMobileDisclosure(
-                    this.taskOptionsEl,
-                    "Reminders",
-                    "bell",
-                    container => this.renderTaskRemindersSection(container)
-                );
-                this.renderMobileDisclosure(options, "Related note", "link", container => this.renderHubNote(container));
-                this.renderMobileDisclosure(options, "Detail note", "file-text", container => this.renderDetailNote(container));
-                this.renderMobileDisclosure(
-                    options,
-                    "Save to",
-                    "folder",
-                    container => this.renderSaveTo(container),
-                    false,
-                    () => this.getTargetFileSummary()
-                );
-            },
-            false,
-            () => "Notes, details, and destination"
-        );
-
-        this.setupMobileViewportSupport(contentEl, viewportVariableTarget);
-    }
-
-    protected renderTitle(container: HTMLElement): void {
-        const titleInput = container.createEl("input", {
-            type: "text",
-            cls: "fn-gcal-title-input fn-mobile-title-input",
-            attr: { placeholder: "Add title", "aria-label": "Title" }
-        });
-        titleInput.addEventListener("input", () => {
-            this.setTitleValue(titleInput.value);
-        });
-        titleInput.addEventListener("keydown", evt => {
-            if (evt.key === "Enter" && !evt.shiftKey) {
-                evt.preventDefault();
-                void this.submit();
-            }
-        });
-    }
-
-    protected renderTabs(container: HTMLElement): void {
-        const tabs = container.createDiv({
-            cls: "fn-gcal-tabs",
-            attr: { role: "group", "aria-label": "Item type" }
-        });
-        const eventBtn = tabs.createEl("button", {
-            cls: "fn-gcal-tab fn-gcal-tab--active",
-            text: "Event",
-            attr: { type: "button", "aria-pressed": "true" }
-        });
-        const taskBtn = tabs.createEl("button", {
-            cls: "fn-gcal-tab",
-            text: "Task",
-            attr: { type: "button", "aria-pressed": "false" }
-        });
-
-        const activate = (kind: EventTaskKind): void => {
-            this.form.kind = kind;
-            const isEvent = kind === "event";
-            eventBtn.toggleClass("fn-gcal-tab--active", isEvent);
-            taskBtn.toggleClass("fn-gcal-tab--active", !isEvent);
-            eventBtn.setAttribute("aria-pressed", String(isEvent));
-            taskBtn.setAttribute("aria-pressed", String(!isEvent));
-            this.eventSectionEl.toggleClass("fn-gcal-hidden", !isEvent);
-            this.taskSectionEl.toggleClass("fn-gcal-hidden", isEvent);
-            this.taskOptionsEl?.toggleClass("fn-gcal-hidden", isEvent);
-            this.contextLabelEl?.setText(isEvent ? "New event" : "New task");
-        };
-
-        eventBtn.addEventListener("click", () => activate("event"));
-        taskBtn.addEventListener("click", () => activate("task"));
-    }
-
-    protected makeCheckboxRow(
-        container: HTMLElement,
-        label: string,
-        id: string,
-        onChange: (checked: boolean) => void,
-        initial = false
-    ): HTMLInputElement {
-        let checked = initial;
-        const row = container.createEl("button", {
-            cls: "fn-mobile-toggle-row" + (initial ? " fn-mobile-toggle-row--on" : ""),
-            attr: { type: "button", "aria-pressed": String(initial) }
-        });
-        row.createSpan({ cls: "fn-mobile-toggle-label", text: label });
-        const indicator = row.createSpan({ cls: "fn-mobile-toggle-indicator" });
-        setIcon(indicator, initial ? "check-circle-2" : "circle");
-
-        row.addEventListener("click", () => {
-            checked = !checked;
-            row.toggleClass("fn-mobile-toggle-row--on", checked);
-            row.setAttribute("aria-pressed", String(checked));
-            indicator.empty();
-            setIcon(indicator, checked ? "check-circle-2" : "circle");
-            dummy.checked = checked;
-            onChange(checked);
-        });
-
-        // Hidden input untuk API compatibility (return type & id lookups)
-        const dummy = container.createEl("input", {
-            type: "checkbox",
-            cls: "fn-gcal-hidden",
-            attr: { id }
-        });
-        dummy.checked = initial;
-        return dummy;
-    }
-
-    private renderMobileDisclosure(
-        container: HTMLElement,
-        label: string,
-        icon: string,
-        renderContent: (container: HTMLElement) => void,
-        open = false,
-        getSummary?: () => string
-    ): void {
-        const details = container.createEl("details", { cls: "fn-mobile-disclosure" });
-        details.open = open;
-        const summary = details.createEl("summary", { cls: "fn-mobile-disclosure-summary" });
-        const iconEl = summary.createSpan({ cls: "fn-mobile-disclosure-icon" });
-        setIcon(iconEl, icon);
-        const labelWrap = summary.createSpan({ cls: "fn-mobile-disclosure-label-wrap" });
-        labelWrap.createSpan({ cls: "fn-mobile-disclosure-label", text: label });
-        const summaryText = getSummary
-            ? labelWrap.createSpan({ cls: "fn-mobile-disclosure-value", text: getSummary() })
-            : null;
-        const chevron = summary.createSpan({ cls: "fn-mobile-disclosure-chevron" });
-        setIcon(chevron, "chevron-down");
-
-        const content = details.createDiv({ cls: "fn-mobile-disclosure-content" });
-        renderContent(content);
-        if (summaryText && getSummary) {
-            details.addEventListener("toggle", () => summaryText.setText(getSummary()));
-        }
-    }
 }
 
 // ---------------------------------------------------------------------------
