@@ -90,9 +90,9 @@ body.fn-mobile-event-screen-open {
 }
 
 .fn-mobile-event-screen .fn-mobile-event-title {
-    width: calc(100% - 50px);
+    width: 100%;
     min-height: 52px;
-    margin: 0 0 8px 50px;
+    margin: 0 0 8px;
     padding: 4px 0;
     border: 0;
     border-radius: 0;
@@ -107,7 +107,7 @@ body.fn-mobile-event-screen-open {
 .fn-mobile-event-screen .fn-mobile-event-kind {
     display: flex;
     gap: 6px;
-    margin: 0 0 8px 50px;
+    margin: 0 0 8px;
     overflow-x: auto;
 }
 
@@ -189,15 +189,16 @@ body.fn-mobile-event-screen-open {
 .fn-mobile-event-screen .fn-mobile-event-field-icon {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     width: 34px;
     height: 40px;
     color: var(--text-muted);
 }
 
 .fn-mobile-event-screen .fn-mobile-event-field-icon svg {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
+    overflow: visible;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-label {
@@ -283,10 +284,18 @@ body.fn-mobile-event-screen-open {
     color: var(--text-muted);
 }
 
+.fn-mobile-event-screen .fn-mobile-event-summary-icon {
+    justify-content: flex-start;
+}
+
 .fn-mobile-event-screen .fn-mobile-event-summary-icon svg,
 .fn-mobile-event-screen .fn-mobile-event-summary-chevron svg {
     width: 18px;
     height: 18px;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-summary-icon svg {
+    overflow: visible;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-disclosure[open] > .fn-mobile-event-summary .fn-mobile-event-summary-chevron {

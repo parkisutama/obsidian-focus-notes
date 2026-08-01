@@ -64,6 +64,7 @@ Less-frequent fields remain available through compact disclosure rows and do not
   - Save to.
 - Each subsection exposes its current summary when collapsed, such as the resolved target filename for `Save to`.
 - Nested option summaries keep their icons on the same leading column as the parent summary instead of accumulating indentation.
+- Add title, type chips, and the leading edge of every row icon share one horizontal alignment line; icon SVG strokes must not be clipped.
 - Opening one subsection must not hide or discard values entered in another subsection.
 
 ### Keyboard behavior

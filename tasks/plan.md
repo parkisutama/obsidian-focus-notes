@@ -53,6 +53,7 @@ Automated gates and real Obsidian acceptance
 - [x] Remove the duplicate centered header title that collided with system UI.
 - [x] Replace large cards and full-width type tabs with compact Google Calendar-inspired rows and chips.
 - [x] Reduce chip visual height and remove cumulative disclosure indentation after the second device review.
+- [x] Align title, chips, and row icons to one leading edge and prevent SVG clipping after the third device review.
 - [ ] Repeat real-device acceptance with keyboard closed and open.
 
 ### Phase 2: Foundation verification
