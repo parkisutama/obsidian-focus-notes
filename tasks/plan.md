@@ -2,7 +2,7 @@
 
 ## Overview
 
-Replace the failed inherited bottom sheet with an independent fullscreen mobile screen while preserving desktop behavior, every form value, and saved Markdown output.
+Refine the independent mobile renderer into a compact, Google Calendar-inspired editor sheet after real-device testing exposed Android status-bar overlap and excessive card density.
 
 ## Architecture Decisions
 
@@ -10,7 +10,8 @@ Replace the failed inherited bottom sheet with an independent fullscreen mobile 
 - Keep `EventTaskModal extends Modal` for desktop and use `EventTaskMobileScreen extends Component` for mobile.
 - Select the mobile renderer with Obsidian's public `Platform.isMobile` API, retaining the width check only for desktop responsive preview.
 - Keep one scrollable mobile body instead of adding a wizard. Common fields stay visible; optional fields move under one collapsed `More options` disclosure.
-- Anchor the fullscreen screen to `visualViewport`; never bottom-align or cap it to a sheet height.
+- Mount inside the public workspace container, reserve system-bar clearance, and resize the body against `visualViewport`.
+- Use a rounded sheet, X/Save header, title, compact type chips, and icon-led rows without large cards.
 - Make listener cleanup idempotent and keep all dynamic viewport styling limited to CSS custom properties.
 - Consolidate mobile-screen CSS into one authoritative scoped block and remove obsolete sheet selectors.
 - Do not change writer logic, settings, default values, or desktop layout.
@@ -45,6 +46,13 @@ Automated gates and real Obsidian acceptance
 - [x] Keep a fixed top header and one scrollable body anchored to `visualViewport`.
 - [x] Preserve every event/task field, suggester, validation, and submission path.
 - [x] Remove obsolete bottom-sheet and keyboard-compression rules.
+
+### Phase 1B: Real-device visual correction
+
+- [x] Move the sheet below Android system chrome with workspace measurement and a tested fallback.
+- [x] Remove the duplicate centered header title that collided with system UI.
+- [x] Replace large cards and full-width type tabs with compact Google Calendar-inspired rows and chips.
+- [ ] Repeat real-device acceptance with keyboard closed and open.
 
 ### Phase 2: Foundation verification
 

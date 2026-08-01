@@ -2,7 +2,7 @@
 
 ## Status
 
-The first implementation failed real-mobile acceptance because the keyboard compressed the inherited bottom-sheet layout. Shared state and submission boundaries are now separated; the approved replacement is an independent fullscreen mobile renderer.
+Two real-mobile acceptance rounds exposed keyboard compression and Android status-bar overlap. The approved renderer is now an independent, workspace-anchored editor sheet with Google Calendar-inspired information density.
 
 ## Objective
 
@@ -21,8 +21,8 @@ Less-frequent fields remain available through compact disclosure rows and do not
 ## Assumptions
 
 - Desktop continues to use `EventTaskModal extends Modal`.
-- Mobile uses an independent `EventTaskMobileScreen extends Component`; it must not inherit desktop rendering or viewport behavior.
-- A single scrollable screen is preferable to a multi-step wizard for fast capture.
+- Mobile uses an independent `EventTaskMobileScreen extends Component`; it mounts inside the public workspace container and must not inherit desktop rendering.
+- A single scrollable editor sheet is preferable to a multi-step wizard for fast capture.
 - Event defaults remain date plus start/end time; Task defaults remain due date, with timebox and reminders optional.
 - `Related note`, `Detail note`, and `Save to` remain supported. `Save to` starts collapsed because its defaults are already resolved.
 - Existing writer behavior, settings, templates, and desktop modal are out of scope.
@@ -40,18 +40,18 @@ Less-frequent fields remain available through compact disclosure rows and do not
 
 ## Mobile Information Architecture
 
-### Persistent top bar
+### Compact sheet header
 
 - `Cancel` action on the left.
-- Context title (`New event` or `New task`) centered or visually grouped with the type selector.
+- No duplicate context title; Event/Task choice is expressed by compact chips below the title.
 - `Save` primary action on the right.
-- Top bar remains visible while the body scrolls and respects the top safe area.
+- The sheet begins below the workspace/status area with rounded top corners, and its header remains visible while the body scrolls.
 
 ### Primary content
 
 - Title input, visually prominent but no larger than needed.
-- Event/Task segmented control with proper selected state.
-- Event: date, start, end, and All day in a compact card/row.
+- Event/Task chip control with proper selected state.
+- Event: date, start, end, and All day in compact icon-led rows without large cards.
 - Task: due date with optional time; Timebox and Reminders remain opt-in.
 - Description is a compact auto-growing textarea with a bounded maximum height.
 
@@ -67,7 +67,8 @@ Less-frequent fields remain available through compact disclosure rows and do not
 ### Keyboard behavior
 
 - The focused field must remain visible above the software keyboard.
-- The screen is anchored to the top of the actual `visualViewport`; keyboard changes resize only the scrollable body below the fixed header.
+- The sheet is mounted inside `app.workspace.containerEl`; its fixed bounds use the workspace top when available and a 40 CSS-pixel Android chrome fallback when the WebView reports zero inset.
+- `visualViewport` changes resize only the scrollable body below the fixed header.
 - The renderer does not use bottom alignment, a backdrop, a drag handle, or a `78dvh` height cap.
 - The scroll position must not jump when focus moves between fields.
 - Save and Cancel remain reachable without requiring the keyboard to be dismissed manually.

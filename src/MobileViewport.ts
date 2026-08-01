@@ -9,19 +9,23 @@ export interface MobileViewportMetrics {
     keyboardInset: number;
 }
 
+const MINIMUM_MOBILE_CHROME_HEIGHT = 40;
+
 export function getMobileViewportMetrics(
     windowHeight: number,
-    viewport?: VisualViewportSnapshot
+    viewport?: VisualViewportSnapshot,
+    workspaceTop = 0,
+    sheetGap = 0
 ): MobileViewportMetrics {
-    if (!viewport) {
-        return { height: windowHeight, offsetTop: 0, keyboardInset: 0 };
-    }
-
-    const height = Math.max(240, viewport.height);
-    const offsetTop = Math.max(0, viewport.offsetTop);
+    const viewportHeight = viewport?.height ?? windowHeight;
+    const viewportTop = Math.max(0, viewport?.offsetTop ?? 0);
+    const contentTop = Math.max(workspaceTop, MINIMUM_MOBILE_CHROME_HEIGHT);
+    const absoluteTop = Math.max(contentTop + sheetGap, viewportTop + sheetGap);
     return {
-        height,
-        offsetTop,
-        keyboardInset: Math.max(0, windowHeight - viewport.height - viewport.offsetTop)
+        height: Math.max(240, viewportTop + viewportHeight - absoluteTop),
+        offsetTop: absoluteTop,
+        keyboardInset: viewport
+            ? Math.max(0, windowHeight - viewport.height - viewport.offsetTop)
+            : 0
     };
 }

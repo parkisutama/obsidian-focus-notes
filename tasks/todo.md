@@ -76,7 +76,7 @@
 
 ## Task 4: Consolidate and refine adaptive mobile styling
 
-**Description:** Replace obsolete mobile-sheet rules with one fullscreen source of truth. Implement compact spacing, 44px touch targets, safe areas, and visual-viewport scrolling without changing desktop styling.
+**Description:** Keep one scoped editor-sheet source of truth. Implement compact rows, 44px touch targets, workspace/system-bar clearance, safe areas, and visual-viewport scrolling without changing desktop styling.
 
 **Acceptance criteria:**
 

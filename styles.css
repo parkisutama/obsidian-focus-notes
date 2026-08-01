@@ -8,7 +8,7 @@
     overflow-y: auto;
 }
 
-/* Independent fullscreen mobile event/task screen. */
+/* Minimal mobile event/task editor sheet. */
 body.fn-mobile-event-screen-open {
     overflow: hidden;
 }
@@ -26,39 +26,56 @@ body.fn-mobile-event-screen-open {
     min-height: 240px;
     overflow: hidden;
     box-sizing: border-box;
+    border-radius: 24px 24px 0 0;
     background: var(--background-primary);
     color: var(--text-normal);
+    box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-handle {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 5px;
+    margin: 8px auto 2px;
+    border-radius: 999px;
+    background: var(--background-modifier-border);
 }
 
 .fn-mobile-event-screen .fn-mobile-event-header {
     flex: 0 0 auto;
     display: grid;
-    grid-template-columns: minmax(64px, auto) minmax(0, 1fr) minmax(64px, auto);
+    grid-template-columns: 44px minmax(0, 1fr) auto;
     align-items: center;
     gap: 8px;
-    min-height: 52px;
-    padding: calc(4px + env(safe-area-inset-top)) 12px 4px;
-    border-bottom: 1px solid var(--background-modifier-border);
+    min-height: 48px;
+    padding: 0 16px 2px;
     background: var(--background-primary);
 }
 
 .fn-mobile-event-screen .fn-mobile-event-cancel,
 .fn-mobile-event-screen .fn-mobile-event-save {
-    min-width: 64px;
     min-height: 44px;
     margin: 0;
     padding: 6px 10px;
     font-size: var(--font-ui-small);
 }
 
-.fn-mobile-event-screen .fn-mobile-event-context {
-    min-width: 0;
-    overflow: hidden;
-    font-size: var(--font-ui-small);
+.fn-mobile-event-screen .fn-mobile-event-cancel {
+    width: 44px;
+    min-width: 44px;
+    padding: 10px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-save {
+    grid-column: 3;
+    min-width: 88px;
+    padding-right: 18px;
+    padding-left: 18px;
+    border-radius: 999px;
     font-weight: 600;
-    text-align: center;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-body {
@@ -66,29 +83,34 @@ body.fn-mobile-event-screen-open {
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 12px 12px calc(24px + env(safe-area-inset-bottom));
+    padding: 4px 20px calc(24px + env(safe-area-inset-bottom));
     overscroll-behavior: contain;
     scroll-padding: 16px 0 calc(24px + env(safe-area-inset-bottom));
     -webkit-overflow-scrolling: touch;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-title {
-    width: 100%;
-    min-height: 48px;
-    margin: 0 0 10px;
-    padding: 8px 4px;
+    width: calc(100% - 54px);
+    min-height: 64px;
+    margin: 0 0 12px 54px;
+    padding: 8px 0;
     border: 0;
-    border-bottom: 1px solid var(--background-modifier-border);
     border-radius: 0;
     background: transparent;
     box-shadow: none;
     color: var(--text-normal);
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 500;
     line-height: 1.25;
 }
 
-.fn-mobile-event-screen .fn-mobile-event-kind,
+.fn-mobile-event-screen .fn-mobile-event-kind {
+    display: flex;
+    gap: 8px;
+    margin: 0 0 14px 54px;
+    overflow-x: auto;
+}
+
 .fn-mobile-event-screen .fn-mobile-event-segmented {
     display: grid;
     grid-auto-flow: column;
@@ -99,17 +121,14 @@ body.fn-mobile-event-screen-open {
     background: var(--background-secondary);
 }
 
-.fn-mobile-event-screen .fn-mobile-event-kind {
-    margin-bottom: 10px;
-}
-
 .fn-mobile-event-screen .fn-mobile-event-kind-button,
 .fn-mobile-event-screen .fn-mobile-event-segment {
-    min-width: 0;
+    min-width: 76px;
     min-height: 44px;
     margin: 0;
     padding: 6px 8px;
-    border: 0;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
     background: transparent;
     box-shadow: none;
     color: var(--text-muted);
@@ -118,12 +137,13 @@ body.fn-mobile-event-screen-open {
 
 .fn-mobile-event-screen .fn-mobile-event-kind-button.is-active,
 .fn-mobile-event-screen .fn-mobile-event-segment.is-active {
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
+    border-color: transparent;
+    background: var(--background-modifier-active-hover);
+    color: var(--text-normal);
 }
 
 .fn-mobile-event-screen .fn-mobile-event-primary,
-.fn-mobile-event-screen .fn-mobile-event-card,
+.fn-mobile-event-screen .fn-mobile-event-field-content,
 .fn-mobile-event-screen .fn-mobile-event-disclosure-content,
 .fn-mobile-event-screen .fn-mobile-event-conditional,
 .fn-mobile-event-screen .fn-mobile-event-reminders {
@@ -132,18 +152,33 @@ body.fn-mobile-event-screen-open {
     gap: 8px;
 }
 
-.fn-mobile-event-screen .fn-mobile-event-card {
-    margin-bottom: 10px;
-    padding: 10px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 10px;
-    background: var(--background-secondary);
+.fn-mobile-event-screen .fn-mobile-event-field-row {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-field-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 44px;
+    color: var(--text-muted);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-field-icon svg {
+    width: 22px;
+    height: 22px;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-label {
     color: var(--text-muted);
     font-size: var(--font-ui-smaller);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-grid {
@@ -163,13 +198,20 @@ body.fn-mobile-event-screen-open {
 }
 
 .fn-mobile-event-screen .fn-mobile-event-input {
-    padding: 7px 9px;
+    padding: 6px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-description {
-    min-height: 64px;
-    max-height: 144px;
-    padding: 9px;
+    min-height: 52px;
+    max-height: 120px;
+    padding: 6px 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
     resize: vertical;
 }
 
@@ -195,10 +237,10 @@ body.fn-mobile-event-screen-open {
 
 .fn-mobile-event-screen .fn-mobile-event-summary {
     display: grid;
-    grid-template-columns: 24px minmax(0, 1fr) 24px;
+    grid-template-columns: 34px minmax(0, 1fr) 24px;
     align-items: center;
     gap: 10px;
-    min-height: 52px;
+    min-height: 64px;
     cursor: pointer;
     list-style: none;
 }
@@ -241,7 +283,7 @@ body.fn-mobile-event-screen-open {
 }
 
 .fn-mobile-event-screen .fn-mobile-event-disclosure-content {
-    padding: 0 0 12px 34px;
+    padding: 0 0 12px 54px;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-task-options {

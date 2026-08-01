@@ -45,7 +45,7 @@ export class EventTaskMobileScreen extends Component {
     open(owner?: Component): void {
         if (this.rootEl || document.querySelector(".fn-mobile-event-screen")) return;
 
-        this.rootEl = document.body.createDiv({
+        this.rootEl = this.app.workspace.containerEl.createDiv({
             cls: "fn-mobile-event-screen",
             attr: { role: "dialog", "aria-modal": "true", "aria-label": "Create event or task" }
         });
@@ -82,17 +82,13 @@ export class EventTaskMobileScreen extends Component {
 
     private render(): void {
         const root = this.rootEl!;
+        root.createDiv({ cls: "fn-mobile-event-handle", attr: { "aria-hidden": "true" } });
         const header = root.createEl("header", { cls: "fn-mobile-event-header" });
         const cancel = header.createEl("button", {
             cls: "fn-mobile-event-cancel",
-            text: "Cancel",
-            attr: { type: "button" }
+            attr: { type: "button", "aria-label": "Cancel" }
         });
-        const context = header.createDiv({
-            cls: "fn-mobile-event-context",
-            text: "New event",
-            attr: { "aria-live": "polite" }
-        });
+        setIcon(cancel, "x");
         const save = header.createEl("button", {
             cls: "fn-mobile-event-save mod-cta",
             text: "Save",
@@ -121,7 +117,6 @@ export class EventTaskMobileScreen extends Component {
             eventSection.toggleClass("fn-gcal-hidden", !isEvent);
             taskSection.toggleClass("fn-gcal-hidden", isEvent);
             taskOptions.toggleClass("fn-gcal-hidden", isEvent);
-            context.setText(isEvent ? "New event" : "New task");
         }, eventSection);
         this.renderEventFields(eventSection);
         this.renderTaskDueFields(taskSection);
@@ -177,7 +172,7 @@ export class EventTaskMobileScreen extends Component {
     }
 
     private renderEventFields(container: HTMLElement): void {
-        const card = this.fieldCard(container, "When");
+        const card = this.fieldGroup(container, "When", "calendar-clock");
         const date = this.input(card, "date", "Event date", this.form.eventDate);
         const times = card.createDiv({ cls: "fn-mobile-event-grid" });
         const start = this.input(times, "time", "Start time", this.form.eventStartTime);
@@ -193,7 +188,7 @@ export class EventTaskMobileScreen extends Component {
     }
 
     private renderTaskDueFields(container: HTMLElement): void {
-        const card = this.fieldCard(container, "Due date");
+        const card = this.fieldGroup(container, "Due date", "calendar");
         const row = card.createDiv({ cls: "fn-mobile-event-grid" });
         const date = this.input(row, "date", "Due date", this.form.taskDueDate);
         const time = this.input(row, "time", "Due time", this.form.taskDueTime);
@@ -207,7 +202,7 @@ export class EventTaskMobileScreen extends Component {
     }
 
     private renderDescription(container: HTMLElement): void {
-        const card = this.fieldCard(container, "Description");
+        const card = this.fieldGroup(container, "Description", "align-left");
         const description = card.createEl("textarea", {
             cls: "fn-mobile-event-description",
             attr: { placeholder: "Add description or attachment…", "aria-label": "Description" }
@@ -349,10 +344,13 @@ export class EventTaskMobileScreen extends Component {
         }
     }
 
-    private fieldCard(container: HTMLElement, label: string): HTMLElement {
-        const card = container.createDiv({ cls: "fn-mobile-event-card" });
-        card.createDiv({ cls: "fn-mobile-event-label", text: label });
-        return card;
+    private fieldGroup(container: HTMLElement, label: string, icon: string): HTMLElement {
+        const row = container.createDiv({ cls: "fn-mobile-event-field-row" });
+        const iconEl = row.createSpan({ cls: "fn-mobile-event-field-icon" });
+        setIcon(iconEl, icon);
+        const fields = row.createDiv({ cls: "fn-mobile-event-field-content" });
+        fields.createDiv({ cls: "fn-mobile-event-label", text: label });
+        return fields;
     }
 
     private input(
@@ -431,7 +429,8 @@ export class EventTaskMobileScreen extends Component {
         const root = this.rootEl!;
         const viewport = window.visualViewport;
         const updateViewport = (): void => {
-            const metrics = getMobileViewportMetrics(window.innerHeight, viewport ?? undefined);
+            const workspaceTop = this.app.workspace.containerEl.getBoundingClientRect().top;
+            const metrics = getMobileViewportMetrics(window.innerHeight, viewport ?? undefined, workspaceTop, 8);
             root.style.setProperty("--fn-mobile-screen-height", `${metrics.height}px`);
             root.style.setProperty("--fn-mobile-screen-top", `${metrics.offsetTop}px`);
         };
