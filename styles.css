@@ -337,6 +337,33 @@ body.fn-mobile-event-screen-open {
     gap: 8px;
 }
 
+.fn-mobile-event-screen .fn-mobile-event-icon-input {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 40px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-input-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    color: var(--text-muted);
+}
+
+.fn-mobile-event-screen .fn-mobile-event-input-icon svg {
+    width: 17px;
+    height: 17px;
+    overflow: visible;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-icon-input .fn-mobile-event-input {
+    border-bottom: 0;
+}
+
 .fn-mobile-event-screen .fn-mobile-event-pick {
     width: auto;
     min-width: 64px;

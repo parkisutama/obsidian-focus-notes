@@ -262,15 +262,23 @@ export class EventTaskMobileScreen extends Component {
     private renderRelatedNote(container: HTMLElement): void {
         const modeHost = container.createDiv();
         const inputRow = container.createDiv({ cls: "fn-mobile-event-related-input fn-gcal-hidden" });
-        const note = this.input(inputRow, "text", "Related note", "", "Search notes…");
+        const noteField = this.iconInput(inputRow, "search", "Related note", "", "Search notes…");
+        const note = noteField.input;
         const pick = inputRow.createEl("button", {
             cls: "fn-mobile-event-pick",
             text: "Pick",
             attr: { type: "button" }
         });
         this.registerSuggester(new FileSuggest(this.app, note));
-        const folder = this.input(container, "text", "Related note folder", this.form.hubCreateFolder, "Folder for new note");
-        folder.addClass("fn-gcal-hidden");
+        const folderField = this.iconInput(
+            container,
+            "folder",
+            "Related note folder",
+            this.form.hubCreateFolder,
+            "Folder for new note"
+        );
+        const folder = folderField.input;
+        folderField.wrapper.addClass("fn-gcal-hidden");
         this.registerSuggester(new FolderSuggest(this.app, folder));
         const alsoWrap = container.createDiv({ cls: "fn-gcal-hidden" });
         this.checkbox(alsoWrap, "Also write to related note", false, checked => this.form.writeToHubNote = checked);
@@ -282,10 +290,12 @@ export class EventTaskMobileScreen extends Component {
         ], "none", mode => {
             this.form.hubMode = mode;
             inputRow.toggleClass("fn-gcal-hidden", mode === "none");
-            folder.toggleClass("fn-gcal-hidden", mode !== "create");
+            folderField.wrapper.toggleClass("fn-gcal-hidden", mode !== "create");
             pick.toggleClass("fn-gcal-hidden", mode !== "link");
             alsoWrap.toggleClass("fn-gcal-hidden", mode === "none");
             note.placeholder = mode === "create" ? "New note name" : "Search notes…";
+            noteField.icon.empty();
+            setIcon(noteField.icon, mode === "create" ? "file-text" : "search");
             note.value = mode === "create" ? this.form.title : "";
             if (mode === "create") this.form.hubCreateName = note.value;
             if (mode === "link") this.form.hubLinkPath = "";
@@ -308,8 +318,14 @@ export class EventTaskMobileScreen extends Component {
     private renderDetailNote(container: HTMLElement): void {
         const toggleHost = container.createDiv();
         const fields = container.createDiv({ cls: "fn-mobile-event-conditional fn-gcal-hidden" });
-        const name = this.input(fields, "text", "Detail note name", "", "Detail note name");
-        const folder = this.input(fields, "text", "Detail note folder", this.form.detailNoteFolder, "Folder for detail note");
+        const name = this.iconInput(fields, "file-text", "Detail note name", "", "Detail note name").input;
+        const folder = this.iconInput(
+            fields,
+            "folder",
+            "Detail note folder",
+            this.form.detailNoteFolder,
+            "Folder for detail note"
+        ).input;
         this.registerSuggester(new FolderSuggest(this.app, folder));
         this.checkbox(toggleHost, "Create detail note", false, checked => {
             this.form.detailNoteEnabled = checked;
@@ -324,8 +340,14 @@ export class EventTaskMobileScreen extends Component {
     }
 
     private renderSaveTarget(container: HTMLElement): void {
-        const file = this.input(container, "text", "Save to file", this.form.targetFile, "Note path");
-        const heading = this.input(container, "text", "Save under heading", this.form.targetHeading, "Heading (optional)");
+        const file = this.iconInput(container, "file-text", "Save to file", this.form.targetFile, "Note path").input;
+        const heading = this.iconInput(
+            container,
+            "hash",
+            "Save under heading",
+            this.form.targetHeading,
+            "Heading (optional)"
+        ).input;
         this.registerSuggester(new FileSuggest(this.app, file));
         this.checkbox(container, "Insert at top", this.form.targetPosition === "start", checked => {
             this.form.targetPosition = checked ? "start" : "end";
@@ -367,6 +389,23 @@ export class EventTaskMobileScreen extends Component {
         });
         input.value = value;
         return input;
+    }
+
+    private iconInput(
+        container: HTMLElement,
+        icon: string,
+        label: string,
+        value: string,
+        placeholder?: string
+    ): { wrapper: HTMLElement; icon: HTMLElement; input: HTMLInputElement } {
+        const wrapper = container.createDiv({ cls: "fn-mobile-event-icon-input" });
+        const iconEl = wrapper.createSpan({
+            cls: "fn-mobile-event-input-icon",
+            attr: { "aria-hidden": "true" }
+        });
+        setIcon(iconEl, icon);
+        const input = this.input(wrapper, "text", label, value, placeholder);
+        return { wrapper, icon: iconEl, input };
     }
 
     private checkbox(

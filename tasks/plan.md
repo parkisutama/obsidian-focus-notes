@@ -54,6 +54,7 @@ Automated gates and real Obsidian acceptance
 - [x] Replace large cards and full-width type tabs with compact Google Calendar-inspired rows and chips.
 - [x] Reduce chip visual height and remove cumulative disclosure indentation after the second device review.
 - [x] Align title, chips, and row icons to one leading edge and prevent SVG clipping after the third device review.
+- [x] Add persistent icons to note, folder, destination, and heading inputs after the fourth device review.
 - [ ] Repeat real-device acceptance with keyboard closed and open.
 
 ### Phase 2: Foundation verification
