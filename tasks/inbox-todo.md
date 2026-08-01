@@ -33,14 +33,14 @@
 
 **Acceptance criteria:**
 
-- [ ] Unchanged/blank/custom titles produce the approved timestamp shape exactly once.
-- [ ] Blank body lines are pruned while non-empty Markdown is preserved in order.
-- [ ] Relative links handle same, parent, nested, spaced, and non-ASCII paths.
+- [x] Unchanged/blank/custom titles produce the approved timestamp shape exactly once.
+- [x] Blank body lines are pruned while non-empty Markdown is preserved in order.
+- [x] Relative links handle same, parent, nested, spaced, and non-ASCII paths.
 
 **Verification:**
 
-- [ ] Add focused `InboxMarkdown` unit tests with exact string assertions.
-- [ ] Run `pnpm test` and `pnpm run typecheck`.
+- [x] Add focused `InboxMarkdown` unit tests with exact string assertions.
+- [x] Run `pnpm test` and `pnpm run typecheck`.
 
 **Dependencies:** Task 1.
 
