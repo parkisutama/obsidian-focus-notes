@@ -2,11 +2,12 @@
 
 ## Overview
 
-Restructure only the custom mobile event/task sheet into a compact capture-first flow while preserving every existing field, saved Markdown behavior, and the desktop modal. The work will follow the approved specification in `docs/spec-mobile-event-task-modal.md` and the public Obsidian API surface locked at version 1.12.3.
+The first compact-sheet implementation failed real-mobile acceptance. Pause layout changes and first extract renderer-independent form state and record construction, preserving all desktop behavior and saved Markdown output.
 
 ## Architecture Decisions
 
-- Keep `EventTaskModal` as the shared state and submit implementation; limit the redesign to `EventTaskMobileSheet` and `.fn-mobile-sheet` styles.
+- Move form data and record construction out of `EventTaskModal` before choosing the final mobile renderer.
+- Keep submission behavior and both renderers unchanged during this refactor increment.
 - Select the mobile renderer with Obsidian's public `Platform.isMobile` API, retaining the width check only for desktop responsive preview.
 - Keep one scrollable sheet instead of adding a wizard. Common fields stay visible; optional fields move under one collapsed `More options` disclosure.
 - Keep the existing custom sheet as a documented exception to Obsidian's standard `Modal` container because of prior software-keyboard failures.
@@ -30,6 +31,13 @@ Automated gates and real Obsidian acceptance
 ```
 
 ## Task List
+
+### Phase 0: Quality prerequisite after failed acceptance
+
+- [x] Extract renderer-independent form state and record construction.
+- [x] Cover event and task record construction with focused regression tests.
+- [x] Extract and test renderer-independent submission orchestration.
+- [x] Re-run all automated quality gates before resuming mobile layout decisions.
 
 ### Phase 1: Foundation
 

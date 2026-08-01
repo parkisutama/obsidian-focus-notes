@@ -1,0 +1,116 @@
+import type { EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
+import type { InsertPosition } from "./types";
+
+export type EventTaskKind = "event" | "task";
+export type HubMode = "none" | "link" | "create";
+
+export interface ReminderEntry {
+    date: string;
+    time: string;
+}
+
+export interface EventTaskFormDefaults {
+    file: string;
+    heading: string;
+    position: InsertPosition;
+    hubNotesFolder: string;
+    detailNotesFolder: string;
+}
+
+export function formatLocalDate(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+/** Renderer-independent values entered in the event/task form. */
+export class EventTaskFormState {
+    kind: EventTaskKind = "event";
+
+    eventDate: string;
+    eventStartTime: string;
+    eventEndTime: string;
+    eventAllDay = false;
+
+    taskDueDate: string;
+    taskDueTime = "09:00";
+    taskDueHasTime = false;
+    taskTimeboxEnabled = false;
+    taskTimeboxDate: string;
+    taskTimeboxStartTime: string;
+    taskTimeboxEndTime: string;
+    reminders: ReminderEntry[] = [];
+
+    title = "";
+    description = "";
+    hubMode: HubMode = "none";
+    hubLinkPath = "";
+    hubCreateName = "";
+    hubCreateFolder: string;
+    writeToHubNote = false;
+    detailNoteEnabled = false;
+    detailNoteName = "";
+    detailNoteFolder: string;
+
+    targetFile: string;
+    targetHeading: string;
+    targetPosition: InsertPosition;
+
+    constructor(anchorDate: Date, defaults: EventTaskFormDefaults) {
+        const hour = anchorDate.getHours();
+        const endHour = Math.min(hour + 1, 23);
+        this.eventDate = formatLocalDate(anchorDate);
+        this.eventStartTime = `${String(hour).padStart(2, "0")}:00`;
+        this.eventEndTime = `${String(endHour).padStart(2, "0")}:00`;
+        this.taskDueDate = this.eventDate;
+        this.taskTimeboxDate = this.eventDate;
+        this.taskTimeboxStartTime = this.eventStartTime;
+        this.taskTimeboxEndTime = this.eventEndTime;
+
+        this.targetFile = defaults.file;
+        this.targetHeading = defaults.heading;
+        this.targetPosition = defaults.position;
+        this.hubCreateFolder = defaults.hubNotesFolder;
+        this.detailNoteFolder = defaults.detailNotesFolder;
+    }
+
+    buildRecord(hubNoteRef: HubNoteRef | null): EventTaskRecord {
+        if (this.kind === "event") {
+            return {
+                kind: "event",
+                title: this.title.trim(),
+                start: this.parseDateTime(this.eventDate, this.eventStartTime),
+                end: this.parseDateTime(this.eventDate, this.eventEndTime),
+                allDay: this.eventAllDay,
+                description: this.description,
+                hubNoteRef
+            };
+        }
+
+        const reminders = this.reminders
+            .filter(reminder => reminder.date)
+            .map(reminder => this.parseDateTime(reminder.date, reminder.time || "09:00"));
+        const timebox: TaskRecord["timebox"] = this.taskTimeboxEnabled && this.taskTimeboxDate
+            ? {
+                start: this.parseDateTime(this.taskTimeboxDate, this.taskTimeboxStartTime),
+                end: this.parseDateTime(this.taskTimeboxDate, this.taskTimeboxEndTime)
+            }
+            : null;
+
+        return {
+            kind: "task",
+            title: this.title.trim(),
+            due: this.taskDueDate
+                ? this.parseDateTime(this.taskDueDate, this.taskDueHasTime ? this.taskDueTime : "00:00")
+                : null,
+            dueHasTime: this.taskDueHasTime,
+            timebox,
+            reminders,
+            description: this.description,
+            hubNoteRef
+        };
+    }
+
+    private parseDateTime(date: string, time: string): Date {
+        const value = new Date(`${date}T${time || "00:00"}:00`);
+        return isNaN(value.getTime()) ? new Date() : value;
+    }
+}

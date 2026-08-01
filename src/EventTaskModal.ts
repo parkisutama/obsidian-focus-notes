@@ -8,19 +8,13 @@ import {
     setIcon
 } from "obsidian";
 import { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
-import { EventRecord, HubNoteRef, EventTaskRecord, EventTaskWriter, TaskRecord } from "./EventTaskWriter";
+import { EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
+import { EventTaskFormState, EventTaskKind, HubMode, formatLocalDate } from "./EventTaskFormState";
+import { submitEventTask } from "./EventTaskSubmission";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { isTFile } from "./utils";
 import { shouldUseMobileForm } from "./MobileFormPolicy";
-
-type ItemKind = "event" | "task";
-type HubMode = "none" | "link" | "create";
-
-interface ReminderEntry {
-    date: string;
-    time: string;
-}
 
 export function openEventTaskForm(
     app: App,
@@ -38,48 +32,7 @@ export function openEventTaskForm(
 }
 
 export class EventTaskModal extends Modal {
-    protected kind: ItemKind = "event";
-
-    // ---- Event fields -------------------------------------------------------
-    private eventDate: string;
-    private eventStartTime: string;
-    private eventEndTime: string;
-    private eventAllDay = false;
-
-    // ---- Task fields --------------------------------------------------------
-    private taskDueDate: string;
-    private taskDueTime = "09:00";
-    private taskDueHasTime = false;
-
-    // Timebox (optional start-end block for task)
-    private taskTimeboxEnabled = false;
-    private taskTimeboxDate: string;
-    private taskTimeboxStartTime: string;
-    private taskTimeboxEndTime: string;
-
-    // Multiple reminders (dynamic list)
-    private reminders: ReminderEntry[] = [];
-
-    // ---- Common fields ------------------------------------------------------
-    private title = "";
-    private description = "";
-
-    // ---- Hub note -----------------------------------------------------------
-    private hubMode: HubMode = "none";
-    private hubLinkPath = "";
-    private hubCreateName = "";
-    private hubCreateFolder = "";
-    private writeToHubNote = false;
-
-    // ---- Detail note --------------------------------------------------------
-    private detailNoteEnabled = false;
-    private detailNoteName = "";
-    private detailNoteFolder = "";
-
-    // ---- Target -------------------------------------------------------------
-    private targetFile: string;
-    private targetHeading: string;
-    private targetPosition: InsertPosition;
+    protected form: EventTaskFormState;
 
     protected resolved = false;
 
@@ -109,25 +62,16 @@ export class EventTaskModal extends Modal {
     ) {
         super(app);
 
-        const now = anchorDate;
-        const h = now.getHours();
-        const endH = Math.min(h + 1, 23);
-        this.eventDate = this.isoDate(now);
-        this.eventStartTime = `${String(h).padStart(2, "0")}:00`;
-        this.eventEndTime = `${String(endH).padStart(2, "0")}:00`;
-        this.taskDueDate = this.isoDate(now);
-        this.taskTimeboxDate = this.isoDate(now);
-        this.taskTimeboxStartTime = this.eventStartTime;
-        this.taskTimeboxEndTime = this.eventEndTime;
-
         const settings = getSettings();
         const resolver = new TargetResolver(app, settings);
-        const resolved = resolver.resolve(resolver.getActiveTarget(), now);
-        this.targetFile = resolved.file;
-        this.targetHeading = settings.eventTask.defaultSaveHeading || resolved.heading;
-        this.targetPosition = resolved.position;
-        this.hubCreateFolder = settings.eventTask.hubNotesFolder;
-        this.detailNoteFolder = settings.eventTask.detailNotesFolder;
+        const resolved = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+        this.form = new EventTaskFormState(anchorDate, {
+            file: resolved.file,
+            heading: settings.eventTask.defaultSaveHeading || resolved.heading,
+            position: resolved.position,
+            hubNotesFolder: settings.eventTask.hubNotesFolder,
+            detailNotesFolder: settings.eventTask.detailNotesFolder
+        });
     }
 
     onOpen(): void {
@@ -187,12 +131,12 @@ export class EventTaskModal extends Modal {
     }
 
     protected setTitleValue(value: string): void {
-        this.title = value;
+        this.form.title = value;
         // Sync hub note name only while still at default
-        if (this.hubMode === "create" && this.hubInputEl) {
-            if (!this.hubInputEl.value || this.hubInputEl.value === this.hubCreateName) {
-                this.hubInputEl.value = this.title;
-                this.hubCreateName = this.title;
+        if (this.form.hubMode === "create" && this.hubInputEl) {
+            if (!this.hubInputEl.value || this.hubInputEl.value === this.form.hubCreateName) {
+                this.hubInputEl.value = this.form.title;
+                this.form.hubCreateName = this.form.title;
             }
         }
     }
@@ -211,14 +155,14 @@ export class EventTaskModal extends Modal {
         });
 
         eventBtn.addEventListener("click", () => {
-            this.kind = "event";
+            this.form.kind = "event";
             eventBtn.addClass("fn-gcal-tab--active");
             taskBtn.removeClass("fn-gcal-tab--active");
             this.eventSectionEl.removeClass("fn-gcal-hidden");
             this.taskSectionEl.addClass("fn-gcal-hidden");
         });
         taskBtn.addEventListener("click", () => {
-            this.kind = "task";
+            this.form.kind = "task";
             taskBtn.addClass("fn-gcal-tab--active");
             eventBtn.removeClass("fn-gcal-tab--active");
             this.taskSectionEl.removeClass("fn-gcal-hidden");
@@ -233,18 +177,18 @@ export class EventTaskModal extends Modal {
         const wrap = content.createDiv({ cls: "fn-gcal-datetime-wrap" });
 
         const mainRow = wrap.createDiv({ cls: "fn-gcal-datetime-row" });
-        const dateEl = this.makeDateInput(mainRow, this.eventDate, "Event date");
-        dateEl.addEventListener("change", () => (this.eventDate = dateEl.value));
+        const dateEl = this.makeDateInput(mainRow, this.form.eventDate, "Event date");
+        dateEl.addEventListener("change", () => (this.form.eventDate = dateEl.value));
 
         this.eventTimeRowEl = mainRow.createDiv({ cls: "fn-gcal-time-range" });
-        const startEl = this.makeTimeInput(this.eventTimeRowEl, this.eventStartTime, "Start time");
-        startEl.addEventListener("change", () => (this.eventStartTime = startEl.value));
+        const startEl = this.makeTimeInput(this.eventTimeRowEl, this.form.eventStartTime, "Start time");
+        startEl.addEventListener("change", () => (this.form.eventStartTime = startEl.value));
         this.eventTimeRowEl.createSpan({ cls: "fn-gcal-time-sep", text: "—" });
-        const endEl = this.makeTimeInput(this.eventTimeRowEl, this.eventEndTime, "End time");
-        endEl.addEventListener("change", () => (this.eventEndTime = endEl.value));
+        const endEl = this.makeTimeInput(this.eventTimeRowEl, this.form.eventEndTime, "End time");
+        endEl.addEventListener("change", () => (this.form.eventEndTime = endEl.value));
 
         this.makeCheckboxRow(wrap, "All day", "fn-gcal-allday", checked => {
-            this.eventAllDay = checked;
+            this.form.eventAllDay = checked;
             this.eventTimeRowEl.toggleClass("fn-gcal-hidden", checked);
         });
     }
@@ -263,15 +207,15 @@ export class EventTaskModal extends Modal {
         dueWrap.createDiv({ cls: "fn-gcal-field-label", text: "Due date (optional)" });
 
         const dueDateRow = dueWrap.createDiv({ cls: "fn-gcal-datetime-row" });
-        const dueDateEl = this.makeDateInput(dueDateRow, this.taskDueDate, "Due date");
-        dueDateEl.addEventListener("change", () => (this.taskDueDate = dueDateEl.value));
+        const dueDateEl = this.makeDateInput(dueDateRow, this.form.taskDueDate, "Due date");
+        dueDateEl.addEventListener("change", () => (this.form.taskDueDate = dueDateEl.value));
 
-        this.taskDueTimeEl = this.makeTimeInput(dueDateRow, this.taskDueTime, "Due time");
+        this.taskDueTimeEl = this.makeTimeInput(dueDateRow, this.form.taskDueTime, "Due time");
         this.taskDueTimeEl.addClass("fn-gcal-hidden");
-        this.taskDueTimeEl.addEventListener("change", () => (this.taskDueTime = this.taskDueTimeEl.value));
+        this.taskDueTimeEl.addEventListener("change", () => (this.form.taskDueTime = this.taskDueTimeEl.value));
 
         this.makeCheckboxRow(dueWrap, "Include time", "fn-gcal-due-time", checked => {
-            this.taskDueHasTime = checked;
+            this.form.taskDueHasTime = checked;
             this.taskDueTimeEl.toggleClass("fn-gcal-hidden", !checked);
         });
     }
@@ -280,17 +224,17 @@ export class EventTaskModal extends Modal {
         const timeboxContent = this.makeRow(container, "timer");
         const timeboxWrap = timeboxContent.createDiv();
         this.makeCheckboxRow(timeboxWrap, "Timebox (start – end)", "fn-gcal-timebox", checked => {
-            this.taskTimeboxEnabled = checked;
+            this.form.taskTimeboxEnabled = checked;
             this.taskTimeboxRowEl.toggleClass("fn-gcal-hidden", !checked);
         });
         this.taskTimeboxRowEl = timeboxWrap.createDiv({ cls: "fn-gcal-datetime-row fn-gcal-hidden" });
-        this.taskTimeboxDateEl = this.makeDateInput(this.taskTimeboxRowEl, this.taskTimeboxDate, "Timebox date");
-        this.taskTimeboxDateEl.addEventListener("change", () => (this.taskTimeboxDate = this.taskTimeboxDateEl.value));
-        this.taskTimeboxStartEl = this.makeTimeInput(this.taskTimeboxRowEl, this.taskTimeboxStartTime, "Timebox start time");
-        this.taskTimeboxStartEl.addEventListener("change", () => (this.taskTimeboxStartTime = this.taskTimeboxStartEl.value));
+        this.taskTimeboxDateEl = this.makeDateInput(this.taskTimeboxRowEl, this.form.taskTimeboxDate, "Timebox date");
+        this.taskTimeboxDateEl.addEventListener("change", () => (this.form.taskTimeboxDate = this.taskTimeboxDateEl.value));
+        this.taskTimeboxStartEl = this.makeTimeInput(this.taskTimeboxRowEl, this.form.taskTimeboxStartTime, "Timebox start time");
+        this.taskTimeboxStartEl.addEventListener("change", () => (this.form.taskTimeboxStartTime = this.taskTimeboxStartEl.value));
         this.taskTimeboxRowEl.createSpan({ cls: "fn-gcal-time-sep", text: "—" });
-        this.taskTimeboxEndEl = this.makeTimeInput(this.taskTimeboxRowEl, this.taskTimeboxEndTime, "Timebox end time");
-        this.taskTimeboxEndEl.addEventListener("change", () => (this.taskTimeboxEndTime = this.taskTimeboxEndEl.value));
+        this.taskTimeboxEndEl = this.makeTimeInput(this.taskTimeboxRowEl, this.form.taskTimeboxEndTime, "Timebox end time");
+        this.taskTimeboxEndEl.addEventListener("change", () => (this.form.taskTimeboxEndTime = this.taskTimeboxEndEl.value));
     }
 
     protected renderTaskRemindersSection(container: HTMLElement): void {
@@ -307,19 +251,19 @@ export class EventTaskModal extends Modal {
         });
         addRemindBtn.addEventListener("click", evt => {
             evt.preventDefault();
-            this.addReminderRow(this.isoDate(this.anchorDate), "09:00");
+            this.addReminderRow(formatLocalDate(this.anchorDate), "09:00");
         });
     }
 
     protected addReminderRow(date: string, time: string): void {
-        const idx = this.reminders.length;
-        this.reminders.push({ date, time });
+        const idx = this.form.reminders.length;
+        this.form.reminders.push({ date, time });
 
         const row = this.remindersListEl.createDiv({ cls: "fn-gcal-reminder-row" });
         const dateEl = this.makeDateInput(row, date, "Reminder date");
-        dateEl.addEventListener("change", () => (this.reminders[idx].date = dateEl.value));
+        dateEl.addEventListener("change", () => (this.form.reminders[idx].date = dateEl.value));
         const timeEl = this.makeTimeInput(row, time, "Reminder time");
-        timeEl.addEventListener("change", () => (this.reminders[idx].time = timeEl.value));
+        timeEl.addEventListener("change", () => (this.form.reminders[idx].time = timeEl.value));
 
         const delBtn = row.createEl("button", {
             cls: "fn-gcal-remind-del-btn",
@@ -330,7 +274,7 @@ export class EventTaskModal extends Modal {
             evt.preventDefault();
             row.remove();
             // Mark as deleted by clearing date
-            this.reminders[idx].date = "";
+            this.form.reminders[idx].date = "";
         });
     }
 
@@ -343,7 +287,7 @@ export class EventTaskModal extends Modal {
             attr: { placeholder: "Add description or attachment...", "aria-label": "Description" }
         });
         textarea.rows = 3;
-        textarea.addEventListener("input", () => (this.description = textarea.value));
+        textarea.addEventListener("input", () => (this.form.description = textarea.value));
     }
 
     // ---- Hub note -----------------------------------------------------------
@@ -361,8 +305,8 @@ export class EventTaskModal extends Modal {
             attr: { placeholder: "Search notes...", "aria-label": "Related note" }
         });
         this.hubInputEl.addEventListener("input", () => {
-            if (this.hubMode === "link") this.hubLinkPath = this.hubInputEl.value;
-            else this.hubCreateName = this.hubInputEl.value;
+            if (this.form.hubMode === "link") this.form.hubLinkPath = this.hubInputEl.value;
+            else this.form.hubCreateName = this.hubInputEl.value;
         });
         new FileSuggest(this.app, this.hubInputEl);
 
@@ -375,7 +319,7 @@ export class EventTaskModal extends Modal {
             evt.preventDefault();
             new FilePickerSuggester(this.app, file => {
                 this.hubInputEl.value = file.path;
-                this.hubLinkPath = file.path;
+                this.form.hubLinkPath = file.path;
             }).open();
         });
 
@@ -390,9 +334,9 @@ export class EventTaskModal extends Modal {
                 "aria-label": "Folder for new related note"
             }
         });
-        hubFolderEl.value = this.hubCreateFolder;
+        hubFolderEl.value = this.form.hubCreateFolder;
         hubFolderEl.addEventListener("input", () => {
-            this.hubCreateFolder = hubFolderEl.value;
+            this.form.hubCreateFolder = hubFolderEl.value;
         });
         new FolderSuggest(this.app, hubFolderEl);
 
@@ -408,7 +352,7 @@ export class EventTaskModal extends Modal {
             attr: { for: "fn-gcal-also-hub" }
         });
         this.writeToHubCb.addEventListener("change", () => {
-            this.writeToHubNote = this.writeToHubCb.checked;
+            this.form.writeToHubNote = this.writeToHubCb.checked;
         });
 
         // Chip selector for hub mode (replaces radio group)
@@ -419,9 +363,9 @@ export class EventTaskModal extends Modal {
                 { value: "link",   label: "Link" },
                 { value: "create", label: "New note" },
             ],
-            this.hubMode,
+            this.form.hubMode,
             value => {
-                this.hubMode = value;
+                this.form.hubMode = value;
                 const showInput = value !== "none";
                 hubInputRow.toggleClass("fn-gcal-hidden", !showInput);
                 hubFolderRow.toggleClass("fn-gcal-hidden", value !== "create");
@@ -433,11 +377,11 @@ export class EventTaskModal extends Modal {
                     value === "link" ? "Related note" : "New related note name"
                 );
                 if (value === "create") {
-                    this.hubInputEl.value = this.title;
-                    this.hubCreateName = this.title;
+                    this.hubInputEl.value = this.form.title;
+                    this.form.hubCreateName = this.form.title;
                 } else {
                     this.hubInputEl.value = "";
-                    this.hubLinkPath = "";
+                    this.form.hubLinkPath = "";
                 }
             }
         );
@@ -453,11 +397,11 @@ export class EventTaskModal extends Modal {
         wrap.createDiv({ cls: "fn-gcal-field-label", text: "Detail note" });
 
         this.makeCheckboxRow(wrap, "Create a detail note for this event / task", "fn-gcal-detail-note", checked => {
-            this.detailNoteEnabled = checked;
+            this.form.detailNoteEnabled = checked;
             this.detailNoteRowEl.toggleClass("fn-gcal-hidden", !checked);
             if (checked && !this.detailNoteInputEl.value) {
-                this.detailNoteInputEl.value = this.title;
-                this.detailNoteName = this.title;
+                this.detailNoteInputEl.value = this.form.title;
+                this.form.detailNoteName = this.form.title;
             }
         });
 
@@ -469,7 +413,7 @@ export class EventTaskModal extends Modal {
             attr: { placeholder: "Detail note name...", "aria-label": "Detail note name" }
         });
         this.detailNoteInputEl.addEventListener("input", () => {
-            this.detailNoteName = this.detailNoteInputEl.value;
+            this.form.detailNoteName = this.detailNoteInputEl.value;
         });
 
         const folderEl = this.detailNoteRowEl.createEl("input", {
@@ -480,9 +424,9 @@ export class EventTaskModal extends Modal {
                 "aria-label": "Detail note folder"
             }
         });
-        folderEl.value = this.detailNoteFolder;
+        folderEl.value = this.form.detailNoteFolder;
         folderEl.addEventListener("input", () => {
-            this.detailNoteFolder = folderEl.value;
+            this.form.detailNoteFolder = folderEl.value;
         });
         new FolderSuggest(this.app, folderEl);
     }
@@ -500,8 +444,8 @@ export class EventTaskModal extends Modal {
             cls: "fn-gcal-saveto-file",
             attr: { placeholder: "Journal/2026-05-27.md", "aria-label": "Save to file" }
         });
-        fileEl.value = this.targetFile;
-        fileEl.addEventListener("input", () => (this.targetFile = fileEl.value));
+        fileEl.value = this.form.targetFile;
+        fileEl.addEventListener("input", () => (this.form.targetFile = fileEl.value));
         new FileSuggest(this.app, fileEl);
 
         const headingEl = fields.createEl("input", {
@@ -509,16 +453,16 @@ export class EventTaskModal extends Modal {
             cls: "fn-gcal-saveto-heading",
             attr: { placeholder: "Heading (optional)", "aria-label": "Save under heading" }
         });
-        headingEl.value = this.targetHeading;
-        headingEl.addEventListener("input", () => (this.targetHeading = headingEl.value));
+        headingEl.value = this.form.targetHeading;
+        headingEl.addEventListener("input", () => (this.form.targetHeading = headingEl.value));
 
         this.makeCheckboxRow(wrap, "Insert at top (not bottom)", "fn-gcal-pos-start", checked => {
-            this.targetPosition = checked ? "start" : "end";
-        }, this.targetPosition === "start");
+            this.form.targetPosition = checked ? "start" : "end";
+        }, this.form.targetPosition === "start");
     }
 
     protected getTargetFileSummary(): string {
-        return this.targetFile || "No destination selected";
+        return this.form.targetFile || "No destination selected";
     }
 
     // ---- Buttons ------------------------------------------------------------
@@ -550,145 +494,40 @@ export class EventTaskModal extends Modal {
     protected async submit(): Promise<void> {
         if (this.resolved) return;
 
-        if (!this.title.trim()) {
+        if (!this.form.title.trim()) {
             new Notice("Please enter a title.");
             return;
         }
-        if (!this.targetFile.trim()) {
+        if (!this.form.targetFile.trim()) {
             new Notice("Please select a target file.");
             return;
         }
 
         const settings = this.getSettings();
         const writer = new EventTaskWriter(this.app, settings.eventTask);
-        let hubNoteRef: HubNoteRef | null = null;
-        let hubNoteFilePath: string | null = null;
-
-        if (this.hubMode === "create") {
-            const hubName = (this.hubCreateName.trim() || this.title.trim());
-            if (hubName) {
-                try {
-                    const hubFile = await writer.createHubNote(
-                        hubName,
-                        this.buildRecord(null),
-                        this.hubCreateFolder.trim() || settings.eventTask.hubNotesFolder
-                    );
-                    hubNoteRef = { title: this.title.trim(), path: hubFile.path };
-                    hubNoteFilePath = hubFile.path;
-                    // Open hub note passively
-                    void this.app.workspace.getLeaf(false).openFile(hubFile, { active: false });
-                } catch (err) {
-                    new Notice(`Failed to create note: ${(err as Error).message}`);
-                    return;
+        const result = await submitEventTask(this.form, {
+            writer,
+            defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
+            defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
+            resolveTargetFile: record => this.resolveTargetFile(record),
+            findMarkdownFile: path => {
+                const file = this.app.vault.getAbstractFileByPath(path);
+                return isTFile(file) ? file : null;
+            },
+            openFile: file => {
+                const vaultFile = this.app.vault.getAbstractFileByPath(file.path);
+                if (isTFile(vaultFile)) {
+                    void this.app.workspace.getLeaf(false).openFile(vaultFile, { active: false });
                 }
             }
-        } else if (this.hubMode === "link" && this.hubLinkPath.trim()) {
-            const found = this.app.vault.getAbstractFileByPath(this.hubLinkPath.trim());
-            if (isTFile(found)) {
-                hubNoteRef = { title: this.title.trim(), path: found.path };
-                hubNoteFilePath = found.path;
-            } else {
-                // Fallback: use the typed value as a relative path
-                const p = this.hubLinkPath.trim();
-                hubNoteRef = { title: this.title.trim(), path: p.endsWith(".md") ? p : `${p}.md` };
-                hubNoteFilePath = hubNoteRef.path;
-            }
-        }
+        });
 
-        const record = this.buildRecord(hubNoteRef);
-        const resolvedTargetFile = this.resolveTargetFile(record);
-
-        // Create detail note (third file) if requested — needs hub path first
-        let detailNoteRef: HubNoteRef | null = null;
-        if (this.detailNoteEnabled) {
-            const detailName = this.detailNoteName.trim() || this.title.trim();
-            if (detailName) {
-                try {
-                    const detailFile = await writer.createDetailNote(
-                        detailName,
-                        record,
-                        this.detailNoteFolder.trim() || settings.eventTask.detailNotesFolder,
-                        resolvedTargetFile,
-                        hubNoteFilePath
-                    );
-                    detailNoteRef = { title: this.title.trim(), path: detailFile.path };
-                    void this.app.workspace.getLeaf(false).openFile(detailFile, { active: false });
-                } catch (err) {
-                    new Notice(`Failed to create detail note: ${(err as Error).message}`);
-                    return;
-                }
-            }
-        }
-
-        const heading = this.targetHeading.trim();
-        const pos = this.targetPosition;
-
-        try {
-            await writer.write(record, resolvedTargetFile, heading, pos, detailNoteRef);
-
-            // Also write to hub note:
-            // The main link in the hub's line points BACK to target (not hub itself),
-            // so the hub can navigate to the origin daily note. Detail sub-bullet is included too.
-            if (this.writeToHubNote && hubNoteFilePath) {
-                const targetRef: HubNoteRef = {
-                    title: this.title.trim(),
-                    path: resolvedTargetFile
-                };
-                const hubRecord = { ...record, hubNoteRef: targetRef } as EventTaskRecord;
-                await writer.write(hubRecord, hubNoteFilePath, heading, pos, detailNoteRef);
-            }
-
-            new Notice(this.kind === "event" ? "Event saved." : "Task saved.");
+        new Notice(result.message);
+        if (result.ok) {
             this.resolved = true;
             this.onComplete();
             this.close();
-        } catch (err) {
-            new Notice(`Failed to save: ${(err as Error).message}`);
         }
-    }
-
-    // =========================================================================
-    // Record builders
-    // =========================================================================
-
-    protected buildRecord(hubNoteRef: HubNoteRef | null): EventTaskRecord {
-        if (this.kind === "event") {
-            const record: EventRecord = {
-                kind: "event",
-                title: this.title.trim(),
-                start: this.parseDateTime(this.eventDate, this.eventStartTime),
-                end: this.parseDateTime(this.eventDate, this.eventEndTime),
-                allDay: this.eventAllDay,
-                description: this.description,
-                hubNoteRef
-            };
-            return record;
-        }
-
-        const validReminders = this.reminders
-            .filter(r => r.date)
-            .map(r => this.parseDateTime(r.date, r.time || "09:00"));
-
-        const timebox: TaskRecord["timebox"] = this.taskTimeboxEnabled && this.taskTimeboxDate
-            ? {
-                start: this.parseDateTime(this.taskTimeboxDate, this.taskTimeboxStartTime),
-                end: this.parseDateTime(this.taskTimeboxDate, this.taskTimeboxEndTime)
-            }
-            : null;
-
-        const record: TaskRecord = {
-            kind: "task",
-            title: this.title.trim(),
-            due: this.taskDueDate
-                ? this.parseDateTime(this.taskDueDate, this.taskDueHasTime ? this.taskDueTime : "00:00")
-                : null,
-            dueHasTime: this.taskDueHasTime,
-            timebox,
-            reminders: validReminders,
-            description: this.description,
-            hubNoteRef
-        };
-        return record;
     }
 
     protected resolveTargetFile(record: EventTaskRecord): string {
@@ -696,9 +535,9 @@ export class EventTaskModal extends Modal {
             ? record.start
             : record.due ?? record.timebox?.start ?? this.anchorDate;
         const target: FocusTarget = {
-            file: this.targetFile.trim(),
-            heading: this.targetHeading.trim(),
-            position: this.targetPosition
+            file: this.form.targetFile.trim(),
+            heading: this.form.targetHeading.trim(),
+            position: this.form.targetPosition
         };
         return new TargetResolver(this.app, this.getSettings()).resolve(target, when).file;
     }
@@ -851,14 +690,6 @@ export class EventTaskModal extends Modal {
         };
     }
 
-    protected parseDateTime(dateStr: string, timeStr: string): Date {
-        const d = new Date(`${dateStr}T${timeStr || "00:00"}:00`);
-        return isNaN(d.getTime()) ? new Date() : d;
-    }
-
-    protected isoDate(date: Date): string {
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    }
 }
 
 export class EventTaskMobileSheet extends EventTaskModal {
@@ -1041,8 +872,8 @@ export class EventTaskMobileSheet extends EventTaskModal {
             attr: { type: "button", "aria-pressed": "false" }
         });
 
-        const activate = (kind: ItemKind): void => {
-            this.kind = kind;
+        const activate = (kind: EventTaskKind): void => {
+            this.form.kind = kind;
             const isEvent = kind === "event";
             eventBtn.toggleClass("fn-gcal-tab--active", isEvent);
             taskBtn.toggleClass("fn-gcal-tab--active", !isEvent);

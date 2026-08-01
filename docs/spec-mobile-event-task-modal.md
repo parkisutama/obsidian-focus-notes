@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved by the user. Implementation is in progress on `feature/mobile-event-task-modal`.
+The first implementation failed real-mobile acceptance because the keyboard compressed the inherited bottom-sheet layout. Further layout work is paused while the shared form state and save boundaries are separated from the renderers.
 
 ## Objective
 
@@ -20,7 +20,7 @@ Less-frequent fields remain available through compact disclosure rows and do not
 
 ## Assumptions
 
-- The current custom `EventTaskMobileSheet` remains the mobile container; this is a layout redesign, not a new navigation model.
+- The current custom `EventTaskMobileSheet` is retained only during a behavior-preserving quality refactor. Its inheritance from `EventTaskModal` is not an approved final architecture.
 - A single scrollable sheet is preferable to a multi-step wizard for fast capture.
 - Event defaults remain date plus start/end time; Task defaults remain due date, with timebox and reminders optional.
 - `Related note`, `Detail note`, and `Save to` remain supported. `Save to` starts collapsed because its defaults are already resolved.
@@ -84,7 +84,9 @@ Less-frequent fields remain available through compact disclosure rows and do not
 ## Tech Stack and Project Structure
 
 - TypeScript and the Obsidian API.
-- Mobile renderer: `src/EventTaskModal.ts`.
+- Shared form state: `src/EventTaskFormState.ts`.
+- Shared submission orchestration: `src/EventTaskSubmission.ts`.
+- Desktop and temporary mobile renderers: `src/EventTaskModal.ts`.
 - Shared styling: `styles.css`; mobile changes remain under `.fn-mobile-sheet` to avoid desktop regressions.
 - Unit tests: `test/` using Node's built-in test runner.
 - Design specification: `docs/spec-mobile-event-task-modal.md`.
