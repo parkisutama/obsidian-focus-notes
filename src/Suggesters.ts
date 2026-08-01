@@ -1,5 +1,5 @@
 import { App, TFile, TFolder, AbstractInputSuggest } from "obsidian";
-import { isTFile } from "./utils";
+import { isTFile, isTFolder } from "./utils";
 
 /**
  * Markdown file path suggester.
@@ -41,8 +41,9 @@ export class FolderSuggest extends AbstractInputSuggest<TFolder> {
         const lower = query.toLowerCase();
         return this.app.vault
             .getAllLoadedFiles()
-            .filter((file): file is TFolder => file instanceof TFolder)
-            .filter(folder => folder.path !== "/" && folder.path.toLowerCase().includes(lower))
+            .filter(isTFolder)
+            .filter(folder => folder.path !== "" && folder.path !== "/")
+            .filter(folder => folder.path.toLowerCase().includes(lower))
             .slice(0, 20);
     }
 

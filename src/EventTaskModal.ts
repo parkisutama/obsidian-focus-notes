@@ -70,6 +70,7 @@ export class EventTaskModal extends Modal {
     private hubMode: HubMode = "none";
     private hubLinkPath = "";
     private hubCreateName = "";
+    private hubCreateFolder = "";
     private writeToHubNote = false;
 
     // ---- Detail note --------------------------------------------------------
@@ -127,6 +128,7 @@ export class EventTaskModal extends Modal {
         this.targetFile = resolved.file;
         this.targetHeading = settings.eventTask.defaultSaveHeading || resolved.heading;
         this.targetPosition = resolved.position;
+        this.hubCreateFolder = settings.eventTask.hubNotesFolder;
         this.detailNoteFolder = settings.eventTask.detailNotesFolder;
     }
 
@@ -369,6 +371,23 @@ export class EventTaskModal extends Modal {
             }).open();
         });
 
+        const hubFolderRow = wrap.createDiv({
+            cls: "fn-gcal-hub-input-row fn-gcal-hidden"
+        });
+        const hubFolderEl = hubFolderRow.createEl("input", {
+            type: "text",
+            cls: "fn-gcal-hub-input",
+            attr: {
+                placeholder: "Folder (e.g. Notes/Projects)",
+                "aria-label": "Folder for new related note"
+            }
+        });
+        hubFolderEl.value = this.hubCreateFolder;
+        hubFolderEl.addEventListener("input", () => {
+            this.hubCreateFolder = hubFolderEl.value;
+        });
+        new FolderSuggest(this.app, hubFolderEl);
+
         // "Also write to hub note" row — visible only when mode != none
         this.hubAlsoRowEl = wrap.createDiv({ cls: "fn-gcal-allday-row fn-gcal-hub-also fn-gcal-hidden" });
         this.writeToHubCb = this.hubAlsoRowEl.createEl("input", {
@@ -397,6 +416,7 @@ export class EventTaskModal extends Modal {
                 this.hubMode = value;
                 const showInput = value !== "none";
                 hubInputRow.toggleClass("fn-gcal-hidden", !showInput);
+                hubFolderRow.toggleClass("fn-gcal-hidden", value !== "create");
                 pickBtn.toggleClass("fn-gcal-hidden", value === "create");
                 this.hubAlsoRowEl.toggleClass("fn-gcal-hidden", !showInput);
                 this.hubInputEl.placeholder = value === "link" ? "Search notes..." : "New note name";
@@ -532,7 +552,7 @@ export class EventTaskModal extends Modal {
                     const hubFile = await writer.createHubNote(
                         hubName,
                         this.buildRecord(null),
-                        settings.eventTask.hubNotesFolder
+                        this.hubCreateFolder.trim() || settings.eventTask.hubNotesFolder
                     );
                     hubNoteRef = { title: this.title.trim(), path: hubFile.path };
                     hubNoteFilePath = hubFile.path;

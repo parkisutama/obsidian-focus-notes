@@ -1,4 +1,4 @@
-import type { App, TFile } from "obsidian";
+import type { App, TFile, TFolder } from "obsidian";
 
 /**
  * Property-based TFile detector.
@@ -17,6 +17,12 @@ import type { App, TFile } from "obsidian";
 export function isTFile(f: unknown): f is TFile {
     if (!f || typeof f !== "object") return false;
     return "extension" in f && "stat" in f;
+}
+
+/** Property-based TFolder detector; see isTFile for why instanceof is avoided. */
+export function isTFolder(f: unknown): f is TFolder {
+    if (!f || typeof f !== "object") return false;
+    return "children" in f && !("extension" in f) && !("stat" in f);
 }
 
 export async function ensureFolderPath(app: App, folderPath: string): Promise<void> {
