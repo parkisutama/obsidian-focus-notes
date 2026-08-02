@@ -3,7 +3,11 @@
     "version": "1.2.0",
     "packageManager": "pnpm@11.5.2",
     "description": "TickTick-style focus timer for Obsidian with flexible per-session logging.",
+    "type": "module",
     "main": "main.js",
+    "engines": {
+        "node": ">=24 <25"
+    },
     "scripts": {
         "dev": "node esbuild.config.mjs",
         "verify:version": "node scripts/verify-version-metadata.mjs",
@@ -12,6 +16,7 @@
         "format:check": "biome format .",
         "typecheck": "tsc --noEmit --skipLibCheck",
         "test": "node --test",
+        "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='src/**/*.ts'",
         "build": "pnpm run typecheck && node esbuild.config.mjs production",
         "verify:artifacts": "node scripts/verify-build-artifacts.mjs",
         "package:plugin": "node scripts/package-plugin.mjs",
