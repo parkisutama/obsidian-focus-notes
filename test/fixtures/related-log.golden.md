@@ -28,7 +28,7 @@ These fixtures represent the append-only Markdown that Task 12 proposes. Each li
 
 ## Review decision
 
-- [ ] The timestamp/range is sufficient without opening the Daily Note.
-- [ ] The activity text is sufficient after an archive breaks the backlink.
-- [ ] The source-specific headings are understandable.
-- [ ] Ordinary relative Markdown links are preferred over block IDs.
+- [x] The timestamp/range is sufficient without opening the Daily Note.
+- [x] The activity text is sufficient after an archive breaks the backlink.
+- [x] The source-specific headings are understandable.
+- [x] Ordinary relative Markdown links are preferred over block IDs.
