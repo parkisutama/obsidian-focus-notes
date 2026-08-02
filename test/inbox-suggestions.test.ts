@@ -3,9 +3,11 @@ import test from "node:test";
 import {
     buildMentionSuggestions,
     buildTagSuggestions,
+    ContextSuggestionIndex,
     filterMentionSuggestions,
     InboxSuggestionSnapshot,
 } from "../src/InboxSuggestions.ts";
+import type { ContextSourceSettings } from "../src/types.ts";
 
 const notes = [
     { path: "People/Muhammad Andi.md", basename: "Muhammad Andi", aliases: ["Andi", "Pak Andi"] },
@@ -14,6 +16,77 @@ const notes = [
     { path: "Place/Kantor.md", basename: "Kantor", aliases: ["HQ", "Andi"] },
     { path: "Travel/Jakarta.md", basename: "Jakarta", aliases: [] },
 ];
+
+const contextNotes = [
+    { path: "People/Ana.md", basename: "Ana", aliases: ["An"], properties: { type: "person" } },
+    {
+        path: "Persona/Work/Project/Activities/Reporting.md",
+        basename: "Reporting",
+        aliases: ["Monthly report"],
+        properties: { type: "activity" },
+    },
+    {
+        path: "Persona/Work/Project/Activities/Reference.md",
+        basename: "Reference",
+        aliases: [],
+        properties: { type: "book" },
+    },
+];
+
+test("indexes generic folder-scoped sources with optional property filters", () => {
+    const sources: ContextSourceSettings[] = [
+        {
+            id: "people",
+            name: "People",
+            icon: "user",
+            folders: ["People"],
+            filter: null,
+            relatedHeading: "Interactions",
+            enabled: true,
+        },
+        {
+            id: "activities",
+            name: "Activities",
+            icon: "activity",
+            folders: ["Persona"],
+            filter: { property: "type", value: "activity" },
+            relatedHeading: "Activity log",
+            enabled: true,
+        },
+    ];
+    const index = new ContextSuggestionIndex(contextNotes);
+
+    assert.deepEqual(
+        index.query(sources, () => 0, 20).map((item) => [item.sourceId, item.label, item.filePath]),
+        [
+            ["people", "Ana", "People/Ana.md"],
+            ["people", "An", "People/Ana.md"],
+            ["activities", "Reporting", "Persona/Work/Project/Activities/Reporting.md"],
+            ["activities", "Monthly report", "Persona/Work/Project/Activities/Reporting.md"],
+        ],
+    );
+});
+
+test("caps and ranks generic results without rebuilding unchanged candidates", () => {
+    const source: ContextSourceSettings = {
+        id: "activities",
+        name: "Activities",
+        icon: "activity",
+        folders: ["Persona"],
+        filter: { property: "type", value: "activity" },
+        relatedHeading: "Activity log",
+        enabled: true,
+    };
+    const index = new ContextSuggestionIndex(contextNotes);
+
+    const result = index.query([source], (text) => (text.includes("report") ? text.length : null), 1);
+
+    assert.equal(result.length, 1);
+    assert.equal(result[0]?.label, "Monthly report");
+    assert.equal(index.candidateBuildCount, 1);
+    index.query([source], () => 0, 20);
+    assert.equal(index.candidateBuildCount, 1);
+});
 
 test("indexes recursive multi-root People and Place suggestions", () => {
     const suggestions = buildMentionSuggestions(notes, ["People"], ["Place", "Travel"]);
@@ -102,4 +175,22 @@ test("loads vault suggestion metadata only once per form", () => {
     assert.deepEqual(snapshot.getTags(), ["#focus"]);
     assert.equal(noteLoads, 1);
     assert.equal(tagLoads, 1);
+});
+
+test("reloads cached metadata only after explicit invalidation", () => {
+    let loads = 0;
+    const snapshot = new InboxSuggestionSnapshot(
+        () => {
+            loads += 1;
+            return notes;
+        },
+        () => [],
+    );
+
+    snapshot.getNotes();
+    snapshot.getNotes();
+    snapshot.invalidate();
+    snapshot.getNotes();
+
+    assert.equal(loads, 2);
 });

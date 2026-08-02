@@ -1,23 +1,40 @@
-import { type App, getAllTags, parseFrontMatterAliases, prepareFuzzySearch } from "obsidian";
+import { type App, type EventRef, getAllTags, parseFrontMatterAliases, prepareFuzzySearch } from "obsidian";
 import {
     buildMentionSuggestions,
     buildTagSuggestions,
     filterMentionSuggestions,
     InboxSuggestionSnapshot,
+    ContextSuggestionIndex,
+    type ContextSuggestion,
     type MentionSuggestion,
     type SuggestionMatcher,
     type SuggestionNote,
 } from "./InboxSuggestions";
+import type { ContextSourceSettings } from "./types";
 
 /** Read-only bridge from Obsidian's vault metadata to Inbox suggestion data. */
 export class ObsidianInboxSuggestionSource {
     private readonly snapshot: InboxSuggestionSnapshot;
+    private contextIndex: ContextSuggestionIndex | null = null;
+    private readonly metadataEventRef: EventRef;
+    private readonly vaultEventRefs: EventRef[];
 
     constructor(private app: App) {
         this.snapshot = new InboxSuggestionSnapshot(
             () => this.loadNotes(),
             () => this.loadTags(),
         );
+        this.metadataEventRef = app.metadataCache.on("changed", () => this.invalidate());
+        this.vaultEventRefs = [
+            app.vault.on("create", () => this.invalidate()),
+            app.vault.on("rename", () => this.invalidate()),
+            app.vault.on("delete", () => this.invalidate()),
+        ];
+    }
+
+    getContextSuggestions(query: string, sources: ContextSourceSettings[], limit = 20): ContextSuggestion[] {
+        this.contextIndex ??= new ContextSuggestionIndex(this.snapshot.getNotes());
+        return this.contextIndex.query(sources, this.matcher(query), limit);
     }
 
     getMentionSuggestions(
@@ -34,6 +51,16 @@ export class ObsidianInboxSuggestionSource {
         return buildTagSuggestions(this.snapshot.getTags(), this.matcher(query), limit);
     }
 
+    destroy(): void {
+        this.app.metadataCache.offref(this.metadataEventRef);
+        for (const ref of this.vaultEventRefs) this.app.vault.offref(ref);
+    }
+
+    private invalidate(): void {
+        this.snapshot.invalidate();
+        this.contextIndex = null;
+    }
+
     private loadNotes(): SuggestionNote[] {
         return this.app.vault.getMarkdownFiles().map((file) => {
             const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter ?? null;
@@ -41,6 +68,7 @@ export class ObsidianInboxSuggestionSource {
                 path: file.path,
                 basename: file.basename,
                 aliases: parseFrontMatterAliases(frontmatter) ?? [],
+                properties: frontmatter ?? {},
             };
         });
     }

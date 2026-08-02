@@ -126,6 +126,7 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
         this.inputEl.removeEventListener("click", this.onClick);
         this.inputEl.removeEventListener("mouseover", this.onMouseOver);
         this.inputEl.removeEventListener("keydown", this.onKeyDown);
+        this.source.destroy();
         this.close();
     }
 
