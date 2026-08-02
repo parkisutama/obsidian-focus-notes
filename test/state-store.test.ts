@@ -11,13 +11,7 @@ test("adds Inbox defaults when loading settings saved before Inbox existed", () 
 
     assert.equal(merged.pomodoroMinutes, 45);
     assert.equal(merged.eventTask.hubNotesFolder, "Hubs");
-    assert.deepEqual(merged.inbox, {
-        defaultTargetMode: "daily-note",
-        heading: "Inbox",
-        position: "end",
-        peopleFolders: ["People"],
-        placeFolders: ["Place"],
-    });
+    assert.deepEqual(merged.inbox, DEFAULT_SETTINGS.inbox);
 });
 
 test("clones saved and default Inbox folder arrays during settings merge", () => {
@@ -29,12 +23,18 @@ test("clones saved and default Inbox folder arrays during settings merge", () =>
 
     first.inbox.peopleFolders.push("Clients");
     first.inbox.placeFolders.push("Travel");
+    first.inbox.contextSources[0]?.folders.push("Private");
+    if (first.inbox.contextSources[2]?.filter) first.inbox.contextSources[2].filter.value = "changed";
 
     assert.deepEqual(savedPeople, ["CRM/People"]);
     assert.deepEqual(second.inbox.peopleFolders, ["People"]);
     assert.deepEqual(second.inbox.placeFolders, ["Place"]);
     assert.deepEqual(DEFAULT_SETTINGS.inbox.peopleFolders, ["People"]);
     assert.deepEqual(DEFAULT_SETTINGS.inbox.placeFolders, ["Place"]);
+    assert.deepEqual(second.inbox.contextSources[0]?.folders, ["People"]);
+    assert.equal(second.inbox.contextSources[2]?.filter?.value, "activity");
+    assert.deepEqual(DEFAULT_SETTINGS.inbox.contextSources[0]?.folders, ["People"]);
+    assert.equal(DEFAULT_SETTINGS.inbox.contextSources[2]?.filter?.value, "activity");
 });
 
 test("uses Activities & Tasks only when no Event/Task heading was previously saved", () => {

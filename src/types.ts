@@ -145,6 +145,21 @@ export interface EventTaskSettings {
 
 export type InboxTargetMode = "daily-note" | "event-task-target";
 
+export interface ContextSourceFilter {
+    property: string;
+    value: string;
+}
+
+export interface ContextSourceSettings {
+    id: string;
+    name: string;
+    icon: string;
+    folders: string[];
+    filter: ContextSourceFilter | null;
+    relatedHeading: string;
+    enabled: boolean;
+}
+
 export interface InboxSettings {
     /** Default destination strategy for Inbox captures. */
     defaultTargetMode: InboxTargetMode;
@@ -156,6 +171,8 @@ export interface InboxSettings {
     peopleFolders: string[];
     /** Recursive vault folders used for Place mention suggestions. */
     placeFolders: string[];
+    /** Canonical contextual object sources. Legacy folder pairs remain during migration. */
+    contextSources: ContextSourceSettings[];
 }
 
 /** What gets passed to NoteWriter when a session ends. */
@@ -247,6 +264,35 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         position: "end",
         peopleFolders: ["People"],
         placeFolders: ["Place"],
+        contextSources: [
+            {
+                id: "people",
+                name: "People",
+                icon: "user",
+                folders: ["People"],
+                filter: null,
+                relatedHeading: "Interactions",
+                enabled: true,
+            },
+            {
+                id: "places",
+                name: "Places",
+                icon: "map-pin",
+                folders: ["Place"],
+                filter: null,
+                relatedHeading: "Related log",
+                enabled: true,
+            },
+            {
+                id: "activities",
+                name: "Activities",
+                icon: "activity",
+                folders: ["Activities"],
+                filter: { property: "type", value: "activity" },
+                relatedHeading: "Activity log",
+                enabled: true,
+            },
+        ],
     },
 };
 
@@ -255,6 +301,15 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
  * Kept independent of Obsidian runtime APIs so migrations are unit-testable.
  */
 export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): FocusNotesSettings {
+    const savedInbox = saved.inbox as Partial<InboxSettings> | undefined;
+    const peopleFolders = [...(savedInbox?.peopleFolders ?? DEFAULT_SETTINGS.inbox.peopleFolders)];
+    const placeFolders = [...(savedInbox?.placeFolders ?? DEFAULT_SETTINGS.inbox.placeFolders)];
+    const contextSources = normalizeContextSources(
+        savedInbox?.contextSources,
+        DEFAULT_SETTINGS.inbox.contextSources,
+        peopleFolders,
+        placeFolders,
+    );
     return {
         ...DEFAULT_SETTINGS,
         ...saved,
@@ -285,9 +340,85 @@ export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): F
         },
         inbox: {
             ...DEFAULT_SETTINGS.inbox,
-            ...((saved.inbox ?? {}) as Partial<typeof DEFAULT_SETTINGS.inbox>),
-            peopleFolders: [...(saved.inbox?.peopleFolders ?? DEFAULT_SETTINGS.inbox.peopleFolders)],
-            placeFolders: [...(saved.inbox?.placeFolders ?? DEFAULT_SETTINGS.inbox.placeFolders)],
+            ...(savedInbox ?? {}),
+            peopleFolders,
+            placeFolders,
+            contextSources,
         },
     };
+}
+
+function normalizeContextSources(
+    saved: unknown,
+    defaults: ContextSourceSettings[],
+    legacyPeopleFolders: string[],
+    legacyPlaceFolders: string[],
+): ContextSourceSettings[] {
+    const candidates = Array.isArray(saved)
+        ? saved
+        : defaults.map((source) => ({
+              ...source,
+              folders:
+                  source.id === "people"
+                      ? legacyPeopleFolders
+                      : source.id === "places"
+                        ? legacyPlaceFolders
+                        : source.folders,
+          }));
+    const usedIds = new Map<string, number>();
+    const result: ContextSourceSettings[] = [];
+    for (const candidate of candidates) {
+        if (!candidate || typeof candidate !== "object") continue;
+        const raw = candidate as Partial<ContextSourceSettings>;
+        const baseId = normalizeSourceId(stringValue(raw.id) || stringValue(raw.name) || "source");
+        const occurrence = (usedIds.get(baseId) ?? 0) + 1;
+        usedIds.set(baseId, occurrence);
+        const folders = normalizeContextFolders(Array.isArray(raw.folders) ? raw.folders : []);
+        const filter = raw.filter && typeof raw.filter === "object" ? raw.filter : null;
+        const property = stringValue(filter?.property).trim();
+        const value = stringValue(filter?.value).trim();
+        result.push({
+            id: occurrence === 1 ? baseId : `${baseId}-${occurrence}`,
+            name: stringValue(raw.name).trim() || baseId,
+            icon: stringValue(raw.icon).trim() || "link",
+            folders,
+            filter: property && value ? { property, value } : null,
+            relatedHeading: stringValue(raw.relatedHeading).trim() || "Related log",
+            enabled: raw.enabled === true && folders.length > 0,
+        });
+    }
+    return result;
+}
+
+function normalizeContextFolders(folders: unknown[]): string[] {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const folder of folders) {
+        if (typeof folder !== "string") continue;
+        const normalized = folder
+            .trim()
+            .replace(/\\/g, "/")
+            .replace(/^\/+|\/+$/g, "");
+        const key = normalized.toLowerCase();
+        if (!normalized || seen.has(key) || normalized.split("/").some((part) => part === "." || part === "..")) {
+            continue;
+        }
+        seen.add(key);
+        result.push(normalized);
+    }
+    return result;
+}
+
+function stringValue(value: unknown): string {
+    return typeof value === "string" ? value : "";
+}
+
+function normalizeSourceId(value: string): string {
+    return (
+        value
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "") || "source"
+    );
 }

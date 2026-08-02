@@ -3,8 +3,12 @@ export function normalizeInboxFolders(folders: string[]): string[] {
     const seen = new Set<string>();
     const result: string[] = [];
     for (const folder of folders) {
-        const normalized = folder.trim().replace(/^\/+|\/+$/g, "");
+        const normalized = folder
+            .trim()
+            .replace(/\\/g, "/")
+            .replace(/^\/+|\/+$/g, "");
         if (!normalized) continue;
+        if (normalized.split("/").some((part) => part === "." || part === "..")) continue;
         const key = normalized.toLowerCase();
         if (seen.has(key)) continue;
         seen.add(key);

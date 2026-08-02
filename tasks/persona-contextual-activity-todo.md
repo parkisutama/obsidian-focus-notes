@@ -15,7 +15,7 @@ See [the full implementation plan](persona-contextual-activity-plan.md) for depe
 ## P1 — Core contextual capture
 
 - [x] Task 6: Migrate the `Activities & Tasks` default and `More options` copy without overwriting custom settings.
-- [ ] Task 7: Define configurable context-source settings and migrate People/Place folders.
+- [x] Task 7: Define configurable context-source settings and migrate People/Place folders.
 - [ ] Task 8: Build the metadata-backed, folder-scoped context suggestion index.
 - [ ] Task 9: Generalize the Inbox Markdown controller without changing behavior.
 - [ ] Checkpoint B1: Verify settings migration, index invalidation, and unchanged Inbox behavior.
