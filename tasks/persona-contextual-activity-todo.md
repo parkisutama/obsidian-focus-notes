@@ -23,7 +23,7 @@ See [the full implementation plan](persona-contextual-activity-plan.md) for depe
 - [ ] Task 11: Integrate contextual Markdown into mobile Event and Task details.
 - [ ] Task 12: Resolve configured contextual links and approve historical-log golden fixtures.
 - [ ] Checkpoint B2: Approve renderer parity and the pure related-log contract.
-- [ ] Task 13: Generalize existing related-note writes with deduplication and typed partial outcomes.
+- [ ] Task 13: Generalize existing related-note writes with deduplication and failed-destination-only partial recovery.
 - [ ] Checkpoint B: Verify the complete capture-to-context loop on desktop and mobile.
 
 ## P2 — Temporal retrieval
@@ -35,9 +35,9 @@ See [the full implementation plan](persona-contextual-activity-plan.md) for depe
 
 ## P3 — Hardening and release evidence
 
-- [ ] Task 17: Measure and bound suggestion and Timeline indexing performance.
+- [ ] Task 17: Confirm and bound suggestion and Timeline indexing performance after the Task 8 fail-fast baseline.
 - [ ] Task 18: Complete user, developer, and desktop/mobile acceptance documentation.
-- [ ] Checkpoint D: Full clean-checkout CI, policy review, code-quality review, and real-device acceptance.
+- [ ] Checkpoint D: Full clean-checkout CI, policy review, code-quality review, real-device acceptance, and recorded Daily Notes dogfooding.
 
 ## Explicitly deferred
 

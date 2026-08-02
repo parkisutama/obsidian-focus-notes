@@ -108,6 +108,7 @@ Parallelizable does not mean one mixed commit. Each numbered task remains an ind
 
 - [ ] Submission returns typed `success`, `partial`, or `failure` outcomes.
 - [ ] Outcomes identify created hub/detail notes and distinguish primary failure from primary success followed by existing related-note failure.
+- [ ] A `partial` outcome carries an ephemeral recovery receipt containing completed paths, failed paths, and the immutable failed-write payload; it is not a signal to rerun the full submission.
 - [ ] Existing successful Event, Task, and Inbox Markdown remains byte-for-byte unchanged.
 
 **Verification:**
@@ -136,7 +137,8 @@ Parallelizable does not mean one mixed commit. Each numbered task remains an ind
 **Acceptance criteria:**
 
 - [ ] A renderer-independent guard permits only one active submission per form.
-- [ ] Failure permits one subsequent retry; success or partial success completes exactly once.
+- [ ] Failure before the primary commit permits one subsequent full retry; success or partial success completes the form exactly once.
+- [ ] Recovery from `partial` is a separate action and cannot invoke the primary submission path.
 - [ ] Desktop and mobile consume the same policy without recombining their layouts.
 
 **Verification:**
@@ -448,7 +450,7 @@ Parallelizable does not mean one mixed commit. Each numbered task remains an ind
 
 **Verification:**
 
-- [ ] Pure tests cover aliases, encoded relative paths, repeated links, disabled sources, overlapping folders, property filters, Event, Task, and Inbox.
+- [ ] Pure tests cover aliases, encoded relative paths, varying folder depth, repeated links, disabled sources, overlapping folders, property filters, Event, Task, and Inbox.
 - [ ] Golden Markdown fixtures for People, Place, Activity Object, and Book receive human approval.
 
 **Dependencies:** Tasks 5 and 7. UI integration is not required to prove this pure contract.
@@ -479,12 +481,15 @@ Parallelizable does not mean one mixed commit. Each numbered task remains an ind
 
 - [ ] The primary target is written once before contextual logs; existing explicit link/create-related-note behavior remains available.
 - [ ] Each resolved destination receives one append-only log under its configured heading, including when the same note is mentioned more than once.
-- [ ] Any contextual failure after primary success returns `partial` with completed and failed paths; retry UI cannot duplicate the primary entry.
+- [ ] Any contextual failure after primary success returns `partial` with a recovery receipt; the form is complete and cannot rerun the primary entry.
+- [ ] `Retry failed related logs` consumes only the receipt's current failed paths and never re-attempts the primary path or a destination recorded as completed.
+- [ ] After each targeted recovery, newly successful paths move to completed and only still-failed paths remain retryable; no permanent synchronization ID or block ID is written to Markdown.
 
 **Verification:**
 
 - [ ] Writer tests assert final Markdown, heading creation, existing related-note compatibility, multiple destinations, and failure at each write position.
-- [ ] Submission tests cover Inbox, Event, Task, complete success, primary failure, partial success, and one guarded retry.
+- [ ] Submission tests cover Inbox, Event, Task, complete success, primary failure, partial success, one guarded full retry before primary commit, and repeated failed-path-only recovery after partial completion.
+- [ ] A multi-destination regression proves that a destination succeeding before another fails is never appended again during recovery.
 - [ ] `pnpm test`, `pnpm run typecheck`, and `pnpm run build` pass.
 
 **Dependencies:** Tasks 1, 2, 10, 11, and 12.
@@ -603,11 +608,11 @@ Parallelizable does not mean one mixed commit. Each numbered task remains an ind
 
 ## Phase 3 — Hardening and release evidence
 
-### Task 17: Measure and bound suggestion/indexing performance
+### Task 17: Confirm and bound suggestion/indexing performance
 
 **Priority:** P3
 
-**Description:** Validate the efficient design against representative vault sizes and prevent accidental full-vault work on each keystroke or render.
+**Description:** Confirm the Task 8 fail-fast synthetic baseline against representative real-vault sizes and prevent later regressions that introduce full-vault work on each keystroke or render. This is confirmation and regression bounding, not the first point of performance discovery.
 
 **Acceptance criteria:**
 
@@ -641,6 +646,7 @@ Parallelizable does not mean one mixed commit. Each numbered task remains an ind
 - [ ] User how-to covers Daily Notes, contextual mentions, related logs, Activity Objects, one-off activities, and Timeline retrieval.
 - [ ] Developer reference covers context-source schema, submission commit boundary, append-only semantics, and parser contracts.
 - [ ] Repeatable desktop and mobile acceptance evidence is recorded separately from automated tests.
+- [ ] A representative Daily Notes workflow is dogfooded for mixed `Activities & Tasks`, fleeting versus promoted items, and retrieval through People, Place, and Activity logs; v1 may use the project owner as the initial real user, but the result and unresolved confusion are recorded.
 
 **Verification:**
 
@@ -664,6 +670,7 @@ Parallelizable does not mean one mixed commit. Each numbered task remains an ind
 - [ ] All P0–P3 acceptance criteria are closed or explicitly deferred with rationale.
 - [ ] Full clean-checkout CI passes.
 - [ ] Real Obsidian desktop and representative Android/iOS acceptance passes.
+- [ ] The seven design assumptions have recorded outcomes from their assigned technical checks or Daily Notes dogfooding; unresolved assumptions are explicitly deferred with rationale.
 - [ ] Obsidian policy blockers recorded in `docs/development-status.md` are resolved before public release.
 - [ ] Final code-quality review finds no required issues.
 
@@ -672,6 +679,7 @@ Parallelizable does not mean one mixed commit. Each numbered task remains an ind
 | Risk | Impact | Mitigation |
 |---|---|---|
 | Generalized related-note failure causes duplicate primary entries on retry | High | Land typed partial outcomes and one in-flight guard before extending `writeToHubNote` |
+| Partial recovery re-appends contextual logs that already succeeded | High | Persist completed and failed paths in an ephemeral partial receipt and retry only its current failed destinations |
 | Context-source migration loses existing People/Place folders | High | Make migration pure, snapshot existing settings, and test customized fixtures |
 | Mixed Event/Task heading erases semantic differences | High | Lock separate writer/parser golden fixtures before changing defaults |
 | Append-only logs duplicate on repeated mentions or double-submit | High | Resolve only configured context links, deduplicate by destination path, and use one guarded submission |
