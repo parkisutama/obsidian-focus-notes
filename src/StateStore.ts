@@ -1,76 +1,124 @@
-import { type App, normalizePath } from "obsidian";
-import { type FocusNotesSettings, mergeSettingsWithDefaults } from "./types";
+import type { FocusNotesSettings } from "./types";
 
-/**
- * Where persistent settings live.
- *
- * We deliberately bypass Obsidian's plugin-local data.json mechanism in favour
- * of a file directly inside `.obsidian/`. The reason is uninstall-survival:
- * `.obsidian/plugins/focus-notes/` is wiped on uninstall, but the user's vault
- * config dir is not. Storing in the config dir means:
- *   - Reinstall preserves all settings (live target, defaults, group-by-date,
- *     templates) without the user re-entering anything.
- *   - Obsidian Sync (which syncs `.obsidian/`) propagates the state across
- *     devices.
- *   - The user's own backup of `.obsidian/` covers it.
- *
- * Path resolution uses `vault.configDir`, not a hard-coded ".obsidian", so we
- * respect users who have configured a different config folder name.
- */
+// This file intentionally lives directly in the vault config directory rather
+// than plugin-local data.json so settings survive uninstall/reinstall and can
+// travel with Obsidian Sync. The legacy loader below performs the one-time move.
 const STATE_FILENAME = "focus-notes-state.json";
 
-function statePath(app: App): string {
-    return normalizePath(`${app.vault.configDir}/${STATE_FILENAME}`);
+interface StateAdapter {
+    exists(path: string): Promise<boolean>;
+    read(path: string): Promise<string>;
+    write(path: string, contents: string): Promise<void>;
+}
+
+export interface StateStoreApp {
+    vault: {
+        configDir: string;
+        adapter: StateAdapter;
+    };
+}
+
+export type StateLoadStatus = "loaded" | "missing" | "migrated" | "unreadable" | "malformed";
+
+export interface StateLoadResult {
+    status: StateLoadStatus;
+    settings: FocusNotesSettings;
+    canSave: boolean;
 }
 
 /**
- * Load settings, with one-time migration from the legacy data.json location.
- *
- * Migration logic: if the external file does not exist but the plugin has a
- * data.json from a previous install, copy it to the external location once.
- * This makes the upgrade transparent for existing users. The legacy data.json
- * is then left in place (Obsidian manages it); subsequent saves go to the
- * external file only, so it gradually becomes irrelevant.
+ * Owns the external settings file lifecycle and serializes writes from immutable
+ * JSON snapshots. A malformed or unreadable existing file stays protected for
+ * the lifetime of this store instance so background settings writes cannot
+ * destroy the user's recovery source.
  */
-export async function loadState(app: App, legacyLoad: () => Promise<unknown>): Promise<FocusNotesSettings> {
-    const adapter = app.vault.adapter;
-    const path = statePath(app);
+export class StateStore {
+    private readonly app: StateStoreApp;
+    private readonly mergeSettings: (saved: Partial<FocusNotesSettings>) => FocusNotesSettings;
+    private readonly path: string;
+    private canSave = true;
+    private writeQueue: Promise<void> = Promise.resolve();
 
-    try {
-        if (await adapter.exists(path)) {
-            const raw = await adapter.read(path);
-            const parsed = JSON.parse(raw) as Partial<FocusNotesSettings>;
-            return mergeSettingsWithDefaults(parsed);
-        }
-    } catch (err) {
-        console.error(
-            "[Focus Notes] Could not parse state file, falling back to defaults. The corrupted file is left untouched so it can be recovered.",
-            err,
-        );
-        return mergeSettingsWithDefaults({});
+    constructor(app: StateStoreApp, mergeSettings: (saved: Partial<FocusNotesSettings>) => FocusNotesSettings) {
+        this.app = app;
+        this.mergeSettings = mergeSettings;
+        this.path = normalizeStatePath(`${app.vault.configDir}/${STATE_FILENAME}`);
     }
 
-    // External file missing — try migrating from legacy data.json.
-    try {
-        const legacy = (await legacyLoad()) as Partial<FocusNotesSettings> | null;
-        if (legacy && typeof legacy === "object") {
-            const merged = mergeSettingsWithDefaults(legacy);
-            await saveState(app, merged);
-            return merged;
+    async load(legacyLoad: () => Promise<unknown>): Promise<StateLoadResult> {
+        let exists: boolean;
+        try {
+            exists = await this.app.vault.adapter.exists(this.path);
+        } catch (error) {
+            return this.protectedFallback("unreadable", "Could not inspect state file.", error);
         }
-    } catch (err) {
-        // Best-effort migration; if it fails we just start fresh.
-        console.warn("[Focus Notes] Legacy data migration skipped.", err);
+
+        if (exists) return this.loadExisting();
+
+        try {
+            const legacy = await legacyLoad();
+            if (legacy && typeof legacy === "object" && !Array.isArray(legacy)) {
+                const settings = this.mergeSettings(legacy as Partial<FocusNotesSettings>);
+                await this.writeSnapshot(JSON.stringify(settings, null, 2));
+                return { status: "migrated", settings, canSave: true };
+            }
+        } catch (error) {
+            console.warn("[Focus Notes] Legacy data migration skipped.", error);
+        }
+
+        const settings = this.mergeSettings({});
+        await this.writeSnapshot(JSON.stringify(settings, null, 2));
+        return { status: "missing", settings, canSave: true };
     }
 
-    // First install or no legacy data — write defaults so the file exists.
-    const fresh = mergeSettingsWithDefaults({});
-    await saveState(app, fresh);
-    return fresh;
+    save(settings: FocusNotesSettings): Promise<boolean> {
+        if (!this.canSave) {
+            console.warn("[Focus Notes] Settings save skipped to protect an unreadable or malformed state file.");
+            return Promise.resolve(false);
+        }
+
+        const snapshot = JSON.stringify(settings, null, 2);
+        const write = this.writeQueue
+            .catch(() => undefined)
+            .then(() => this.app.vault.adapter.write(this.path, snapshot));
+        this.writeQueue = write;
+        return write.then(() => true);
+    }
+
+    private async loadExisting(): Promise<StateLoadResult> {
+        let raw: string;
+        try {
+            raw = await this.app.vault.adapter.read(this.path);
+        } catch (error) {
+            return this.protectedFallback("unreadable", "Could not read state file.", error);
+        }
+
+        try {
+            const parsed = JSON.parse(raw) as unknown;
+            if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+                throw new Error("State root must be an object.");
+            }
+            return {
+                status: "loaded",
+                settings: this.mergeSettings(parsed as Partial<FocusNotesSettings>),
+                canSave: true,
+            };
+        } catch (error) {
+            return this.protectedFallback("malformed", "Could not parse state file.", error);
+        }
+    }
+
+    private protectedFallback(status: "unreadable" | "malformed", message: string, error: unknown): StateLoadResult {
+        this.canSave = false;
+        console.error(`[Focus Notes] ${message} The existing file is left untouched for recovery.`, error);
+        return { status, settings: this.mergeSettings({}), canSave: false };
+    }
+
+    private async writeSnapshot(snapshot: string): Promise<void> {
+        await this.app.vault.adapter.write(this.path, snapshot);
+    }
 }
 
-export async function saveState(app: App, settings: FocusNotesSettings): Promise<void> {
-    const path = statePath(app);
-    const json = JSON.stringify(settings, null, 2);
-    await app.vault.adapter.write(path, json);
+function normalizeStatePath(path: string): string {
+    return path.replace(/\\/g, "/").replace(/\/{2,}/g, "/");
 }

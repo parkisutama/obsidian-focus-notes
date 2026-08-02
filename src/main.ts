@@ -1,12 +1,12 @@
 import { Plugin, type WorkspaceLeaf } from "obsidian";
-import type { FocusNotesSettings } from "./types";
+import { type FocusNotesSettings, mergeSettingsWithDefaults } from "./types";
 import { TimerView, VIEW_TYPE_FOCUS_NOTES } from "./TimerView";
 import { TimelineView, VIEW_TYPE_FOCUS_TIMELINE } from "./TimelineView";
 import { NoteWriter } from "./NoteWriter";
 import { TargetResolver } from "./TargetResolver";
 import { RecentEntriesReader } from "./RecentEntriesReader";
 import { FocusNotesSettingsTab } from "./SettingsTab";
-import { loadState, saveState } from "./StateStore";
+import { StateStore } from "./StateStore";
 import { openEventTaskForm } from "./EventTaskModal";
 
 /**
@@ -22,6 +22,7 @@ import { openEventTaskForm } from "./EventTaskModal";
  */
 export default class FocusNotesPlugin extends Plugin {
     public settings!: FocusNotesSettings;
+    private stateStore!: StateStore;
 
     async onload(): Promise<void> {
         await this.loadSettings();
@@ -92,11 +93,13 @@ export default class FocusNotesPlugin extends Plugin {
     async loadSettings(): Promise<void> {
         // Pass loadData as a thunk so StateStore can perform the one-time
         // migration from the legacy data.json without coupling the two layers.
-        this.settings = await loadState(this.app, () => this.loadData());
+        this.stateStore = new StateStore(this.app, mergeSettingsWithDefaults);
+        const result = await this.stateStore.load(() => this.loadData());
+        this.settings = result.settings;
     }
 
     async saveSettings(): Promise<void> {
-        await saveState(this.app, this.settings);
+        await this.stateStore.save(this.settings);
     }
 
     private async activateView(): Promise<void> {
