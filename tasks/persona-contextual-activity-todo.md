@@ -9,7 +9,7 @@ See [the full implementation plan](persona-contextual-activity-plan.md) for depe
 - [ ] Checkpoint A1: Verify submission lifecycle and existing Related note compatibility.
 - [x] Task 3: Reject invalid Event and Task temporal records.
 - [x] Task 4: Make settings reads recoverable and writes ordered.
-- [ ] Task 5: Lock Event/Task writer and Timeline parser compatibility with direct tests.
+- [x] Task 5: Lock Event/Task writer and Timeline parser compatibility with direct tests.
 - [ ] Checkpoint A: Run full CI and desktop/mobile regression acceptance.
 
 ## P1 — Core contextual capture

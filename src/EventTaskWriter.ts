@@ -3,6 +3,7 @@ import type { EventTaskSettings, InsertPosition } from "./types";
 import type { InboxRecord } from "./EventTaskFormState";
 import { formatInboxEntry } from "./InboxMarkdown";
 import { ensureFolderPath, isTFile } from "./utils";
+import { formatEventTaskEntry } from "./EventTaskMarkdown";
 
 /** Reference to a hub note, used to build a markdown link. */
 export interface HubNoteRef {
@@ -51,16 +52,7 @@ export class EventTaskWriter {
         detailNoteRef?: HubNoteRef | null,
     ): Promise<void> {
         const file = await this.resolveOrCreateFile(targetFilePath);
-        const line = record.kind === "event" ? this.formatEventLine(record) : this.formatTaskLine(record);
-
-        const parts: string[] = [line];
-        const desc = record.description.trim();
-        if (desc) parts.push(`    - ${desc}`);
-        if (detailNoteRef) {
-            parts.push(`    - detail: [${detailNoteRef.title}](${this.encodePath(detailNoteRef.path)})`);
-        }
-
-        await this.insertIntoFile(file, targetHeading, parts.join("\n"), position);
+        await this.insertIntoFile(file, targetHeading, formatEventTaskEntry(record, detailNoteRef), position);
     }
 
     async writeInbox(
@@ -237,53 +229,8 @@ export class EventTaskWriter {
     }
 
     // -------------------------------------------------------------------------
-    // Line formatters
-    // -------------------------------------------------------------------------
-
-    private formatEventLine(record: EventRecord): string {
-        // Title is always the event's own title; hub note becomes a relative
-        // markdown link so the text stays visible in any MD reader/writer.
-        const titlePart = record.hubNoteRef
-            ? `[${record.title}](${this.encodePath(record.hubNoteRef.path)})`
-            : record.title;
-
-        if (record.allDay) {
-            return `- ${this.fmtDate(record.start)} ${titlePart}`;
-        }
-        return `- ${this.fmtDateTime(record.start)} - ${this.fmtTime(record.end)} ${titlePart}`;
-    }
-
-    private formatTaskLine(record: TaskRecord): string {
-        const titlePart = record.hubNoteRef
-            ? `[${record.title}](${this.encodePath(record.hubNoteRef.path)})`
-            : record.title;
-
-        let line = `- [ ] ${titlePart}`;
-
-        if (record.due) {
-            const dueStr = record.dueHasTime ? this.fmtDateTime(record.due) : this.fmtDate(record.due);
-            line += ` | due:${dueStr}`;
-        }
-
-        if (record.timebox) {
-            line += ` | start:${this.fmtDateTime(record.timebox.start)}`;
-            line += ` | end:${this.fmtDateTime(record.timebox.end)}`;
-        }
-
-        for (const remind of record.reminders) {
-            line += ` | remind:${this.fmtDateTime(remind)}`;
-        }
-
-        return line;
-    }
-
-    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
-
-    private encodePath(path: string): string {
-        return path.replace(/ /g, "%20");
-    }
 
     private fmtDate(d: Date): string {
         const y = d.getFullYear();
