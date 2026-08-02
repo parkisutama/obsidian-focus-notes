@@ -10,6 +10,9 @@
     },
     "scripts": {
         "dev": "node esbuild.config.mjs",
+        "docs:dev": "vitepress dev docs",
+        "docs:build": "vitepress build docs",
+        "docs:preview": "vitepress preview docs",
         "verify:version": "node scripts/verify-version-metadata.mjs",
         "lint": "biome lint . --error-on-warnings",
         "format": "biome format --write .",
@@ -21,7 +24,7 @@
         "verify:artifacts": "node scripts/verify-build-artifacts.mjs",
         "package:plugin": "node scripts/package-plugin.mjs",
         "check": "pnpm run format:check && pnpm run lint && pnpm run verify:version && pnpm run typecheck && pnpm run test",
-        "check:ci": "pnpm run check && pnpm run build && pnpm run verify:artifacts"
+        "check:ci": "pnpm run check && pnpm run build && pnpm run verify:artifacts && pnpm run docs:build"
     },
     "keywords": [
         "obsidian",
@@ -40,6 +43,7 @@
         "esbuild": "0.28.1",
         "obsidian": "1.12.3",
         "tslib": "^2.6.0",
-        "typescript": "^5.3.0"
+        "typescript": "^5.3.0",
+        "vitepress": "1.6.4"
     }
 }

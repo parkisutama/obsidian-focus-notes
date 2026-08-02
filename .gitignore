@@ -7,3 +7,6 @@ focus-notes.zip
 *:Zone.Identifier
 *.log
 .DS_Store
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+docs/.vitepress/.temp/

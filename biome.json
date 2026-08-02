@@ -1,7 +1,15 @@
 {
     "$schema": "https://biomejs.dev/schemas/2.5.6/schema.json",
     "files": {
-        "includes": ["**/*.{js,mjs,ts,json,jsonc}", "!!main.js", "!!node_modules", "!!.vscode"]
+        "includes": [
+            "**/*.{js,mjs,ts,json,jsonc}",
+            "!!main.js",
+            "!!node_modules",
+            "!!.vscode",
+            "!!docs/.vitepress/cache",
+            "!!docs/.vitepress/dist",
+            "!!docs/.vitepress/.temp"
+        ]
     },
     "formatter": {
         "enabled": true,
