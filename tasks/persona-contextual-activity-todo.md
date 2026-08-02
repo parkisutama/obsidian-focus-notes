@@ -4,8 +4,8 @@ See [the full implementation plan](persona-contextual-activity-plan.md) for depe
 
 ## P0 — Reliability prerequisites
 
-- [ ] Task 1: Introduce typed success, partial, and failure outcomes.
-- [ ] Task 2: Share one in-flight submission policy that consumes those outcomes.
+- [x] Task 1: Introduce typed success, partial, and failure outcomes.
+- [x] Task 2: Share one in-flight submission policy that consumes those outcomes.
 - [ ] Checkpoint A1: Verify submission lifecycle and existing Related note compatibility.
 - [ ] Task 3: Reject invalid Event and Task temporal records.
 - [ ] Task 4: Make settings reads recoverable and writes ordered.

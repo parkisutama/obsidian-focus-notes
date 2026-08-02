@@ -10,6 +10,7 @@ import { isTFile } from "./utils";
 import { shouldUseMobileForm } from "./MobileFormPolicy";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { InboxDesktopForm } from "./InboxDesktopForm";
+import { SubmissionPolicy } from "./SubmissionPolicy";
 
 export function openEventTaskForm(
     app: App,
@@ -30,6 +31,7 @@ export class EventTaskModal extends Modal {
     protected form: EventTaskFormState;
 
     protected resolved = false;
+    private readonly submissionPolicy = new SubmissionPolicy();
 
     // ---- DOM refs -----------------------------------------------------------
     private hubInputEl!: HTMLInputElement;
@@ -43,6 +45,7 @@ export class EventTaskModal extends Modal {
     private taskTimeboxDateEl!: HTMLInputElement;
     private taskTimeboxStartEl!: HTMLInputElement;
     private taskTimeboxEndEl!: HTMLInputElement;
+    private saveButtonEl!: HTMLButtonElement;
     private remindersListEl!: HTMLElement;
     private detailNoteRowEl!: HTMLElement;
     private detailNoteInputEl!: HTMLInputElement;
@@ -541,6 +544,7 @@ export class EventTaskModal extends Modal {
             text: "Save",
             attr: { type: "button" },
         });
+        this.saveButtonEl = save;
         save.addEventListener("click", () => void this.submit());
     }
 
@@ -554,11 +558,12 @@ export class EventTaskModal extends Modal {
         const settings = this.getSettings();
         const writer = new EventTaskWriter(this.app, settings.eventTask);
         if (this.form.kind === "inbox") {
-            const result = await submitInbox(this.form, {
-                writer,
-                resolveTarget: () => this.resolveInboxTarget(),
-            });
-            this.finishSubmission(result);
+            await this.executeSubmission(() =>
+                submitInbox(this.form, {
+                    writer,
+                    resolveTarget: () => this.resolveInboxTarget(),
+                }),
+            );
             return;
         }
 
@@ -571,24 +576,42 @@ export class EventTaskModal extends Modal {
             return;
         }
 
-        const result = await submitEventTask(this.form, {
-            writer,
-            defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
-            defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
-            resolveTargetFile: (record) => this.resolveTargetFile(record),
-            findMarkdownFile: (path) => {
-                const file = this.app.vault.getAbstractFileByPath(path);
-                return isTFile(file) ? file : null;
-            },
-            openFile: (file) => {
-                const vaultFile = this.app.vault.getAbstractFileByPath(file.path);
-                if (isTFile(vaultFile)) {
-                    void this.app.workspace.getLeaf(false).openFile(vaultFile, { active: false });
-                }
-            },
-        });
+        await this.executeSubmission(() =>
+            submitEventTask(this.form, {
+                writer,
+                defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
+                defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
+                resolveTargetFile: (record) => this.resolveTargetFile(record),
+                findMarkdownFile: (path) => {
+                    const file = this.app.vault.getAbstractFileByPath(path);
+                    return isTFile(file) ? file : null;
+                },
+                openFile: (file) => {
+                    const vaultFile = this.app.vault.getAbstractFileByPath(file.path);
+                    if (isTFile(vaultFile)) {
+                        void this.app.workspace.getLeaf(false).openFile(vaultFile, { active: false });
+                    }
+                },
+            }),
+        );
+    }
 
-        this.finishSubmission(result);
+    private async executeSubmission(operation: () => Promise<EventTaskSubmissionResult>): Promise<void> {
+        const attempt = this.submissionPolicy.run(operation);
+        if (!attempt) return;
+
+        this.setSubmissionBusy(true);
+        try {
+            this.finishSubmission(await attempt);
+        } finally {
+            this.setSubmissionBusy(false);
+        }
+    }
+
+    private setSubmissionBusy(busy: boolean): void {
+        this.saveButtonEl.disabled = busy;
+        this.saveButtonEl.setAttribute("aria-busy", String(busy));
+        this.saveButtonEl.setText(busy ? "Saving…" : "Save");
     }
 
     private finishSubmission(result: EventTaskSubmissionResult): void {
