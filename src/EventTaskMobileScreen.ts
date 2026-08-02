@@ -18,6 +18,7 @@ import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { SubmissionPolicy } from "./SubmissionPolicy";
 import { ContextNotesController } from "./InboxNotesController";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
+import { preferActiveNoteTarget } from "./CaptureTarget";
 
 export class EventTaskMobileScreen extends Component {
     private rootEl: HTMLElement | null = null;
@@ -41,7 +42,9 @@ export class EventTaskMobileScreen extends Component {
         super();
         const settings = getSettings();
         const resolver = new TargetResolver(app, settings);
-        const target = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+        const configured = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+        const activeFile = app.workspace.getActiveFile();
+        const target = preferActiveNoteTarget(configured, activeFile?.extension === "md" ? activeFile.path : null);
         const inboxTarget = selectInboxTarget({
             mode: settings.inbox.defaultTargetMode,
             dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),

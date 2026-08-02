@@ -19,6 +19,7 @@ import { InboxDesktopForm } from "./InboxDesktopForm";
 import { SubmissionPolicy } from "./SubmissionPolicy";
 import { ContextNotesController } from "./InboxNotesController";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
+import { preferActiveNoteTarget } from "./CaptureTarget";
 
 export function openEventTaskForm(
     app: App,
@@ -75,7 +76,9 @@ export class EventTaskModal extends Modal {
 
         const settings = getSettings();
         const resolver = new TargetResolver(app, settings);
-        const resolved = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+        const configured = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+        const activeFile = app.workspace.getActiveFile();
+        const resolved = preferActiveNoteTarget(configured, activeFile?.extension === "md" ? activeFile.path : null);
         const inboxTarget = selectInboxTarget({
             mode: settings.inbox.defaultTargetMode,
             dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),
