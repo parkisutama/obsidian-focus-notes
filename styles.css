@@ -13,6 +13,13 @@ body.fn-mobile-event-screen-open {
     overflow: hidden;
 }
 
+/* Page Preview is normally below Obsidian's modal layer. Keep it above only
+ * while the Focus Notes editor is the active modal/screen. */
+body.fn-event-task-modal-open .popover.hover-popover,
+body.fn-mobile-event-screen-open .popover.hover-popover {
+    z-index: calc(var(--layer-modal, 1000) + 20) !important;
+}
+
 .fn-mobile-event-screen {
     position: fixed;
     top: var(--fn-mobile-screen-top, 0px);

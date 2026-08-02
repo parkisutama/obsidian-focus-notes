@@ -92,12 +92,14 @@ export class EventTaskModal extends Modal {
 
     onOpen(): void {
         this.modalEl.addClass("fn-gcal-modal");
+        document.body.addClass("fn-event-task-modal-open");
         const { contentEl } = this;
         contentEl.empty();
         this.renderForm(contentEl);
     }
 
     onClose(): void {
+        document.body.removeClass("fn-event-task-modal-open");
         this.inboxForm?.destroy();
         this.inboxForm = null;
         this.contentEl.empty();
