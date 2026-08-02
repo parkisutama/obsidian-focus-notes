@@ -126,3 +126,73 @@ test("builds task due, timebox, and reminders from shared form state", () => {
         [new Date(2026, 7, 1, 8, 30).getTime()],
     );
 });
+
+test("rejects malformed Event dates and times instead of falling back to now", () => {
+    const state = createState();
+    state.kind = "event";
+    state.eventDate = "2026-02-30";
+    assert.deepEqual(state.validateTemporalFields(), { valid: false, message: "Event date is invalid." });
+
+    state.eventDate = "2026-08-01";
+    state.eventStartTime = "25:00";
+    assert.deepEqual(state.validateTemporalFields(), { valid: false, message: "Event start time is invalid." });
+});
+
+test("requires timed Event and Task timebox end to be later than start", () => {
+    const event = createState();
+    event.kind = "event";
+    event.eventStartTime = "10:00";
+    event.eventEndTime = "10:00";
+    assert.deepEqual(event.validateTemporalFields(), {
+        valid: false,
+        message: "Event end must be later than start.",
+    });
+
+    const task = createState();
+    task.kind = "task";
+    task.taskTimeboxEnabled = true;
+    task.taskTimeboxStartTime = "11:00";
+    task.taskTimeboxEndTime = "10:00";
+    assert.deepEqual(task.validateTemporalFields(), {
+        valid: false,
+        message: "Task timebox end must be later than start.",
+    });
+});
+
+test("allows an all-day Event without requiring a positive time range", () => {
+    const state = createState();
+    state.kind = "event";
+    state.eventAllDay = true;
+    state.eventStartTime = "";
+    state.eventEndTime = "";
+
+    assert.deepEqual(state.validateTemporalFields(), { valid: true });
+    const record = state.buildRecord(null);
+    assert.equal(record.kind, "event");
+    assert.equal(record.start.getHours(), 0);
+    assert.equal(record.end.getHours(), 0);
+});
+
+test("keeps late-night defaults valid at the 23:00 boundary", () => {
+    const state = new EventTaskFormState(new Date(2026, 7, 1, 23, 30), {
+        file: "Daily.md",
+        heading: "Schedule",
+        position: "end",
+        hubNotesFolder: "Hub",
+        detailNotesFolder: "Details",
+    });
+
+    assert.equal(state.eventStartTime, "23:00");
+    assert.equal(state.eventEndTime, "23:59");
+    assert.deepEqual(state.validateTemporalFields(), { valid: true });
+});
+
+function createState(): EventTaskFormState {
+    return new EventTaskFormState(new Date(2026, 7, 1, 9, 0), {
+        file: "Daily.md",
+        heading: "Schedule",
+        position: "end",
+        hubNotesFolder: "Hub",
+        detailNotesFolder: "Details",
+    });
+}

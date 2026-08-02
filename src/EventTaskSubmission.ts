@@ -75,7 +75,7 @@ export type EventTaskSubmissionResult =
       }
     | {
           status: "failure";
-          phase: "hub-note" | "detail-note" | "primary" | "inbox";
+          phase: "validation" | "hub-note" | "detail-note" | "primary" | "inbox";
           message: string;
           createdNotes: SubmissionCreatedNotes;
       };
@@ -84,6 +84,11 @@ export async function submitEventTask(
     state: EventTaskFormState,
     dependencies: EventTaskSubmissionDependencies,
 ): Promise<EventTaskSubmissionResult> {
+    const validation = state.validateTemporalFields();
+    if (!validation.valid) {
+        return failure("validation", validation.message);
+    }
+
     const { writer } = dependencies;
     let hubNoteRef: HubNoteRef | null = null;
     let hubNoteFilePath: string | null = null;
@@ -213,16 +218,16 @@ export async function submitInbox(
 }
 
 function failure(
-    phase: "hub-note" | "detail-note" | "primary" | "inbox",
+    phase: "validation" | "hub-note" | "detail-note" | "primary" | "inbox",
     prefix: string,
-    error: unknown,
+    error?: unknown,
     hubPath: string | null = null,
     detailPath: string | null = null,
 ): EventTaskSubmissionResult {
     return {
         status: "failure",
         phase,
-        message: `${prefix}: ${getErrorMessage(error)}`,
+        message: error === undefined ? prefix : `${prefix}: ${getErrorMessage(error)}`,
         createdNotes: { hubPath, detailPath },
     };
 }

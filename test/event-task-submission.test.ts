@@ -124,6 +124,49 @@ test("reports notes created before a primary-write failure", async () => {
     });
 });
 
+test("rejects invalid temporal state before invoking any writer operation", async () => {
+    const state = new EventTaskFormState(new Date(2026, 7, 1, 9, 0), {
+        file: "Daily.md",
+        heading: "Schedule",
+        position: "end",
+        hubNotesFolder: "Hub",
+        detailNotesFolder: "Details",
+    });
+    state.kind = "event";
+    state.title = "Invalid event";
+    state.eventEndTime = state.eventStartTime;
+    let writerCalls = 0;
+
+    const result = await submitEventTask(state, {
+        defaultHubNotesFolder: "Hub",
+        defaultDetailNotesFolder: "Details",
+        resolveTargetFile: () => "Daily.md",
+        findMarkdownFile: () => null,
+        openFile: () => undefined,
+        writer: {
+            createHubNote: async () => {
+                writerCalls += 1;
+                return { path: "unused.md" };
+            },
+            createDetailNote: async () => {
+                writerCalls += 1;
+                return { path: "unused.md" };
+            },
+            write: async () => {
+                writerCalls += 1;
+            },
+        },
+    });
+
+    assert.deepEqual(result, {
+        status: "failure",
+        phase: "validation",
+        message: "Event end must be later than start.",
+        createdNotes: { hubPath: null, detailPath: null },
+    });
+    assert.equal(writerCalls, 0);
+});
+
 test("returns partial with a failed-write receipt when the primary write committed", async () => {
     const state = new EventTaskFormState(new Date(2026, 7, 1, 9, 0), {
         file: "Daily.md",
