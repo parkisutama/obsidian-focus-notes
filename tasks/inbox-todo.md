@@ -185,13 +185,13 @@
 
 **Acceptance criteria:**
 
-- [ ] Mobile chips appear as `Inbox`, `Event`, `Task` with accessible selected state.
+- [x] Mobile chips appear as `Inbox`, `Event`, `Task` with accessible selected state.
 - [ ] Title, Notes, Save, and collapsed Advanced remain reachable with the keyboard open.
 - [ ] Suggestions support touch/keyboard selection without clipping or losing the Notes cursor.
 
 **Verification:**
 
-- [ ] Run all automated gates.
+- [x] Run all automated gates.
 - [ ] Test approximately 390x844 and 360x640 with keyboard closed/open.
 
 **Dependencies:** Task 7.

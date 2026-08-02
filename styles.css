@@ -177,6 +177,48 @@ body.fn-mobile-event-screen-open {
     gap: 8px;
 }
 
+.fn-mobile-event-screen .fn-mobile-inbox-primary {
+    display: flex;
+    flex-direction: column;
+}
+
+.fn-mobile-event-screen .fn-mobile-inbox-notes {
+    width: 100%;
+    min-height: 104px;
+    max-height: 38vh;
+    padding: 6px 0;
+    overflow-y: auto;
+    border: 0;
+    background: transparent;
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+    line-height: var(--line-height-normal);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    outline: none;
+}
+
+.fn-mobile-event-screen .fn-mobile-inbox-notes:empty::before {
+    content: attr(data-placeholder);
+    color: var(--text-faint);
+    pointer-events: none;
+}
+
+.fn-mobile-event-screen .fn-mobile-inbox-target {
+    padding: 0 0 6px;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    overflow-wrap: anywhere;
+}
+
+.fn-mobile-event-screen .fn-mobile-inbox-advanced .fn-mobile-event-disclosure-content {
+    padding-left: 0;
+}
+
+.fn-mobile-event-screen .fn-mobile-inbox-advanced .fn-mobile-event-field-row {
+    grid-template-columns: 34px minmax(0, 1fr);
+}
+
 .fn-mobile-event-screen .fn-mobile-event-field-row {
     display: grid;
     grid-template-columns: 34px minmax(0, 1fr);

@@ -7,13 +7,15 @@ import {
     setIcon
 } from "obsidian";
 import { EventTaskFormState, EventTaskKind, HubMode, formatLocalDate } from "./EventTaskFormState";
-import { submitEventTask } from "./EventTaskSubmission";
+import { submitEventTask, submitInbox } from "./EventTaskSubmission";
 import { EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
 import { getMobileViewportMetrics } from "./MobileViewport";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
+import { InboxMobileForm } from "./InboxMobileForm";
+import { selectInboxTarget } from "./InboxTarget";
 
 export class EventTaskMobileScreen extends Component {
     private rootEl: HTMLElement | null = null;
@@ -38,7 +40,8 @@ export class EventTaskMobileScreen extends Component {
             heading: settings.eventTask.defaultSaveHeading || target.heading,
             position: target.position,
             hubNotesFolder: settings.eventTask.hubNotesFolder,
-            detailNotesFolder: settings.eventTask.detailNotesFolder
+            detailNotesFolder: settings.eventTask.detailNotesFolder,
+            inbox: settings.inbox
         });
     }
 
@@ -47,7 +50,7 @@ export class EventTaskMobileScreen extends Component {
 
         this.rootEl = this.app.workspace.containerEl.createDiv({
             cls: "fn-mobile-event-screen",
-            attr: { role: "dialog", "aria-modal": "true", "aria-label": "Create event or task" }
+            attr: { role: "dialog", "aria-modal": "true", "aria-label": "Create inbox item, event, or task" }
         });
         document.body.addClass("fn-mobile-event-screen-open");
         this.render();
@@ -101,6 +104,7 @@ export class EventTaskMobileScreen extends Component {
             cls: "fn-mobile-event-title",
             attr: { placeholder: "Add title", "aria-label": "Title" }
         });
+        title.value = this.form.getTitleForKind(this.form.kind);
         this.registerDomEvent(title, "input", () => this.setTitle(title.value));
         this.registerDomEvent(title, "keydown", event => {
             if (event.key === "Enter" && !event.shiftKey) {
@@ -109,20 +113,26 @@ export class EventTaskMobileScreen extends Component {
             }
         });
 
-        const eventSection = this.bodyEl.createDiv({ cls: "fn-mobile-event-primary" });
-        const taskSection = this.bodyEl.createDiv({ cls: "fn-mobile-event-primary fn-gcal-hidden" });
-        const taskOptions = this.bodyEl.createDiv({ cls: "fn-mobile-event-task-options fn-gcal-hidden" });
+        const eventTaskFields = this.bodyEl.createDiv({ cls: "fn-mobile-event-task-fields" });
+        const eventSection = eventTaskFields.createDiv({ cls: "fn-mobile-event-primary" });
+        const taskSection = eventTaskFields.createDiv({ cls: "fn-mobile-event-primary fn-gcal-hidden" });
+        const taskOptions = eventTaskFields.createDiv({ cls: "fn-mobile-event-task-options fn-gcal-hidden" });
+        const inboxSection = this.bodyEl.createDiv({ cls: "fn-mobile-inbox-primary fn-gcal-hidden" });
         this.renderKindSelector(this.bodyEl, kind => {
+            title.value = this.form.getTitleForKind(kind);
+            const isInbox = kind === "inbox";
             const isEvent = kind === "event";
+            eventTaskFields.toggleClass("fn-gcal-hidden", isInbox);
+            inboxSection.toggleClass("fn-gcal-hidden", !isInbox);
             eventSection.toggleClass("fn-gcal-hidden", !isEvent);
-            taskSection.toggleClass("fn-gcal-hidden", isEvent);
-            taskOptions.toggleClass("fn-gcal-hidden", isEvent);
-        }, eventSection);
+            taskSection.toggleClass("fn-gcal-hidden", isInbox || isEvent);
+            taskOptions.toggleClass("fn-gcal-hidden", isInbox || isEvent);
+        }, eventTaskFields);
         this.renderEventFields(eventSection);
         this.renderTaskDueFields(taskSection);
-        this.renderDescription(this.bodyEl);
+        this.renderDescription(eventTaskFields);
 
-        const options = this.disclosure(this.bodyEl, "More options", "sliders-horizontal", "Notes, details, and destination");
+        const options = this.disclosure(eventTaskFields, "More options", "sliders-horizontal", "Notes, details, and destination");
         const timebox = this.disclosure(taskOptions, "Timebox", "timer");
         this.renderTaskTimebox(timebox);
         const reminders = this.disclosure(taskOptions, "Reminders", "bell");
@@ -131,6 +141,14 @@ export class EventTaskMobileScreen extends Component {
         this.renderRelatedNote(this.disclosure(options, "Related note", "link"));
         this.renderDetailNote(this.disclosure(options, "Detail note", "file-text"));
         this.renderSaveTarget(this.disclosure(options, "Save to", "folder", this.form.targetFile));
+
+        new InboxMobileForm({
+            app: this.app,
+            form: this.form,
+            getSettings: this.getSettings,
+            resolveTarget: () => this.resolveInboxTarget(),
+            registerCleanup: cleanup => this.register(cleanup)
+        }).render(inboxSection);
 
         this.registerDomEvent(cancel, "click", () => this.close());
         this.registerDomEvent(save, "click", () => void this.submit());
@@ -148,6 +166,11 @@ export class EventTaskMobileScreen extends Component {
             attr: { role: "group", "aria-label": "Item type" }
         });
         container.insertBefore(group, before);
+        const inboxButton = group.createEl("button", {
+            cls: "fn-mobile-event-kind-button",
+            text: "Inbox",
+            attr: { type: "button", "aria-pressed": "false" }
+        });
         const eventButton = group.createEl("button", {
             cls: "fn-mobile-event-kind-button is-active",
             text: "Event",
@@ -160,13 +183,17 @@ export class EventTaskMobileScreen extends Component {
         });
         const activate = (kind: EventTaskKind): void => {
             this.form.kind = kind;
+            const isInbox = kind === "inbox";
             const isEvent = kind === "event";
+            inboxButton.toggleClass("is-active", isInbox);
             eventButton.toggleClass("is-active", isEvent);
-            taskButton.toggleClass("is-active", !isEvent);
+            taskButton.toggleClass("is-active", !isInbox && !isEvent);
+            inboxButton.setAttribute("aria-pressed", String(isInbox));
             eventButton.setAttribute("aria-pressed", String(isEvent));
-            taskButton.setAttribute("aria-pressed", String(!isEvent));
+            taskButton.setAttribute("aria-pressed", String(!isInbox && !isEvent));
             onChange(kind);
         };
+        this.registerDomEvent(inboxButton, "click", () => activate("inbox"));
         this.registerDomEvent(eventButton, "click", () => activate("event"));
         this.registerDomEvent(taskButton, "click", () => activate("task"));
     }
@@ -357,6 +384,10 @@ export class EventTaskMobileScreen extends Component {
     }
 
     private setTitle(value: string): void {
+        if (this.form.kind === "inbox") {
+            this.form.inboxTitle = value;
+            return;
+        }
         const previous = this.form.title;
         this.form.title = value;
         if (this.form.hubMode === "create" && (!this.form.hubCreateName || this.form.hubCreateName === previous)) {
@@ -501,6 +532,18 @@ export class EventTaskMobileScreen extends Component {
 
     private async submit(): Promise<void> {
         if (this.resolved || this.submitting) return;
+        const settings = this.getSettings();
+        const writer = new EventTaskWriter(this.app, settings.eventTask);
+        if (this.form.kind === "inbox") {
+            this.submitting = true;
+            const result = await submitInbox(this.form, {
+                writer,
+                resolveTarget: () => this.resolveInboxTarget()
+            });
+            this.submitting = false;
+            this.finishSubmission(result);
+            return;
+        }
         if (!this.form.title.trim()) {
             new Notice("Please enter a title.");
             return;
@@ -511,9 +554,8 @@ export class EventTaskMobileScreen extends Component {
         }
 
         this.submitting = true;
-        const settings = this.getSettings();
         const result = await submitEventTask(this.form, {
-            writer: new EventTaskWriter(this.app, settings.eventTask),
+            writer,
             defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
             defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
             resolveTargetFile: record => this.resolveTargetFile(record),
@@ -527,12 +569,39 @@ export class EventTaskMobileScreen extends Component {
             }
         });
         this.submitting = false;
+        this.finishSubmission(result);
+    }
+
+    private finishSubmission(result: { ok: boolean; message: string }): void {
         new Notice(result.message);
         if (result.ok) {
             this.resolved = true;
             this.onComplete();
             this.close();
         }
+    }
+
+    private resolveInboxTarget(): FocusTarget | null {
+        const resolver = new TargetResolver(this.app, this.getSettings());
+        const override = this.form.inboxTargetFileOverride.trim();
+        if (override) {
+            return resolver.resolve({
+                file: override,
+                heading: this.form.inboxHeading.replace(/^#+\s*/, "").trim(),
+                position: this.form.inboxPosition
+            }, this.form.inboxCapturedAt);
+        }
+        return selectInboxTarget({
+            mode: this.form.inboxTargetMode,
+            dailyNoteTarget: resolver.getDailyNoteTarget(this.form.inboxCapturedAt),
+            eventTaskTarget: resolver.resolve({
+                file: this.form.targetFile,
+                heading: this.form.targetHeading,
+                position: this.form.targetPosition
+            }, this.form.inboxCapturedAt),
+            heading: this.form.inboxHeading,
+            position: this.form.inboxPosition
+        });
     }
 
     private resolveTargetFile(record: EventTaskRecord): string {
