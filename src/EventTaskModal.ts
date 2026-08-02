@@ -17,7 +17,7 @@ import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { isTFile } from "./utils";
 import { shouldUseMobileForm } from "./MobileFormPolicy";
-import { selectInboxTarget } from "./InboxTarget";
+import { resolveInboxFormTarget } from "./InboxTarget";
 import { InboxDesktopForm } from "./InboxDesktopForm";
 
 export function openEventTaskForm(
@@ -204,29 +204,10 @@ export class EventTaskModal extends Modal {
     // ---- Inbox section -----------------------------------------------------
 
     private resolveInboxTarget(): FocusTarget | null {
-        const resolver = new TargetResolver(this.app, this.getSettings());
-        const fileOverride = this.form.inboxTargetFileOverride.trim();
-        if (fileOverride) {
-            return resolver.resolve({
-                file: fileOverride,
-                heading: this.form.inboxHeading.replace(/^#+\s*/, "").trim(),
-                position: this.form.inboxPosition
-            }, this.form.inboxCapturedAt);
-        }
-        const dailyNoteTarget = resolver.getDailyNoteTarget(this.form.inboxCapturedAt);
-        const eventTaskTarget = resolver.resolve({
-            file: this.form.targetFile,
-            heading: this.form.targetHeading,
-            position: this.form.targetPosition
-        }, this.form.inboxCapturedAt);
-        const selected = selectInboxTarget({
-            mode: this.form.inboxTargetMode,
-            dailyNoteTarget,
-            eventTaskTarget,
-            heading: this.form.inboxHeading,
-            position: this.form.inboxPosition
-        });
-        return selected;
+        return resolveInboxFormTarget(
+            new TargetResolver(this.app, this.getSettings()),
+            this.form
+        );
     }
 
     // ---- Event section ------------------------------------------------------

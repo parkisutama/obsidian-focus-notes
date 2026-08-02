@@ -211,13 +211,13 @@
 
 **Acceptance criteria:**
 
-- [ ] All automated commands pass with no skipped tests or artifact mismatch.
+- [x] All automated commands pass with no skipped tests or artifact mismatch.
 - [ ] Desktop/mobile scenarios in the spec pass without console errors.
 - [ ] Existing Event/Task outputs and interactions do not regress.
 
 **Verification:**
 
-- [ ] Run every command from the spec.
+- [x] Run every command from the spec.
 - [ ] Record exact device/viewports, keyboard state, target modes, and link checks.
 - [ ] Obtain explicit user acceptance before merge to `main`.
 

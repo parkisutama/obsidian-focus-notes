@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { selectInboxTarget } from "../src/InboxTarget.ts";
+import { resolveInboxFormTarget, selectInboxTarget } from "../src/InboxTarget.ts";
+import { EventTaskFormState } from "../src/EventTaskFormState.ts";
 
 test("uses the captured-date Daily Note with Inbox overrides", () => {
     assert.deepEqual(
@@ -49,4 +50,31 @@ test("does not silently fall back when the selected target cannot resolve", () =
         }),
         null
     );
+});
+
+test("gives an explicit file override precedence for every renderer", () => {
+    const capturedAt = new Date(2026, 7, 2, 15, 40);
+    const form = new EventTaskFormState(capturedAt, {
+        file: "Planning.md",
+        heading: "Schedule",
+        position: "end",
+        hubNotesFolder: "Hub",
+        detailNotesFolder: "Details"
+    });
+    form.inboxTargetFileOverride = "Captures/Quick.md";
+    form.inboxHeading = "## Quick Inbox";
+    form.inboxPosition = "start";
+
+    const resolved = resolveInboxFormTarget({
+        resolve: target => ({ ...target, file: target.file.replace("Quick", "2026-08-02") }),
+        getDailyNoteTarget: () => {
+            throw new Error("Daily Note must not be read when an override exists");
+        }
+    }, form);
+
+    assert.deepEqual(resolved, {
+        file: "Captures/2026-08-02.md",
+        heading: "Quick Inbox",
+        position: "start"
+    });
 });

@@ -79,9 +79,8 @@ export class InboxDesktopForm {
         file.value = this.options.form.inboxTargetFileOverride;
         file.addEventListener("input", () => {
             this.options.form.inboxTargetFileOverride = file.value;
-            this.refreshTarget(false);
+            this.refreshTarget();
         });
-        file.addEventListener("change", () => this.refreshTarget());
         new FileSuggest(this.options.app, file);
 
         const headingLabel = fields.createEl("label", { text: "Heading" });

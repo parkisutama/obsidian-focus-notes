@@ -15,7 +15,7 @@ import { TargetResolver } from "./TargetResolver";
 import { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
 import { InboxMobileForm } from "./InboxMobileForm";
-import { selectInboxTarget } from "./InboxTarget";
+import { resolveInboxFormTarget } from "./InboxTarget";
 
 export class EventTaskMobileScreen extends Component {
     private rootEl: HTMLElement | null = null;
@@ -582,26 +582,10 @@ export class EventTaskMobileScreen extends Component {
     }
 
     private resolveInboxTarget(): FocusTarget | null {
-        const resolver = new TargetResolver(this.app, this.getSettings());
-        const override = this.form.inboxTargetFileOverride.trim();
-        if (override) {
-            return resolver.resolve({
-                file: override,
-                heading: this.form.inboxHeading.replace(/^#+\s*/, "").trim(),
-                position: this.form.inboxPosition
-            }, this.form.inboxCapturedAt);
-        }
-        return selectInboxTarget({
-            mode: this.form.inboxTargetMode,
-            dailyNoteTarget: resolver.getDailyNoteTarget(this.form.inboxCapturedAt),
-            eventTaskTarget: resolver.resolve({
-                file: this.form.targetFile,
-                heading: this.form.targetHeading,
-                position: this.form.targetPosition
-            }, this.form.inboxCapturedAt),
-            heading: this.form.inboxHeading,
-            position: this.form.inboxPosition
-        });
+        return resolveInboxFormTarget(
+            new TargetResolver(this.app, this.getSettings()),
+            this.form
+        );
     }
 
     private resolveTargetFile(record: EventTaskRecord): string {

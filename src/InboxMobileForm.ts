@@ -73,9 +73,8 @@ export class InboxMobileForm {
         file.value = this.options.form.inboxTargetFileOverride;
         file.addEventListener("input", () => {
             this.options.form.inboxTargetFileOverride = file.value;
-            this.refreshTarget(false);
+            this.refreshTarget();
         });
-        file.addEventListener("change", () => this.refreshTarget());
         const fileSuggest = new FileSuggest(this.options.app, file);
         this.options.registerCleanup(() => fileSuggest.close());
 
