@@ -1,14 +1,12 @@
-import { App, Component, setIcon } from "obsidian";
+import { App, setIcon } from "obsidian";
 import { EventTaskFormState } from "./EventTaskFormState";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
 import { InboxNotesController } from "./InboxNotesController";
 import { FileSuggest } from "./Suggesters";
-import { InboxLinkPreview } from "./InboxLinkPreview";
 import type { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
 
 interface InboxMobileFormOptions {
     app: App;
-    owner: Component;
     form: EventTaskFormState;
     getSettings(): FocusNotesSettings;
     resolveTarget(): FocusTarget | null;
@@ -19,7 +17,6 @@ interface InboxMobileFormOptions {
 export class InboxMobileForm {
     private notesController: InboxNotesController | null = null;
     private targetSummaryEl: HTMLElement | null = null;
-    private linkPreview: InboxLinkPreview | null = null;
 
     constructor(private readonly options: InboxMobileFormOptions) {}
 
@@ -32,19 +29,13 @@ export class InboxMobileForm {
                 "data-placeholder": "Add context. Use @ for People or Places, # for tags."
             }
         });
-        const previewEl = notes.createDiv({ cls: "fn-inbox-link-preview fn-gcal-hidden" });
-        this.linkPreview = new InboxLinkPreview(this.options.app, this.options.owner, previewEl);
         this.notesController = new InboxNotesController(this.options.app, notesEl, {
             initialValue: this.options.form.inboxBody,
             targetFile: this.options.resolveTarget()?.file ?? "",
             getPeopleFolders: () => this.peopleFolders,
             getPlaceFolders: () => this.placeFolders,
-            onChange: value => {
-                this.options.form.inboxBody = value;
-                this.refreshLinkPreview();
-            }
+            onChange: value => (this.options.form.inboxBody = value)
         });
-        this.refreshLinkPreview();
         this.options.registerCleanup(() => this.destroy());
 
         const advanced = container.createEl("details", { cls: "fn-mobile-event-disclosure fn-mobile-inbox-advanced" });
@@ -63,7 +54,6 @@ export class InboxMobileForm {
         this.notesController?.destroy();
         this.notesController = null;
         this.targetSummaryEl = null;
-        this.linkPreview = null;
     }
 
     private renderAdvanced(container: HTMLElement): void {
@@ -162,13 +152,6 @@ export class InboxMobileForm {
             target ? `${target.file} · ${target.heading || "No heading"}` : "Selected destination is unavailable"
         );
         if (updateNotes && target) this.notesController?.setTargetFile(target.file);
-    }
-
-    private refreshLinkPreview(): void {
-        this.linkPreview?.update(
-            this.options.form.inboxBody,
-            this.options.resolveTarget()?.file ?? ""
-        );
     }
 
     private get peopleFolders(): string[] {

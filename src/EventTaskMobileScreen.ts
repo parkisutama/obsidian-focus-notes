@@ -152,7 +152,6 @@ export class EventTaskMobileScreen extends Component {
 
         new InboxMobileForm({
             app: this.app,
-            owner: this,
             form: this.form,
             getSettings: this.getSettings,
             resolveTarget: () => this.resolveInboxTarget(),

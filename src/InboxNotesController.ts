@@ -1,14 +1,18 @@
-import { AbstractInputSuggest, App } from "obsidian";
-import { formatRelativeMarkdownLink } from "./InboxMarkdown";
 import {
-    findInboxTrigger,
-    InboxTrigger,
-    rebaseTrackedMentionLinks,
-    replaceInboxTextRange,
-    TrackedMentionLink
-} from "./InboxNotesText";
+    AbstractInputSuggest,
+    App,
+    HoverPopover,
+    Keymap
+} from "obsidian";
+import { findInboxTrigger, InboxTrigger } from "./InboxNotesText";
+import {
+    InboxRichTextPart,
+    parseInboxRichText,
+    serializeInboxRichText
+} from "./InboxRichText";
 import type { MentionSuggestion } from "./InboxSuggestions";
 import { ObsidianInboxSuggestionSource } from "./ObsidianInboxSuggestionSource";
+import { formatRelativeMarkdownLink } from "./InboxMarkdown";
 
 type InboxNotesSuggestion =
     | { kind: "mention"; value: MentionSuggestion }
@@ -22,13 +26,21 @@ export interface InboxNotesControllerOptions {
     onChange(value: string): void;
 }
 
-/** Inline @mention and #tag suggestions for a plaintext contenteditable body. */
+/** Rich contenteditable controller that persists portable Markdown, never editor HTML. */
 export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggestion> {
+    hoverPopover: HoverPopover | null = null;
     private activeTrigger: InboxTrigger | null = null;
-    private trackedMentions: TrackedMentionLink[] = [];
     private targetFile: string;
     private readonly source: ObsidianInboxSuggestionSource;
-    private readonly onInput = (): void => this.options.onChange(this.readText());
+    private readonly onInput = (): void => this.emitMarkdown();
+    private readonly onPaste = (event: ClipboardEvent): void => this.pastePlainText(event);
+    private readonly onClick = (event: MouseEvent): void => this.openInternalLink(event);
+    private readonly onMouseOver = (event: MouseEvent): void => this.previewInternalLink(event);
+    private readonly onKeyDown = (event: KeyboardEvent): void => {
+        if (event.key === "Enter" && event.target instanceof HTMLAnchorElement) {
+            this.openInternalLink(event);
+        }
+    };
 
     constructor(
         app: App,
@@ -39,15 +51,19 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
         this.source = new ObsidianInboxSuggestionSource(app);
         this.targetFile = options.targetFile;
         this.limit = 20;
-        inputEl.contentEditable = "plaintext-only";
+        inputEl.contentEditable = "true";
         inputEl.setAttribute("role", "textbox");
         inputEl.setAttribute("aria-multiline", "true");
-        inputEl.textContent = options.initialValue;
+        this.renderInitialValue(options.initialValue);
         inputEl.addEventListener("input", this.onInput);
+        inputEl.addEventListener("paste", this.onPaste);
+        inputEl.addEventListener("click", this.onClick);
+        inputEl.addEventListener("mouseover", this.onMouseOver);
+        inputEl.addEventListener("keydown", this.onKeyDown);
     }
 
     getSuggestions(): InboxNotesSuggestion[] {
-        const text = this.readText();
+        const text = this.readVisibleText();
         const cursor = getCaretOffset(this.inputEl);
         this.activeTrigger = findInboxTrigger(text, cursor);
         if (!this.activeTrigger) return [];
@@ -80,26 +96,13 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
     selectSuggestion(suggestion: InboxNotesSuggestion): void {
         const trigger = this.activeTrigger;
         if (!trigger) return;
-        const current = this.readText();
-        let replacement: string;
+        const replacement = suggestion.kind === "tag"
+            ? this.inputEl.ownerDocument.createTextNode(suggestion.value)
+            : this.createLink(suggestion.value.filePath, suggestion.value.label);
 
-        if (suggestion.kind === "tag") {
-            replacement = suggestion.value;
-        } else {
-            replacement = formatRelativeMarkdownLink(
-                this.targetFile,
-                suggestion.value.filePath,
-                suggestion.value.label
-            );
-            this.trackedMentions.push({
-                filePath: suggestion.value.filePath,
-                label: suggestion.value.label,
-                markdown: replacement
-            });
-        }
-
-        const next = replaceInboxTextRange(current, trigger, replacement);
-        this.writeText(next, trigger.start + replacement.length);
+        replaceVisibleRange(this.inputEl, trigger.start, trigger.end, replacement);
+        placeCaretAfter(replacement);
+        this.emitMarkdown();
         this.activeTrigger = null;
         this.close();
     }
@@ -107,32 +110,122 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
     setTargetFile(nextTargetFile: string): void {
         const next = nextTargetFile.trim();
         if (!next || next === this.targetFile) return;
-        const rebased = rebaseTrackedMentionLinks(
-            this.readText(),
-            this.trackedMentions,
-            this.targetFile,
-            next,
-            formatRelativeMarkdownLink
-        );
         this.targetFile = next;
-        this.trackedMentions = rebased.mentions;
-        this.writeText(rebased.text, rebased.text.length, false);
+        this.emitMarkdown();
     }
 
     destroy(): void {
         this.inputEl.removeEventListener("input", this.onInput);
+        this.inputEl.removeEventListener("paste", this.onPaste);
+        this.inputEl.removeEventListener("click", this.onClick);
+        this.inputEl.removeEventListener("mouseover", this.onMouseOver);
+        this.inputEl.removeEventListener("keydown", this.onKeyDown);
         this.close();
     }
 
-    private readText(): string {
+    private renderInitialValue(markdown: string): void {
+        const parts = parseInboxRichText(markdown, destination => {
+            const decoded = safeDecodeURIComponent(destination);
+            return this.app.metadataCache.getFirstLinkpathDest(decoded, this.targetFile)?.path ?? null;
+        });
+        this.inputEl.empty();
+        for (const part of parts) {
+            this.inputEl.appendChild(part.kind === "text"
+                ? this.inputEl.ownerDocument.createTextNode(part.value)
+                : this.createLink(part.filePath, part.label)
+            );
+        }
+    }
+
+    private createLink(filePath: string, label: string): HTMLAnchorElement {
+        const link = this.inputEl.ownerDocument.createElement("a");
+        link.addClass("internal-link", "fn-inbox-inline-link");
+        link.dataset.href = filePath;
+        link.dataset.inboxFilePath = filePath;
+        link.href = filePath;
+        link.textContent = label;
+        link.contentEditable = "false";
+        link.tabIndex = 0;
+        link.setAttribute("role", "link");
+        return link;
+    }
+
+    private emitMarkdown(): void {
+        this.options.onChange(serializeInboxRichText(
+            readDomParts(this.inputEl),
+            this.targetFile,
+            formatRelativeMarkdownLink
+        ));
+    }
+
+    private readVisibleText(): string {
         return this.inputEl.innerText.replace(/\u00a0/g, " ").replace(/\r\n/g, "\n");
     }
 
-    private writeText(value: string, caret: number, restoreCaret = true): void {
-        this.inputEl.textContent = value;
-        this.options.onChange(value);
-        if (restoreCaret) setCaretOffset(this.inputEl, caret);
+    private pastePlainText(event: ClipboardEvent): void {
+        const text = event.clipboardData?.getData("text/plain");
+        if (text === undefined) return;
+        event.preventDefault();
+        insertAtSelection(this.inputEl, this.inputEl.ownerDocument.createTextNode(text));
+        this.emitMarkdown();
     }
+
+    private openInternalLink(event: MouseEvent | KeyboardEvent): void {
+        const link = closestInboxLink(event.target);
+        if (!link) return;
+        event.preventDefault();
+        void this.app.workspace.openLinkText(
+            link.dataset.inboxFilePath ?? "",
+            this.targetFile,
+            Keymap.isModEvent(event)
+        );
+    }
+
+    private previewInternalLink(event: MouseEvent): void {
+        const link = closestInboxLink(event.target);
+        const filePath = link?.dataset.inboxFilePath;
+        if (!link || !filePath) return;
+        this.app.workspace.trigger("hover-link", {
+            event,
+            source: "focus-notes-inbox",
+            hoverParent: this,
+            targetEl: link,
+            linktext: filePath,
+            sourcePath: this.targetFile
+        });
+    }
+}
+
+function readDomParts(root: HTMLElement): InboxRichTextPart[] {
+    const parts: InboxRichTextPart[] = [];
+    const visit = (node: Node): void => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            parts.push({ kind: "text", value: node.textContent ?? "" });
+            return;
+        }
+        if (!(node instanceof HTMLElement)) return;
+        const filePath = node.dataset.inboxFilePath;
+        if (node instanceof HTMLAnchorElement && filePath) {
+            parts.push({ kind: "link", label: node.textContent ?? filePath, filePath });
+            return;
+        }
+        if (node instanceof HTMLBRElement) {
+            parts.push({ kind: "text", value: "\n" });
+            return;
+        }
+        node.childNodes.forEach(visit);
+        if ((node instanceof HTMLDivElement || node instanceof HTMLParagraphElement) && node.nextSibling) {
+            parts.push({ kind: "text", value: "\n" });
+        }
+    };
+    root.childNodes.forEach(visit);
+    return parts;
+}
+
+function closestInboxLink(target: EventTarget | null): HTMLAnchorElement | null {
+    return target instanceof Element
+        ? target.closest<HTMLAnchorElement>("a[data-inbox-file-path]")
+        : null;
 }
 
 function getCaretOffset(root: HTMLElement): number {
@@ -146,25 +239,58 @@ function getCaretOffset(root: HTMLElement): number {
     return prefix.toString().length;
 }
 
-function setCaretOffset(root: HTMLElement, offset: number): void {
-    root.focus();
-    const document = root.ownerDocument;
-    const showText = document.defaultView?.NodeFilter.SHOW_TEXT ?? 4;
-    const walker = document.createTreeWalker(root, showText);
+function replaceVisibleRange(root: HTMLElement, start: number, end: number, replacement: Node): void {
+    const startPoint = pointAtOffset(root, start);
+    const endPoint = pointAtOffset(root, end);
+    const range = root.ownerDocument.createRange();
+    range.setStart(startPoint.node, startPoint.offset);
+    range.setEnd(endPoint.node, endPoint.offset);
+    range.deleteContents();
+    range.insertNode(replacement);
+}
+
+function pointAtOffset(root: HTMLElement, offset: number): { node: Node; offset: number } {
+    const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let remaining = Math.max(0, offset);
     let node = walker.nextNode();
     while (node) {
         const length = node.textContent?.length ?? 0;
-        if (remaining <= length) {
-            const range = document.createRange();
-            range.setStart(node, remaining);
-            range.collapse(true);
-            const selection = document.getSelection();
-            selection?.removeAllRanges();
-            selection?.addRange(range);
-            return;
-        }
+        if (remaining <= length) return { node, offset: remaining };
         remaining -= length;
         node = walker.nextNode();
+    }
+    return { node: root, offset: root.childNodes.length };
+}
+
+function placeCaretAfter(node: Node): void {
+    const document = node.ownerDocument;
+    if (!document) return;
+    const range = document.createRange();
+    range.setStartAfter(node);
+    range.collapse(true);
+    const selection = document.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    (node.parentElement as HTMLElement | null)?.focus();
+}
+
+function insertAtSelection(root: HTMLElement, node: Node): void {
+    const selection = root.ownerDocument.getSelection();
+    if (!selection?.rangeCount || !root.contains(selection.anchorNode)) {
+        root.appendChild(node);
+        placeCaretAfter(node);
+        return;
+    }
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(node);
+    placeCaretAfter(node);
+}
+
+function safeDecodeURIComponent(value: string): string {
+    try {
+        return decodeURIComponent(value);
+    } catch {
+        return value;
     }
 }

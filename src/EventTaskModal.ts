@@ -60,7 +60,6 @@ export class EventTaskModal extends Modal {
     private eventTaskFieldsEl!: HTMLElement;
     private inboxSectionEl!: HTMLElement;
     private inboxForm: InboxDesktopForm | null = null;
-    private inboxRenderOwner: Component | null = null;
     constructor(
         app: App,
         private getSettings: () => FocusNotesSettings,
@@ -101,8 +100,6 @@ export class EventTaskModal extends Modal {
     onClose(): void {
         this.inboxForm?.destroy();
         this.inboxForm = null;
-        this.inboxRenderOwner?.unload();
-        this.inboxRenderOwner = null;
         this.contentEl.empty();
         if (!this.resolved) this.resolved = true;
     }
@@ -126,11 +123,8 @@ export class EventTaskModal extends Modal {
         this.renderSaveTo(this.eventTaskFieldsEl);
 
         this.inboxSectionEl = body.createDiv({ cls: "fn-gcal-tab-section" });
-        this.inboxRenderOwner = new Component();
-        this.inboxRenderOwner.load();
         this.inboxForm = new InboxDesktopForm({
             app: this.app,
-            owner: this.inboxRenderOwner,
             form: this.form,
             getSettings: this.getSettings,
             resolveTarget: () => this.resolveInboxTarget()

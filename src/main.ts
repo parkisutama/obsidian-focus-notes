@@ -26,6 +26,11 @@ export default class FocusNotesPlugin extends Plugin {
     async onload(): Promise<void> {
         await this.loadSettings();
 
+        this.registerHoverLinkSource("focus-notes-inbox", {
+            display: "Focus Notes",
+            defaultMod: false
+        });
+
         this.registerView(
             VIEW_TYPE_FOCUS_NOTES,
             leaf =>

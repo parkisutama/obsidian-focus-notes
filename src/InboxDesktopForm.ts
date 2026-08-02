@@ -1,14 +1,12 @@
-import { App, Component, setIcon } from "obsidian";
+import { App, setIcon } from "obsidian";
 import { EventTaskFormState } from "./EventTaskFormState";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
 import { InboxNotesController } from "./InboxNotesController";
 import { FileSuggest } from "./Suggesters";
-import { InboxLinkPreview } from "./InboxLinkPreview";
 import type { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
 
 interface InboxDesktopFormOptions {
     app: App;
-    owner: Component;
     form: EventTaskFormState;
     getSettings(): FocusNotesSettings;
     resolveTarget(): FocusTarget | null;
@@ -18,7 +16,6 @@ interface InboxDesktopFormOptions {
 export class InboxDesktopForm {
     private notesController: InboxNotesController | null = null;
     private targetSummaryEl: HTMLElement | null = null;
-    private linkPreview: InboxLinkPreview | null = null;
 
     constructor(private readonly options: InboxDesktopFormOptions) {}
 
@@ -33,20 +30,13 @@ export class InboxDesktopForm {
                 "data-placeholder": "Capture context. Type @ for People or Places, # for tags."
             }
         });
-        const previewEl = notesWrap.createDiv({ cls: "fn-inbox-link-preview fn-gcal-hidden" });
-        this.linkPreview = new InboxLinkPreview(this.options.app, this.options.owner, previewEl);
-
         this.notesController = new InboxNotesController(this.options.app, notesEl, {
             initialValue: this.options.form.inboxBody,
             targetFile: this.options.resolveTarget()?.file ?? "",
             getPeopleFolders: () => this.getPeopleFolders(),
             getPlaceFolders: () => this.getPlaceFolders(),
-            onChange: value => {
-                this.options.form.inboxBody = value;
-                this.refreshLinkPreview();
-            }
+            onChange: value => (this.options.form.inboxBody = value)
         });
-        this.refreshLinkPreview();
 
         this.renderAdvanced(container);
     }
@@ -55,7 +45,6 @@ export class InboxDesktopForm {
         this.notesController?.destroy();
         this.notesController = null;
         this.targetSummaryEl = null;
-        this.linkPreview = null;
     }
 
     private renderAdvanced(container: HTMLElement): void {
@@ -155,13 +144,6 @@ export class InboxDesktopForm {
                 : "Selected destination is unavailable"
         );
         if (updateNotes && target) this.notesController?.setTargetFile(target.file);
-    }
-
-    private refreshLinkPreview(): void {
-        this.linkPreview?.update(
-            this.options.form.inboxBody,
-            this.options.resolveTarget()?.file ?? ""
-        );
     }
 
     private makeRow(container: HTMLElement, icon: string): HTMLElement {

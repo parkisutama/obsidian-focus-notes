@@ -117,8 +117,8 @@ The resolved initial target is copied into an editable `Save to` field when the 
 ### Live link feedback
 
 - Notes remain editable and persisted as plain Markdown source.
-- Selected Markdown links are also rendered in a compact `Linked context` row through Obsidian's public Markdown renderer.
-- Rendered internal links use the current `Save to` path as their source path, so clicking and Page Preview resolve relative links correctly.
+- Selected mentions render as live internal links directly inside the Notes editor.
+- Inline links can be opened or previewed through Obsidian while their underlying state remains relative Markdown based on the current `Save to` path.
 
 ### Suggestion source configuration
 

@@ -3056,29 +3056,18 @@ body.fn-mobile-event-screen-open {
     pointer-events: none;
 }
 
-.fn-inbox-link-preview {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    min-height: 28px;
-    padding-top: 4px;
-    color: var(--text-muted);
-    font-size: var(--font-ui-smaller);
-}
-
-.fn-inbox-link-preview-label {
-    flex: 0 0 auto;
-}
-
-.fn-inbox-link-preview-links,
-.fn-inbox-link-preview-links p {
+.fn-inbox-inline-link {
     display: inline;
-    margin: 0;
-}
-
-.fn-inbox-link-preview-links a.internal-link {
+    padding: 1px 2px;
+    border-radius: 3px;
     color: var(--link-color);
     text-decoration: var(--link-decoration);
+    cursor: pointer;
+}
+
+.fn-inbox-inline-link:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
 }
 
 .fn-inbox-advanced {
