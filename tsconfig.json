@@ -5,6 +5,7 @@
         "module": "ESNext",
         "target": "ES2018",
         "allowJs": true,
+        "allowImportingTsExtensions": true,
         "moduleResolution": "bundler",
         "importHelpers": true,
         "isolatedModules": true,
