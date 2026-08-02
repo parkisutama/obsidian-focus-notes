@@ -8,6 +8,7 @@ import {
     buildMentionSuggestions,
     buildTagSuggestions,
     filterMentionSuggestions,
+    InboxSuggestionSnapshot,
     MentionSuggestion,
     SuggestionMatcher,
     SuggestionNote
@@ -15,7 +16,14 @@ import {
 
 /** Read-only bridge from Obsidian's vault metadata to Inbox suggestion data. */
 export class ObsidianInboxSuggestionSource {
-    constructor(private app: App) {}
+    private readonly snapshot: InboxSuggestionSnapshot;
+
+    constructor(private app: App) {
+        this.snapshot = new InboxSuggestionSnapshot(
+            () => this.loadNotes(),
+            () => this.loadTags()
+        );
+    }
 
     getMentionSuggestions(
         query: string,
@@ -23,7 +31,20 @@ export class ObsidianInboxSuggestionSource {
         placeFolders: string[],
         limit = 20
     ): MentionSuggestion[] {
-        const notes: SuggestionNote[] = this.app.vault.getMarkdownFiles().map(file => {
+        const candidates = buildMentionSuggestions(
+            this.snapshot.getNotes(),
+            peopleFolders,
+            placeFolders
+        );
+        return filterMentionSuggestions(candidates, this.matcher(query), limit);
+    }
+
+    getTagSuggestions(query: string, limit = 20): string[] {
+        return buildTagSuggestions(this.snapshot.getTags(), this.matcher(query), limit);
+    }
+
+    private loadNotes(): SuggestionNote[] {
+        return this.app.vault.getMarkdownFiles().map(file => {
             const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter ?? null;
             return {
                 path: file.path,
@@ -31,16 +52,13 @@ export class ObsidianInboxSuggestionSource {
                 aliases: parseFrontMatterAliases(frontmatter) ?? []
             };
         });
-        const candidates = buildMentionSuggestions(notes, peopleFolders, placeFolders);
-        return filterMentionSuggestions(candidates, this.matcher(query), limit);
     }
 
-    getTagSuggestions(query: string, limit = 20): string[] {
-        const tags = this.app.vault.getMarkdownFiles().flatMap(file => {
+    private loadTags(): string[] {
+        return this.app.vault.getMarkdownFiles().flatMap(file => {
             const cache = this.app.metadataCache.getFileCache(file);
             return cache ? (getAllTags(cache) ?? []) : [];
         });
-        return buildTagSuggestions(tags, this.matcher(query), limit);
     }
 
     private matcher(query: string): SuggestionMatcher {

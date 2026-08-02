@@ -16,6 +16,32 @@ export interface MentionSuggestion {
 
 export type SuggestionMatcher = (text: string) => number | null;
 
+/** Lazy metadata snapshot scoped to one open Inbox form. */
+export class InboxSuggestionSnapshot {
+    private notes: SuggestionNote[] | null = null;
+    private tags: string[] | null = null;
+    private readonly loadNotes: () => SuggestionNote[];
+    private readonly loadTags: () => string[];
+
+    constructor(
+        loadNotes: () => SuggestionNote[],
+        loadTags: () => string[]
+    ) {
+        this.loadNotes = loadNotes;
+        this.loadTags = loadTags;
+    }
+
+    getNotes(): SuggestionNote[] {
+        this.notes ??= this.loadNotes();
+        return this.notes;
+    }
+
+    getTags(): string[] {
+        this.tags ??= this.loadTags();
+        return this.tags;
+    }
+}
+
 export function buildMentionSuggestions(
     notes: SuggestionNote[],
     peopleFolders: string[],

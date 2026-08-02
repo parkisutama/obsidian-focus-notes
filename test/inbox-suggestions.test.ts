@@ -3,7 +3,8 @@ import test from "node:test";
 import {
     buildMentionSuggestions,
     buildTagSuggestions,
-    filterMentionSuggestions
+    filterMentionSuggestions,
+    InboxSuggestionSnapshot
 } from "../src/InboxSuggestions.ts";
 
 const notes = [
@@ -82,4 +83,26 @@ test("fuzzy-filters tags and enforces the result limit", () => {
     );
 
     assert.deepEqual(results, ["#food", "#focus"]);
+});
+
+test("loads vault suggestion metadata only once per form", () => {
+    let noteLoads = 0;
+    let tagLoads = 0;
+    const snapshot = new InboxSuggestionSnapshot(
+        () => {
+            noteLoads += 1;
+            return notes;
+        },
+        () => {
+            tagLoads += 1;
+            return ["#focus"];
+        }
+    );
+
+    assert.equal(snapshot.getNotes(), notes);
+    assert.equal(snapshot.getNotes(), notes);
+    assert.deepEqual(snapshot.getTags(), ["#focus"]);
+    assert.deepEqual(snapshot.getTags(), ["#focus"]);
+    assert.equal(noteLoads, 1);
+    assert.equal(tagLoads, 1);
 });
