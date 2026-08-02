@@ -1,6 +1,6 @@
-import type { EventTaskFormState } from "./EventTaskFormState";
+import type { EventTaskFormState, InboxRecord } from "./EventTaskFormState";
 import type { EventTaskRecord, HubNoteRef } from "./EventTaskWriter";
-import type { InsertPosition } from "./types";
+import type { FocusTarget, InsertPosition } from "./types";
 
 interface NoteFile {
     path: string;
@@ -31,6 +31,20 @@ export interface EventTaskSubmissionDependencies {
     resolveTargetFile(record: EventTaskRecord): string;
     findMarkdownFile(path: string): NoteFile | null;
     openFile(file: NoteFile): void;
+}
+
+interface InboxSubmissionWriter {
+    writeInbox(
+        record: InboxRecord,
+        targetFilePath: string,
+        targetHeading: string,
+        position: InsertPosition
+    ): Promise<void>;
+}
+
+export interface InboxSubmissionDependencies {
+    writer: InboxSubmissionWriter;
+    resolveTarget(record: InboxRecord): FocusTarget | null;
 }
 
 export type EventTaskSubmissionResult =
@@ -105,6 +119,33 @@ export async function submitEventTask(
     }
 
     return { ok: true, message: state.kind === "event" ? "Event saved." : "Task saved." };
+}
+
+export async function submitInbox(
+    state: EventTaskFormState,
+    dependencies: InboxSubmissionDependencies
+): Promise<EventTaskSubmissionResult> {
+    const record = state.buildInboxRecord();
+    const target = dependencies.resolveTarget(record);
+    if (!target?.file.trim()) {
+        return failure(
+            "Failed to save Inbox",
+            new Error("Selected Inbox destination is unavailable.")
+        );
+    }
+
+    try {
+        await dependencies.writer.writeInbox(
+            record,
+            target.file,
+            target.heading,
+            target.position
+        );
+    } catch (error) {
+        return failure("Failed to save Inbox", error);
+    }
+
+    return { ok: true, message: "Inbox saved." };
 }
 
 function failure(prefix: string, error: unknown): EventTaskSubmissionResult {

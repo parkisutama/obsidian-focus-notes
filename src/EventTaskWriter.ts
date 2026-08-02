@@ -1,5 +1,7 @@
 import { App, TFile, normalizePath } from "obsidian";
 import { EventTaskSettings, InsertPosition } from "./types";
+import type { InboxRecord } from "./EventTaskFormState";
+import { formatInboxEntry } from "./InboxMarkdown";
 import { ensureFolderPath, isTFile } from "./utils";
 
 /** Reference to a hub note, used to build a markdown link. */
@@ -61,6 +63,16 @@ export class EventTaskWriter {
         }
 
         await this.insertIntoFile(file, targetHeading, parts.join("\n"), position);
+    }
+
+    async writeInbox(
+        record: InboxRecord,
+        targetFilePath: string,
+        targetHeading: string,
+        position: InsertPosition
+    ): Promise<void> {
+        const file = await this.resolveOrCreateFile(targetFilePath);
+        await this.insertIntoFile(file, targetHeading, formatInboxEntry(record), position);
     }
 
     async createHubNote(

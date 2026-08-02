@@ -57,14 +57,14 @@
 
 **Acceptance criteria:**
 
-- [ ] Both destination modes honor heading, position, and per-capture overrides.
-- [ ] Missing/invalid destinations fail before modifying a vault file.
-- [ ] Inbox submission never creates or writes related/detail notes.
+- [x] Both destination modes honor heading, position, and per-capture overrides.
+- [x] Missing/invalid destinations fail before modifying a vault file.
+- [x] Inbox submission never creates or writes related/detail notes.
 
 **Verification:**
 
-- [ ] Add target, writer, and submission tests with exact calls/output.
-- [ ] Run the Checkpoint 2 command set.
+- [x] Add target, writer, and submission tests with exact calls/output.
+- [x] Run the Checkpoint 2 command set.
 
 **Dependencies:** Tasks 1 and 2.
 
