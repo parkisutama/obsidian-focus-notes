@@ -18,7 +18,7 @@ Pilihan `@` berubah menjadi link Markdown relatif terhadap note tujuan. Karakter
 
 ## Pilih tujuan bila diperlukan
 
-Buka bagian Advanced untuk mengganti target file, heading Inbox, posisi insertion, atau sumber folder suggestion pada capture tersebut.
+Buka bagian **More options** untuk mengganti target file, heading Inbox, posisi insertion, atau sumber folder suggestion pada capture tersebut.
 
 Default capture dapat diarahkan ke Daily Note di bawah heading Inbox atau mengikuti target Event/Task, sesuai Settings.
 

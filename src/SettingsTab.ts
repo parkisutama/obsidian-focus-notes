@@ -379,7 +379,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             cls: "setting-item-description",
             text:
                 "Choose where quick captures go and which folders provide " +
-                "People and Place suggestions. These defaults can be overridden in Advanced.",
+                "People and Place suggestions. These defaults can be overridden in More options.",
         });
 
         new Setting(containerEl)

@@ -49,7 +49,7 @@ export class InboxDesktopForm {
 
     private renderAdvanced(container: HTMLElement): void {
         const advanced = container.createEl("details", { cls: "fn-inbox-advanced" });
-        advanced.createEl("summary", { text: "Advanced" });
+        advanced.createEl("summary", { text: "More options" });
         const fields = advanced.createDiv({ cls: "fn-inbox-advanced-fields" });
 
         this.targetSummaryEl = fields.createDiv({ cls: "fn-inbox-target-summary" });

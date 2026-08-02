@@ -232,7 +232,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
     },
     eventTask: {
         hubNotesFolder: "Notes",
-        defaultSaveHeading: "",
+        defaultSaveHeading: "Activities & Tasks",
         detailNotesFolder: "Notes",
         eventNoteTemplate: "# {{title}}\n\n{{description}}",
         taskNoteTemplate: "# {{title}}\n\n{{description}}",

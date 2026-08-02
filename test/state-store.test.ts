@@ -37,6 +37,20 @@ test("clones saved and default Inbox folder arrays during settings merge", () =>
     assert.deepEqual(DEFAULT_SETTINGS.inbox.placeFolders, ["Place"]);
 });
 
+test("uses Activities & Tasks only when no Event/Task heading was previously saved", () => {
+    const fresh = mergeSettingsWithDefaults({});
+    const legacyEmpty = mergeSettingsWithDefaults({
+        eventTask: { ...DEFAULT_SETTINGS.eventTask, defaultSaveHeading: "" },
+    });
+    const customized = mergeSettingsWithDefaults({
+        eventTask: { ...DEFAULT_SETTINGS.eventTask, defaultSaveHeading: "Plan" },
+    });
+
+    assert.equal(fresh.eventTask.defaultSaveHeading, "Activities & Tasks");
+    assert.equal(legacyEmpty.eventTask.defaultSaveHeading, "");
+    assert.equal(customized.eventTask.defaultSaveHeading, "Plan");
+});
+
 test("creates defaults on first install and reports a missing state", async () => {
     const writes: string[] = [];
     const store = new StateStore(fakeApp({ exists: false, writes }), mergeSettingsWithDefaults);

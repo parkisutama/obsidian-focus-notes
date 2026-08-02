@@ -6,15 +6,15 @@ See [the full implementation plan](persona-contextual-activity-plan.md) for depe
 
 - [x] Task 1: Introduce typed success, partial, and failure outcomes.
 - [x] Task 2: Share one in-flight submission policy that consumes those outcomes.
-- [ ] Checkpoint A1: Verify submission lifecycle and existing Related note compatibility.
+- [x] Checkpoint A1: Verify submission lifecycle and existing Related note compatibility.
 - [x] Task 3: Reject invalid Event and Task temporal records.
 - [x] Task 4: Make settings reads recoverable and writes ordered.
 - [x] Task 5: Lock Event/Task writer and Timeline parser compatibility with direct tests.
-- [ ] Checkpoint A: Run full CI and desktop/mobile regression acceptance.
+- [x] Checkpoint A: Run full CI and desktop/mobile regression acceptance.
 
 ## P1 — Core contextual capture
 
-- [ ] Task 6: Migrate the `Activities & Tasks` default and `More options` copy without overwriting custom settings.
+- [x] Task 6: Migrate the `Activities & Tasks` default and `More options` copy without overwriting custom settings.
 - [ ] Task 7: Define configurable context-source settings and migrate People/Place folders.
 - [ ] Task 8: Build the metadata-backed, folder-scoped context suggestion index.
 - [ ] Task 9: Generalize the Inbox Markdown controller without changing behavior.

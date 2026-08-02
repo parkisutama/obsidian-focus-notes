@@ -43,7 +43,7 @@ export class InboxMobileForm {
         const icon = summary.createSpan({ cls: "fn-mobile-event-summary-icon" });
         setIcon(icon, "sliders-horizontal");
         const text = summary.createSpan({ cls: "fn-mobile-event-summary-text" });
-        text.createSpan({ text: "Advanced" });
+        text.createSpan({ text: "More options" });
         text.createEl("small", { text: "Save location and suggestion sources" });
         const chevron = summary.createSpan({ cls: "fn-mobile-event-summary-chevron" });
         setIcon(chevron, "chevron-down");
