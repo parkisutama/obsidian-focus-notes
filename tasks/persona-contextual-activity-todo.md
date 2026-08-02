@@ -4,8 +4,9 @@ See [the full implementation plan](persona-contextual-activity-plan.md) for depe
 
 ## P0 — Reliability prerequisites
 
-- [ ] Task 1: Share one in-flight submission policy.
-- [ ] Task 2: Introduce typed success, partial, and failure outcomes.
+- [ ] Task 1: Introduce typed success, partial, and failure outcomes.
+- [ ] Task 2: Share one in-flight submission policy that consumes those outcomes.
+- [ ] Checkpoint A1: Verify submission lifecycle and existing Related note compatibility.
 - [ ] Task 3: Reject invalid Event and Task temporal records.
 - [ ] Task 4: Make settings reads recoverable and writes ordered.
 - [ ] Task 5: Lock Event/Task writer and Timeline parser compatibility with direct tests.
@@ -13,25 +14,29 @@ See [the full implementation plan](persona-contextual-activity-plan.md) for depe
 
 ## P1 — Core contextual capture
 
-- [ ] Task 6: Adopt Persona terminology, `Activities & Tasks`, and `More options` defaults without overwriting custom settings.
+- [ ] Task 6: Migrate the `Activities & Tasks` default and `More options` copy without overwriting custom settings.
 - [ ] Task 7: Define configurable context-source settings and migrate People/Place folders.
 - [ ] Task 8: Build the metadata-backed, folder-scoped context suggestion index.
-- [ ] Task 9: Reuse `@` and tag suggestions in Event and Task details.
-- [ ] Task 10: Approve self-contained append-only related-log golden fixtures.
-- [ ] Task 11: Append related logs with deduplication and typed partial outcomes.
+- [ ] Task 9: Generalize the Inbox Markdown controller without changing behavior.
+- [ ] Checkpoint B1: Verify settings migration, index invalidation, and unchanged Inbox behavior.
+- [ ] Task 10: Integrate contextual Markdown into desktop Event and Task details.
+- [ ] Task 11: Integrate contextual Markdown into mobile Event and Task details.
+- [ ] Task 12: Resolve configured contextual links and approve historical-log golden fixtures.
+- [ ] Checkpoint B2: Approve renderer parity and the pure related-log contract.
+- [ ] Task 13: Generalize existing related-note writes with deduplication and typed partial outcomes.
 - [ ] Checkpoint B: Verify the complete capture-to-context loop on desktop and mobile.
 
 ## P2 — Temporal retrieval
 
-- [ ] Task 12: Align Daily Note capture targets with Focus Timeline sources.
-- [ ] Task 13: Replace pending preview with a stable detail modal and source navigation.
-- [ ] Task 14: Specify planned, actual, completed, and cancelled Event occurrence semantics.
+- [ ] Task 14: Align Daily Note capture targets with Focus Timeline sources.
+- [ ] Task 15: Replace pending preview with a stable detail modal and source navigation.
+- [ ] Task 16: Specify planned, actual, completed, and cancelled Event occurrence semantics.
 - [ ] Checkpoint C: Verify distinct Event/Task behavior in Day and Week views.
 
 ## P3 — Hardening and release evidence
 
-- [ ] Task 15: Measure and bound suggestion and Timeline indexing performance.
-- [ ] Task 16: Complete user, developer, and desktop/mobile acceptance documentation.
+- [ ] Task 17: Measure and bound suggestion and Timeline indexing performance.
+- [ ] Task 18: Complete user, developer, and desktop/mobile acceptance documentation.
 - [ ] Checkpoint D: Full clean-checkout CI, policy review, code-quality review, and real-device acceptance.
 
 ## Explicitly deferred

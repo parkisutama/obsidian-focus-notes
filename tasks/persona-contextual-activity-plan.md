@@ -5,7 +5,7 @@
 Implement the smallest reliable loop from Daily Notes capture to contextual retrieval:
 
 ```text
-capture Event or Task
+capture Inbox, Event, or Task
     → insert portable contextual links
     → write distinct Markdown under Activities & Tasks
     → append self-contained historical logs
@@ -13,7 +13,7 @@ capture Event or Task
     → open stable details and the source note
 ```
 
-The work deliberately starts with submission and persistence safety. Related logs introduce multiple file writes; adding them before typed partial outcomes, concurrency guards, and writer coverage would make retries capable of duplicating the primary entry or historical logs. The plan therefore closes the directly blocking quality findings before adding product behavior.
+The work deliberately starts with submission and persistence safety. The current `writeToHubNote` path already performs a related-note write after the primary target write. The feature generalizes that existing path from one optional related note using the same heading into multiple contextual notes using source-specific headings. Doing so before typed partial outcomes, concurrency guards, and writer coverage would make retries capable of duplicating the primary entry or historical logs. The plan therefore closes the directly blocking quality findings before extending existing behavior.
 
 The product direction is defined in [`docs/ideas/persona-rooted-contextual-activity-system.md`](../docs/ideas/persona-rooted-contextual-activity-system.md). This plan does not replace the implementation specifications required for each behavioral slice.
 
@@ -21,8 +21,8 @@ The product direction is defined in [`docs/ideas/persona-rooted-contextual-activ
 
 | Priority | Meaning | Outcome |
 |---|---|---|
-| P0 | Reliability prerequisite | Existing capture is safe enough to extend with secondary writes and settings migration |
-| P1 | Core contextual capture | Event and Task can use extensible context suggestions and append historical logs |
+| P0 | Reliability prerequisite | Existing capture is safe enough to generalize related-note writes and migrate settings |
+| P1 | Core contextual capture | Inbox, Event, and Task can use extensible context suggestions and append historical logs |
 | P2 | Temporal retrieval | Output is reliably visible and inspectable in Focus Timeline |
 | P3 | Product hardening | Performance, migration, documentation, and real-device acceptance are release-ready |
 
@@ -34,6 +34,9 @@ The product direction is defined in [`docs/ideas/persona-rooted-contextual-activ
 - Folder scope is required for a context source; a frontmatter property filter such as `type: activity` is optional.
 - One suggestion index serves Inbox, Event, and Task and is built from Obsidian metadata rather than per-keystroke file reads.
 - Related logs are self-contained, physical, enabled by default, and append-only. They link to the source Daily Note but do not require block IDs.
+- Related-log delivery generalizes `writeToHubNote` and the existing heading-aware `EventTaskWriter`; it does not introduce a parallel persistence subsystem.
+- Explicit Related note and contextual mentions remain distinct contracts inside that shared orchestration: explicit link/create keeps its current opt-in write behavior, while configured contextual mentions receive append-only logs by default under source-specific headings.
+- Ordinary links that do not resolve to an enabled configured context source remain ordinary links and do not receive physical logs.
 - The primary Daily Note write is the submission commit boundary. Related-log failures produce typed partial success and never invite a blind full retry.
 - Focus Timeline remains a projection over Markdown. It does not become the canonical data store.
 - Note Composer remains responsible for manual fleeting-to-promoted extraction. Promotion automation and two-way synchronization are outside this plan.
@@ -41,49 +44,77 @@ The product direction is defined in [`docs/ideas/persona-rooted-contextual-activ
 ## Dependency graph
 
 ```text
-P0 submission guard + typed outcomes ─────┐
-P0 date validation ───────────────────────┼── writer/parser contract tests
-P0 state persistence safety ──────────────┘              │
+typed outcomes ──→ submission guard ────────────────────────────────┐
+                                                                  │
+date validation ───→ writer/parser contract ───────────────┐       │
+                                                          │       │
+settings safety ───┬─→ Activities & Tasks migration       │       │
+                   └─→ context-source settings ──┐         │       │
+                                                ▼         ▼       │
+                                  metadata suggestion index        │
+                                                │                  │
+                                                ▼                  │
+                                     generic Markdown controller   │
+                                         ┌──────┴──────┐           │
+                                         ▼             ▼           │
+                                  desktop details  mobile details  │
+                                         └──────┬──────┘           │
+                                                │                  │
+context settings + writer contract ──→ destination extraction     │
+                                                │                  │
+                                                └────────┬─────────┘
                                                          ▼
-Activities & Tasks default + migration ─────── context-source settings model
+                          generalized existing related-note writes
+
+writer/parser contract + target migration ──→ Timeline source alignment
                                                          │
                                                          ▼
-                                      metadata-backed suggestion index
-                                                │                 │
-                                                ▼                 ▼
-                                      Inbox integration   Event/Task integration
-                                                └────────┬────────┘
-                                                         ▼
-                                            related-log pure contract
-                                                         ▼
-                                      append-only multi-file submission
-                                                         ▼
-                                      Timeline compatibility fixtures
-                                                         ▼
-                                        stable Timeline detail modal
-                                                         ▼
-                                  performance + desktop/mobile acceptance
+                                               stable detail modal
+
+suggestion index + Timeline alignment ──→ performance and acceptance
 ```
+
+## Execution lanes
+
+The dependency graph, not the phase label alone, determines what may begin. The following chains must remain sequential:
+
+```text
+typed outcomes → submission guard → generalized related-note delivery
+settings safety → context-source schema → suggestion index → generic controller
+date validation → writer/parser contract → related-log contract
+settings safety → daily-heading migration → Timeline source alignment → detail modal
+```
+
+After their prerequisites land as reviewed commits, these tasks may proceed independently:
+
+- Tasks 3 and 4 may proceed alongside the Task 1–2 submission chain.
+- Tasks 6 and 7 may proceed in parallel after Task 4.
+- Tasks 10 and 11 may proceed in parallel after Task 9 because desktop and mobile renderers remain independent.
+- Task 12 may proceed alongside Tasks 10 and 11 after Tasks 5 and 7.
+- Task 14 may proceed after Tasks 5 and 6 without waiting for related-log delivery.
+- Task 16 may begin after Task 5 because it is a grammar decision, not a Timeline UI dependency.
+
+Parallelizable does not mean one mixed commit. Each numbered task remains an independently reviewed, verified save point. A checkpoint blocks downstream mutation even when another lane's code is technically available.
 
 ## Phase 0 — Reliability prerequisites
 
-### Task 1: Share one in-flight submission policy
+### Task 1: Introduce typed submission outcomes
 
 **Priority:** P0
 
-**Description:** Prevent duplicate Inbox, Event, and Task submissions from concurrent Save button and keyboard signals on desktop and mobile.
+**Description:** Establish the primary-write commit boundary by distinguishing complete success, partial success, and total failure around the existing target and related-note writes.
 
 **Acceptance criteria:**
 
-- [ ] A renderer-independent guard permits only one active submission per form.
-- [ ] Failure permits one subsequent retry; success or partial success completes exactly once.
-- [ ] Desktop and mobile consume the same policy without recombining their layouts.
+- [ ] Submission returns typed `success`, `partial`, or `failure` outcomes.
+- [ ] Outcomes identify created hub/detail notes and distinguish primary failure from primary success followed by existing related-note failure.
+- [ ] Existing successful Event, Task, and Inbox Markdown remains byte-for-byte unchanged.
 
 **Verification:**
 
-- [ ] Focused `node:test` coverage proves concurrent signals create one submission.
-- [ ] `pnpm run typecheck` and `pnpm test` pass.
-- [ ] Manual Obsidian desktop and mobile checks confirm Save state is visible and recoverable.
+- [ ] Tests cover optional-note creation followed by primary failure, primary success followed by related-note failure, and complete success.
+- [ ] Desktop and mobile render each typed outcome consistently.
+- [ ] `pnpm test` and `pnpm run build` pass.
 
 **Dependencies:** None.
 
@@ -96,22 +127,23 @@ Activities & Tasks default + migration ─────── context-source sett
 
 **Estimated scope:** Medium.
 
-### Task 2: Introduce typed submission outcomes
+### Task 2: Share one in-flight submission policy
 
 **Priority:** P0
 
-**Description:** Distinguish complete success, partial success, and total failure around the authoritative primary write and optional secondary writes.
+**Description:** Prevent duplicate Inbox, Event, and Task submissions from concurrent Save button and keyboard signals, using the typed outcome to decide whether the form completes or permits retry.
 
 **Acceptance criteria:**
 
-- [ ] Submission returns typed `success`, `partial`, or `failure` outcomes.
-- [ ] A successful primary write followed by secondary failure reports what was completed and closes without encouraging a full retry.
-- [ ] Existing successful Event, Task, and Inbox Markdown remains byte-for-byte unchanged.
+- [ ] A renderer-independent guard permits only one active submission per form.
+- [ ] Failure permits one subsequent retry; success or partial success completes exactly once.
+- [ ] Desktop and mobile consume the same policy without recombining their layouts.
 
 **Verification:**
 
-- [ ] Tests cover primary failure, secondary failure, and complete success.
-- [ ] `pnpm test` and `pnpm run build` pass.
+- [ ] Focused `node:test` coverage proves concurrent Save and keyboard signals create one submission.
+- [ ] `pnpm run typecheck` and `pnpm test` pass.
+- [ ] Manual Obsidian desktop and mobile checks confirm Save state is visible and recoverable.
 
 **Dependencies:** Task 1.
 
@@ -123,6 +155,12 @@ Activities & Tasks default + migration ─────── context-source sett
 - `test/event-task-submission.test.ts`
 
 **Estimated scope:** Medium.
+
+## Checkpoint A1 — Submission lifecycle
+
+- [ ] Typed outcomes and the one-in-flight guard pass focused tests.
+- [ ] Existing explicit Related note link/create/write behavior is unchanged on success.
+- [ ] Desktop and mobile distinguish retryable failure from completed partial success.
 
 ### Task 3: Reject invalid temporal records
 
@@ -197,7 +235,7 @@ Activities & Tasks default + migration ─────── context-source sett
 - [ ] New focused writer/parser tests pass using a small fake vault or pure formatting seam.
 - [ ] `pnpm test`, `pnpm run typecheck`, and `pnpm run build` pass.
 
-**Dependencies:** Tasks 2 and 3.
+**Dependencies:** Task 3. Typed submission outcomes are not required to test final Markdown compatibility.
 
 **Files likely touched:**
 
@@ -217,16 +255,16 @@ Activities & Tasks default + migration ─────── context-source sett
 
 ## Phase 1 — Core contextual capture
 
-### Task 6: Adopt Persona terminology and shared daily heading defaults
+### Task 6: Migrate the shared daily heading and disclosure copy
 
 **Priority:** P1
 
-**Description:** Align user-facing terms and defaults without silently overriding existing user choices.
+**Description:** Adopt the combined daily ledger default and consistent disclosure label without silently overriding existing user choices.
 
 **Acceptance criteria:**
 
 - [ ] New installations default Event and Task to `Activities & Tasks`.
-- [ ] Existing non-empty custom headings are preserved during migration.
+- [ ] Existing non-empty custom headings are preserved; an existing explicit empty value continues to mean “follow the active target” rather than being silently replaced.
 - [ ] Inbox disclosure is labelled `More options` on desktop and mobile, and help text no longer says `Advanced`.
 
 **Verification:**
@@ -251,7 +289,7 @@ Activities & Tasks default + migration ─────── context-source sett
 
 **Priority:** P1
 
-**Description:** Replace hardcoded People/Place folder pairs with an extensible typed source model while preserving existing settings through migration.
+**Description:** Replace hardcoded People/Place folder pairs with an extensible typed source model while preserving existing settings through a recoverable migration.
 
 **Acceptance criteria:**
 
@@ -261,15 +299,15 @@ Activities & Tasks default + migration ─────── context-source sett
 
 **Verification:**
 
-- [ ] Pure settings tests cover defaults, migration, normalization, and custom Book source configuration.
+- [ ] Pure settings tests cover defaults, migration, normalization, duplicate IDs, invalid folders, and a custom Book source.
 - [ ] `pnpm run typecheck` and `pnpm test` pass.
 
-**Dependencies:** Tasks 4 and 6.
+**Dependencies:** Task 4. It does not depend on the UI-copy or default-heading change in Task 6.
 
 **Files likely touched:**
 
 - `src/types.ts`
-- `src/InboxFolderSettings.ts` or a renamed generic settings module
+- `src/InboxFolderSettings.ts` or a generic replacement
 - `src/StateStore.ts`
 - `test/context-source-settings.test.ts`
 
@@ -279,7 +317,7 @@ Activities & Tasks default + migration ─────── context-source sett
 
 **Priority:** P1
 
-**Description:** Generalize the current Inbox suggestion snapshot into one reusable index filtered by folders and optional frontmatter type.
+**Description:** Generalize the current Inbox suggestion snapshot into one reusable index filtered by configured folders and optional frontmatter properties.
 
 **Acceptance criteria:**
 
@@ -290,7 +328,7 @@ Activities & Tasks default + migration ─────── context-source sett
 **Verification:**
 
 - [ ] Pure tests cover folder scope, aliases, optional `type`, ranking, result limits, and invalidation.
-- [ ] A representative large synthetic fixture records a latency baseline without imposing an arbitrary production claim.
+- [ ] A representative large synthetic fixture records a latency baseline without claiming unmeasured real-vault performance.
 - [ ] `pnpm test` and `pnpm run test:coverage` pass.
 
 **Dependencies:** Task 7.
@@ -304,22 +342,22 @@ Activities & Tasks default + migration ─────── context-source sett
 
 **Estimated scope:** Medium.
 
-### Task 9: Reuse contextual suggestions in Event and Task details
+### Task 9: Generalize the Inbox Markdown controller without changing behavior
 
 **Priority:** P1
 
-**Description:** Apply the proven Inbox `@` and tag interaction to Event and Task description/details through a shared controller contract.
+**Description:** Extract a capture-kind-neutral contextual Markdown controller from `InboxNotesController` before either Event/Task renderer consumes it. This establishes one owner for trigger detection, relative-link serialization, page preview, and tag suggestions.
 
 **Acceptance criteria:**
 
-- [ ] Inbox, Event, and Task support the same `@` and `#` trigger semantics.
-- [ ] Selection inserts a normal relative Markdown link based on the active target file.
-- [ ] Desktop and mobile preserve cursor behavior, link activation, keyboard handling, and suggestion layering.
+- [ ] Existing Inbox `@`, `#`, aliases, relative links, link activation, and mobile keyboard behavior remain unchanged.
+- [ ] The controller accepts generic context sources and a current target path rather than People/Place-specific callbacks.
+- [ ] The controller can be instantiated by another renderer without referencing Inbox form state.
 
 **Verification:**
 
-- [ ] Controller tests cover trigger detection, selection, target changes, serialization, and tags for every capture kind.
-- [ ] Real Obsidian desktop and mobile acceptance covers keyboard-open suggestions and populated descriptions.
+- [ ] Existing Inbox tests remain green and new generic-controller tests cover source changes and target changes.
+- [ ] A manual Inbox desktop/mobile smoke check passes before Event/Task integration begins.
 - [ ] `pnpm test` and `pnpm run build` pass.
 
 **Dependencies:** Task 8.
@@ -327,58 +365,129 @@ Activities & Tasks default + migration ─────── context-source sett
 **Files likely touched:**
 
 - `src/InboxNotesController.ts` or a generic replacement
-- `src/EventTaskModal.ts`
-- `src/EventTaskMobileScreen.ts`
+- `src/InboxNotesText.ts` only if names are generalized
+- `test/inbox-notes-controller.test.ts`
 - `test/context-notes-controller.test.ts`
 
 **Estimated scope:** Medium.
 
-### Task 10: Define self-contained related-log formatting
+## Checkpoint B1 — Generic context foundation
+
+- [ ] Existing settings migrate without losing People or Place folders.
+- [ ] Generic folder/property filtering and cache invalidation pass focused tests.
+- [ ] Inbox behavior and real mobile `@` suggestions remain accepted before adding new consumers.
+
+### Task 10: Integrate contextual Markdown into desktop Event and Task details
 
 **Priority:** P1
 
-**Description:** Specify and implement a pure append-only log contract before any vault writes are added.
+**Description:** Replace the desktop description textarea with the proven shared contextual Markdown controller while preserving Event/Task form-state and submission contracts.
 
 **Acceptance criteria:**
 
-- [ ] A log includes source date/time, intelligible activity text, and an optional relative Daily Note link.
-- [ ] Formatting differs appropriately for Event and Task while remaining meaningful when the link breaks.
-- [ ] A normalized submission-local deduplication key can identify repeated writes without adding block IDs or permanent sync IDs.
+- [ ] Desktop Event and Task details support identical `@` and `#` semantics to Inbox.
+- [ ] Selection inserts a relative Markdown link based on the resolved primary target file.
+- [ ] Switching kind, target, or disclosure state preserves serialized Markdown and cursor-safe editing.
 
 **Verification:**
 
-- [ ] Pure tests cover Event, Task, Activity Object, People, Place, missing time, encoded paths, and broken-link-readable output.
-- [ ] Golden Markdown fixtures receive human approval before writer integration.
+- [ ] Focused orchestration tests cover initial value, target change, kind switch, and form-state updates.
+- [ ] Real Obsidian desktop acceptance covers typing, suggestion selection, page preview, and Save.
+- [ ] `pnpm test` and `pnpm run build` pass.
 
-**Dependencies:** Tasks 5 and 7.
+**Dependencies:** Task 9.
 
 **Files likely touched:**
 
-- `src/RelatedLog.ts`
-- `src/InboxMarkdown.ts` only if a canonical relative-link helper is extracted
-- `test/related-log.test.ts`
+- `src/EventTaskModal.ts`
+- shared contextual controller module
+- `test/event-task-context-desktop.test.ts`
 
-**Estimated scope:** Small.
+**Estimated scope:** Small to Medium.
 
-### Task 11: Append related logs with partial-outcome safety
+### Task 11: Integrate contextual Markdown into mobile Event and Task details
 
 **Priority:** P1
 
-**Description:** After a successful primary capture, append logs to each selected contextual note and report any secondary failure without retrying the primary write.
+**Description:** Apply the same controller to the independent mobile renderer without sharing desktop DOM or reintroducing keyboard/layering regressions.
 
 **Acceptance criteria:**
 
-- [ ] Related logs are enabled by default and use each source's configured heading.
-- [ ] One submission writes at most one log per related note even when the same object is mentioned repeatedly.
-- [ ] Primary success plus any related-log failure returns `partial` with completed and failed destinations; existing historical logs are never updated or deleted.
+- [ ] Mobile Event and Task details support the same `@`, `#`, alias, and relative-link behavior.
+- [ ] The suggestion layer remains above the mobile screen and reachable with the software keyboard open.
+- [ ] Target changes and disclosure changes preserve serialized Markdown.
 
 **Verification:**
 
-- [ ] Writer tests assert final Markdown, heading creation, multiple related objects, deduplication, and partial failures.
-- [ ] End-to-end submission tests prove a partial outcome cannot duplicate the Daily Note entry.
+- [ ] Focused mobile policy/controller tests remain green.
+- [ ] Real Android and iOS acceptance covers keyboard-open selection, scrolling, dismissal, and Save.
+- [ ] `pnpm test` and `pnpm run build` pass.
+
+**Dependencies:** Task 9. It may proceed in parallel with Task 10 after the shared contract is committed.
+
+**Files likely touched:**
+
+- `src/EventTaskMobileScreen.ts`
+- shared contextual controller module
+- `test/event-task-context-mobile.test.ts`
+- `styles.css` only if an existing scoped layer rule is insufficient
+
+**Estimated scope:** Small to Medium.
+
+### Task 12: Resolve contextual destinations and define historical-log Markdown
+
+**Priority:** P1
+
+**Description:** Build a pure contract that extracts ordinary Markdown links from a capture, resolves only those links that belong to enabled context sources, deduplicates by destination path, and formats a self-contained append-only line for each contextual destination. Existing explicit Related note selection remains a separate input to the shared write orchestration.
+
+**Acceptance criteria:**
+
+- [ ] Repeated mentions of one note yield one destination; unrelated Markdown links remain link-only and receive no physical log.
+- [ ] Each destination carries its configured related heading and source type.
+- [ ] Event, Task, and Inbox log text remains meaningful when the Daily Note link later breaks; no block ID is added.
+
+**Verification:**
+
+- [ ] Pure tests cover aliases, encoded relative paths, repeated links, disabled sources, overlapping folders, property filters, Event, Task, and Inbox.
+- [ ] Golden Markdown fixtures for People, Place, Activity Object, and Book receive human approval.
+
+**Dependencies:** Tasks 5 and 7. UI integration is not required to prove this pure contract.
+
+**Files likely touched:**
+
+- `src/ContextLinkResolver.ts`
+- `src/RelatedLog.ts`
+- canonical relative-link helper if extracted
+- `test/context-link-resolver.test.ts`
+- `test/related-log.test.ts`
+
+**Estimated scope:** Medium; split resolver and formatter into separate commits if they exceed five files together.
+
+## Checkpoint B2 — Context input and log contract
+
+- [ ] Desktop and mobile serialize the same contextual Markdown for equivalent input.
+- [ ] Unrelated links remain link-only; enabled context sources resolve deterministically.
+- [ ] Human review approves self-contained golden log fixtures before vault mutation is added.
+
+### Task 13: Generalize existing related-note writes with partial-outcome safety
+
+**Priority:** P1
+
+**Description:** Extend the existing `writeToHubNote` orchestration and heading-aware writer from one optional related note to the deduplicated contextual destinations resolved in Task 12. Do not create a second persistence subsystem.
+
+**Acceptance criteria:**
+
+- [ ] The primary target is written once before contextual logs; existing explicit link/create-related-note behavior remains available.
+- [ ] Each resolved destination receives one append-only log under its configured heading, including when the same note is mentioned more than once.
+- [ ] Any contextual failure after primary success returns `partial` with completed and failed paths; retry UI cannot duplicate the primary entry.
+
+**Verification:**
+
+- [ ] Writer tests assert final Markdown, heading creation, existing related-note compatibility, multiple destinations, and failure at each write position.
+- [ ] Submission tests cover Inbox, Event, Task, complete success, primary failure, partial success, and one guarded retry.
 - [ ] `pnpm test`, `pnpm run typecheck`, and `pnpm run build` pass.
 
-**Dependencies:** Tasks 2, 9, and 10.
+**Dependencies:** Tasks 1, 2, 10, 11, and 12.
 
 **Files likely touched:**
 
@@ -388,19 +497,20 @@ Activities & Tasks default + migration ─────── context-source sett
 - `test/event-task-submission.test.ts`
 - `test/event-task-writer.test.ts`
 
-**Estimated scope:** Medium.
+**Estimated scope:** Medium. If Inbox and Event/Task orchestration cannot fit one stable contract, land Event/Task first and Inbox as the next vertical slice.
 
 ## Checkpoint B — Complete contextual loop
 
 - [ ] People, Places, and Activity Object mentions work from Inbox, Event, and Task.
 - [ ] One capture produces correct primary Markdown and append-only logs.
 - [ ] A broken related-log link still leaves an intelligible historical line.
+- [ ] Existing single related-note link/create/write behavior remains backward compatible.
 - [ ] Settings migration is tested against a copy of representative existing state.
 - [ ] Full CI gate and real desktop/mobile capture acceptance pass.
 
 ## Phase 2 — Temporal retrieval
 
-### Task 12: Verify source-target alignment for Daily Notes
+### Task 14: Verify source-target alignment for Daily Notes
 
 **Priority:** P2
 
@@ -417,7 +527,7 @@ Activities & Tasks default + migration ─────── context-source sett
 - [ ] Integration fixtures cover Daily Notes default, manual target, source mismatch, Event, timeboxed Task, and due-only Task.
 - [ ] `pnpm test` and `pnpm run build` pass.
 
-**Dependencies:** Tasks 5, 6, and 11.
+**Dependencies:** Tasks 5 and 6. Related-log delivery is not required for Timeline source alignment.
 
 **Files likely touched:**
 
@@ -428,7 +538,7 @@ Activities & Tasks default + migration ─────── context-source sett
 
 **Estimated scope:** Medium.
 
-### Task 13: Replace pending preview with a stable detail modal
+### Task 15: Replace pending preview with a stable detail modal
 
 **Priority:** P2
 
@@ -446,7 +556,7 @@ Activities & Tasks default + migration ─────── context-source sett
 - [ ] Manual desktop/sidebar and mobile acceptance verifies layering, focus, Escape/back behavior, and source navigation.
 - [ ] `pnpm test` and `pnpm run build` pass.
 
-**Dependencies:** Task 12.
+**Dependencies:** Task 14.
 
 **Files likely touched:**
 
@@ -458,7 +568,7 @@ Activities & Tasks default + migration ─────── context-source sett
 
 **Estimated scope:** Medium.
 
-### Task 14: Confirm planned and actual occurrence semantics
+### Task 16: Confirm planned and actual occurrence semantics
 
 **Priority:** P2
 
@@ -475,7 +585,7 @@ Activities & Tasks default + migration ─────── context-source sett
 - [ ] Representative Markdown examples are approved by the user.
 - [ ] Parser fixtures prove old and proposed formats before runtime implementation begins.
 
-**Dependencies:** Task 12. This is a decision/spec task and may defer runtime changes to a subsequent plan.
+**Dependencies:** Task 5. This decision/spec task does not require related logs or the detail modal and may proceed once the existing grammar is locked by tests.
 
 **Files likely touched:**
 
@@ -493,7 +603,7 @@ Activities & Tasks default + migration ─────── context-source sett
 
 ## Phase 3 — Hardening and release evidence
 
-### Task 15: Measure and bound suggestion/indexing performance
+### Task 17: Measure and bound suggestion/indexing performance
 
 **Priority:** P3
 
@@ -510,7 +620,7 @@ Activities & Tasks default + migration ─────── context-source sett
 - [ ] Repeatable benchmark command and results are recorded.
 - [ ] Profiling or instrumentation confirms the intended cache path in Obsidian.
 
-**Dependencies:** Tasks 8 and 12.
+**Dependencies:** Tasks 8 and 14.
 
 **Files likely touched:**
 
@@ -520,7 +630,7 @@ Activities & Tasks default + migration ─────── context-source sett
 
 **Estimated scope:** Medium.
 
-### Task 16: Complete user, developer, and acceptance documentation
+### Task 18: Complete user, developer, and acceptance documentation
 
 **Priority:** P3
 
@@ -538,7 +648,7 @@ Activities & Tasks default + migration ─────── context-source sett
 - [ ] `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` passes.
 - [ ] Documentation examples match tested Markdown fixtures.
 
-**Dependencies:** Tasks 11–15 as applicable.
+**Dependencies:** Tasks 13–17 as applicable.
 
 **Files likely touched:**
 
@@ -561,10 +671,10 @@ Activities & Tasks default + migration ─────── context-source sett
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Secondary related-log failure causes duplicate primary entries on retry | High | Land typed partial outcomes and one in-flight guard before related logs |
+| Generalized related-note failure causes duplicate primary entries on retry | High | Land typed partial outcomes and one in-flight guard before extending `writeToHubNote` |
 | Context-source migration loses existing People/Place folders | High | Make migration pure, snapshot existing settings, and test customized fixtures |
 | Mixed Event/Task heading erases semantic differences | High | Lock separate writer/parser golden fixtures before changing defaults |
-| Append-only logs duplicate on repeated mentions or double-submit | High | Deduplicate per related-note path within one guarded submission |
+| Append-only logs duplicate on repeated mentions or double-submit | High | Resolve only configured context links, deduplicate by destination path, and use one guarded submission |
 | Full-vault suggestion scans degrade mobile input | High | Require folder scope, metadata cache, in-memory ranking, capped results, and performance fixtures |
 | Daily target is outside Timeline source scope | Medium | Validate source-target alignment and provide a visible settings warning |
 | Historical links break after Project archival | Low by design | Keep log text self-contained and document archive boundary semantics |
@@ -584,8 +694,8 @@ Activities & Tasks default + migration ─────── context-source sett
 
 Implementation must pause for user review at these points:
 
-1. After Checkpoint A, before settings migration and new secondary writes.
-2. After Task 10 golden log fixtures, before append-only writer integration.
+1. After Checkpoint A, before settings migration and generalizing related-note writes.
+2. After Task 12 golden log fixtures, before generalizing related-note writes.
 3. After Checkpoint B, before changing Timeline interaction.
-4. At Task 14, before extending Event lifecycle grammar.
+4. At Task 16, before extending Event lifecycle grammar.
 5. After real mobile acceptance, before merging the complete feature line to `main`.
