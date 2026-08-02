@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DEFAULT_SETTINGS, mergeSettingsWithDefaults } from "../src/types.ts";
+import { createContextSource } from "../src/ContextSourceSettings.ts";
 
 test("migrates legacy People and Place folders and adds Activities", () => {
     const merged = mergeSettingsWithDefaults({
@@ -30,6 +31,7 @@ test("normalizes duplicate IDs, invalid folders, and incomplete filters determin
         folders: [" /Library/ ", "Library", "../unsafe"],
         filter: { property: " type ", value: " " },
         relatedHeading: " ",
+        templatePath: "../unsafe.md",
         enabled: true,
     };
     const merged = mergeSettingsWithDefaults({
@@ -44,6 +46,7 @@ test("normalizes duplicate IDs, invalid folders, and incomplete filters determin
             folders: ["Library"],
             filter: null,
             relatedHeading: "Related log",
+            templatePath: "",
             enabled: true,
         },
         {
@@ -53,6 +56,7 @@ test("normalizes duplicate IDs, invalid folders, and incomplete filters determin
             folders: ["Library"],
             filter: null,
             relatedHeading: "Related log",
+            templatePath: "",
             enabled: true,
         },
     ]);
@@ -106,6 +110,7 @@ test("drops malformed values without throwing or enabling full-vault scope", () 
         folders: [],
         filter: null,
         relatedHeading: "Related log",
+        templatePath: "",
         enabled: false,
     });
 });
@@ -122,6 +127,7 @@ test("preserves a valid custom Book source and property filter", () => {
                     folders: ["Library/Books"],
                     filter: { property: "type", value: "book" },
                     relatedHeading: "Reading log",
+                    templatePath: "Templates/Book.md",
                     enabled: true,
                 },
             ],
@@ -135,6 +141,25 @@ test("preserves a valid custom Book source and property filter", () => {
         folders: ["Library/Books"],
         filter: { property: "type", value: "book" },
         relatedHeading: "Reading log",
+        templatePath: "Templates/Book.md",
         enabled: true,
+    });
+});
+
+test("creates a disabled object source with a stable unique ID", () => {
+    const created = createContextSource([
+        { ...DEFAULT_SETTINGS.inbox.contextSources[0], id: "source" },
+        { ...DEFAULT_SETTINGS.inbox.contextSources[0], id: "source-2" },
+    ]);
+
+    assert.deepEqual(created, {
+        id: "source-3",
+        name: "New object",
+        icon: "link",
+        folders: [],
+        filter: null,
+        relatedHeading: "Related log",
+        templatePath: "",
+        enabled: false,
     });
 });

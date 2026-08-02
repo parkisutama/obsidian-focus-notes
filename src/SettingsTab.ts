@@ -1,8 +1,9 @@
 import { type App, PluginSettingTab, Setting } from "obsidian";
 import type FocusNotesPlugin from "./main";
-import type { InboxTargetMode, InsertPosition, TimelineMode } from "./types";
+import type { ContextSourceSettings, InboxTargetMode, InsertPosition, TimelineMode } from "./types";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
+import { createContextSource } from "./ContextSourceSettings";
 
 export class FocusNotesSettingsTab extends PluginSettingTab {
     constructor(
@@ -378,8 +379,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         containerEl.createEl("p", {
             cls: "setting-item-description",
             text:
-                "Choose where quick captures go and which folders provide " +
-                "People and Place suggestions. These defaults can be overridden in More options.",
+                "Choose where quick captures go and configure Object Sources for contextual @ suggestions, " +
+                "historical logs, and future template-based object creation.",
         });
 
         new Setting(containerEl)
@@ -423,27 +424,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     }),
             );
 
-        this.renderInboxFolderList(
-            containerEl,
-            "People source folders",
-            "Markdown notes in these folders and subfolders appear in @ suggestions as People.",
-            this.plugin.settings.inbox.peopleFolders,
-            async (folders) => {
-                this.plugin.settings.inbox.peopleFolders = folders;
-                await this.plugin.saveSettings();
-            },
-        );
-
-        this.renderInboxFolderList(
-            containerEl,
-            "Place source folders",
-            "Markdown notes in these folders and subfolders appear in @ suggestions as Places.",
-            this.plugin.settings.inbox.placeFolders,
-            async (folders) => {
-                this.plugin.settings.inbox.placeFolders = folders;
-                await this.plugin.saveSettings();
-            },
-        );
+        this.renderContextSources(containerEl);
 
         // ---- Event & Task Creation -----------------------------------------
         containerEl.createEl("h3", { text: "Event & Task Creation" });
@@ -584,17 +565,140 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             );
     }
 
-    private renderInboxFolderList(
-        container: HTMLElement,
-        title: string,
-        description: string,
-        folders: string[],
-        save: (folders: string[]) => Promise<void>,
-    ): void {
-        container.createEl("h4", { text: title });
-        container.createEl("p", { text: description, cls: "setting-item-description" });
-        const rows = container.createDiv({ cls: "fn-inbox-folder-settings" });
-        const values = [...folders];
+    private renderContextSources(container: HTMLElement): void {
+        container.createEl("h4", { text: "Object Sources" });
+        container.createEl("p", {
+            cls: "setting-item-description",
+            text:
+                "Each source labels one object type. Folder scope is required; an optional property filter narrows matches. " +
+                "Template note paths are stored now for future object creation.",
+        });
+        const list = container.createDiv({ cls: "fn-context-source-list" });
+        const sources = this.plugin.settings.inbox.contextSources;
+
+        sources.forEach((source, index) => {
+            this.renderContextSource(list, source, index);
+        });
+        new Setting(list).addButton((button) =>
+            button
+                .setButtonText("Add object source")
+                .setCta()
+                .onClick(async () => {
+                    sources.push(createContextSource(sources));
+                    await this.saveContextSources();
+                    this.display();
+                }),
+        );
+    }
+
+    private renderContextSource(container: HTMLElement, source: ContextSourceSettings, index: number): void {
+        const card = container.createDiv({ cls: "fn-context-source-card" });
+        new Setting(card)
+            .setName(source.name)
+            .setDesc(`Stable ID: ${source.id}`)
+            .addToggle((toggle) =>
+                toggle.setValue(source.enabled).onChange(async (value) => {
+                    source.enabled = value;
+                    await this.saveContextSources();
+                }),
+            )
+            .addExtraButton((button) =>
+                button
+                    .setIcon("trash-2")
+                    .setTooltip(`Remove ${source.name}`)
+                    .onClick(async () => {
+                        this.plugin.settings.inbox.contextSources.splice(index, 1);
+                        await this.saveContextSources();
+                        this.display();
+                    }),
+            );
+
+        new Setting(card)
+            .setName("Object label")
+            .setDesc("Shown in @ suggestions.")
+            .addText((text) =>
+                text
+                    .setPlaceholder("Books")
+                    .setValue(source.name)
+                    .onChange(async (value) => {
+                        source.name = value.trim() || source.id;
+                        await this.saveContextSources();
+                    }),
+            );
+        new Setting(card)
+            .setName("Icon")
+            .setDesc("Lucide icon name used in the interface.")
+            .addText((text) =>
+                text
+                    .setPlaceholder("book-open")
+                    .setValue(source.icon)
+                    .onChange(async (value) => {
+                        source.icon = value.trim() || "link";
+                        await this.saveContextSources();
+                    }),
+            );
+
+        this.renderContextSourceFolders(card, source);
+
+        let filterProperty = source.filter?.property ?? "";
+        let filterValue = source.filter?.value ?? "";
+        const saveFilter = async (): Promise<void> => {
+            source.filter =
+                filterProperty.trim() && filterValue.trim()
+                    ? { property: filterProperty.trim(), value: filterValue.trim() }
+                    : null;
+            await this.saveContextSources();
+        };
+        new Setting(card)
+            .setName("Property filter")
+            .setDesc("Optional frontmatter property name, for example type.")
+            .addText((text) =>
+                text
+                    .setPlaceholder("type")
+                    .setValue(filterProperty)
+                    .onChange(async (value) => {
+                        filterProperty = value;
+                        await saveFilter();
+                    }),
+            );
+        new Setting(card)
+            .setName("Property value")
+            .setDesc("Exact value required when a property filter is set.")
+            .addText((text) =>
+                text
+                    .setPlaceholder("book")
+                    .setValue(filterValue)
+                    .onChange(async (value) => {
+                        filterValue = value;
+                        await saveFilter();
+                    }),
+            );
+        new Setting(card).setName("Historical log heading").addText((text) =>
+            text
+                .setPlaceholder("Reading log")
+                .setValue(source.relatedHeading)
+                .onChange(async (value) => {
+                    source.relatedHeading = value.replace(/^#+\s*/, "").trim() || "Related log";
+                    await this.saveContextSources();
+                }),
+        );
+        new Setting(card)
+            .setName("Template note path")
+            .setDesc("Optional vault-relative template used by future object creation.")
+            .addText((text) => {
+                text.setPlaceholder("Templates/Book.md")
+                    .setValue(source.templatePath)
+                    .onChange(async (value) => {
+                        source.templatePath = value.trim().replace(/^\/+/, "");
+                        await this.saveContextSources();
+                    });
+                new FileSuggest(this.app, text.inputEl);
+            });
+    }
+
+    private renderContextSourceFolders(container: HTMLElement, source: ContextSourceSettings): void {
+        const rows = container.createDiv({ cls: "fn-context-source-folders" });
+        const values = [...source.folders];
         let suggesters: FolderSuggest[] = [];
 
         const renderRows = (): void => {
@@ -604,26 +708,26 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
 
             values.forEach((folder, index) => {
                 new Setting(rows)
-                    .setName(`${title.replace(/s$/, "")} ${index + 1}`)
+                    .setName(`Source folder ${index + 1}`)
                     .addText((text) => {
-                        text.setPlaceholder(
-                            index === 0 ? (title.startsWith("People") ? "People" : "Place") : "Folder/path",
-                        )
+                        text.setPlaceholder(index === 0 ? "Objects" : "Folder/path")
                             .setValue(folder)
                             .onChange(async (value) => {
                                 values[index] = value;
-                                await save(normalizeInboxFolders(values));
+                                source.folders = normalizeInboxFolders(values);
+                                await this.saveContextSources();
                             });
-                        text.inputEl.setAttribute("aria-label", `${title} ${index + 1}`);
+                        text.inputEl.setAttribute("aria-label", `${source.name} source folder ${index + 1}`);
                         suggesters.push(new FolderSuggest(this.app, text.inputEl));
                     })
                     .addExtraButton((button) =>
                         button
                             .setIcon("trash-2")
-                            .setTooltip(`Remove ${title.toLowerCase()} ${index + 1}`)
+                            .setTooltip(`Remove ${source.name} folder ${index + 1}`)
                             .onClick(async () => {
                                 values.splice(index, 1);
-                                await save(normalizeInboxFolders(values));
+                                source.folders = normalizeInboxFolders(values);
+                                await this.saveContextSources();
                                 renderRows();
                             }),
                     );
@@ -632,7 +736,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             new Setting(rows).addButton((button) =>
                 button
                     .setButtonText("Add folder")
-                    .setTooltip(`Add ${title.toLowerCase()}`)
+                    .setTooltip(`Add ${source.name} folder`)
                     .onClick(() => {
                         values.push("");
                         renderRows();
@@ -643,5 +747,16 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         };
 
         renderRows();
+    }
+
+    private async saveContextSources(): Promise<void> {
+        const sources = this.plugin.settings.inbox.contextSources;
+        this.plugin.settings.inbox.peopleFolders = [
+            ...(sources.find((source) => source.id === "people")?.folders ?? []),
+        ];
+        this.plugin.settings.inbox.placeFolders = [
+            ...(sources.find((source) => source.id === "places")?.folders ?? []),
+        ];
+        await this.plugin.saveSettings();
     }
 }

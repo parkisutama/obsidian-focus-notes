@@ -3147,6 +3147,26 @@ body.fn-mobile-event-screen-open .suggestion-container {
     display: none !important;
 }
 
+/* ---- Object source settings --------------------------------------------- */
+
+.fn-context-source-list {
+    display: grid;
+    gap: 12px;
+    margin-block: 10px 18px;
+}
+
+.fn-context-source-card {
+    padding: 4px 14px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--radius-m);
+    background: var(--background-secondary);
+}
+
+.fn-context-source-folders {
+    padding-inline-start: 12px;
+    border-inline-start: 2px solid var(--background-modifier-border);
+}
+
 /* ---- Mobile modal layout ------------------------------------------------ */
 
 @media (max-width: 640px) {

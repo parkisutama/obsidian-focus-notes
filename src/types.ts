@@ -157,6 +157,8 @@ export interface ContextSourceSettings {
     folders: string[];
     filter: ContextSourceFilter | null;
     relatedHeading: string;
+    /** Optional vault-relative template note used when object creation is enabled. */
+    templatePath: string;
     enabled: boolean;
 }
 
@@ -272,6 +274,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 folders: ["People"],
                 filter: null,
                 relatedHeading: "Interactions",
+                templatePath: "",
                 enabled: true,
             },
             {
@@ -281,6 +284,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 folders: ["Place"],
                 filter: null,
                 relatedHeading: "Related log",
+                templatePath: "",
                 enabled: true,
             },
             {
@@ -290,6 +294,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 folders: ["Activities"],
                 filter: { property: "type", value: "activity" },
                 relatedHeading: "Activity log",
+                templatePath: "",
                 enabled: true,
             },
         ],
@@ -384,10 +389,20 @@ function normalizeContextSources(
             folders,
             filter: property && value ? { property, value } : null,
             relatedHeading: stringValue(raw.relatedHeading).trim() || "Related log",
+            templatePath: normalizeVaultFilePath(stringValue(raw.templatePath)),
             enabled: raw.enabled === true && folders.length > 0,
         });
     }
     return result;
+}
+
+function normalizeVaultFilePath(path: string): string {
+    const normalized = path
+        .trim()
+        .replace(/\\/g, "/")
+        .replace(/^\/+|\/+$/g, "");
+    if (normalized.split("/").some((part) => part === "." || part === "..")) return "";
+    return normalized;
 }
 
 function normalizeContextFolders(folders: unknown[]): string[] {
