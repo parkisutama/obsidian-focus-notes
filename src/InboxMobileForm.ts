@@ -1,6 +1,6 @@
 import { type App, setIcon } from "obsidian";
 import type { EventTaskFormState } from "./EventTaskFormState";
-import { normalizeInboxFolders } from "./InboxFolderSettings";
+import { applyInboxContextOverrides, normalizeInboxFolders } from "./InboxFolderSettings";
 import { InboxNotesController } from "./InboxNotesController";
 import { FileSuggest } from "./Suggesters";
 import type { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
@@ -26,14 +26,18 @@ export class InboxMobileForm {
             cls: "fn-mobile-inbox-notes",
             attr: {
                 "aria-label": "Inbox notes",
-                "data-placeholder": "Add context. Use @ for People or Places, # for tags.",
+                "data-placeholder": "Add context. Use @ for contextual notes, # for tags.",
             },
         });
         this.notesController = new InboxNotesController(this.options.app, notesEl, {
             initialValue: this.options.form.inboxBody,
             targetFile: this.options.resolveTarget()?.file ?? "",
-            getPeopleFolders: () => this.peopleFolders,
-            getPlaceFolders: () => this.placeFolders,
+            getContextSources: () =>
+                applyInboxContextOverrides(
+                    this.options.getSettings().inbox.contextSources,
+                    this.options.form.inboxPeopleFoldersOverride,
+                    this.options.form.inboxPlaceFoldersOverride,
+                ),
             onChange: (value) => (this.options.form.inboxBody = value),
         });
         this.options.registerCleanup(() => this.destroy());
@@ -158,15 +162,5 @@ export class InboxMobileForm {
             target ? `${target.file} · ${target.heading || "No heading"}` : "Selected destination is unavailable",
         );
         if (updateNotes && target) this.notesController?.setTargetFile(target.file);
-    }
-
-    private get peopleFolders(): string[] {
-        const override = this.options.form.inboxPeopleFoldersOverride;
-        return override.length > 0 ? override : this.options.getSettings().inbox.peopleFolders;
-    }
-
-    private get placeFolders(): string[] {
-        const override = this.options.form.inboxPlaceFoldersOverride;
-        return override.length > 0 ? override : this.options.getSettings().inbox.placeFolders;
     }
 }

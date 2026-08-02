@@ -6,22 +6,22 @@ import {
     parseInboxRichText,
     serializeInboxRichText,
 } from "./InboxRichText";
-import type { MentionSuggestion } from "./InboxSuggestions";
+import type { ContextSuggestion } from "./InboxSuggestions";
 import { ObsidianInboxSuggestionSource } from "./ObsidianInboxSuggestionSource";
 import { formatRelativeMarkdownLink } from "./InboxMarkdown";
+import type { ContextSourceSettings } from "./types";
 
-type InboxNotesSuggestion = { kind: "mention"; value: MentionSuggestion } | { kind: "tag"; value: string };
+type ContextNotesSuggestion = { kind: "mention"; value: ContextSuggestion } | { kind: "tag"; value: string };
 
-export interface InboxNotesControllerOptions {
+export interface ContextNotesControllerOptions {
     initialValue: string;
     targetFile: string;
-    getPeopleFolders(): string[];
-    getPlaceFolders(): string[];
+    getContextSources(): ContextSourceSettings[];
     onChange(value: string): void;
 }
 
 /** Rich contenteditable controller that persists portable Markdown, never editor HTML. */
-export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggestion> {
+export class ContextNotesController extends AbstractInputSuggest<ContextNotesSuggestion> {
     hoverPopover: HoverPopover | null = null;
     private activeTrigger: InboxTrigger | null = null;
     private targetFile: string;
@@ -45,7 +45,7 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
     constructor(
         app: App,
         private readonly inputEl: HTMLDivElement,
-        private readonly options: InboxNotesControllerOptions,
+        private readonly options: ContextNotesControllerOptions,
     ) {
         super(app, inputEl);
         this.source = new ObsidianInboxSuggestionSource(app);
@@ -63,7 +63,7 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
         inputEl.addEventListener("keydown", this.onKeyDown);
     }
 
-    getSuggestions(): InboxNotesSuggestion[] {
+    getSuggestions(): ContextNotesSuggestion[] {
         const text = this.readVisibleText();
         const cursor = getCaretOffset(this.inputEl);
         this.activeTrigger = findInboxTrigger(text, cursor);
@@ -71,12 +71,7 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
 
         if (this.activeTrigger.kind === "mention") {
             return this.source
-                .getMentionSuggestions(
-                    this.activeTrigger.query,
-                    this.options.getPeopleFolders(),
-                    this.options.getPlaceFolders(),
-                    this.limit,
-                )
+                .getContextSuggestions(this.activeTrigger.query, this.options.getContextSources(), this.limit)
                 .map((value) => ({ kind: "mention" as const, value }));
         }
         return this.source
@@ -84,7 +79,7 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
             .map((value) => ({ kind: "tag" as const, value }));
     }
 
-    renderSuggestion(suggestion: InboxNotesSuggestion, el: HTMLElement): void {
+    renderSuggestion(suggestion: ContextNotesSuggestion, el: HTMLElement): void {
         if (suggestion.kind === "tag") {
             el.setText(suggestion.value);
             return;
@@ -92,12 +87,12 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
         const { value } = suggestion;
         el.createDiv({ text: value.label, cls: "fn-inbox-suggestion-label" });
         el.createDiv({
-            text: `${value.kind === "person" ? "People" : "Place"} · ${value.filePath}`,
+            text: `${value.sourceName} · ${value.filePath}`,
             cls: "fn-inbox-suggestion-context",
         });
     }
 
-    selectSuggestion(suggestion: InboxNotesSuggestion): void {
+    selectSuggestion(suggestion: ContextNotesSuggestion): void {
         const trigger = this.activeTrigger;
         if (!trigger) return;
         const replacement =
@@ -201,6 +196,8 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
         });
     }
 }
+
+export { ContextNotesController as InboxNotesController };
 
 function readDomParts(root: HTMLElement): InboxRichTextPart[] {
     const parts: InboxRichTextPart[] = [];

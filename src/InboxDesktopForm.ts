@@ -1,6 +1,6 @@
 import { type App, setIcon } from "obsidian";
 import type { EventTaskFormState } from "./EventTaskFormState";
-import { normalizeInboxFolders } from "./InboxFolderSettings";
+import { applyInboxContextOverrides, normalizeInboxFolders } from "./InboxFolderSettings";
 import { InboxNotesController } from "./InboxNotesController";
 import { FileSuggest } from "./Suggesters";
 import type { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
@@ -27,14 +27,18 @@ export class InboxDesktopForm {
             cls: "fn-inbox-notes-input",
             attr: {
                 "aria-label": "Inbox notes",
-                "data-placeholder": "Capture context. Type @ for People or Places, # for tags.",
+                "data-placeholder": "Capture context. Type @ for contextual notes, # for tags.",
             },
         });
         this.notesController = new InboxNotesController(this.options.app, notesEl, {
             initialValue: this.options.form.inboxBody,
             targetFile: this.options.resolveTarget()?.file ?? "",
-            getPeopleFolders: () => this.getPeopleFolders(),
-            getPlaceFolders: () => this.getPlaceFolders(),
+            getContextSources: () =>
+                applyInboxContextOverrides(
+                    this.options.getSettings().inbox.contextSources,
+                    this.options.form.inboxPeopleFoldersOverride,
+                    this.options.form.inboxPlaceFoldersOverride,
+                ),
             onChange: (value) => (this.options.form.inboxBody = value),
         });
 
@@ -124,16 +128,6 @@ export class InboxDesktopForm {
         input.addEventListener("input", () => {
             onChange(normalizeInboxFolders(input.value.split(/\r?\n/)));
         });
-    }
-
-    private getPeopleFolders(): string[] {
-        const override = this.options.form.inboxPeopleFoldersOverride;
-        return override.length > 0 ? override : this.options.getSettings().inbox.peopleFolders;
-    }
-
-    private getPlaceFolders(): string[] {
-        const override = this.options.form.inboxPlaceFoldersOverride;
-        return override.length > 0 ? override : this.options.getSettings().inbox.placeFolders;
     }
 
     private refreshTarget(updateNotes = true): void {
