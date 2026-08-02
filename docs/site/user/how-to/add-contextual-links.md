@@ -37,3 +37,15 @@ Suggestion dan historical log hanya aktif untuk source yang:
 - memenuhi property filter bila filter dikonfigurasi.
 
 People, Places, dan Activities adalah default awal. Source tambahan seperti Books dapat memakai mekanisme yang sama.
+
+## Konfigurasikan Object Sources
+
+Buka **Settings → Focus Notes → Object sources** untuk menentukan kelompok note yang dapat muncul dalam contextual suggester. Setiap source memiliki:
+
+- label dan icon untuk mengenali jenis objek;
+- satu atau beberapa folder sumber;
+- property filter opsional untuk mempersempit note di dalam folder;
+- heading tujuan historical log;
+- template note path yang akan dipakai oleh alur pembuatan object pada pengembangan berikutnya.
+
+Gunakan path note template di dalam vault, misalnya `Templates/Person.md`. Menetapkan template path saat ini tidak otomatis membuat object note; konfigurasi tersebut disimpan sebagai fondasi untuk fitur pembuatan object berikutnya.

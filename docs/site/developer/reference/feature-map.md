@@ -21,6 +21,7 @@ Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah ti
 | Format bullet dan relative link | `src/InboxMarkdown.ts` |
 | Mention dan tag suggestions | `src/InboxSuggestions.ts` |
 | Editor link hidup | `src/InboxNotesController.ts` |
+| Model dan ID Object Sources baru | `src/ContextSourceSettings.ts` |
 | Resolusi link ke source context | `src/ContextLinkResolver.ts` |
 | Format append-only historical log | `src/RelatedLog.ts` |
 | Receipt dan failed-destination-only retry | `src/RelatedWriteRecovery.ts` |
@@ -54,5 +55,7 @@ Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah ti
 | Settings UI | `src/SettingsTab.ts` |
 | Load, migration, dan save | `src/StateStore.ts` |
 | Plugin lifecycle | `src/main.ts` |
+
+`ContextSourceSettings.templatePath` menyimpan path note template yang sudah dinormalisasi. Field ini belum menjalankan template atau membuat note; consumer pembuatan object harus diimplementasikan secara terpisah. Folder People dan Places lama tetap disinkronkan dari source bawaan untuk menjaga kompatibilitas selama migrasi.
 
 Status reliability setiap area dicatat di dokumen internal `docs/development-status.md` dan tidak dipublikasikan melalui VitePress.
