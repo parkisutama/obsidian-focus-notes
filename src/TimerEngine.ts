@@ -1,4 +1,4 @@
-import { EngineMode, TimerStatus } from "./types";
+import type { EngineMode, TimerStatus } from "./types";
 
 /**
  * Pure timer state machine. No DOM, no Obsidian APIs.
@@ -75,7 +75,7 @@ export class TimerEngine {
             startedAt: this.originalStartedAt,
             endedAt: new Date(),
             elapsedMs,
-            targetMs: this.targetMs
+            targetMs: this.targetMs,
         };
         this.reset();
         return result;

@@ -1,4 +1,4 @@
-import { App, TFile, TFolder, AbstractInputSuggest } from "obsidian";
+import { type App, type TFile, type TFolder, AbstractInputSuggest } from "obsidian";
 import { isTFile, isTFolder } from "./utils";
 
 /**
@@ -8,7 +8,10 @@ import { isTFile, isTFolder } from "./utils";
  * at a .canvas or other non-markdown file would silently corrupt the file.
  */
 export class FileSuggest extends AbstractInputSuggest<TFile> {
-    constructor(app: App, private inputEl: HTMLInputElement) {
+    constructor(
+        app: App,
+        private inputEl: HTMLInputElement,
+    ) {
         super(app, inputEl);
     }
 
@@ -16,7 +19,7 @@ export class FileSuggest extends AbstractInputSuggest<TFile> {
         const lower = query.toLowerCase();
         return this.app.vault
             .getMarkdownFiles()
-            .filter(f => f.path.toLowerCase().includes(lower))
+            .filter((f) => f.path.toLowerCase().includes(lower))
             .slice(0, 20);
     }
 
@@ -33,7 +36,10 @@ export class FileSuggest extends AbstractInputSuggest<TFile> {
 
 /** Vault folder path suggester. */
 export class FolderSuggest extends AbstractInputSuggest<TFolder> {
-    constructor(app: App, private inputEl: HTMLInputElement) {
+    constructor(
+        app: App,
+        private inputEl: HTMLInputElement,
+    ) {
         super(app, inputEl);
     }
 
@@ -42,8 +48,8 @@ export class FolderSuggest extends AbstractInputSuggest<TFolder> {
         return this.app.vault
             .getAllLoadedFiles()
             .filter(isTFolder)
-            .filter(folder => folder.path !== "" && folder.path !== "/")
-            .filter(folder => folder.path.toLowerCase().includes(lower))
+            .filter((folder) => folder.path !== "" && folder.path !== "/")
+            .filter((folder) => folder.path.toLowerCase().includes(lower))
             .slice(0, 20);
     }
 
@@ -70,7 +76,7 @@ export class HeadingSuggest extends AbstractInputSuggest<string> {
     constructor(
         app: App,
         private inputEl: HTMLInputElement,
-        private getFilePath: () => string
+        private getFilePath: () => string,
     ) {
         super(app, inputEl);
     }
@@ -84,8 +90,8 @@ export class HeadingSuggest extends AbstractInputSuggest<string> {
         if (!cache?.headings) return [];
         const lower = query.toLowerCase();
         return cache.headings
-            .map(h => h.heading)
-            .filter(h => h.toLowerCase().includes(lower))
+            .map((h) => h.heading)
+            .filter((h) => h.toLowerCase().includes(lower))
             .slice(0, 20);
     }
 

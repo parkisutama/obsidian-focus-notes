@@ -13,14 +13,14 @@ interface EventTaskSubmissionWriter {
         record: EventTaskRecord,
         folder: string,
         targetPath: string,
-        hubPath: string | null
+        hubPath: string | null,
     ): Promise<NoteFile>;
     write(
         record: EventTaskRecord,
         targetFilePath: string,
         targetHeading: string,
         position: InsertPosition,
-        detailNoteRef?: HubNoteRef | null
+        detailNoteRef?: HubNoteRef | null,
     ): Promise<void>;
 }
 
@@ -38,7 +38,7 @@ interface InboxSubmissionWriter {
         record: InboxRecord,
         targetFilePath: string,
         targetHeading: string,
-        position: InsertPosition
+        position: InsertPosition,
     ): Promise<void>;
 }
 
@@ -47,13 +47,11 @@ export interface InboxSubmissionDependencies {
     resolveTarget(record: InboxRecord): FocusTarget | null;
 }
 
-export type EventTaskSubmissionResult =
-    | { ok: true; message: string }
-    | { ok: false; message: string };
+export type EventTaskSubmissionResult = { ok: true; message: string } | { ok: false; message: string };
 
 export async function submitEventTask(
     state: EventTaskFormState,
-    dependencies: EventTaskSubmissionDependencies
+    dependencies: EventTaskSubmissionDependencies,
 ): Promise<EventTaskSubmissionResult> {
     const { writer } = dependencies;
     let hubNoteRef: HubNoteRef | null = null;
@@ -66,7 +64,7 @@ export async function submitEventTask(
                 const hubFile = await writer.createHubNote(
                     hubName,
                     state.buildRecord(null),
-                    state.hubCreateFolder.trim() || dependencies.defaultHubNotesFolder
+                    state.hubCreateFolder.trim() || dependencies.defaultHubNotesFolder,
                 );
                 hubNoteRef = { title: state.title.trim(), path: hubFile.path };
                 hubNoteFilePath = hubFile.path;
@@ -96,7 +94,7 @@ export async function submitEventTask(
                     record,
                     state.detailNoteFolder.trim() || dependencies.defaultDetailNotesFolder,
                     resolvedTargetFile,
-                    hubNoteFilePath
+                    hubNoteFilePath,
                 );
                 detailNoteRef = { title: state.title.trim(), path: detailFile.path };
                 dependencies.openFile(detailFile);
@@ -123,24 +121,16 @@ export async function submitEventTask(
 
 export async function submitInbox(
     state: EventTaskFormState,
-    dependencies: InboxSubmissionDependencies
+    dependencies: InboxSubmissionDependencies,
 ): Promise<EventTaskSubmissionResult> {
     const record = state.buildInboxRecord();
     const target = dependencies.resolveTarget(record);
     if (!target?.file.trim()) {
-        return failure(
-            "Failed to save Inbox",
-            new Error("Selected Inbox destination is unavailable.")
-        );
+        return failure("Failed to save Inbox", new Error("Selected Inbox destination is unavailable."));
     }
 
     try {
-        await dependencies.writer.writeInbox(
-            record,
-            target.file,
-            target.heading,
-            target.position
-        );
+        await dependencies.writer.writeInbox(record, target.file, target.heading, target.position);
     } catch (error) {
         return failure("Failed to save Inbox", error);
     }

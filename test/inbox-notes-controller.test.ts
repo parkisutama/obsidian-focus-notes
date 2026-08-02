@@ -7,13 +7,13 @@ test("finds mention and tag triggers immediately before the cursor", () => {
         kind: "mention",
         start: 18,
         end: 22,
-        query: "ndi"
+        query: "ndi",
     });
     assert.deepEqual(findInboxTrigger("Catatan #follow", 15), {
         kind: "tag",
         start: 8,
         end: 15,
-        query: "follow"
+        query: "follow",
     });
 });
 
@@ -23,7 +23,7 @@ test("uses the cursor position instead of a later trigger", () => {
         kind: "mention",
         start: 6,
         end: 11,
-        query: "Andi"
+        query: "Andi",
     });
 });
 

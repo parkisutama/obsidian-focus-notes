@@ -1,5 +1,5 @@
-import { App, moment } from "obsidian";
-import { FocusNotesSettings, FocusTarget } from "./types";
+import { type App, moment } from "obsidian";
+import type { FocusNotesSettings, FocusTarget } from "./types";
 import { normalizeDailyNoteFormat } from "./DailyNotePath";
 
 /**
@@ -19,7 +19,10 @@ interface DailyNotesConfig {
 }
 
 export class TargetResolver {
-    constructor(private app: App, private settings: FocusNotesSettings) {}
+    constructor(
+        private app: App,
+        private settings: FocusNotesSettings,
+    ) {}
 
     /**
      * Returns the abstract default target. The file may still contain tokens.
@@ -34,7 +37,7 @@ export class TargetResolver {
                 return {
                     file: `${folder}{{date:${fmt}}}.md`,
                     heading: this.settings.defaultTarget.heading,
-                    position: this.settings.defaultTarget.position
+                    position: this.settings.defaultTarget.position,
                 };
             }
         }
@@ -56,7 +59,7 @@ export class TargetResolver {
         return {
             file: live.file.trim() || def.file,
             heading: live.heading.trim() || def.heading,
-            position: live.position
+            position: live.position,
         };
     }
 
@@ -68,15 +71,16 @@ export class TargetResolver {
     public getDailyNoteTarget(when: Date = new Date()): FocusTarget | null {
         const dailyNotes = this.readDailyNotesConfig();
         if (!dailyNotes) return null;
-        const folder = dailyNotes.folder
-            ? `${dailyNotes.folder.replace(/\/+$/, "")}/`
-            : "";
+        const folder = dailyNotes.folder ? `${dailyNotes.folder.replace(/\/+$/, "")}/` : "";
         const format = normalizeDailyNoteFormat(dailyNotes.format, this.settings.dailyNoteFormat);
-        return this.resolve({
-            file: `${folder}{{date:${format}}}.md`,
-            heading: "",
-            position: this.settings.defaultTarget.position
-        }, when);
+        return this.resolve(
+            {
+                file: `${folder}{{date:${format}}}.md`,
+                heading: "",
+                position: this.settings.defaultTarget.position,
+            },
+            when,
+        );
     }
 
     /** Expand {{date}} / {{date:FORMAT}} tokens in the file path against `when`. */
@@ -84,7 +88,7 @@ export class TargetResolver {
         return {
             file: this.expandPath(target.file, when),
             heading: target.heading,
-            position: target.position
+            position: target.position,
         };
     }
 
@@ -104,14 +108,13 @@ export class TargetResolver {
      */
     private readDailyNotesConfig(): DailyNotesConfig | null {
         try {
-            const internal = (this.app as unknown as {
-                internalPlugins?: {
-                    plugins?: Record<
-                        string,
-                        { enabled?: boolean; instance?: { options?: DailyNotesConfig } }
-                    >;
-                };
-            }).internalPlugins;
+            const internal = (
+                this.app as unknown as {
+                    internalPlugins?: {
+                        plugins?: Record<string, { enabled?: boolean; instance?: { options?: DailyNotesConfig } }>;
+                    };
+                }
+            ).internalPlugins;
             const dn = internal?.plugins?.["daily-notes"];
             if (!dn?.enabled) return null;
             const opts = dn.instance?.options;

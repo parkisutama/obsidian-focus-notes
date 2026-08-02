@@ -1,11 +1,8 @@
-import { App, TFile, moment, normalizePath } from "obsidian";
-import { FocusNotesSettings, FocusTarget, SessionRecord } from "./types";
+import { type App, type TFile, moment, normalizePath } from "obsidian";
+import type { FocusNotesSettings, FocusTarget, SessionRecord } from "./types";
 import { ensureFolderPath, isTFile } from "./utils";
 import { getMood } from "./MoodReference";
-import {
-    getEmotionCategoryLabel,
-    getStressLevelLabel
-} from "./EmotionalWellbeingReference";
+import { getEmotionCategoryLabel, getStressLevelLabel } from "./EmotionalWellbeingReference";
 
 /**
  * Writes a SessionRecord into the chosen note.
@@ -22,7 +19,10 @@ import {
  * they diverge is the placement strategy in `insertIntoFile`.
  */
 export class NoteWriter {
-    constructor(private app: App, private settings: FocusNotesSettings) {}
+    constructor(
+        private app: App,
+        private settings: FocusNotesSettings,
+    ) {}
 
     public async writeSession(record: SessionRecord, target: FocusTarget): Promise<void> {
         const file = await this.resolveOrCreateFile(target.file);
@@ -74,14 +74,12 @@ export class NoteWriter {
             "{{moodName}}": mood?.name ?? "",
             "{{moodEmoji}}": mood?.emoji ?? "",
             "{{moodTag}}": mood ? `#mood/${mood.key}` : "",
-            "{{moodKeywords}}": mood ? mood.keywords.map(k => `#${k}`).join(" ") : "",
-            "{{links}}": links
+            "{{moodKeywords}}": mood ? mood.keywords.map((k) => `#${k}`).join(" ") : "",
+            "{{links}}": links,
         };
 
         // Pick template based on grouping. Both share the same token set.
-        const template = this.settings.groupByDate
-            ? this.settings.logFormatGrouped
-            : this.settings.logFormatFlat;
+        const template = this.settings.groupByDate ? this.settings.logFormatGrouped : this.settings.logFormatFlat;
 
         let output = template;
         for (const [token, value] of Object.entries(replacements)) {
@@ -101,17 +99,20 @@ export class NoteWriter {
      * letters, numbers, wikilink) are kept regardless of whitespace quirks.
      */
     private pruneEmptyBullets(rendered: string): string {
-        const HAS_CONTENT = /[\p{L}\p{N}\[\]\p{Emoji_Presentation}\p{Extended_Pictographic}]/u;
+        const HAS_CONTENT = /[\p{L}\p{N}[\]\p{Emoji_Presentation}\p{Extended_Pictographic}]/u;
         return rendered
             .split("\n")
-            .filter(line => {
+            .filter((line) => {
                 // Top-level bullet (no leading whitespace before the dash) is
                 // always kept — that's the main entry line.
                 if (/^- /.test(line)) return true;
                 // Indented sub-bullets: keep only if there's actual content
                 // beyond bullet-decoration characters (-, —, whitespace).
                 if (/^\s+- /.test(line)) {
-                    const stripped = line.replace(/^\s+- /, "").replace(/—/g, "").trim();
+                    const stripped = line
+                        .replace(/^\s+- /, "")
+                        .replace(/—/g, "")
+                        .trim();
                     return stripped.length > 0 && HAS_CONTENT.test(stripped);
                 }
                 return true;
@@ -122,7 +123,7 @@ export class NoteWriter {
     private formatWellbeing(
         stressLabel: string,
         emotionCategoryLabel: string,
-        mood: ReturnType<typeof getMood>
+        mood: ReturnType<typeof getMood>,
     ): string {
         const parts: string[] = [];
         if (stressLabel) parts.push(`stress ${stressLabel}`);
@@ -158,7 +159,7 @@ export class NoteWriter {
         if (existing) {
             throw new Error(
                 `Target path is a folder, not a file: ${path}. ` +
-                    `Pick a markdown file (e.g. ${path}/index.md) or move the folder out of the way.`
+                    `Pick a markdown file (e.g. ${path}/index.md) or move the folder out of the way.`,
             );
         }
         const parts = path.split("/");
@@ -177,7 +178,7 @@ export class NoteWriter {
         file: TFile,
         target: FocusTarget,
         content: string,
-        record: SessionRecord
+        record: SessionRecord,
     ): Promise<void> {
         const original = await this.app.vault.read(file);
         const lines = original.split("\n");
@@ -198,9 +199,9 @@ export class NoteWriter {
             const sep = original.length === 0 ? "" : original.endsWith("\n") ? "" : "\n";
             let block = `${sep}\n## ${mainHeading}\n\n`;
             if (this.settings.groupByDate) {
-                block += this.makeDateSubHeading(record) + "\n\n";
+                block += `${this.makeDateSubHeading(record)}\n\n`;
             }
-            block += content + "\n";
+            block += `${content}\n`;
             await this.app.vault.modify(file, original + block);
             return;
         }
@@ -215,12 +216,7 @@ export class NoteWriter {
         // Grouped mode: find or create today's date sub-heading inside the
         // main section, then insert into that subsection.
         const dateHeadingText = this.makeDateSubHeadingText(record);
-        const dateSubInfo = this.findSubHeading(
-            lines,
-            mainInfo,
-            dateHeadingText,
-            mainInfo.level
-        );
+        const dateSubInfo = this.findSubHeading(lines, mainInfo, dateHeadingText, mainInfo.level);
 
         if (!dateSubInfo) {
             // Create date sub-heading. Insertion position determines placement:
@@ -276,10 +272,10 @@ export class NoteWriter {
         lines: string[],
         info: { startIndex: number; endIndex: number; level: number },
         content: string,
-        position: "start" | "end"
+        position: "start" | "end",
     ): void {
         if (position === "start") {
-            let blankIdx = info.startIndex + 1;
+            const blankIdx = info.startIndex + 1;
             if (lines[blankIdx] === undefined || lines[blankIdx].trim() !== "") {
                 lines.splice(blankIdx, 0, "");
             }
@@ -300,7 +296,7 @@ export class NoteWriter {
 
     private findHeading(
         lines: string[],
-        targetHeading: string
+        targetHeading: string,
     ): { startIndex: number; endIndex: number; level: number } | null {
         const headingRegex = /^(#{1,6})\s+(.+?)\s*$/;
         const target = targetHeading.toLowerCase();
@@ -340,7 +336,7 @@ export class NoteWriter {
         lines: string[],
         parent: { startIndex: number; endIndex: number; level: number },
         targetHeading: string,
-        parentLevel: number
+        parentLevel: number,
     ): { startIndex: number; endIndex: number; level: number } | null {
         const headingRegex = /^(#{1,6})\s+(.+?)\s*$/;
         const target = targetHeading.toLowerCase();

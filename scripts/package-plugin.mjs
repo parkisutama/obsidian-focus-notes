@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync } from "node:fs";
 
 const packageName = "focus-notes.zip";
 const artifacts = ["main.js", "manifest.json", "styles.css"];
@@ -79,7 +79,7 @@ for (const artifact of artifacts) {
             uint32(0),
             uint32(offset),
             fileName,
-        ])
+        ]),
     );
 
     offset += localFileHeader.length;

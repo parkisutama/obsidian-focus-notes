@@ -30,33 +30,33 @@ export const CBT_PROMPTS: CbtPrompt[] = [
     {
         label: "Intensity",
         question: "How strong is the feeling, 1–10?",
-        hint: "10 is overwhelming, 1 is barely there. A baseline, not a judgment."
+        hint: "10 is overwhelming, 1 is barely there. A baseline, not a judgment.",
     },
     {
         label: "Trigger",
         question: "What was the situation or trigger?",
-        hint: "Specific event, conversation, thought, or moment. The more concrete, the more workable."
+        hint: "Specific event, conversation, thought, or moment. The more concrete, the more workable.",
     },
     {
         label: "Automatic thought",
         question: "What thought arrived first — automatically, instantly?",
-        hint: "Catch the words. Often it's a sentence you didn't choose to think."
+        hint: "Catch the words. Often it's a sentence you didn't choose to think.",
     },
     {
         label: "Pattern",
         question: "Does the thought match one of the cognitive distortions below?",
-        hint: "Naming the pattern reduces its grip. Multiple patterns can apply at once."
+        hint: "Naming the pattern reduces its grip. Multiple patterns can apply at once.",
     },
     {
         label: "Evidence",
         question: "What's the evidence for and against this thought?",
-        hint: "An honest jury, not a defense or prosecution. Both sides count."
+        hint: "An honest jury, not a defense or prosecution. Both sides count.",
     },
     {
         label: "Balanced view",
         question: "What's a more balanced view — without blame?",
-        hint: "Not denial, not minimization. A truer description, the kind you'd offer a friend."
-    }
+        hint: "Not denial, not minimization. A truer description, the kind you'd offer a friend.",
+    },
 ];
 
 export interface CognitiveDistortion {
@@ -74,71 +74,68 @@ export const COGNITIVE_DISTORTIONS: CognitiveDistortion[] = [
     {
         key: "all-or-nothing",
         name: "All-or-nothing thinking",
-        example: "\"This is a complete failure, nothing worked at all.\"",
+        example: '"This is a complete failure, nothing worked at all."',
         description:
-            "Black-and-white categories — perfect or worthless, success or failure. Reality usually lives in shades."
+            "Black-and-white categories — perfect or worthless, success or failure. Reality usually lives in shades.",
     },
     {
         key: "overgeneralization",
         name: "Overgeneralization",
-        example: "\"This never works. It always goes wrong.\"",
-        description:
-            "Treating a single event as a universal pattern. \"Always\" and \"never\" are flags."
+        example: '"This never works. It always goes wrong."',
+        description: 'Treating a single event as a universal pattern. "Always" and "never" are flags.',
     },
     {
         key: "catastrophizing",
         name: "Catastrophizing",
-        example: "\"This is a disaster. I can't handle it.\"",
-        description:
-            "Predicting the worst outcome as if certain, and your inability to cope as if proven."
+        example: '"This is a disaster. I can\'t handle it."',
+        description: "Predicting the worst outcome as if certain, and your inability to cope as if proven.",
     },
     {
         key: "mind-reading",
         name: "Mind reading",
-        example: "\"They must be disappointed in me. I know they're judging me.\"",
+        example: '"They must be disappointed in me. I know they\'re judging me."',
         description:
-            "Assuming you know what others think without evidence. The thought feels like knowledge but it's invented."
+            "Assuming you know what others think without evidence. The thought feels like knowledge but it's invented.",
     },
     {
         key: "personalization",
         name: "Personalization",
-        example: "\"This is my fault. I must have caused this.\"",
+        example: '"This is my fault. I must have caused this."',
         description:
-            "Taking responsibility for events outside your control. Other factors usually contributed; you weren't the only cause."
+            "Taking responsibility for events outside your control. Other factors usually contributed; you weren't the only cause.",
     },
     {
         key: "labeling",
         name: "Labeling",
         example: "\"I'm stupid. I'm such a failure.\"",
         description:
-            "Attaching a global label to yourself or others based on one event. The behavior is data; the label is a leap."
+            "Attaching a global label to yourself or others based on one event. The behavior is data; the label is a leap.",
     },
     {
         key: "emotional-reasoning",
         name: "Emotional reasoning",
-        example: "\"I feel scared, so it must be dangerous.\"",
+        example: '"I feel scared, so it must be dangerous."',
         description:
-            "Treating feelings as evidence about reality. Feelings are real; what they imply about the world isn't always true."
+            "Treating feelings as evidence about reality. Feelings are real; what they imply about the world isn't always true.",
     },
     {
         key: "mental-filter",
         name: "Mental filter",
-        example: "\"One bad comment ruined everything good that happened.\"",
-        description:
-            "Focusing only on the negative, filtering out the positive. The full picture includes both."
+        example: '"One bad comment ruined everything good that happened."',
+        description: "Focusing only on the negative, filtering out the positive. The full picture includes both.",
     },
     {
         key: "minimization",
         name: "Minimization",
         example: "\"It's fine, I can handle it.\" (when you actually can't)",
         description:
-            "Downplaying difficult experiences or your own needs. What hurts is information; dismissing it costs more later."
+            "Downplaying difficult experiences or your own needs. What hurts is information; dismissing it costs more later.",
     },
     {
         key: "blaming-others",
         name: "Blaming others",
-        example: "\"This is entirely their fault, I had no part in it.\"",
+        example: '"This is entirely their fault, I had no part in it."',
         description:
-            "Assigning all responsibility to others, denying your own contribution. Most situations are co-created."
-    }
+            "Assigning all responsibility to others, denying your own contribution. Most situations are co-created.",
+    },
 ];

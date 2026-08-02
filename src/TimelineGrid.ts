@@ -1,5 +1,5 @@
-import { ScheduledItem, TimelineMode, TimelineRange } from "./ScheduledItemTypes";
-import { TimelineLayoutResult } from "./TimelineLayout";
+import type { ScheduledItem, TimelineMode, TimelineRange } from "./ScheduledItemTypes";
+import type { TimelineLayoutResult } from "./TimelineLayout";
 import { addDays, formatDayKey, formatTime, startOfDay } from "./utils";
 
 const HOUR_PX = 60;
@@ -20,11 +20,9 @@ export class TimelineGrid {
             openPendingSummary?: boolean;
             onOpenPendingSummary?: () => void;
             onOpenItem: (item: ScheduledItem) => void;
-        }
+        },
     ) {
-        this.itemById = new Map(
-            opts.items.concat(opts.pendingItems).map(item => [item.id, item])
-        );
+        this.itemById = new Map(opts.items.concat(opts.pendingItems).map((item) => [item.id, item]));
     }
 
     render(): void {
@@ -45,7 +43,7 @@ export class TimelineGrid {
             root.style.setProperty("--ftl-scrollbar-width", `${scrollbarWidth}px`);
             const now = new Date();
             const minutes = now.getHours() * 60 + now.getMinutes();
-            scroll.scrollTop = Math.max(0, (minutes - 60) * HOUR_PX / 60);
+            scroll.scrollTop = Math.max(0, ((minutes - 60) * HOUR_PX) / 60);
         });
     }
 
@@ -56,20 +54,20 @@ export class TimelineGrid {
         for (const day of days) {
             const isToday = formatDayKey(day) === formatDayKey(today);
             const col = header.createDiv({
-                cls: `ftl-day-header${isToday ? " ftl-day-header--today" : ""}`
+                cls: `ftl-day-header${isToday ? " ftl-day-header--today" : ""}`,
             });
             col.createDiv({
                 cls: "ftl-day-weekday",
-                text: day.toLocaleDateString(undefined, { weekday: "short" })
+                text: day.toLocaleDateString(undefined, { weekday: "short" }),
             });
             const numEl = col.createDiv({
-                cls: `ftl-day-num${isToday ? " ftl-day-num--today" : ""}`
+                cls: `ftl-day-num${isToday ? " ftl-day-num--today" : ""}`,
             });
             numEl.setText(String(day.getDate()));
             if (this.opts.mode === "day") {
                 col.createDiv({
                     cls: "ftl-day-month",
-                    text: day.toLocaleDateString(undefined, { month: "long", year: "numeric" })
+                    text: day.toLocaleDateString(undefined, { month: "long", year: "numeric" }),
                 });
             }
         }
@@ -88,7 +86,7 @@ export class TimelineGrid {
                 this.renderPendingHint(col);
             }
 
-            for (const due of this.opts.layout.dues.filter(d => d.dayKey === dayKey)) {
+            for (const due of this.opts.layout.dues.filter((d) => d.dayKey === dayKey)) {
                 const item = this.itemById.get(due.itemId);
                 if (item) this.renderDueChip(col, item);
             }
@@ -129,23 +127,23 @@ export class TimelineGrid {
     private renderDayCol(parent: HTMLElement, day: Date, isToday: boolean): void {
         const dayKey = formatDayKey(day);
         const col = parent.createDiv({
-            cls: `ftl-day-col${isToday ? " ftl-day-col--today" : ""}`
+            cls: `ftl-day-col${isToday ? " ftl-day-col--today" : ""}`,
         });
 
         if (isToday) {
             const now = new Date();
-            const topPx = (now.getHours() * 60 + now.getMinutes()) * HOUR_PX / 60;
+            const topPx = ((now.getHours() * 60 + now.getMinutes()) * HOUR_PX) / 60;
             const nowLine = col.createDiv({ cls: "ftl-now-line" });
             nowLine.style.top = `${topPx}px`;
             nowLine.createDiv({ cls: "ftl-now-dot" });
         }
 
-        for (const block of this.opts.layout.blocks.filter(b => b.dayKey === dayKey)) {
+        for (const block of this.opts.layout.blocks.filter((b) => b.dayKey === dayKey)) {
             const item = this.itemById.get(block.itemId);
             if (item) this.renderBlock(col, item, block.start, block.end, block.column, block.columnCount);
         }
 
-        for (const point of this.opts.layout.points.filter(p => formatDayKey(p.at) === dayKey)) {
+        for (const point of this.opts.layout.points.filter((p) => formatDayKey(p.at) === dayKey)) {
             const item = this.itemById.get(point.itemId);
             if (item) this.renderPoint(col, item, point.at);
         }
@@ -157,7 +155,7 @@ export class TimelineGrid {
         start: Date,
         end: Date,
         column: number,
-        columnCount: number
+        columnCount: number,
     ): void {
         const topPx = this.toPx(start);
         const heightPx = Math.max(20, this.toPx(end) - this.toPx(start));
@@ -165,7 +163,7 @@ export class TimelineGrid {
         const widthPct = 100 / columnCount;
 
         const block = parent.createEl("button", {
-            cls: `ftl-block ftl-${item.kind}${item.isCompleted ? " ftl-completed" : ""}`
+            cls: `ftl-block ftl-${item.kind}${item.isCompleted ? " ftl-completed" : ""}`,
         });
         block.style.top = `${topPx}px`;
         block.style.height = `${heightPx}px`;
@@ -185,7 +183,7 @@ export class TimelineGrid {
         if (heightPx >= 34) {
             content.createDiv({
                 cls: "ftl-block-time",
-                text: `${formatTime(start)} – ${formatTime(end)}`
+                text: `${formatTime(start)} – ${formatTime(end)}`,
             });
         }
 
@@ -200,7 +198,7 @@ export class TimelineGrid {
         const topPx = this.toPx(at);
 
         const point = parent.createEl("button", {
-            cls: `ftl-point ftl-${item.kind}${item.isCompleted ? " ftl-completed" : ""}`
+            cls: `ftl-point ftl-${item.kind}${item.isCompleted ? " ftl-completed" : ""}`,
         });
         point.style.top = `${topPx}px`;
         point.style.setProperty("--ftl-color", this.colorFor(item));
@@ -209,7 +207,7 @@ export class TimelineGrid {
         if (item.kind === "task") point.createSpan({ cls: "ftl-bullet", attr: { "aria-hidden": "true" } });
         point.createSpan({
             cls: "ftl-point-text",
-            text: `${formatTime(at)} ${item.title}`
+            text: `${formatTime(at)} ${item.title}`,
         });
 
         point.addEventListener("click", () => this.opts.onOpenItem(item));
@@ -217,15 +215,14 @@ export class TimelineGrid {
 
     private renderDueChip(parent: HTMLElement, item: ScheduledItem): void {
         const chip = parent.createEl("button", {
-            cls: `ftl-due-chip ftl-${item.kind}${item.isCompleted ? " ftl-completed" : ""}`
+            cls: `ftl-due-chip ftl-${item.kind}${item.isCompleted ? " ftl-completed" : ""}`,
         });
         chip.style.setProperty("--ftl-color", this.colorFor(item));
-        if (item.kind === "task") chip.createSpan({ cls: "ftl-bullet ftl-bullet--sm", attr: { "aria-hidden": "true" } });
+        if (item.kind === "task")
+            chip.createSpan({ cls: "ftl-bullet ftl-bullet--sm", attr: { "aria-hidden": "true" } });
         chip.createSpan({
             cls: "ftl-due-text",
-            text: item.kind === "task"
-                ? item.title
-                : `${item.isCompleted ? "Done: " : "Due: "}${item.title}`
+            text: item.kind === "task" ? item.title : `${item.isCompleted ? "Done: " : "Due: "}${item.title}`,
         });
         chip.addEventListener("click", () => this.opts.onOpenItem(item));
     }
@@ -238,7 +235,7 @@ export class TimelineGrid {
         btn.createSpan({ cls: "ftl-pending-btn-check", attr: { "aria-hidden": "true" } });
         btn.createSpan({
             cls: "ftl-pending-btn-text",
-            text: `${this.opts.pendingItems.length} pending tasks`
+            text: `${this.opts.pendingItems.length} pending tasks`,
         });
         btn.title = `${this.opts.pendingItems.length} pending tasks`;
 
@@ -249,7 +246,7 @@ export class TimelineGrid {
         titleWrap.createDiv({ cls: "ftl-pending-subtitle", text: "In the past 365 days" });
         const closeBtn = previewHead.createEl("button", {
             cls: "ftl-pending-close",
-            attr: { "aria-label": "Close pending tasks" }
+            attr: { "aria-label": "Close pending tasks" },
         });
         closeBtn.createSpan({ attr: { "aria-hidden": "true" } });
 
@@ -260,7 +257,7 @@ export class TimelineGrid {
             body.createDiv({ cls: "ftl-pending-name", text: item.title });
             body.createDiv({
                 cls: "ftl-pending-meta",
-                text: this.formatPendingMeta(item)
+                text: this.formatPendingMeta(item),
             });
             row.addEventListener("click", () => this.opts.onOpenItem(item));
         }
@@ -268,11 +265,11 @@ export class TimelineGrid {
         if (this.opts.pendingItems.length > 8) {
             preview.createDiv({
                 cls: "ftl-pending-more",
-                text: `+${this.opts.pendingItems.length - 8} more pending tasks`
+                text: `+${this.opts.pendingItems.length - 8} more pending tasks`,
             });
         }
 
-        btn.addEventListener("click", event => {
+        btn.addEventListener("click", (event) => {
             event.stopPropagation();
             if (this.opts.mode === "day" && this.opts.onOpenPendingSummary) {
                 this.opts.onOpenPendingSummary();
@@ -283,16 +280,12 @@ export class TimelineGrid {
             wrap.toggleClass("ftl-pending-open", shouldOpen);
             if (shouldOpen) {
                 window.setTimeout(() => {
-                    document.addEventListener(
-                        "click",
-                        () => wrap.removeClass("ftl-pending-open"),
-                        { once: true }
-                    );
+                    document.addEventListener("click", () => wrap.removeClass("ftl-pending-open"), { once: true });
                 });
             }
         });
-        preview.addEventListener("click", event => event.stopPropagation());
-        closeBtn.addEventListener("click", event => {
+        preview.addEventListener("click", (event) => event.stopPropagation());
+        closeBtn.addEventListener("click", (event) => {
             event.stopPropagation();
             wrap.removeClass("ftl-pending-open");
         });
@@ -309,14 +302,8 @@ export class TimelineGrid {
         const margin = 12;
         const rect = anchor.getBoundingClientRect();
         const width = Math.min(420, window.innerWidth - margin * 2);
-        const left = Math.min(
-            Math.max(margin, rect.left),
-            Math.max(margin, window.innerWidth - width - margin)
-        );
-        const top = Math.min(
-            rect.bottom + 8,
-            Math.max(margin, window.innerHeight - 120)
-        );
+        const left = Math.min(Math.max(margin, rect.left), Math.max(margin, window.innerWidth - width - margin));
+        const top = Math.min(rect.bottom + 8, Math.max(margin, window.innerHeight - 120));
         preview.style.width = `${width}px`;
         preview.style.left = `${left}px`;
         preview.style.top = `${top}px`;
@@ -357,7 +344,7 @@ export class TimelineGrid {
     }
 
     private toPx(date: Date): number {
-        return (date.getHours() * 60 + date.getMinutes()) * HOUR_PX / 60;
+        return ((date.getHours() * 60 + date.getMinutes()) * HOUR_PX) / 60;
     }
 
     private colorFor(item: ScheduledItem): string {
@@ -365,9 +352,7 @@ export class TimelineGrid {
     }
 
     private tooltip(item: ScheduledItem): string {
-        const heading = item.source.headingPath.length
-            ? `\n${item.source.headingPath.join(" > ")}`
-            : "";
+        const heading = item.source.headingPath.length ? `\n${item.source.headingPath.join(" > ")}` : "";
         return `${item.title}\n${item.source.filePath}:${item.source.lineNumber}${heading}`;
     }
 }

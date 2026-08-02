@@ -1,5 +1,5 @@
-import { App, setIcon } from "obsidian";
-import { EventTaskFormState } from "./EventTaskFormState";
+import { type App, setIcon } from "obsidian";
+import type { EventTaskFormState } from "./EventTaskFormState";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
 import { InboxNotesController } from "./InboxNotesController";
 import { FileSuggest } from "./Suggesters";
@@ -26,15 +26,15 @@ export class InboxMobileForm {
             cls: "fn-mobile-inbox-notes",
             attr: {
                 "aria-label": "Inbox notes",
-                "data-placeholder": "Add context. Use @ for People or Places, # for tags."
-            }
+                "data-placeholder": "Add context. Use @ for People or Places, # for tags.",
+            },
         });
         this.notesController = new InboxNotesController(this.options.app, notesEl, {
             initialValue: this.options.form.inboxBody,
             targetFile: this.options.resolveTarget()?.file ?? "",
             getPeopleFolders: () => this.peopleFolders,
             getPlaceFolders: () => this.placeFolders,
-            onChange: value => (this.options.form.inboxBody = value)
+            onChange: (value) => (this.options.form.inboxBody = value),
         });
         this.options.registerCleanup(() => this.destroy());
 
@@ -76,19 +76,25 @@ export class InboxMobileForm {
             this.refreshTarget(false);
         });
 
-        const position = this.selectField(container, "list-end", "Insert position", [
-            { value: "end", label: "End of section" },
-            { value: "start", label: "Start of section" }
-        ], this.options.form.inboxPosition);
+        const position = this.selectField(
+            container,
+            "list-end",
+            "Insert position",
+            [
+                { value: "end", label: "End of section" },
+                { value: "start", label: "Start of section" },
+            ],
+            this.options.form.inboxPosition,
+        );
         position.addEventListener("change", () => {
             this.options.form.inboxPosition = position.value as InsertPosition;
         });
 
         const settings = this.options.getSettings().inbox;
-        this.folderField(container, "People folders", settings.peopleFolders, value => {
+        this.folderField(container, "People folders", settings.peopleFolders, (value) => {
             this.options.form.inboxPeopleFoldersOverride = value;
         });
-        this.folderField(container, "Place folders", settings.placeFolders, value => {
+        this.folderField(container, "Place folders", settings.placeFolders, (value) => {
             this.options.form.inboxPlaceFoldersOverride = value;
         });
     }
@@ -107,7 +113,7 @@ export class InboxMobileForm {
         return content.createEl("input", {
             type: "text",
             cls: "fn-mobile-event-input",
-            attr: { "aria-label": label, placeholder }
+            attr: { "aria-label": label, placeholder },
         });
     }
 
@@ -116,12 +122,12 @@ export class InboxMobileForm {
         icon: string,
         label: string,
         options: Array<{ value: string; label: string }>,
-        initial: string
+        initial: string,
     ): HTMLSelectElement {
         const content = this.fieldRow(container, icon, label);
         const select = content.createEl("select", {
             cls: "fn-mobile-event-input",
-            attr: { "aria-label": label }
+            attr: { "aria-label": label },
         });
         for (const option of options) select.createEl("option", { value: option.value, text: option.label });
         select.value = initial;
@@ -132,15 +138,15 @@ export class InboxMobileForm {
         container: HTMLElement,
         label: string,
         defaults: string[],
-        onChange: (folders: string[]) => void
+        onChange: (folders: string[]) => void,
     ): void {
         const content = this.fieldRow(container, "folder", label);
         const input = content.createEl("textarea", {
             cls: "fn-mobile-event-description",
             attr: {
                 "aria-label": `${label} override`,
-                placeholder: `Using Settings: ${defaults.join(", ")}`
-            }
+                placeholder: `Using Settings: ${defaults.join(", ")}`,
+            },
         });
         input.rows = 2;
         input.addEventListener("input", () => onChange(normalizeInboxFolders(input.value.split(/\r?\n/))));
@@ -149,7 +155,7 @@ export class InboxMobileForm {
     private refreshTarget(updateNotes = true): void {
         const target = this.options.resolveTarget();
         this.targetSummaryEl?.setText(
-            target ? `${target.file} · ${target.heading || "No heading"}` : "Selected destination is unavailable"
+            target ? `${target.file} · ${target.heading || "No heading"}` : "Selected destination is unavailable",
         );
         if (updateNotes && target) this.notesController?.setTargetFile(target.file);
     }

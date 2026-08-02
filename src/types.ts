@@ -190,12 +190,12 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
     defaultTarget: {
         file: "Journal/{{date:YYYY-MM-DD}}.md",
         heading: "Focus timeline",
-        position: "end"
+        position: "end",
     },
     liveTarget: {
         file: "",
         heading: "",
-        position: "end"
+        position: "end",
     },
     useDailyNotesAsDefault: true,
     dailyNoteFormat: "YYYY-MM-DD",
@@ -228,7 +228,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         showPendingSummary: true,
         sourceSidebarCollapsed: false,
         sourceVisibility: {},
-        sourceColors: {}
+        sourceColors: {},
     },
     eventTask: {
         hubNotesFolder: "Notes",
@@ -239,34 +239,32 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         relatedFieldFormat: "[[{{date}}]]",
         includeStatus: true,
         includePriority: true,
-        includeTags: true
+        includeTags: true,
     },
     inbox: {
         defaultTargetMode: "daily-note",
         heading: "Inbox",
         position: "end",
         peopleFolders: ["People"],
-        placeFolders: ["Place"]
-    }
+        placeFolders: ["Place"],
+    },
 };
 
 /**
  * Merge persisted state with current defaults without sharing mutable arrays.
  * Kept independent of Obsidian runtime APIs so migrations are unit-testable.
  */
-export function mergeSettingsWithDefaults(
-    saved: Partial<FocusNotesSettings>
-): FocusNotesSettings {
+export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): FocusNotesSettings {
     return {
         ...DEFAULT_SETTINGS,
         ...saved,
         defaultTarget: {
             ...DEFAULT_SETTINGS.defaultTarget,
-            ...((saved.defaultTarget ?? {}) as Partial<typeof DEFAULT_SETTINGS.defaultTarget>)
+            ...((saved.defaultTarget ?? {}) as Partial<typeof DEFAULT_SETTINGS.defaultTarget>),
         },
         liveTarget: {
             ...DEFAULT_SETTINGS.liveTarget,
-            ...((saved.liveTarget ?? {}) as Partial<typeof DEFAULT_SETTINGS.liveTarget>)
+            ...((saved.liveTarget ?? {}) as Partial<typeof DEFAULT_SETTINGS.liveTarget>),
         },
         timeline: {
             ...DEFAULT_SETTINGS.timeline,
@@ -274,22 +272,22 @@ export function mergeSettingsWithDefaults(
             sourceFolders: [...(saved.timeline?.sourceFolders ?? DEFAULT_SETTINGS.timeline.sourceFolders)],
             sourceVisibility: {
                 ...DEFAULT_SETTINGS.timeline.sourceVisibility,
-                ...(saved.timeline?.sourceVisibility ?? {})
+                ...(saved.timeline?.sourceVisibility ?? {}),
             },
             sourceColors: {
                 ...DEFAULT_SETTINGS.timeline.sourceColors,
-                ...(saved.timeline?.sourceColors ?? {})
-            }
+                ...(saved.timeline?.sourceColors ?? {}),
+            },
         },
         eventTask: {
             ...DEFAULT_SETTINGS.eventTask,
-            ...((saved.eventTask ?? {}) as Partial<typeof DEFAULT_SETTINGS.eventTask>)
+            ...((saved.eventTask ?? {}) as Partial<typeof DEFAULT_SETTINGS.eventTask>),
         },
         inbox: {
             ...DEFAULT_SETTINGS.inbox,
             ...((saved.inbox ?? {}) as Partial<typeof DEFAULT_SETTINGS.inbox>),
             peopleFolders: [...(saved.inbox?.peopleFolders ?? DEFAULT_SETTINGS.inbox.peopleFolders)],
-            placeFolders: [...(saved.inbox?.placeFolders ?? DEFAULT_SETTINGS.inbox.placeFolders)]
-        }
+            placeFolders: [...(saved.inbox?.placeFolders ?? DEFAULT_SETTINGS.inbox.placeFolders)],
+        },
     };
 }

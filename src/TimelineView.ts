@@ -1,27 +1,18 @@
-import { ItemView, Notice, TFile, ViewStateResult, WorkspaceLeaf, setIcon } from "obsidian";
+import { ItemView, Notice, TFile, type ViewStateResult, type WorkspaceLeaf, setIcon } from "obsidian";
 import { ScheduledItemIndexer } from "./ScheduledItemIndexer";
 import { ScheduledItemParser } from "./ScheduledItemParser";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
-import { ScheduledItem, TimelineMode, TimelineRange } from "./ScheduledItemTypes";
+import type { ScheduledItem, TimelineMode, TimelineRange } from "./ScheduledItemTypes";
 import { TimelineGrid } from "./TimelineGrid";
 import { TimelineLayout } from "./TimelineLayout";
-import { TimelineSourceSidebar, TimelineSourceSummary } from "./TimelineSourceSidebar";
-import { FocusNotesSettings } from "./types";
+import { TimelineSourceSidebar, type TimelineSourceSummary } from "./TimelineSourceSidebar";
+import type { FocusNotesSettings } from "./types";
 import { addDays, formatDayKey, getIsoWeek, startOfDay, startOfWeek } from "./utils";
 import { openEventTaskForm } from "./EventTaskModal";
 
 export const VIEW_TYPE_FOCUS_TIMELINE = "focus-timeline-view";
 
-const SOURCE_COLORS = [
-    "#4c9aff",
-    "#2fb344",
-    "#f59f00",
-    "#e64980",
-    "#15aabf",
-    "#845ef7",
-    "#f76707",
-    "#40c057"
-];
+const SOURCE_COLORS = ["#4c9aff", "#2fb344", "#f59f00", "#e64980", "#15aabf", "#845ef7", "#f76707", "#40c057"];
 
 export class TimelineView extends ItemView {
     private mode: TimelineMode = "day";
@@ -43,7 +34,7 @@ export class TimelineView extends ItemView {
     constructor(
         leaf: WorkspaceLeaf,
         private getSettings: () => FocusNotesSettings,
-        private saveSettings: () => Promise<void>
+        private saveSettings: () => Promise<void>,
     ) {
         super(leaf);
         this.mode = this.getSettings().timeline.defaultMode === "multi-day" ? "day" : "day";
@@ -66,7 +57,7 @@ export class TimelineView extends ItemView {
             ...super.getState(),
             mode: this.mode,
             anchorDate: formatDayKey(this.anchorDate),
-            openPendingSummary: this.openPendingAfterRender
+            openPendingSummary: this.openPendingAfterRender,
         };
     }
 
@@ -77,7 +68,7 @@ export class TimelineView extends ItemView {
             if (next.mode === "day" || next.mode === "multi-day") this.mode = next.mode;
             if (typeof next.anchorDate === "string") {
                 const parsed = new Date(`${next.anchorDate}T00:00:00`);
-                if (!isNaN(parsed.getTime())) this.anchorDate = parsed;
+                if (!Number.isNaN(parsed.getTime())) this.anchorDate = parsed;
             }
             this.openPendingAfterRender = next.openPendingSummary === true;
         }
@@ -93,9 +84,9 @@ export class TimelineView extends ItemView {
 
         this.renderShell(root);
         this.registerEvent(
-            this.app.vault.on("modify", file => {
+            this.app.vault.on("modify", (file) => {
                 if (file instanceof TFile && this.isInSourceScope(file.path)) void this.refreshIndex();
-            })
+            }),
         );
         await this.refreshIndex();
     }
@@ -109,23 +100,16 @@ export class TimelineView extends ItemView {
 
         const addBtn = controls.createEl("button", {
             cls: "focus-timeline-add-button",
-            attr: { "aria-label": "Tambah event atau task", title: "Tambah event atau task" }
+            attr: { "aria-label": "Tambah event atau task", title: "Tambah event atau task" },
         });
         setIcon(addBtn, "plus");
         addBtn.addEventListener("click", () => {
-            openEventTaskForm(
-                this.app,
-                this.getSettings,
-                this.saveSettings,
-                this.anchorDate,
-                () => void this.refreshIndex(),
-                this
-            );
+            openEventTaskForm(this.app, this.getSettings, this.anchorDate, () => void this.refreshIndex(), this);
         });
 
         this.sourceToggleButton = controls.createEl("button", {
             cls: "focus-timeline-source-toggle",
-            attr: { "aria-label": "Toggle sources", title: "Toggle sources" }
+            attr: { "aria-label": "Toggle sources", title: "Toggle sources" },
         });
         setIcon(this.sourceToggleButton, "panel-left");
         this.sourceToggleButton.addEventListener("click", () => {
@@ -146,8 +130,8 @@ export class TimelineView extends ItemView {
             cls: "focus-timeline-weekly-open-button",
             attr: {
                 "aria-label": "Open Weekly View",
-                title: "Open Weekly View"
-            }
+                title: "Open Weekly View",
+            },
         });
         setIcon(this.weeklyOpenButton, "calendar-range");
         this.weeklyOpenButton.addEventListener("click", () => {
@@ -193,8 +177,8 @@ export class TimelineView extends ItemView {
             state: {
                 mode: "multi-day",
                 anchorDate: formatDayKey(this.anchorDate),
-                openPendingSummary
-            }
+                openPendingSummary,
+            },
         });
         this.app.workspace.revealLeaf(leaf);
     }
@@ -230,7 +214,7 @@ export class TimelineView extends ItemView {
         this.gridEl.empty();
         this.gridEl.createDiv({
             cls: "focus-timeline-empty",
-            text: "Focus Timeline is disabled in settings."
+            text: "Focus Timeline is disabled in settings.",
         });
     }
 
@@ -240,35 +224,34 @@ export class TimelineView extends ItemView {
         this.rootEl.toggleClass("focus-timeline-multi-day-mode", this.mode === "multi-day");
         if (this.modeSelect) this.modeSelect.value = this.mode;
         if (this.modeSelect) this.modeSelect.toggleClass("focus-timeline-mode-select--hidden", this.mode === "day");
-        if (this.weeklyOpenButton) this.weeklyOpenButton.toggleClass("focus-timeline-weekly-open-button--hidden", this.mode !== "day");
+        if (this.weeklyOpenButton)
+            this.weeklyOpenButton.toggleClass("focus-timeline-weekly-open-button--hidden", this.mode !== "day");
         if (this.weekLabel) this.weekLabel.setText(`Week ${getIsoWeek(this.currentRange().start)}`);
         if (this.sourceToggleButton) {
             this.sourceToggleButton.toggleClass(
                 "focus-timeline-source-toggle--active",
-                !settings.timeline.sourceSidebarCollapsed
+                !settings.timeline.sourceSidebarCollapsed,
             );
             this.sourceToggleButton.setAttr(
                 "aria-label",
-                settings.timeline.sourceSidebarCollapsed ? "Show sources" : "Hide sources"
+                settings.timeline.sourceSidebarCollapsed ? "Show sources" : "Hide sources",
             );
             this.sourceToggleButton.setAttr(
                 "title",
-                settings.timeline.sourceSidebarCollapsed ? "Show sources" : "Hide sources"
+                settings.timeline.sourceSidebarCollapsed ? "Show sources" : "Hide sources",
             );
         }
         const sources = this.buildSourceSummaries();
-        const visibleSources = new Set(
-            sources.filter(source => source.visible).map(source => source.filePath)
-        );
+        const visibleSources = new Set(sources.filter((source) => source.visible).map((source) => source.filePath));
         const range = this.currentRange();
         const rangeItems = this.query.getItemsForRange(this.items, range, {
             visibleSources,
-            includeCompleted: settings.timeline.showCompletedTasks
+            includeCompleted: settings.timeline.showCompletedTasks,
         });
         const pendingItems = this.query.getPendingTasks(this.items, this.anchorDate, visibleSources);
         const layout = this.layout.build(rangeItems, range);
 
-        new TimelineSourceSidebar(this.app, this.sidebarEl, {
+        new TimelineSourceSidebar(this.sidebarEl, {
             sources,
             collapsed: settings.timeline.sourceSidebarCollapsed,
             onToggleSource: (filePath, visible) => {
@@ -276,23 +259,20 @@ export class TimelineView extends ItemView {
                 void this.saveSettings();
                 this.renderContent();
             },
-            onToggleCollapsed: collapsed => {
+            onToggleCollapsed: (collapsed) => {
                 settings.timeline.sourceSidebarCollapsed = collapsed;
                 void this.saveSettings();
                 this.renderContent();
-            }
+            },
         }).render();
 
-        this.gridEl.toggleClass(
-            "focus-timeline-main-expanded",
-            settings.timeline.sourceSidebarCollapsed
-        );
+        this.gridEl.toggleClass("focus-timeline-main-expanded", settings.timeline.sourceSidebarCollapsed);
 
         if (settings.timeline.sourceFolders.length === 0) {
             this.gridEl.empty();
             this.gridEl.createDiv({
                 cls: "focus-timeline-empty",
-                text: "Configure timeline source folders in plugin settings."
+                text: "Configure timeline source folders in plugin settings.",
             });
             return;
         }
@@ -309,7 +289,7 @@ export class TimelineView extends ItemView {
             showPendingSummary: settings.timeline.showPendingSummary,
             openPendingSummary,
             onOpenPendingSummary: () => void this.openWeeklyPlanner(true),
-            onOpenItem: item => void this.openItem(item)
+            onOpenItem: (item) => void this.openItem(item),
         }).render();
     }
 
@@ -318,14 +298,12 @@ export class TimelineView extends ItemView {
             this.mode === "multi-day"
                 ? startOfWeek(this.anchorDate, this.getSettings().timeline.weekStartsOn)
                 : startOfDay(this.anchorDate);
-        const days =
-            this.mode === "day" ? 1 : Math.max(1, this.getSettings().timeline.multiDaySpanDays);
+        const days = this.mode === "day" ? 1 : Math.max(1, this.getSettings().timeline.multiDaySpanDays);
         return { start, end: addDays(start, days) };
     }
 
     private shift(direction: number): void {
-        const days =
-            this.mode === "day" ? 1 : Math.max(1, this.getSettings().timeline.multiDaySpanDays);
+        const days = this.mode === "day" ? 1 : Math.max(1, this.getSettings().timeline.multiDaySpanDays);
         this.anchorDate = addDays(this.anchorDate, direction * days);
         this.renderContent();
     }
@@ -336,7 +314,7 @@ export class TimelineView extends ItemView {
         for (const item of this.items) {
             const existing = counts.get(item.source.filePath) ?? {
                 fileName: item.source.fileName,
-                count: 0
+                count: 0,
             };
             existing.count += 1;
             counts.set(item.source.filePath, existing);
@@ -349,7 +327,7 @@ export class TimelineView extends ItemView {
                 fileName: value.fileName,
                 count: value.count,
                 color: settings.timeline.sourceColors[filePath] ?? this.colorFor(filePath),
-                visible: settings.timeline.sourceVisibility[filePath] ?? true
+                visible: settings.timeline.sourceVisibility[filePath] ?? true,
             }));
     }
 
@@ -372,8 +350,10 @@ export class TimelineView extends ItemView {
     }
 
     private isInSourceScope(path: string): boolean {
-        const folders = this.getSettings().timeline.sourceFolders.map(folder => folder.trim()).filter(Boolean);
-        return folders.some(folder => path === folder || path.startsWith(`${folder}/`));
+        const folders = this.getSettings()
+            .timeline.sourceFolders.map((folder) => folder.trim())
+            .filter(Boolean);
+        return folders.some((folder) => path === folder || path.startsWith(`${folder}/`));
     }
 
     private async openItem(item: ScheduledItem): Promise<void> {
@@ -385,7 +365,7 @@ export class TimelineView extends ItemView {
         const leaf = this.app.workspace.getLeaf(false);
         await leaf.openFile(file, {
             active: true,
-            eState: { line: Math.max(0, item.source.lineNumber - 1) }
+            eState: { line: Math.max(0, item.source.lineNumber - 1) },
         });
     }
 }

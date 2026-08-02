@@ -7,9 +7,6 @@ test("isTFolder accepts vault folder-shaped values across runtime boundaries", (
 });
 
 test("isTFolder rejects files and unrelated values", () => {
-    assert.equal(
-        isTFolder({ path: "Notes/item.md", name: "item.md", extension: "md", stat: {} }),
-        false
-    );
+    assert.equal(isTFolder({ path: "Notes/item.md", name: "item.md", extension: "md", stat: {} }), false);
     assert.equal(isTFolder(null), false);
 });

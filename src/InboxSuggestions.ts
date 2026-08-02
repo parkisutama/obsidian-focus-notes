@@ -23,10 +23,7 @@ export class InboxSuggestionSnapshot {
     private readonly loadNotes: () => SuggestionNote[];
     private readonly loadTags: () => string[];
 
-    constructor(
-        loadNotes: () => SuggestionNote[],
-        loadTags: () => string[]
-    ) {
+    constructor(loadNotes: () => SuggestionNote[], loadTags: () => string[]) {
         this.loadNotes = loadNotes;
         this.loadTags = loadTags;
     }
@@ -45,27 +42,20 @@ export class InboxSuggestionSnapshot {
 export function buildMentionSuggestions(
     notes: SuggestionNote[],
     peopleFolders: string[],
-    placeFolders: string[]
+    placeFolders: string[],
 ): MentionSuggestion[] {
-    return [
-        ...buildGroup(notes, peopleFolders, "person"),
-        ...buildGroup(notes, placeFolders, "place")
-    ];
+    return [...buildGroup(notes, peopleFolders, "person"), ...buildGroup(notes, placeFolders, "place")];
 }
 
 export function filterMentionSuggestions(
     candidates: MentionSuggestion[],
     matcher: SuggestionMatcher,
-    limit = 20
+    limit = 20,
 ): MentionSuggestion[] {
-    return rankAndLimit(candidates, matcher, item => item.label, limit);
+    return rankAndLimit(candidates, matcher, (item) => item.label, limit);
 }
 
-export function buildTagSuggestions(
-    tags: string[],
-    matcher: SuggestionMatcher,
-    limit = 20
-): string[] {
+export function buildTagSuggestions(tags: string[], matcher: SuggestionMatcher, limit = 20): string[] {
     const seen = new Set<string>();
     const unique: string[] = [];
     for (const raw of tags) {
@@ -77,21 +67,17 @@ export function buildTagSuggestions(
         seen.add(key);
         unique.push(tag);
     }
-    return rankAndLimit(unique, matcher, tag => tag, limit);
+    return rankAndLimit(unique, matcher, (tag) => tag, limit);
 }
 
-function buildGroup(
-    notes: SuggestionNote[],
-    folders: string[],
-    kind: InboxMentionKind
-): MentionSuggestion[] {
+function buildGroup(notes: SuggestionNote[], folders: string[], kind: InboxMentionKind): MentionSuggestion[] {
     const roots = folders.map(normalizeFolder).filter(Boolean);
     if (roots.length === 0) return [];
     const results: MentionSuggestion[] = [];
     const seen = new Set<string>();
 
     for (const note of notes) {
-        if (!roots.some(root => note.path.startsWith(`${root}/`))) continue;
+        if (!roots.some((root) => note.path.startsWith(`${root}/`))) continue;
         addSuggestion(results, seen, kind, note.path, note.basename, "filename");
         for (const alias of note.aliases) {
             addSuggestion(results, seen, kind, note.path, alias.trim(), "alias");
@@ -106,7 +92,7 @@ function addSuggestion(
     kind: InboxMentionKind,
     filePath: string,
     label: string,
-    matchedBy: MentionMatchSource
+    matchedBy: MentionMatchSource,
 ): void {
     if (!label) return;
     const key = `${kind}\u0000${filePath}\u0000${label.toLowerCase()}`;
@@ -119,16 +105,11 @@ function normalizeFolder(folder: string): string {
     return folder.trim().replace(/^\/+|\/+$/g, "");
 }
 
-function rankAndLimit<T>(
-    values: T[],
-    matcher: SuggestionMatcher,
-    textOf: (value: T) => string,
-    limit: number
-): T[] {
+function rankAndLimit<T>(values: T[], matcher: SuggestionMatcher, textOf: (value: T) => string, limit: number): T[] {
     return values
         .map((value, index) => ({ value, index, score: matcher(textOf(value)) }))
         .filter((item): item is { value: T; index: number; score: number } => item.score !== null)
         .sort((a, b) => a.score - b.score || a.index - b.index)
         .slice(0, Math.max(0, limit))
-        .map(item => item.value);
+        .map((item) => item.value);
 }

@@ -1,5 +1,5 @@
-import { App, setIcon } from "obsidian";
-import { EventTaskFormState } from "./EventTaskFormState";
+import { type App, setIcon } from "obsidian";
+import type { EventTaskFormState } from "./EventTaskFormState";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
 import { InboxNotesController } from "./InboxNotesController";
 import { FileSuggest } from "./Suggesters";
@@ -27,15 +27,15 @@ export class InboxDesktopForm {
             cls: "fn-inbox-notes-input",
             attr: {
                 "aria-label": "Inbox notes",
-                "data-placeholder": "Capture context. Type @ for People or Places, # for tags."
-            }
+                "data-placeholder": "Capture context. Type @ for People or Places, # for tags.",
+            },
         });
         this.notesController = new InboxNotesController(this.options.app, notesEl, {
             initialValue: this.options.form.inboxBody,
             targetFile: this.options.resolveTarget()?.file ?? "",
             getPeopleFolders: () => this.getPeopleFolders(),
             getPlaceFolders: () => this.getPlaceFolders(),
-            onChange: value => (this.options.form.inboxBody = value)
+            onChange: (value) => (this.options.form.inboxBody = value),
         });
 
         this.renderAdvanced(container);
@@ -60,8 +60,8 @@ export class InboxDesktopForm {
             type: "text",
             attr: {
                 placeholder: "Note path",
-                "aria-label": "Inbox target note"
-            }
+                "aria-label": "Inbox target note",
+            },
         });
         file.value = this.options.form.inboxTargetFile;
         file.addEventListener("input", () => {
@@ -73,7 +73,7 @@ export class InboxDesktopForm {
         const headingLabel = fields.createEl("label", { text: "Heading" });
         const heading = headingLabel.createEl("input", {
             type: "text",
-            attr: { placeholder: "Inbox", "aria-label": "Inbox heading" }
+            attr: { placeholder: "Inbox", "aria-label": "Inbox heading" },
         });
         heading.value = this.options.form.inboxHeading;
         heading.addEventListener("input", () => {
@@ -83,7 +83,7 @@ export class InboxDesktopForm {
 
         const positionLabel = fields.createEl("label", { text: "Insert position" });
         const position = positionLabel.createEl("select", {
-            attr: { "aria-label": "Inbox insert position" }
+            attr: { "aria-label": "Inbox insert position" },
         });
         position.createEl("option", { text: "End of section", value: "end" });
         position.createEl("option", { text: "Start of section", value: "start" });
@@ -97,13 +97,13 @@ export class InboxDesktopForm {
             fields,
             "People folders override",
             settings.peopleFolders,
-            value => (this.options.form.inboxPeopleFoldersOverride = value)
+            (value) => (this.options.form.inboxPeopleFoldersOverride = value),
         );
         this.renderFolderOverride(
             fields,
             "Place folders override",
             settings.placeFolders,
-            value => (this.options.form.inboxPlaceFoldersOverride = value)
+            (value) => (this.options.form.inboxPlaceFoldersOverride = value),
         );
     }
 
@@ -111,14 +111,14 @@ export class InboxDesktopForm {
         container: HTMLElement,
         label: string,
         defaults: string[],
-        onChange: (folders: string[]) => void
+        onChange: (folders: string[]) => void,
     ): void {
         const wrap = container.createEl("label", { text: label });
         const input = wrap.createEl("textarea", {
             attr: {
                 placeholder: `Using Settings: ${defaults.join(", ")}`,
-                "aria-label": label
-            }
+                "aria-label": label,
+            },
         });
         input.rows = 2;
         input.addEventListener("input", () => {
@@ -139,9 +139,7 @@ export class InboxDesktopForm {
     private refreshTarget(updateNotes = true): void {
         const target = this.options.resolveTarget();
         this.targetSummaryEl?.setText(
-            target
-                ? `${target.file} · ${target.heading || "No heading"}`
-                : "Selected destination is unavailable"
+            target ? `${target.file} · ${target.heading || "No heading"}` : "Selected destination is unavailable",
         );
         if (updateNotes && target) this.notesController?.setTargetFile(target.file);
     }

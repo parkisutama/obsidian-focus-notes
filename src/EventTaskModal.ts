@@ -1,16 +1,7 @@
-import {
-    App,
-    Component,
-    FuzzySuggestModal,
-    Modal,
-    Notice,
-    Platform,
-    TFile,
-    setIcon
-} from "obsidian";
-import { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
-import { EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
-import { EventTaskFormState, EventTaskKind, HubMode, formatLocalDate } from "./EventTaskFormState";
+import { type App, type Component, FuzzySuggestModal, Modal, Notice, Platform, type TFile, setIcon } from "obsidian";
+import type { FocusNotesSettings, FocusTarget } from "./types";
+import { type EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
+import { EventTaskFormState, type EventTaskKind, type HubMode, formatLocalDate } from "./EventTaskFormState";
 import { submitEventTask, submitInbox } from "./EventTaskSubmission";
 import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
@@ -23,17 +14,16 @@ import { InboxDesktopForm } from "./InboxDesktopForm";
 export function openEventTaskForm(
     app: App,
     getSettings: () => FocusNotesSettings,
-    saveSettings: () => Promise<void>,
     anchorDate: Date = new Date(),
     onComplete: () => void = () => {},
-    owner?: Component
+    owner?: Component,
 ): void {
     if (shouldUseMobileForm(Platform.isMobile, window.innerWidth)) {
         new EventTaskMobileScreen(app, getSettings, anchorDate, onComplete).open(owner);
         return;
     }
 
-    new EventTaskModal(app, getSettings, saveSettings, anchorDate, onComplete).open();
+    new EventTaskModal(app, getSettings, anchorDate, onComplete).open();
 }
 
 export class EventTaskModal extends Modal {
@@ -63,9 +53,8 @@ export class EventTaskModal extends Modal {
     constructor(
         app: App,
         private getSettings: () => FocusNotesSettings,
-        private saveSettings: () => Promise<void>,
         private anchorDate: Date = new Date(),
-        private onComplete: () => void = () => {}
+        private onComplete: () => void = () => {},
     ) {
         super(app);
 
@@ -77,7 +66,7 @@ export class EventTaskModal extends Modal {
             dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),
             eventTaskTarget: resolved,
             heading: settings.inbox.heading,
-            position: settings.inbox.position
+            position: settings.inbox.position,
         });
         this.form = new EventTaskFormState(anchorDate, {
             file: resolved.file,
@@ -86,7 +75,7 @@ export class EventTaskModal extends Modal {
             hubNotesFolder: settings.eventTask.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
             inbox: settings.inbox,
-            inboxTargetFile: inboxTarget?.file ?? ""
+            inboxTargetFile: inboxTarget?.file ?? "",
         });
     }
 
@@ -129,7 +118,7 @@ export class EventTaskModal extends Modal {
             app: this.app,
             form: this.form,
             getSettings: this.getSettings,
-            resolveTarget: () => this.resolveInboxTarget()
+            resolveTarget: () => this.resolveInboxTarget(),
         });
         this.inboxForm.render(this.inboxSectionEl);
         this.renderButtons(contentEl);
@@ -143,13 +132,13 @@ export class EventTaskModal extends Modal {
         this.titleInputEl = container.createEl("input", {
             type: "text",
             cls: "fn-gcal-title-input",
-            attr: { placeholder: "Add title", "aria-label": "Title" }
+            attr: { placeholder: "Add title", "aria-label": "Title" },
         });
         this.titleInputEl.value = this.form.getTitleForKind(this.form.kind);
         this.titleInputEl.addEventListener("input", () => {
             this.setTitleValue(this.titleInputEl.value);
         });
-        this.titleInputEl.addEventListener("keydown", evt => {
+        this.titleInputEl.addEventListener("keydown", (evt) => {
             if (evt.key === "Enter" && !evt.shiftKey) {
                 evt.preventDefault();
                 void this.submit();
@@ -175,23 +164,23 @@ export class EventTaskModal extends Modal {
         const inboxBtn = tabs.createEl("button", {
             cls: "fn-gcal-tab fn-gcal-tab--active",
             text: "Inbox",
-            attr: { type: "button", "aria-pressed": "true" }
+            attr: { type: "button", "aria-pressed": "true" },
         });
         const eventBtn = tabs.createEl("button", {
             cls: "fn-gcal-tab",
             text: "Event",
-            attr: { type: "button", "aria-pressed": "false" }
+            attr: { type: "button", "aria-pressed": "false" },
         });
         const taskBtn = tabs.createEl("button", {
             cls: "fn-gcal-tab",
             text: "Task",
-            attr: { type: "button", "aria-pressed": "false" }
+            attr: { type: "button", "aria-pressed": "false" },
         });
 
         const buttons = new Map<EventTaskKind, HTMLButtonElement>([
             ["inbox", inboxBtn],
             ["event", eventBtn],
-            ["task", taskBtn]
+            ["task", taskBtn],
         ]);
         const activate = (kind: EventTaskKind): void => {
             this.form.kind = kind;
@@ -214,10 +203,7 @@ export class EventTaskModal extends Modal {
     // ---- Inbox section -----------------------------------------------------
 
     private resolveInboxTarget(): FocusTarget | null {
-        return resolveInboxFormTarget(
-            new TargetResolver(this.app, this.getSettings()),
-            this.form
-        );
+        return resolveInboxFormTarget(new TargetResolver(this.app, this.getSettings()), this.form);
     }
 
     // ---- Event section ------------------------------------------------------
@@ -237,7 +223,7 @@ export class EventTaskModal extends Modal {
         const endEl = this.makeTimeInput(this.eventTimeRowEl, this.form.eventEndTime, "End time");
         endEl.addEventListener("change", () => (this.form.eventEndTime = endEl.value));
 
-        this.makeCheckboxRow(wrap, "All day", "fn-gcal-allday", checked => {
+        this.makeCheckboxRow(wrap, "All day", "fn-gcal-allday", (checked) => {
             this.form.eventAllDay = checked;
             this.eventTimeRowEl.toggleClass("fn-gcal-hidden", checked);
         });
@@ -264,7 +250,7 @@ export class EventTaskModal extends Modal {
         this.taskDueTimeEl.addClass("fn-gcal-hidden");
         this.taskDueTimeEl.addEventListener("change", () => (this.form.taskDueTime = this.taskDueTimeEl.value));
 
-        this.makeCheckboxRow(dueWrap, "Include time", "fn-gcal-due-time", checked => {
+        this.makeCheckboxRow(dueWrap, "Include time", "fn-gcal-due-time", (checked) => {
             this.form.taskDueHasTime = checked;
             this.taskDueTimeEl.toggleClass("fn-gcal-hidden", !checked);
         });
@@ -273,18 +259,35 @@ export class EventTaskModal extends Modal {
     protected renderTaskTimeboxSection(container: HTMLElement): void {
         const timeboxContent = this.makeRow(container, "timer");
         const timeboxWrap = timeboxContent.createDiv();
-        this.makeCheckboxRow(timeboxWrap, "Timebox (start – end)", "fn-gcal-timebox", checked => {
+        this.makeCheckboxRow(timeboxWrap, "Timebox (start – end)", "fn-gcal-timebox", (checked) => {
             this.form.taskTimeboxEnabled = checked;
             this.taskTimeboxRowEl.toggleClass("fn-gcal-hidden", !checked);
         });
         this.taskTimeboxRowEl = timeboxWrap.createDiv({ cls: "fn-gcal-datetime-row fn-gcal-hidden" });
         this.taskTimeboxDateEl = this.makeDateInput(this.taskTimeboxRowEl, this.form.taskTimeboxDate, "Timebox date");
-        this.taskTimeboxDateEl.addEventListener("change", () => (this.form.taskTimeboxDate = this.taskTimeboxDateEl.value));
-        this.taskTimeboxStartEl = this.makeTimeInput(this.taskTimeboxRowEl, this.form.taskTimeboxStartTime, "Timebox start time");
-        this.taskTimeboxStartEl.addEventListener("change", () => (this.form.taskTimeboxStartTime = this.taskTimeboxStartEl.value));
+        this.taskTimeboxDateEl.addEventListener(
+            "change",
+            () => (this.form.taskTimeboxDate = this.taskTimeboxDateEl.value),
+        );
+        this.taskTimeboxStartEl = this.makeTimeInput(
+            this.taskTimeboxRowEl,
+            this.form.taskTimeboxStartTime,
+            "Timebox start time",
+        );
+        this.taskTimeboxStartEl.addEventListener(
+            "change",
+            () => (this.form.taskTimeboxStartTime = this.taskTimeboxStartEl.value),
+        );
         this.taskTimeboxRowEl.createSpan({ cls: "fn-gcal-time-sep", text: "—" });
-        this.taskTimeboxEndEl = this.makeTimeInput(this.taskTimeboxRowEl, this.form.taskTimeboxEndTime, "Timebox end time");
-        this.taskTimeboxEndEl.addEventListener("change", () => (this.form.taskTimeboxEndTime = this.taskTimeboxEndEl.value));
+        this.taskTimeboxEndEl = this.makeTimeInput(
+            this.taskTimeboxRowEl,
+            this.form.taskTimeboxEndTime,
+            "Timebox end time",
+        );
+        this.taskTimeboxEndEl.addEventListener(
+            "change",
+            () => (this.form.taskTimeboxEndTime = this.taskTimeboxEndEl.value),
+        );
     }
 
     protected renderTaskRemindersSection(container: HTMLElement): void {
@@ -297,9 +300,9 @@ export class EventTaskModal extends Modal {
         const addRemindBtn = remindWrap.createEl("button", {
             cls: "fn-gcal-add-remind-btn",
             text: "+ Add reminder",
-            attr: { type: "button" }
+            attr: { type: "button" },
         });
-        addRemindBtn.addEventListener("click", evt => {
+        addRemindBtn.addEventListener("click", (evt) => {
             evt.preventDefault();
             this.addReminderRow(formatLocalDate(this.anchorDate), "09:00");
         });
@@ -317,10 +320,10 @@ export class EventTaskModal extends Modal {
 
         const delBtn = row.createEl("button", {
             cls: "fn-gcal-remind-del-btn",
-            attr: { type: "button", "aria-label": "Remove reminder" }
+            attr: { type: "button", "aria-label": "Remove reminder" },
         });
         setIcon(delBtn, "x");
-        delBtn.addEventListener("click", evt => {
+        delBtn.addEventListener("click", (evt) => {
             evt.preventDefault();
             row.remove();
             // Mark as deleted by clearing date
@@ -334,7 +337,7 @@ export class EventTaskModal extends Modal {
         const content = this.makeRow(container, "align-left");
         const textarea = content.createEl("textarea", {
             cls: "fn-gcal-desc-input",
-            attr: { placeholder: "Add description or attachment...", "aria-label": "Description" }
+            attr: { placeholder: "Add description or attachment...", "aria-label": "Description" },
         });
         textarea.rows = 3;
         textarea.addEventListener("input", () => (this.form.description = textarea.value));
@@ -352,7 +355,7 @@ export class EventTaskModal extends Modal {
         this.hubInputEl = hubInputRow.createEl("input", {
             type: "text",
             cls: "fn-gcal-hub-input",
-            attr: { placeholder: "Search notes...", "aria-label": "Related note" }
+            attr: { placeholder: "Search notes...", "aria-label": "Related note" },
         });
         this.hubInputEl.addEventListener("input", () => {
             if (this.form.hubMode === "link") this.form.hubLinkPath = this.hubInputEl.value;
@@ -363,26 +366,26 @@ export class EventTaskModal extends Modal {
         const pickBtn = hubInputRow.createEl("button", {
             cls: "fn-gcal-hub-pick-btn",
             text: "Pick",
-            attr: { type: "button" }
+            attr: { type: "button" },
         });
-        pickBtn.addEventListener("click", evt => {
+        pickBtn.addEventListener("click", (evt) => {
             evt.preventDefault();
-            new FilePickerSuggester(this.app, file => {
+            new FilePickerSuggester(this.app, (file) => {
                 this.hubInputEl.value = file.path;
                 this.form.hubLinkPath = file.path;
             }).open();
         });
 
         const hubFolderRow = wrap.createDiv({
-            cls: "fn-gcal-hub-input-row fn-gcal-hidden"
+            cls: "fn-gcal-hub-input-row fn-gcal-hidden",
         });
         const hubFolderEl = hubFolderRow.createEl("input", {
             type: "text",
             cls: "fn-gcal-hub-input",
             attr: {
                 placeholder: "Folder (e.g. Notes/Projects)",
-                "aria-label": "Folder for new related note"
-            }
+                "aria-label": "Folder for new related note",
+            },
         });
         hubFolderEl.value = this.form.hubCreateFolder;
         hubFolderEl.addEventListener("input", () => {
@@ -395,11 +398,11 @@ export class EventTaskModal extends Modal {
         this.writeToHubCb = this.hubAlsoRowEl.createEl("input", {
             type: "checkbox",
             cls: "fn-gcal-checkbox",
-            attr: { id: "fn-gcal-also-hub" }
+            attr: { id: "fn-gcal-also-hub" },
         });
         this.hubAlsoRowEl.createEl("label", {
             text: "Also write to related note (same heading)",
-            attr: { for: "fn-gcal-also-hub" }
+            attr: { for: "fn-gcal-also-hub" },
         });
         this.writeToHubCb.addEventListener("change", () => {
             this.form.writeToHubNote = this.writeToHubCb.checked;
@@ -409,12 +412,12 @@ export class EventTaskModal extends Modal {
         this.makeChipGroup<HubMode>(
             wrap,
             [
-                { value: "none",   label: "None" },
-                { value: "link",   label: "Link" },
+                { value: "none", label: "None" },
+                { value: "link", label: "Link" },
                 { value: "create", label: "New note" },
             ],
             this.form.hubMode,
-            value => {
+            (value) => {
                 this.form.hubMode = value;
                 const showInput = value !== "none";
                 hubInputRow.toggleClass("fn-gcal-hidden", !showInput);
@@ -422,10 +425,7 @@ export class EventTaskModal extends Modal {
                 pickBtn.toggleClass("fn-gcal-hidden", value === "create");
                 this.hubAlsoRowEl.toggleClass("fn-gcal-hidden", !showInput);
                 this.hubInputEl.placeholder = value === "link" ? "Search notes..." : "New note name";
-                this.hubInputEl.setAttribute(
-                    "aria-label",
-                    value === "link" ? "Related note" : "New related note name"
-                );
+                this.hubInputEl.setAttribute("aria-label", value === "link" ? "Related note" : "New related note name");
                 if (value === "create") {
                     this.hubInputEl.value = this.form.title;
                     this.form.hubCreateName = this.form.title;
@@ -433,10 +433,11 @@ export class EventTaskModal extends Modal {
                     this.hubInputEl.value = "";
                     this.form.hubLinkPath = "";
                 }
-            }
+            },
         );
         // Move chip group before hubInputRow (chip group was appended last)
-        wrap.insertBefore(wrap.lastElementChild!, hubInputRow);
+        const chipGroup = wrap.lastElementChild;
+        if (chipGroup) wrap.insertBefore(chipGroup, hubInputRow);
     }
 
     // ---- Detail note --------------------------------------------------------
@@ -446,7 +447,7 @@ export class EventTaskModal extends Modal {
         const wrap = content.createDiv({ cls: "fn-gcal-detail-wrap" });
         wrap.createDiv({ cls: "fn-gcal-field-label", text: "Detail note" });
 
-        this.makeCheckboxRow(wrap, "Create a detail note for this event / task", "fn-gcal-detail-note", checked => {
+        this.makeCheckboxRow(wrap, "Create a detail note for this event / task", "fn-gcal-detail-note", (checked) => {
             this.form.detailNoteEnabled = checked;
             this.detailNoteRowEl.toggleClass("fn-gcal-hidden", !checked);
             if (checked && !this.detailNoteInputEl.value) {
@@ -460,7 +461,7 @@ export class EventTaskModal extends Modal {
         this.detailNoteInputEl = this.detailNoteRowEl.createEl("input", {
             type: "text",
             cls: "fn-gcal-saveto-heading",
-            attr: { placeholder: "Detail note name...", "aria-label": "Detail note name" }
+            attr: { placeholder: "Detail note name...", "aria-label": "Detail note name" },
         });
         this.detailNoteInputEl.addEventListener("input", () => {
             this.form.detailNoteName = this.detailNoteInputEl.value;
@@ -471,8 +472,8 @@ export class EventTaskModal extends Modal {
             cls: "fn-gcal-saveto-file",
             attr: {
                 placeholder: "Folder (e.g. Notes/Events)",
-                "aria-label": "Detail note folder"
-            }
+                "aria-label": "Detail note folder",
+            },
         });
         folderEl.value = this.form.detailNoteFolder;
         folderEl.addEventListener("input", () => {
@@ -492,7 +493,7 @@ export class EventTaskModal extends Modal {
         const fileEl = fields.createEl("input", {
             type: "text",
             cls: "fn-gcal-saveto-file",
-            attr: { placeholder: "Journal/2026-05-27.md", "aria-label": "Save to file" }
+            attr: { placeholder: "Journal/2026-05-27.md", "aria-label": "Save to file" },
         });
         fileEl.value = this.form.targetFile;
         fileEl.addEventListener("input", () => (this.form.targetFile = fileEl.value));
@@ -501,14 +502,20 @@ export class EventTaskModal extends Modal {
         const headingEl = fields.createEl("input", {
             type: "text",
             cls: "fn-gcal-saveto-heading",
-            attr: { placeholder: "Heading (optional)", "aria-label": "Save under heading" }
+            attr: { placeholder: "Heading (optional)", "aria-label": "Save under heading" },
         });
         headingEl.value = this.form.targetHeading;
         headingEl.addEventListener("input", () => (this.form.targetHeading = headingEl.value));
 
-        this.makeCheckboxRow(wrap, "Insert at top (not bottom)", "fn-gcal-pos-start", checked => {
-            this.form.targetPosition = checked ? "start" : "end";
-        }, this.form.targetPosition === "start");
+        this.makeCheckboxRow(
+            wrap,
+            "Insert at top (not bottom)",
+            "fn-gcal-pos-start",
+            (checked) => {
+                this.form.targetPosition = checked ? "start" : "end";
+            },
+            this.form.targetPosition === "start",
+        );
     }
 
     protected getTargetFileSummary(): string {
@@ -522,7 +529,7 @@ export class EventTaskModal extends Modal {
         const discard = footer.createEl("button", {
             cls: "fn-gcal-btn-discard",
             text: "Cancel",
-            attr: { type: "button" }
+            attr: { type: "button" },
         });
         discard.addEventListener("click", () => {
             if (this.resolved) return;
@@ -532,7 +539,7 @@ export class EventTaskModal extends Modal {
         const save = footer.createEl("button", {
             cls: "fn-gcal-btn-save mod-cta",
             text: "Save",
-            attr: { type: "button" }
+            attr: { type: "button" },
         });
         save.addEventListener("click", () => void this.submit());
     }
@@ -549,7 +556,7 @@ export class EventTaskModal extends Modal {
         if (this.form.kind === "inbox") {
             const result = await submitInbox(this.form, {
                 writer,
-                resolveTarget: () => this.resolveInboxTarget()
+                resolveTarget: () => this.resolveInboxTarget(),
             });
             this.finishSubmission(result);
             return;
@@ -568,17 +575,17 @@ export class EventTaskModal extends Modal {
             writer,
             defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
             defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
-            resolveTargetFile: record => this.resolveTargetFile(record),
-            findMarkdownFile: path => {
+            resolveTargetFile: (record) => this.resolveTargetFile(record),
+            findMarkdownFile: (path) => {
                 const file = this.app.vault.getAbstractFileByPath(path);
                 return isTFile(file) ? file : null;
             },
-            openFile: file => {
+            openFile: (file) => {
                 const vaultFile = this.app.vault.getAbstractFileByPath(file.path);
                 if (isTFile(vaultFile)) {
                     void this.app.workspace.getLeaf(false).openFile(vaultFile, { active: false });
                 }
-            }
+            },
         });
 
         this.finishSubmission(result);
@@ -594,13 +601,11 @@ export class EventTaskModal extends Modal {
     }
 
     protected resolveTargetFile(record: EventTaskRecord): string {
-        const when = record.kind === "event"
-            ? record.start
-            : record.due ?? record.timebox?.start ?? this.anchorDate;
+        const when = record.kind === "event" ? record.start : (record.due ?? record.timebox?.start ?? this.anchorDate);
         const target: FocusTarget = {
             file: this.form.targetFile.trim(),
             heading: this.form.targetHeading.trim(),
-            position: this.form.targetPosition
+            position: this.form.targetPosition,
         };
         return new TargetResolver(this.app, this.getSettings()).resolve(target, when).file;
     }
@@ -613,21 +618,20 @@ export class EventTaskModal extends Modal {
         container: HTMLElement,
         options: Array<{ value: T; label: string }>,
         initial: T,
-        onChange: (value: T) => void
+        onChange: (value: T) => void,
     ): void {
         const group = container.createDiv({ cls: "fn-chip-group", attr: { role: "group" } });
         options.forEach(({ value, label }) => {
             const btn = group.createEl("button", {
-                cls: "fn-chip-option" + (value === initial ? " fn-chip-option--active" : ""),
-                attr: { type: "button", "aria-pressed": String(value === initial) }
+                cls: `fn-chip-option${value === initial ? " fn-chip-option--active" : ""}`,
+                attr: { type: "button", "aria-pressed": String(value === initial) },
             });
             btn.textContent = label;
             btn.addEventListener("click", () => {
-                group.querySelectorAll<HTMLElement>(".fn-chip-option")
-                    .forEach(el => {
-                        el.removeClass("fn-chip-option--active");
-                        el.setAttribute("aria-pressed", "false");
-                    });
+                group.querySelectorAll<HTMLElement>(".fn-chip-option").forEach((el) => {
+                    el.removeClass("fn-chip-option--active");
+                    el.setAttribute("aria-pressed", "false");
+                });
                 btn.addClass("fn-chip-option--active");
                 btn.setAttribute("aria-pressed", "true");
                 onChange(value);
@@ -646,7 +650,7 @@ export class EventTaskModal extends Modal {
         const el = container.createEl("input", {
             type: "date",
             cls: "fn-gcal-date-input",
-            attr: { "aria-label": label }
+            attr: { "aria-label": label },
         });
         el.value = value;
         return el;
@@ -656,7 +660,7 @@ export class EventTaskModal extends Modal {
         const el = container.createEl("input", {
             type: "time",
             cls: "fn-gcal-time-input",
-            attr: { "aria-label": label }
+            attr: { "aria-label": label },
         });
         el.value = value;
         return el;
@@ -667,7 +671,7 @@ export class EventTaskModal extends Modal {
         label: string,
         id: string,
         onChange: (checked: boolean) => void,
-        initial = false
+        initial = false,
     ): HTMLInputElement {
         const row = container.createDiv({ cls: "fn-gcal-allday-row" });
         const cb = row.createEl("input", { type: "checkbox", cls: "fn-gcal-checkbox", attr: { id } });
@@ -676,13 +680,15 @@ export class EventTaskModal extends Modal {
         cb.addEventListener("change", () => onChange(cb.checked));
         return cb;
     }
-
 }
 
 // ---------------------------------------------------------------------------
 
 class FilePickerSuggester extends FuzzySuggestModal<TFile> {
-    constructor(app: App, private onPick: (file: TFile) => void) {
+    constructor(
+        app: App,
+        private onPick: (file: TFile) => void,
+    ) {
         super(app);
         this.setPlaceholder("Pick a note...");
     }

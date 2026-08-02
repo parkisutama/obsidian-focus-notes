@@ -10,9 +10,9 @@ test("uses the captured-date Daily Note with Inbox overrides", () => {
             dailyNoteTarget: { file: "Daily/2026-08-02.md", heading: "", position: "end" },
             eventTaskTarget: { file: "Planning.md", heading: "Schedule", position: "end" },
             heading: "Inbox",
-            position: "start"
+            position: "start",
         }),
-        { file: "Daily/2026-08-02.md", heading: "Inbox", position: "start" }
+        { file: "Daily/2026-08-02.md", heading: "Inbox", position: "start" },
     );
 });
 
@@ -23,9 +23,9 @@ test("uses the active Event/Task file but replaces its heading and position", ()
             dailyNoteTarget: null,
             eventTaskTarget: { file: "Planning.md", heading: "Schedule", position: "end" },
             heading: "Quick Inbox",
-            position: "start"
+            position: "start",
         }),
-        { file: "Planning.md", heading: "Quick Inbox", position: "start" }
+        { file: "Planning.md", heading: "Quick Inbox", position: "start" },
     );
 });
 
@@ -36,9 +36,9 @@ test("does not silently fall back when the selected target cannot resolve", () =
             dailyNoteTarget: null,
             eventTaskTarget: { file: "Planning.md", heading: "Schedule", position: "end" },
             heading: "Inbox",
-            position: "end"
+            position: "end",
         }),
-        null
+        null,
     );
     assert.equal(
         selectInboxTarget({
@@ -46,9 +46,9 @@ test("does not silently fall back when the selected target cannot resolve", () =
             dailyNoteTarget: { file: "Daily.md", heading: "", position: "end" },
             eventTaskTarget: { file: "", heading: "", position: "end" },
             heading: "Inbox",
-            position: "end"
+            position: "end",
         }),
-        null
+        null,
     );
 });
 
@@ -60,18 +60,21 @@ test("uses the directly editable Inbox target for every renderer", () => {
         position: "end",
         hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
-        inboxTargetFile: "Captures/Quick.md"
+        inboxTargetFile: "Captures/Quick.md",
     });
     form.inboxHeading = "## Quick Inbox";
     form.inboxPosition = "start";
 
-    const resolved = resolveInboxFormTarget({
-        resolve: target => ({ ...target, file: target.file.replace("Quick", "2026-08-02") })
-    }, form);
+    const resolved = resolveInboxFormTarget(
+        {
+            resolve: (target) => ({ ...target, file: target.file.replace("Quick", "2026-08-02") }),
+        },
+        form,
+    );
 
     assert.deepEqual(resolved, {
         file: "Captures/2026-08-02.md",
         heading: "Quick Inbox",
-        position: "start"
+        position: "start",
     });
 });

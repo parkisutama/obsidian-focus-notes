@@ -1,4 +1,4 @@
-import { ScheduledItem, TimelineRange } from "./ScheduledItemTypes";
+import type { ScheduledItem, TimelineRange } from "./ScheduledItemTypes";
 import { addDays, endOfDay, formatDayKey, startOfDay } from "./utils";
 
 export interface TimelineBlockSegment {
@@ -64,7 +64,7 @@ export class TimelineLayout {
                     start,
                     end,
                     column: 0,
-                    columnCount: 1
+                    columnCount: 1,
                 });
             }
             cursor = addDays(cursor, 1);
@@ -88,15 +88,14 @@ export class TimelineLayout {
                 for (let i = active.length - 1; i >= 0; i--) {
                     if (active[i].end <= block.start) active.splice(i, 1);
                 }
-                const used = new Set(active.map(item => item.column));
+                const used = new Set(active.map((item) => item.column));
                 let column = 0;
                 while (used.has(column)) column++;
                 block.column = column;
                 active.push(block);
-                const count = Math.max(...active.map(item => item.column), column) + 1;
+                const count = Math.max(...active.map((item) => item.column), column) + 1;
                 for (const item of active) item.columnCount = Math.max(item.columnCount, count);
             }
         }
     }
 }
-

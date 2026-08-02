@@ -1,10 +1,10 @@
-import { EmotionCategory, StressLevel } from "./types";
+import type { EmotionCategory, StressLevel } from "./types";
 
 export const STRESS_OPTIONS: Array<{ level: StressLevel; label: string }> = [
     { level: "low", label: "Low" },
     { level: "normal", label: "Normal" },
     { level: "medium", label: "Medium" },
-    { level: "high", label: "High" }
+    { level: "high", label: "High" },
 ];
 
 export const EMOTION_GROUPS: Array<{ category: EmotionCategory; label: string; keys: string[] }> = [
@@ -26,13 +26,13 @@ export const EMOTION_GROUPS: Array<{ category: EmotionCategory; label: string; k
             "stuck",
             "sad",
             "apathetic",
-            "lethargic"
-        ]
+            "lethargic",
+        ],
     },
     {
         category: "neutral",
         label: "Neutral",
-        keys: ["calm", "reflective", "present", "at-ease", "flat", "bored", "foggy", "disconnected"]
+        keys: ["calm", "reflective", "present", "at-ease", "flat", "bored", "foggy", "disconnected"],
     },
     {
         category: "pleasant",
@@ -53,15 +53,15 @@ export const EMOTION_GROUPS: Array<{ category: EmotionCategory; label: string; k
             "peaceful",
             "grateful",
             "relaxed",
-            "hopeful"
-        ]
-    }
+            "hopeful",
+        ],
+    },
 ];
 
 export function getEmotionCategoryLabel(category: EmotionCategory | null): string {
-    return EMOTION_GROUPS.find(group => group.category === category)?.label ?? "";
+    return EMOTION_GROUPS.find((group) => group.category === category)?.label ?? "";
 }
 
 export function getStressLevelLabel(level: StressLevel | null): string {
-    return STRESS_OPTIONS.find(option => option.level === level)?.label ?? "";
+    return STRESS_OPTIONS.find((option) => option.level === level)?.label ?? "";
 }

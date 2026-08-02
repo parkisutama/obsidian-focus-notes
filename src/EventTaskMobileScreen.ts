@@ -1,18 +1,11 @@
-import {
-    App,
-    Component,
-    FuzzySuggestModal,
-    Notice,
-    TFile,
-    setIcon
-} from "obsidian";
-import { EventTaskFormState, EventTaskKind, HubMode, formatLocalDate } from "./EventTaskFormState";
+import { type App, Component, FuzzySuggestModal, Notice, type TFile, setIcon } from "obsidian";
+import { EventTaskFormState, type EventTaskKind, type HubMode, formatLocalDate } from "./EventTaskFormState";
 import { submitEventTask, submitInbox } from "./EventTaskSubmission";
-import { EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
+import { type EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
 import { getMobileViewportMetrics } from "./MobileViewport";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
-import { FocusNotesSettings, FocusTarget } from "./types";
+import type { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
 import { InboxMobileForm } from "./InboxMobileForm";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
@@ -29,7 +22,7 @@ export class EventTaskMobileScreen extends Component {
         private readonly app: App,
         private readonly getSettings: () => FocusNotesSettings,
         private readonly anchorDate: Date = new Date(),
-        private readonly onComplete: () => void = () => {}
+        private readonly onComplete: () => void = () => {},
     ) {
         super();
         const settings = getSettings();
@@ -40,7 +33,7 @@ export class EventTaskMobileScreen extends Component {
             dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),
             eventTaskTarget: target,
             heading: settings.inbox.heading,
-            position: settings.inbox.position
+            position: settings.inbox.position,
         });
         this.form = new EventTaskFormState(anchorDate, {
             file: target.file,
@@ -49,7 +42,7 @@ export class EventTaskMobileScreen extends Component {
             hubNotesFolder: settings.eventTask.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
             inbox: settings.inbox,
-            inboxTargetFile: inboxTarget?.file ?? ""
+            inboxTargetFile: inboxTarget?.file ?? "",
         });
     }
 
@@ -58,7 +51,7 @@ export class EventTaskMobileScreen extends Component {
 
         this.rootEl = this.app.workspace.containerEl.createDiv({
             cls: "fn-mobile-event-screen",
-            attr: { role: "dialog", "aria-modal": "true", "aria-label": "Create inbox item, event, or task" }
+            attr: { role: "dialog", "aria-modal": "true", "aria-label": "Create inbox item, event, or task" },
         });
         document.body.addClass("fn-mobile-event-screen-open");
         this.render();
@@ -92,29 +85,30 @@ export class EventTaskMobileScreen extends Component {
     }
 
     private render(): void {
-        const root = this.rootEl!;
+        const root = this.rootEl;
+        if (!root) return;
         root.createDiv({ cls: "fn-mobile-event-handle", attr: { "aria-hidden": "true" } });
         const header = root.createEl("header", { cls: "fn-mobile-event-header" });
         const cancel = header.createEl("button", {
             cls: "fn-mobile-event-cancel",
-            attr: { type: "button", "aria-label": "Cancel" }
+            attr: { type: "button", "aria-label": "Cancel" },
         });
         setIcon(cancel, "x");
         const save = header.createEl("button", {
             cls: "fn-mobile-event-save mod-cta",
             text: "Save",
-            attr: { type: "button" }
+            attr: { type: "button" },
         });
 
         this.bodyEl = root.createEl("main", { cls: "fn-mobile-event-body" });
         const title = this.bodyEl.createEl("input", {
             type: "text",
             cls: "fn-mobile-event-title",
-            attr: { placeholder: "Add title", "aria-label": "Title" }
+            attr: { placeholder: "Add title", "aria-label": "Title" },
         });
         title.value = this.form.getTitleForKind(this.form.kind);
         this.registerDomEvent(title, "input", () => this.setTitle(title.value));
-        this.registerDomEvent(title, "keydown", event => {
+        this.registerDomEvent(title, "keydown", (event) => {
             if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
                 void this.submit();
@@ -126,21 +120,30 @@ export class EventTaskMobileScreen extends Component {
         const taskSection = eventTaskFields.createDiv({ cls: "fn-mobile-event-primary fn-gcal-hidden" });
         const taskOptions = eventTaskFields.createDiv({ cls: "fn-mobile-event-task-options fn-gcal-hidden" });
         const inboxSection = this.bodyEl.createDiv({ cls: "fn-mobile-inbox-primary" });
-        this.renderKindSelector(this.bodyEl, kind => {
-            title.value = this.form.getTitleForKind(kind);
-            const isInbox = kind === "inbox";
-            const isEvent = kind === "event";
-            eventTaskFields.toggleClass("fn-gcal-hidden", isInbox);
-            inboxSection.toggleClass("fn-gcal-hidden", !isInbox);
-            eventSection.toggleClass("fn-gcal-hidden", !isEvent);
-            taskSection.toggleClass("fn-gcal-hidden", isInbox || isEvent);
-            taskOptions.toggleClass("fn-gcal-hidden", isInbox || isEvent);
-        }, eventTaskFields);
+        this.renderKindSelector(
+            this.bodyEl,
+            (kind) => {
+                title.value = this.form.getTitleForKind(kind);
+                const isInbox = kind === "inbox";
+                const isEvent = kind === "event";
+                eventTaskFields.toggleClass("fn-gcal-hidden", isInbox);
+                inboxSection.toggleClass("fn-gcal-hidden", !isInbox);
+                eventSection.toggleClass("fn-gcal-hidden", !isEvent);
+                taskSection.toggleClass("fn-gcal-hidden", isInbox || isEvent);
+                taskOptions.toggleClass("fn-gcal-hidden", isInbox || isEvent);
+            },
+            eventTaskFields,
+        );
         this.renderEventFields(eventSection);
         this.renderTaskDueFields(taskSection);
         this.renderDescription(eventTaskFields);
 
-        const options = this.disclosure(eventTaskFields, "More options", "sliders-horizontal", "Notes, details, and destination");
+        const options = this.disclosure(
+            eventTaskFields,
+            "More options",
+            "sliders-horizontal",
+            "Notes, details, and destination",
+        );
         const timebox = this.disclosure(taskOptions, "Timebox", "timer");
         this.renderTaskTimebox(timebox);
         const reminders = this.disclosure(taskOptions, "Reminders", "bell");
@@ -155,7 +158,7 @@ export class EventTaskMobileScreen extends Component {
             form: this.form,
             getSettings: this.getSettings,
             resolveTarget: () => this.resolveInboxTarget(),
-            registerCleanup: cleanup => this.register(cleanup)
+            registerCleanup: (cleanup) => this.register(cleanup),
         }).render(inboxSection);
 
         this.registerDomEvent(cancel, "click", () => this.close());
@@ -167,27 +170,27 @@ export class EventTaskMobileScreen extends Component {
     private renderKindSelector(
         container: HTMLElement,
         onChange: (kind: EventTaskKind) => void,
-        before: HTMLElement
+        before: HTMLElement,
     ): void {
         const group = container.createDiv({
             cls: "fn-mobile-event-kind",
-            attr: { role: "group", "aria-label": "Item type" }
+            attr: { role: "group", "aria-label": "Item type" },
         });
         container.insertBefore(group, before);
         const inboxButton = group.createEl("button", {
             cls: "fn-mobile-event-kind-button is-active",
             text: "Inbox",
-            attr: { type: "button", "aria-pressed": "true" }
+            attr: { type: "button", "aria-pressed": "true" },
         });
         const eventButton = group.createEl("button", {
             cls: "fn-mobile-event-kind-button",
             text: "Event",
-            attr: { type: "button", "aria-pressed": "false" }
+            attr: { type: "button", "aria-pressed": "false" },
         });
         const taskButton = group.createEl("button", {
             cls: "fn-mobile-event-kind-button",
             text: "Task",
-            attr: { type: "button", "aria-pressed": "false" }
+            attr: { type: "button", "aria-pressed": "false" },
         });
         const activate = (kind: EventTaskKind): void => {
             this.form.kind = kind;
@@ -212,13 +215,13 @@ export class EventTaskMobileScreen extends Component {
         const times = card.createDiv({ cls: "fn-mobile-event-grid" });
         const start = this.input(times, "time", "Start time", this.form.eventStartTime);
         const end = this.input(times, "time", "End time", this.form.eventEndTime);
-        const allDay = this.checkbox(card, "All day", this.form.eventAllDay, checked => {
+        const allDay = this.checkbox(card, "All day", this.form.eventAllDay, (checked) => {
             this.form.eventAllDay = checked;
             times.toggleClass("fn-gcal-hidden", checked);
         });
-        this.registerDomEvent(date, "change", () => this.form.eventDate = date.value);
-        this.registerDomEvent(start, "change", () => this.form.eventStartTime = start.value);
-        this.registerDomEvent(end, "change", () => this.form.eventEndTime = end.value);
+        this.registerDomEvent(date, "change", () => (this.form.eventDate = date.value));
+        this.registerDomEvent(start, "change", () => (this.form.eventStartTime = start.value));
+        this.registerDomEvent(end, "change", () => (this.form.eventEndTime = end.value));
         allDay.checked = this.form.eventAllDay;
     }
 
@@ -228,28 +231,28 @@ export class EventTaskMobileScreen extends Component {
         const date = this.input(row, "date", "Due date", this.form.taskDueDate);
         const time = this.input(row, "time", "Due time", this.form.taskDueTime);
         time.toggleClass("fn-gcal-hidden", !this.form.taskDueHasTime);
-        this.checkbox(card, "Include time", this.form.taskDueHasTime, checked => {
+        this.checkbox(card, "Include time", this.form.taskDueHasTime, (checked) => {
             this.form.taskDueHasTime = checked;
             time.toggleClass("fn-gcal-hidden", !checked);
         });
-        this.registerDomEvent(date, "change", () => this.form.taskDueDate = date.value);
-        this.registerDomEvent(time, "change", () => this.form.taskDueTime = time.value);
+        this.registerDomEvent(date, "change", () => (this.form.taskDueDate = date.value));
+        this.registerDomEvent(time, "change", () => (this.form.taskDueTime = time.value));
     }
 
     private renderDescription(container: HTMLElement): void {
         const card = this.fieldGroup(container, "Description", "align-left");
         const description = card.createEl("textarea", {
             cls: "fn-mobile-event-description",
-            attr: { placeholder: "Add description or attachment…", "aria-label": "Description" }
+            attr: { placeholder: "Add description or attachment…", "aria-label": "Description" },
         });
         description.rows = 2;
-        this.registerDomEvent(description, "input", () => this.form.description = description.value);
+        this.registerDomEvent(description, "input", () => (this.form.description = description.value));
     }
 
     private renderTaskTimebox(container: HTMLElement): void {
         const toggleHost = container.createDiv();
         const fields = container.createDiv({ cls: "fn-mobile-event-conditional fn-gcal-hidden" });
-        this.checkbox(toggleHost, "Enable timebox", false, checked => {
+        this.checkbox(toggleHost, "Enable timebox", false, (checked) => {
             this.form.taskTimeboxEnabled = checked;
             fields.toggleClass("fn-gcal-hidden", !checked);
         });
@@ -257,9 +260,9 @@ export class EventTaskMobileScreen extends Component {
         const times = fields.createDiv({ cls: "fn-mobile-event-grid" });
         const start = this.input(times, "time", "Timebox start", this.form.taskTimeboxStartTime);
         const end = this.input(times, "time", "Timebox end", this.form.taskTimeboxEndTime);
-        this.registerDomEvent(date, "change", () => this.form.taskTimeboxDate = date.value);
-        this.registerDomEvent(start, "change", () => this.form.taskTimeboxStartTime = start.value);
-        this.registerDomEvent(end, "change", () => this.form.taskTimeboxEndTime = end.value);
+        this.registerDomEvent(date, "change", () => (this.form.taskTimeboxDate = date.value));
+        this.registerDomEvent(start, "change", () => (this.form.taskTimeboxStartTime = start.value));
+        this.registerDomEvent(end, "change", () => (this.form.taskTimeboxEndTime = end.value));
     }
 
     private renderReminders(container: HTMLElement): void {
@@ -267,7 +270,7 @@ export class EventTaskMobileScreen extends Component {
         const add = container.createEl("button", {
             cls: "fn-mobile-event-secondary-action",
             text: "Add reminder",
-            attr: { type: "button" }
+            attr: { type: "button" },
         });
         this.registerDomEvent(add, "click", () => {
             const index = this.form.reminders.length;
@@ -283,11 +286,11 @@ export class EventTaskMobileScreen extends Component {
         const time = this.input(row, "time", "Reminder time", reminder.time);
         const remove = row.createEl("button", {
             cls: "fn-mobile-event-remove",
-            attr: { type: "button", "aria-label": "Remove reminder" }
+            attr: { type: "button", "aria-label": "Remove reminder" },
         });
         setIcon(remove, "x");
-        this.registerDomEvent(date, "change", () => reminder.date = date.value);
-        this.registerDomEvent(time, "change", () => reminder.time = time.value);
+        this.registerDomEvent(date, "change", () => (reminder.date = date.value));
+        this.registerDomEvent(time, "change", () => (reminder.time = time.value));
         this.registerDomEvent(remove, "click", () => {
             reminder.date = "";
             row.remove();
@@ -302,7 +305,7 @@ export class EventTaskMobileScreen extends Component {
         const pick = inputRow.createEl("button", {
             cls: "fn-mobile-event-pick",
             text: "Pick",
-            attr: { type: "button" }
+            attr: { type: "button" },
         });
         this.registerSuggester(new FileSuggest(this.app, note));
         const folderField = this.iconInput(
@@ -310,38 +313,43 @@ export class EventTaskMobileScreen extends Component {
             "folder",
             "Related note folder",
             this.form.hubCreateFolder,
-            "Folder for new note"
+            "Folder for new note",
         );
         const folder = folderField.input;
         folderField.wrapper.addClass("fn-gcal-hidden");
         this.registerSuggester(new FolderSuggest(this.app, folder));
         const alsoWrap = container.createDiv({ cls: "fn-gcal-hidden" });
-        this.checkbox(alsoWrap, "Also write to related note", false, checked => this.form.writeToHubNote = checked);
+        this.checkbox(alsoWrap, "Also write to related note", false, (checked) => (this.form.writeToHubNote = checked));
 
-        this.segmented<HubMode>(modeHost, [
-            { value: "none", label: "None" },
-            { value: "link", label: "Link" },
-            { value: "create", label: "New note" }
-        ], "none", mode => {
-            this.form.hubMode = mode;
-            inputRow.toggleClass("fn-gcal-hidden", mode === "none");
-            folderField.wrapper.toggleClass("fn-gcal-hidden", mode !== "create");
-            pick.toggleClass("fn-gcal-hidden", mode !== "link");
-            alsoWrap.toggleClass("fn-gcal-hidden", mode === "none");
-            note.placeholder = mode === "create" ? "New note name" : "Search notes…";
-            noteField.icon.empty();
-            setIcon(noteField.icon, mode === "create" ? "file-text" : "search");
-            note.value = mode === "create" ? this.form.title : "";
-            if (mode === "create") this.form.hubCreateName = note.value;
-            if (mode === "link") this.form.hubLinkPath = "";
-        });
+        this.segmented<HubMode>(
+            modeHost,
+            [
+                { value: "none", label: "None" },
+                { value: "link", label: "Link" },
+                { value: "create", label: "New note" },
+            ],
+            "none",
+            (mode) => {
+                this.form.hubMode = mode;
+                inputRow.toggleClass("fn-gcal-hidden", mode === "none");
+                folderField.wrapper.toggleClass("fn-gcal-hidden", mode !== "create");
+                pick.toggleClass("fn-gcal-hidden", mode !== "link");
+                alsoWrap.toggleClass("fn-gcal-hidden", mode === "none");
+                note.placeholder = mode === "create" ? "New note name" : "Search notes…";
+                noteField.icon.empty();
+                setIcon(noteField.icon, mode === "create" ? "file-text" : "search");
+                note.value = mode === "create" ? this.form.title : "";
+                if (mode === "create") this.form.hubCreateName = note.value;
+                if (mode === "link") this.form.hubLinkPath = "";
+            },
+        );
         this.registerDomEvent(note, "input", () => {
             if (this.form.hubMode === "link") this.form.hubLinkPath = note.value;
             if (this.form.hubMode === "create") this.form.hubCreateName = note.value;
         });
-        this.registerDomEvent(folder, "input", () => this.form.hubCreateFolder = folder.value);
+        this.registerDomEvent(folder, "input", () => (this.form.hubCreateFolder = folder.value));
         this.registerDomEvent(pick, "click", () => {
-            const picker = new MobileFilePicker(this.app, file => {
+            const picker = new MobileFilePicker(this.app, (file) => {
                 note.value = file.path;
                 this.form.hubLinkPath = file.path;
             });
@@ -359,10 +367,10 @@ export class EventTaskMobileScreen extends Component {
             "folder",
             "Detail note folder",
             this.form.detailNoteFolder,
-            "Folder for detail note"
+            "Folder for detail note",
         ).input;
         this.registerSuggester(new FolderSuggest(this.app, folder));
-        this.checkbox(toggleHost, "Create detail note", false, checked => {
+        this.checkbox(toggleHost, "Create detail note", false, (checked) => {
             this.form.detailNoteEnabled = checked;
             fields.toggleClass("fn-gcal-hidden", !checked);
             if (checked && !name.value) {
@@ -370,8 +378,8 @@ export class EventTaskMobileScreen extends Component {
                 this.form.detailNoteName = name.value;
             }
         });
-        this.registerDomEvent(name, "input", () => this.form.detailNoteName = name.value);
-        this.registerDomEvent(folder, "input", () => this.form.detailNoteFolder = folder.value);
+        this.registerDomEvent(name, "input", () => (this.form.detailNoteName = name.value));
+        this.registerDomEvent(folder, "input", () => (this.form.detailNoteFolder = folder.value));
     }
 
     private renderSaveTarget(container: HTMLElement): void {
@@ -381,14 +389,14 @@ export class EventTaskMobileScreen extends Component {
             "hash",
             "Save under heading",
             this.form.targetHeading,
-            "Heading (optional)"
+            "Heading (optional)",
         ).input;
         this.registerSuggester(new FileSuggest(this.app, file));
-        this.checkbox(container, "Insert at top", this.form.targetPosition === "start", checked => {
+        this.checkbox(container, "Insert at top", this.form.targetPosition === "start", (checked) => {
             this.form.targetPosition = checked ? "start" : "end";
         });
-        this.registerDomEvent(file, "input", () => this.form.targetFile = file.value);
-        this.registerDomEvent(heading, "input", () => this.form.targetHeading = heading.value);
+        this.registerDomEvent(file, "input", () => (this.form.targetFile = file.value));
+        this.registerDomEvent(heading, "input", () => (this.form.targetHeading = heading.value));
     }
 
     private setTitle(value: string): void {
@@ -419,12 +427,12 @@ export class EventTaskMobileScreen extends Component {
         type: "text" | "date" | "time",
         label: string,
         value: string,
-        placeholder?: string
+        placeholder?: string,
     ): HTMLInputElement {
         const input = container.createEl("input", {
             type,
             cls: "fn-mobile-event-input",
-            attr: { "aria-label": label, ...(placeholder ? { placeholder } : {}) }
+            attr: { "aria-label": label, ...(placeholder ? { placeholder } : {}) },
         });
         input.value = value;
         return input;
@@ -435,12 +443,12 @@ export class EventTaskMobileScreen extends Component {
         icon: string,
         label: string,
         value: string,
-        placeholder?: string
+        placeholder?: string,
     ): { wrapper: HTMLElement; icon: HTMLElement; input: HTMLInputElement } {
         const wrapper = container.createDiv({ cls: "fn-mobile-event-icon-input" });
         const iconEl = wrapper.createSpan({
             cls: "fn-mobile-event-input-icon",
-            attr: { "aria-hidden": "true" }
+            attr: { "aria-hidden": "true" },
         });
         setIcon(iconEl, icon);
         const input = this.input(wrapper, "text", label, value, placeholder);
@@ -451,7 +459,7 @@ export class EventTaskMobileScreen extends Component {
         container: HTMLElement,
         label: string,
         initial: boolean,
-        onChange: (checked: boolean) => void
+        onChange: (checked: boolean) => void,
     ): HTMLInputElement {
         const row = container.createEl("label", { cls: "fn-mobile-event-toggle" });
         const input = row.createEl("input", { type: "checkbox" });
@@ -465,17 +473,17 @@ export class EventTaskMobileScreen extends Component {
         container: HTMLElement,
         options: Array<{ value: T; label: string }>,
         initial: T,
-        onChange: (value: T) => void
+        onChange: (value: T) => void,
     ): void {
         const group = container.createDiv({ cls: "fn-mobile-event-segmented", attr: { role: "group" } });
         for (const option of options) {
             const button = group.createEl("button", {
-                cls: "fn-mobile-event-segment" + (option.value === initial ? " is-active" : ""),
+                cls: `fn-mobile-event-segment${option.value === initial ? " is-active" : ""}`,
                 text: option.label,
-                attr: { type: "button", "aria-pressed": String(option.value === initial) }
+                attr: { type: "button", "aria-pressed": String(option.value === initial) },
             });
             this.registerDomEvent(button, "click", () => {
-                group.querySelectorAll<HTMLElement>(".fn-mobile-event-segment").forEach(element => {
+                group.querySelectorAll<HTMLElement>(".fn-mobile-event-segment").forEach((element) => {
                     element.removeClass("is-active");
                     element.setAttribute("aria-pressed", "false");
                 });
@@ -504,7 +512,8 @@ export class EventTaskMobileScreen extends Component {
     }
 
     private registerLifecycle(): void {
-        const root = this.rootEl!;
+        const root = this.rootEl;
+        if (!root) return;
         const viewport = window.visualViewport;
         const updateViewport = (): void => {
             const workspaceTop = this.app.workspace.containerEl.getBoundingClientRect().top;
@@ -519,7 +528,7 @@ export class EventTaskMobileScreen extends Component {
         };
         updateViewport();
         this.registerDomEvent(window, "resize", updateViewport);
-        this.registerDomEvent(window, "keydown", event => {
+        this.registerDomEvent(window, "keydown", (event) => {
             if (event.key === "Escape") {
                 event.preventDefault();
                 this.close();
@@ -546,7 +555,7 @@ export class EventTaskMobileScreen extends Component {
             this.submitting = true;
             const result = await submitInbox(this.form, {
                 writer,
-                resolveTarget: () => this.resolveInboxTarget()
+                resolveTarget: () => this.resolveInboxTarget(),
             });
             this.submitting = false;
             this.finishSubmission(result);
@@ -566,15 +575,15 @@ export class EventTaskMobileScreen extends Component {
             writer,
             defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
             defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
-            resolveTargetFile: record => this.resolveTargetFile(record),
-            findMarkdownFile: path => {
+            resolveTargetFile: (record) => this.resolveTargetFile(record),
+            findMarkdownFile: (path) => {
                 const file = this.app.vault.getAbstractFileByPath(path);
                 return isTFile(file) ? file : null;
             },
-            openFile: file => {
+            openFile: (file) => {
                 const vaultFile = this.app.vault.getAbstractFileByPath(file.path);
                 if (isTFile(vaultFile)) void this.app.workspace.getLeaf(false).openFile(vaultFile, { active: false });
-            }
+            },
         });
         this.submitting = false;
         this.finishSubmission(result);
@@ -590,27 +599,25 @@ export class EventTaskMobileScreen extends Component {
     }
 
     private resolveInboxTarget(): FocusTarget | null {
-        return resolveInboxFormTarget(
-            new TargetResolver(this.app, this.getSettings()),
-            this.form
-        );
+        return resolveInboxFormTarget(new TargetResolver(this.app, this.getSettings()), this.form);
     }
 
     private resolveTargetFile(record: EventTaskRecord): string {
-        const when = record.kind === "event"
-            ? record.start
-            : record.due ?? record.timebox?.start ?? this.anchorDate;
+        const when = record.kind === "event" ? record.start : (record.due ?? record.timebox?.start ?? this.anchorDate);
         const target: FocusTarget = {
             file: this.form.targetFile.trim(),
             heading: this.form.targetHeading.trim(),
-            position: this.form.targetPosition
+            position: this.form.targetPosition,
         };
         return new TargetResolver(this.app, this.getSettings()).resolve(target, when).file;
     }
 }
 
 class MobileFilePicker extends FuzzySuggestModal<TFile> {
-    constructor(app: App, private readonly onPick: (file: TFile) => void) {
+    constructor(
+        app: App,
+        private readonly onPick: (file: TFile) => void,
+    ) {
         super(app);
         this.setPlaceholder("Pick a note…");
     }

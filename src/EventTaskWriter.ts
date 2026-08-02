@@ -1,5 +1,5 @@
-import { App, TFile, normalizePath } from "obsidian";
-import { EventTaskSettings, InsertPosition } from "./types";
+import { type App, type TFile, normalizePath } from "obsidian";
+import type { EventTaskSettings, InsertPosition } from "./types";
 import type { InboxRecord } from "./EventTaskFormState";
 import { formatInboxEntry } from "./InboxMarkdown";
 import { ensureFolderPath, isTFile } from "./utils";
@@ -38,28 +38,26 @@ export interface TaskRecord {
 export type EventTaskRecord = EventRecord | TaskRecord;
 
 export class EventTaskWriter {
-    constructor(private app: App, private settings?: EventTaskSettings) {}
+    constructor(
+        private app: App,
+        private settings?: EventTaskSettings,
+    ) {}
 
     async write(
         record: EventTaskRecord,
         targetFilePath: string,
         targetHeading: string,
         position: InsertPosition,
-        detailNoteRef?: HubNoteRef | null
+        detailNoteRef?: HubNoteRef | null,
     ): Promise<void> {
         const file = await this.resolveOrCreateFile(targetFilePath);
-        const line =
-            record.kind === "event"
-                ? this.formatEventLine(record)
-                : this.formatTaskLine(record);
+        const line = record.kind === "event" ? this.formatEventLine(record) : this.formatTaskLine(record);
 
         const parts: string[] = [line];
         const desc = record.description.trim();
         if (desc) parts.push(`    - ${desc}`);
         if (detailNoteRef) {
-            parts.push(
-                `    - detail: [${detailNoteRef.title}](${this.encodePath(detailNoteRef.path)})`
-            );
+            parts.push(`    - detail: [${detailNoteRef.title}](${this.encodePath(detailNoteRef.path)})`);
         }
 
         await this.insertIntoFile(file, targetHeading, parts.join("\n"), position);
@@ -69,17 +67,13 @@ export class EventTaskWriter {
         record: InboxRecord,
         targetFilePath: string,
         targetHeading: string,
-        position: InsertPosition
+        position: InsertPosition,
     ): Promise<void> {
         const file = await this.resolveOrCreateFile(targetFilePath);
         await this.insertIntoFile(file, targetHeading, formatInboxEntry(record), position);
     }
 
-    async createHubNote(
-        title: string,
-        record: EventTaskRecord,
-        folder: string
-    ): Promise<TFile> {
+    async createHubNote(title: string, record: EventTaskRecord, folder: string): Promise<TFile> {
         const filePath = await this.resolveNotePath(title, folder);
         const existing = this.app.vault.getAbstractFileByPath(filePath);
         if (isTFile(existing)) return existing;
@@ -93,7 +87,7 @@ export class EventTaskWriter {
         record: EventTaskRecord,
         folder: string,
         targetPath: string,
-        hubPath: string | null
+        hubPath: string | null,
     ): Promise<TFile> {
         const filePath = await this.resolveNotePath(title, folder);
         const existing = this.app.vault.getAbstractFileByPath(filePath);
@@ -149,11 +143,7 @@ export class EventTaskWriter {
         return lines.join("\n");
     }
 
-    private buildDetailFrontmatter(
-        record: EventTaskRecord,
-        targetPath: string,
-        hubPath: string | null
-    ): string {
+    private buildDetailFrontmatter(record: EventTaskRecord, targetPath: string, hubPath: string | null): string {
         const s = this.settings;
         const lines = ["---"];
 
@@ -178,13 +168,16 @@ export class EventTaskWriter {
 
         const relFmt = s?.relatedFieldFormat ?? "[[{{date}}]]";
         if (relFmt) {
-            const dateStr = record.kind === "event"
-                ? this.fmtDate(record.start)
-                : (record.due ? this.fmtDate(record.due) : this.fmtDate(new Date()));
+            const dateStr =
+                record.kind === "event"
+                    ? this.fmtDate(record.start)
+                    : record.due
+                      ? this.fmtDate(record.due)
+                      : this.fmtDate(new Date());
             const rel = this.expandTokens(relFmt, {
                 date: dateStr,
                 targetFile: targetPath.replace(/\.md$/, ""),
-                title: record.title
+                title: record.title,
             });
             if (rel) lines.push(`related: "${this.escapeYaml(rel)}"`);
         }
@@ -200,18 +193,20 @@ export class EventTaskWriter {
     private buildBody(record: EventTaskRecord): string {
         const s = this.settings;
         const defaultTpl = "# {{title}}\n\n{{description}}";
-        const template = record.kind === "event"
-            ? (s?.eventNoteTemplate || defaultTpl)
-            : (s?.taskNoteTemplate || defaultTpl);
+        const template =
+            record.kind === "event" ? s?.eventNoteTemplate || defaultTpl : s?.taskNoteTemplate || defaultTpl;
 
-        const dateStr = record.kind === "event"
-            ? this.fmtDate(record.start)
-            : (record.due ? this.fmtDate(record.due) : this.fmtDate(new Date()));
+        const dateStr =
+            record.kind === "event"
+                ? this.fmtDate(record.start)
+                : record.due
+                  ? this.fmtDate(record.due)
+                  : this.fmtDate(new Date());
 
         const tokens: Record<string, string> = {
             title: record.title,
             date: dateStr,
-            description: record.description.trim()
+            description: record.description.trim(),
         };
 
         if (record.kind === "event") {
@@ -221,7 +216,9 @@ export class EventTaskWriter {
             tokens.remind = "";
         } else {
             tokens.due = record.due
-                ? (record.dueHasTime ? this.fmtDateTime(record.due) : this.fmtDate(record.due))
+                ? record.dueHasTime
+                    ? this.fmtDateTime(record.due)
+                    : this.fmtDate(record.due)
                 : "";
             tokens.start = record.timebox ? this.fmtTime(record.timebox.start) : "";
             tokens.end = record.timebox ? this.fmtTime(record.timebox.end) : "";
@@ -264,9 +261,7 @@ export class EventTaskWriter {
         let line = `- [ ] ${titlePart}`;
 
         if (record.due) {
-            const dueStr = record.dueHasTime
-                ? this.fmtDateTime(record.due)
-                : this.fmtDate(record.due);
+            const dueStr = record.dueHasTime ? this.fmtDateTime(record.due) : this.fmtDate(record.due);
             line += ` | due:${dueStr}`;
         }
 
@@ -323,7 +318,7 @@ export class EventTaskWriter {
         file: TFile,
         heading: string,
         content: string,
-        position: InsertPosition
+        position: InsertPosition,
     ): Promise<void> {
         const original = await this.app.vault.read(file);
         const lines = original.split("\n");
@@ -338,15 +333,12 @@ export class EventTaskWriter {
         const info = this.findHeading(lines, cleanHeading);
         if (!info) {
             const sep = !original ? "" : original.endsWith("\n") ? "" : "\n";
-            await this.app.vault.modify(
-                file,
-                `${original}${sep}\n## ${cleanHeading}\n\n${content}\n`
-            );
+            await this.app.vault.modify(file, `${original}${sep}\n## ${cleanHeading}\n\n${content}\n`);
             return;
         }
 
         if (position === "start") {
-            let blankIdx = info.startIndex + 1;
+            const blankIdx = info.startIndex + 1;
             if (lines[blankIdx] === undefined || lines[blankIdx].trim() !== "") {
                 lines.splice(blankIdx, 0, "");
             }
@@ -364,7 +356,7 @@ export class EventTaskWriter {
 
     private findHeading(
         lines: string[],
-        target: string
+        target: string,
     ): { startIndex: number; endIndex: number; level: number } | null {
         const re = /^(#{1,6})\s+(.+?)\s*$/;
         const lower = target.toLowerCase();

@@ -1,5 +1,5 @@
-import { accessSync, constants, statSync } from "fs";
-import path from "path";
+import { accessSync, constants, statSync } from "node:fs";
+import path from "node:path";
 
 const REQUIRED_BUILD_ARTIFACTS = ["main.js", "manifest.json", "styles.css"];
 

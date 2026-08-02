@@ -15,7 +15,7 @@ export function getMobileViewportMetrics(
     windowHeight: number,
     viewport?: VisualViewportSnapshot,
     workspaceTop = 0,
-    sheetGap = 0
+    sheetGap = 0,
 ): MobileViewportMetrics {
     const viewportHeight = viewport?.height ?? windowHeight;
     const viewportTop = Math.max(0, viewport?.offsetTop ?? 0);
@@ -24,8 +24,6 @@ export function getMobileViewportMetrics(
     return {
         height: Math.max(240, viewportTop + viewportHeight - absoluteTop),
         offsetTop: absoluteTop,
-        keyboardInset: viewport
-            ? Math.max(0, windowHeight - viewport.height - viewport.offsetTop)
-            : 0
+        keyboardInset: viewport ? Math.max(0, windowHeight - viewport.height - viewport.offsetTop) : 0,
     };
 }

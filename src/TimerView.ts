@@ -1,25 +1,17 @@
-import {
-    ItemView,
-    Notice,
-    WorkspaceLeaf,
-    setIcon,
-    debounce,
-    MarkdownRenderer,
-    Menu
-} from "obsidian";
+import { ItemView, Notice, type WorkspaceLeaf, setIcon, debounce, MarkdownRenderer, Menu } from "obsidian";
 import { TimerEngine } from "./TimerEngine";
 import { CircularDisplay } from "./CircularDisplay";
 import { LogModal } from "./LogModal";
-import { NoteWriter } from "./NoteWriter";
-import { TargetResolver } from "./TargetResolver";
-import { RecentEntriesReader } from "./RecentEntriesReader";
+import type { NoteWriter } from "./NoteWriter";
+import type { TargetResolver } from "./TargetResolver";
+import type { RecentEntriesReader } from "./RecentEntriesReader";
 import {
-    DisplayMode,
-    FocusNotesSettings,
-    FocusTarget,
-    InsertPosition,
-    SessionRecord,
-    toEngineMode
+    type DisplayMode,
+    type FocusNotesSettings,
+    type FocusTarget,
+    type InsertPosition,
+    type SessionRecord,
+    toEngineMode,
 } from "./types";
 import { FileSuggest, HeadingSuggest } from "./Suggesters";
 import { isTFile } from "./utils";
@@ -74,7 +66,7 @@ export class TimerView extends ItemView {
         private saveSettings: () => Promise<void>,
         private buildWriter: () => NoteWriter,
         private buildResolver: () => TargetResolver,
-        private buildReader: () => RecentEntriesReader
+        private buildReader: () => RecentEntriesReader,
     ) {
         super(leaf);
         this.engine = new TimerEngine();
@@ -129,8 +121,8 @@ export class TimerView extends ItemView {
             attr: {
                 "aria-label": "Timer mode",
                 "aria-haspopup": "menu",
-                title: "Timer mode"
-            }
+                title: "Timer mode",
+            },
         });
         this.modeButton.addEventListener("click", () => {
             if (this.modeButton.disabled) return;
@@ -143,12 +135,11 @@ export class TimerView extends ItemView {
         const modes: Array<[DisplayMode, string]> = [
             ["pomodoro", "Pomodoro"],
             ["timer", "Timer"],
-            ["stopwatch", "Stopwatch"]
+            ["stopwatch", "Stopwatch"],
         ];
         for (const [mode, label] of modes) {
-            menu.addItem(item => {
-                item
-                    .setTitle(label)
+            menu.addItem((item) => {
+                item.setTitle(label)
                     .setChecked(mode === this.currentMode)
                     .onClick(() => this.applyMode(mode));
             });
@@ -157,7 +148,7 @@ export class TimerView extends ItemView {
         menu.showAtPosition({
             x: rect.left,
             y: rect.bottom + 4,
-            width: rect.width
+            width: rect.width,
         });
     }
 
@@ -166,7 +157,7 @@ export class TimerView extends ItemView {
         this.focusInput = row.createEl("input", {
             type: "text",
             cls: "focus-notes-focus-input",
-            attr: { placeholder: "What are you doing?" }
+            attr: { placeholder: "What are you doing?" },
         });
         // FileSuggest mirrors the modal's "What are you doing?" field — same
         // input type in both places means the user doesn't have to remember
@@ -175,7 +166,7 @@ export class TimerView extends ItemView {
         new FileSuggest(this.app, this.focusInput);
         this.focusInput.addEventListener("input", () => {
             const value = this.focusInput.value;
-            if (/^[^\s\[]+\.md$/.test(value)) {
+            if (/^[^\s[]+\.md$/.test(value)) {
                 const stem = value.replace(/\.md$/, "");
                 this.focusInput.value = `[[${stem}]]`;
             }
@@ -188,7 +179,7 @@ export class TimerView extends ItemView {
         this.durationInput = control.createEl("input", {
             type: "number",
             cls: "focus-notes-duration-input",
-            attr: { min: "1", max: "600", step: "1" }
+            attr: { min: "1", max: "600", step: "1" },
         });
         control.createEl("span", { text: "min", cls: "focus-notes-duration-suffix" });
         // Reflect duration changes into the display while idle so the user
@@ -213,11 +204,11 @@ export class TimerView extends ItemView {
         parent: HTMLElement,
         icon: string,
         ariaLabel: string,
-        extraCls: string
+        extraCls: string,
     ): HTMLButtonElement {
         const btn = parent.createEl("button", {
             cls: `focus-notes-icon-btn ${extraCls}`,
-            attr: { "aria-label": ariaLabel, title: ariaLabel }
+            attr: { "aria-label": ariaLabel, title: ariaLabel },
         });
         setIcon(btn, icon);
         return btn;
@@ -244,7 +235,7 @@ export class TimerView extends ItemView {
                 void this.refreshRecent();
             },
             300,
-            true
+            true,
         );
 
         // File row
@@ -254,7 +245,7 @@ export class TimerView extends ItemView {
         this.targetFileInput = fileCell.createEl("input", {
             type: "text",
             cls: "focus-notes-target-input",
-            attr: { placeholder: "Path or template, e.g. Daily/{{date:YYYY-MM-DD}}.md" }
+            attr: { placeholder: "Path or template, e.g. Daily/{{date:YYYY-MM-DD}}.md" },
         });
         new FileSuggest(this.app, this.targetFileInput);
         this.targetFileInput.addEventListener("input", () => {
@@ -263,7 +254,7 @@ export class TimerView extends ItemView {
             persistTargetEdit();
         });
         this.targetResolvedPreviewEl = fileCell.createDiv({
-            cls: "focus-notes-target-resolved"
+            cls: "focus-notes-target-resolved",
         });
 
         // Heading row — uses the file-aware HeadingSuggest so it autocompletes
@@ -276,12 +267,12 @@ export class TimerView extends ItemView {
         this.targetHeadingInput = headingRow.createEl("input", {
             type: "text",
             cls: "focus-notes-target-input",
-            attr: { placeholder: "(empty = end of file)" }
+            attr: { placeholder: "(empty = end of file)" },
         });
         new HeadingSuggest(
             this.app,
             this.targetHeadingInput,
-            () => this.buildResolver().resolve(this.activeTarget()).file
+            () => this.buildResolver().resolve(this.activeTarget()).file,
         );
         this.targetHeadingInput.addEventListener("input", () => {
             this.getSettings().liveTarget.heading = this.targetHeadingInput.value.trim();
@@ -293,13 +284,12 @@ export class TimerView extends ItemView {
         const posRow = body.createDiv({ cls: "focus-notes-target-row" });
         posRow.createEl("label", { text: "Position", cls: "focus-notes-target-label" });
         this.targetPositionSelect = posRow.createEl("select", {
-            cls: "focus-notes-target-input"
+            cls: "focus-notes-target-input",
         });
         this.targetPositionSelect.createEl("option", { text: "End (newest at bottom)", value: "end" });
         this.targetPositionSelect.createEl("option", { text: "Start (newest at top)", value: "start" });
         this.targetPositionSelect.addEventListener("change", () => {
-            this.getSettings().liveTarget.position =
-                this.targetPositionSelect.value as InsertPosition;
+            this.getSettings().liveTarget.position = this.targetPositionSelect.value as InsertPosition;
             void this.saveSettings();
             void this.refreshRecent();
         });
@@ -320,12 +310,12 @@ export class TimerView extends ItemView {
         });
         groupCell.createSpan({ text: "by date", cls: "focus-notes-group-label" });
         this.targetGroupLevelSelect = groupCell.createEl("select", {
-            cls: "focus-notes-group-level"
+            cls: "focus-notes-group-level",
         });
         for (const lvl of [2, 3, 4] as const) {
             this.targetGroupLevelSelect.createEl("option", {
                 text: `H${lvl}`,
-                value: String(lvl)
+                value: String(lvl),
             });
         }
         this.targetGroupLevelSelect.addEventListener("change", () => {
@@ -342,14 +332,14 @@ export class TimerView extends ItemView {
         const resetLink = body.createEl("a", {
             text: "Reset to default",
             cls: "focus-notes-target-reset",
-            href: "#"
+            href: "#",
         });
-        resetLink.addEventListener("click", evt => {
+        resetLink.addEventListener("click", (evt) => {
             evt.preventDefault();
             this.getSettings().liveTarget = {
                 file: "",
                 heading: "",
-                position: this.getSettings().defaultTarget.position
+                position: this.getSettings().defaultTarget.position,
             };
             void this.saveSettings();
             this.syncTargetInputs();
@@ -362,13 +352,13 @@ export class TimerView extends ItemView {
         // outside this view (manual edits, sync, other plugins). The check
         // resolves the active target lazily so token changes don't matter.
         this.registerEvent(
-            this.app.vault.on("modify", file => {
+            this.app.vault.on("modify", (file) => {
                 if (!isTFile(file)) return;
                 const active = this.buildResolver().resolve(this.activeTarget());
                 if (file.path === active.file) {
                     void this.refreshRecent();
                 }
-            })
+            }),
         );
     }
 
@@ -378,14 +368,14 @@ export class TimerView extends ItemView {
         const summary = details.createEl("summary");
         this.recentTitle = summary.createEl("span", {
             text: "Recent in section",
-            cls: "focus-notes-section-title"
+            cls: "focus-notes-section-title",
         });
         const refresh = summary.createEl("button", {
             cls: "focus-notes-section-refresh",
-            attr: { "aria-label": "Refresh", title: "Refresh" }
+            attr: { "aria-label": "Refresh", title: "Refresh" },
         });
         setIcon(refresh, "refresh-cw");
-        refresh.addEventListener("click", evt => {
+        refresh.addEventListener("click", (evt) => {
             evt.preventDefault();
             evt.stopPropagation(); // don't toggle <details>
             void this.refreshRecent();
@@ -505,14 +495,10 @@ export class TimerView extends ItemView {
         }
     }
 
-    private async openLogModal(
-        startTime: Date,
-        endTime: Date,
-        durationSeconds: number
-    ): Promise<void> {
+    private async openLogModal(startTime: Date, endTime: Date, durationSeconds: number): Promise<void> {
         const resolver = this.buildResolver();
         const resolvedTarget = resolver.resolve(this.activeTarget(), endTime);
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             const modal = new LogModal(
                 this.app,
                 {
@@ -521,9 +507,9 @@ export class TimerView extends ItemView {
                     endTime,
                     durationSeconds,
                     initialTask: this.focusInput.value,
-                    resolvedTarget
+                    resolvedTarget,
                 },
-                async result => {
+                async (result) => {
                     if (!result) {
                         resolve();
                         return;
@@ -534,16 +520,13 @@ export class TimerView extends ItemView {
                             startTime,
                             endTime,
                             durationSeconds,
-                            plannedSeconds:
-                                this.currentMode === "stopwatch"
-                                    ? null
-                                    : this.parseMinutes() * 60,
+                            plannedSeconds: this.currentMode === "stopwatch" ? null : this.parseMinutes() * 60,
                             task: result.task,
                             notes: result.notes,
                             stressLevel: result.stressLevel,
                             emotionCategory: result.emotionCategory,
                             moodKey: result.moodKey,
-                            links: result.links
+                            links: result.links,
                         };
                         await this.buildWriter().writeSession(record, resolvedTarget);
                         new Notice("Session logged.");
@@ -556,7 +539,7 @@ export class TimerView extends ItemView {
                         console.error("[Focus Notes] write failed", err);
                     }
                     resolve();
-                }
+                },
             );
             modal.open();
         });
@@ -596,7 +579,7 @@ export class TimerView extends ItemView {
         setIcon(this.primaryBtn, isRunning ? "pause" : "play");
         this.primaryBtn.setAttribute(
             "aria-label",
-            status === "idle" ? "Start" : isRunning ? "Pause" : isPaused ? "Resume" : "Start"
+            status === "idle" ? "Start" : isRunning ? "Pause" : isPaused ? "Resume" : "Start",
         );
         // Reset and stop are only meaningful when something is in flight.
         const inFlight = status !== "idle";
@@ -615,17 +598,13 @@ export class TimerView extends ItemView {
         const settings = this.getSettings();
         const resolver = this.buildResolver();
         const resolved = resolver.resolve(this.activeTarget());
-        this.recentTitle.setText(
-            resolved.heading
-                ? `Recent in “${resolved.heading}”`
-                : "Recent in target file"
-        );
+        this.recentTitle.setText(resolved.heading ? `Recent in “${resolved.heading}”` : "Recent in target file");
         const reader = this.buildReader();
         const entries = await reader.read(resolved, settings.recentEntriesCount);
         if (entries.length === 0) {
             this.recentList.createDiv({
                 cls: "focus-notes-recent-empty",
-                text: "No entries yet."
+                text: "No entries yet.",
             });
             return;
         }
@@ -636,7 +615,7 @@ export class TimerView extends ItemView {
             // sourcePath is the target file so relative links resolve correctly.
             // `this` (Component) ties cleanup to the view's lifecycle.
             void MarkdownRenderer.render(this.app, entry.text, item, resolved.file, this);
-            item.addEventListener("click", evt => {
+            item.addEventListener("click", (evt) => {
                 // Don't intercept clicks on rendered links — let them follow
                 // their hrefs via Obsidian's normal handlers.
                 if ((evt.target as HTMLElement).closest("a")) return;
@@ -658,11 +637,9 @@ export class TimerView extends ItemView {
 
     private parseMinutes(): number {
         const raw = parseFloat(this.durationInput.value);
-        if (!isFinite(raw) || raw <= 0) {
+        if (!Number.isFinite(raw) || raw <= 0) {
             const fallback =
-                this.currentMode === "pomodoro"
-                    ? this.getSettings().pomodoroMinutes
-                    : this.getSettings().timerMinutes;
+                this.currentMode === "pomodoro" ? this.getSettings().pomodoroMinutes : this.getSettings().timerMinutes;
             this.durationInput.value = String(fallback);
             return fallback;
         }
@@ -706,8 +683,7 @@ export class TimerView extends ItemView {
         try {
             const Ctor =
                 window.AudioContext ||
-                (window as unknown as { webkitAudioContext: typeof AudioContext })
-                    .webkitAudioContext;
+                (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
             const ctx = new Ctor();
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();

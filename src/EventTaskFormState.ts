@@ -86,7 +86,7 @@ export class EventTaskFormState {
             heading: "Inbox",
             position: "end",
             peopleFolders: ["People"],
-            placeFolders: ["Place"]
+            placeFolders: ["Place"],
         };
         this.inboxCapturedAt = new Date(anchorDate.getTime());
         this.inboxDefaultTitle = formatLocalDateTime(this.inboxCapturedAt);
@@ -121,7 +121,7 @@ export class EventTaskFormState {
                 end: this.parseDateTime(this.eventDate, this.eventEndTime),
                 allDay: this.eventAllDay,
                 description: this.description,
-                hubNoteRef
+                hubNoteRef,
             };
         }
 
@@ -130,14 +130,15 @@ export class EventTaskFormState {
         }
 
         const reminders = this.reminders
-            .filter(reminder => reminder.date)
-            .map(reminder => this.parseDateTime(reminder.date, reminder.time || "09:00"));
-        const timebox: TaskRecord["timebox"] = this.taskTimeboxEnabled && this.taskTimeboxDate
-            ? {
-                start: this.parseDateTime(this.taskTimeboxDate, this.taskTimeboxStartTime),
-                end: this.parseDateTime(this.taskTimeboxDate, this.taskTimeboxEndTime)
-            }
-            : null;
+            .filter((reminder) => reminder.date)
+            .map((reminder) => this.parseDateTime(reminder.date, reminder.time || "09:00"));
+        const timebox: TaskRecord["timebox"] =
+            this.taskTimeboxEnabled && this.taskTimeboxDate
+                ? {
+                      start: this.parseDateTime(this.taskTimeboxDate, this.taskTimeboxStartTime),
+                      end: this.parseDateTime(this.taskTimeboxDate, this.taskTimeboxEndTime),
+                  }
+                : null;
 
         return {
             kind: "task",
@@ -149,7 +150,7 @@ export class EventTaskFormState {
             timebox,
             reminders,
             description: this.description,
-            hubNoteRef
+            hubNoteRef,
         };
     }
 
@@ -159,7 +160,7 @@ export class EventTaskFormState {
             capturedAt: new Date(this.inboxCapturedAt.getTime()),
             defaultTitle: this.inboxDefaultTitle,
             title: this.inboxTitle.trim(),
-            body: this.inboxBody
+            body: this.inboxBody,
         };
     }
 
@@ -174,6 +175,6 @@ export class EventTaskFormState {
 
     private parseDateTime(date: string, time: string): Date {
         const value = new Date(`${date}T${time || "00:00"}:00`);
-        return isNaN(value.getTime()) ? new Date() : value;
+        return Number.isNaN(value.getTime()) ? new Date() : value;
     }
 }

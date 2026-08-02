@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 
 function readJson(filePath) {
     return JSON.parse(readFileSync(filePath, "utf8"));
@@ -12,7 +12,7 @@ const errors = [];
 
 if (packageJson.version !== manifest.version) {
     errors.push(
-        `package.json version (${packageJson.version}) must match manifest.json version (${manifest.version}).`
+        `package.json version (${packageJson.version}) must match manifest.json version (${manifest.version}).`,
     );
 }
 
@@ -20,11 +20,11 @@ if (!manifest.minAppVersion) {
     errors.push("manifest.json must define minAppVersion.");
 }
 
-if (!Object.prototype.hasOwnProperty.call(versions, manifest.version)) {
+if (!Object.hasOwn(versions, manifest.version)) {
     errors.push(`versions.json must include a key for ${manifest.version}.`);
 } else if (versions[manifest.version] !== manifest.minAppVersion) {
     errors.push(
-        `versions.json[${manifest.version}] (${versions[manifest.version]}) must match manifest.json minAppVersion (${manifest.minAppVersion}).`
+        `versions.json[${manifest.version}] (${versions[manifest.version]}) must match manifest.json minAppVersion (${manifest.minAppVersion}).`,
     );
 }
 

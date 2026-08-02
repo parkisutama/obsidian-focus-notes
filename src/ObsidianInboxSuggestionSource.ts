@@ -1,17 +1,12 @@
-import {
-    App,
-    getAllTags,
-    parseFrontMatterAliases,
-    prepareFuzzySearch
-} from "obsidian";
+import { type App, getAllTags, parseFrontMatterAliases, prepareFuzzySearch } from "obsidian";
 import {
     buildMentionSuggestions,
     buildTagSuggestions,
     filterMentionSuggestions,
     InboxSuggestionSnapshot,
-    MentionSuggestion,
-    SuggestionMatcher,
-    SuggestionNote
+    type MentionSuggestion,
+    type SuggestionMatcher,
+    type SuggestionNote,
 } from "./InboxSuggestions";
 
 /** Read-only bridge from Obsidian's vault metadata to Inbox suggestion data. */
@@ -21,7 +16,7 @@ export class ObsidianInboxSuggestionSource {
     constructor(private app: App) {
         this.snapshot = new InboxSuggestionSnapshot(
             () => this.loadNotes(),
-            () => this.loadTags()
+            () => this.loadTags(),
         );
     }
 
@@ -29,13 +24,9 @@ export class ObsidianInboxSuggestionSource {
         query: string,
         peopleFolders: string[],
         placeFolders: string[],
-        limit = 20
+        limit = 20,
     ): MentionSuggestion[] {
-        const candidates = buildMentionSuggestions(
-            this.snapshot.getNotes(),
-            peopleFolders,
-            placeFolders
-        );
+        const candidates = buildMentionSuggestions(this.snapshot.getNotes(), peopleFolders, placeFolders);
         return filterMentionSuggestions(candidates, this.matcher(query), limit);
     }
 
@@ -44,18 +35,18 @@ export class ObsidianInboxSuggestionSource {
     }
 
     private loadNotes(): SuggestionNote[] {
-        return this.app.vault.getMarkdownFiles().map(file => {
+        return this.app.vault.getMarkdownFiles().map((file) => {
             const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter ?? null;
             return {
                 path: file.path,
                 basename: file.basename,
-                aliases: parseFrontMatterAliases(frontmatter) ?? []
+                aliases: parseFrontMatterAliases(frontmatter) ?? [],
             };
         });
     }
 
     private loadTags(): string[] {
-        return this.app.vault.getMarkdownFiles().flatMap(file => {
+        return this.app.vault.getMarkdownFiles().flatMap((file) => {
             const cache = this.app.metadataCache.getFileCache(file);
             return cache ? (getAllTags(cache) ?? []) : [];
         });
@@ -64,6 +55,6 @@ export class ObsidianInboxSuggestionSource {
     private matcher(query: string): SuggestionMatcher {
         if (!query.trim()) return () => 0;
         const search = prepareFuzzySearch(query);
-        return text => search(text)?.score ?? null;
+        return (text) => search(text)?.score ?? null;
     }
 }

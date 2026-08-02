@@ -20,6 +20,6 @@ export function findInboxTrigger(text: string, cursor: number): InboxTrigger | n
         kind: match[1] === "@" ? "mention" : "tag",
         start,
         end: cursor,
-        query: match[2]
+        query: match[2],
     };
 }

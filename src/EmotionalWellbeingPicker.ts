@@ -1,11 +1,11 @@
 import { setIcon } from "obsidian";
-import { MOODS, MoodEntry } from "./MoodReference";
-import { EmotionCategory, StressLevel } from "./types";
+import { MOODS, type MoodEntry } from "./MoodReference";
+import type { EmotionCategory, StressLevel } from "./types";
 import {
     EMOTION_GROUPS,
     getEmotionCategoryLabel,
     getStressLevelLabel,
-    STRESS_OPTIONS
+    STRESS_OPTIONS,
 } from "./EmotionalWellbeingReference";
 
 export interface EmotionalWellbeingValue {
@@ -26,7 +26,7 @@ export class EmotionalWellbeingPicker {
 
     constructor(
         parent: HTMLElement,
-        private onChange: (value: EmotionalWellbeingValue) => void
+        private onChange: (value: EmotionalWellbeingValue) => void,
     ) {
         this.container = parent.createDiv({ cls: "fn-wellbeing-picker" });
         this.renderStress();
@@ -44,7 +44,7 @@ export class EmotionalWellbeingPicker {
         for (const option of STRESS_OPTIONS) {
             const btn = row.createEl("button", {
                 cls: "fn-wellbeing-segment",
-                text: option.label
+                text: option.label,
             });
             btn.addEventListener("click", () => this.setStressLevel(option.level));
             this.stressButtons.set(option.level, btn);
@@ -58,7 +58,7 @@ export class EmotionalWellbeingPicker {
         for (const option of EMOTION_GROUPS) {
             const btn = row.createEl("button", {
                 cls: "fn-wellbeing-segment",
-                text: option.label
+                text: option.label,
             });
             btn.addEventListener("click", () => this.setEmotionCategory(option.category));
             this.categoryButtons.set(option.category, btn);
@@ -74,7 +74,7 @@ export class EmotionalWellbeingPicker {
 
     private setEmotionCategory(category: EmotionCategory): void {
         this.emotionCategory = category;
-        const group = EMOTION_GROUPS.find(item => item.category === category);
+        const group = EMOTION_GROUPS.find((item) => item.category === category);
         if (!group?.keys.includes(this.emotionKey ?? "")) {
             this.emotionKey = null;
         }
@@ -93,11 +93,11 @@ export class EmotionalWellbeingPicker {
 
     private renderEmotionStates(): void {
         this.emotionStatesEl.empty();
-        const group = EMOTION_GROUPS.find(item => item.category === this.emotionCategory);
+        const group = EMOTION_GROUPS.find((item) => item.category === this.emotionCategory);
         if (!group) {
             this.emotionStatesEl.createDiv({
                 cls: "fn-wellbeing-state-empty",
-                text: "Choose Unpleasant, Neutral, or Pleasant to show emotion states."
+                text: "Choose Unpleasant, Neutral, or Pleasant to show emotion states.",
             });
             return;
         }
@@ -144,7 +144,7 @@ export class EmotionalWellbeingPicker {
         if (parts.length === 0) {
             this.summaryEl.createSpan({
                 cls: "fn-mood-summary-empty",
-                text: "No wellbeing selected"
+                text: "No wellbeing selected",
             });
             return;
         }
@@ -153,10 +153,10 @@ export class EmotionalWellbeingPicker {
         chip.createSpan({ cls: "fn-mood-summary-name", text: parts.join(" · ") });
         const clear = chip.createSpan({
             cls: "fn-mood-summary-clear",
-            attr: { "aria-label": "Clear wellbeing" }
+            attr: { "aria-label": "Clear wellbeing" },
         });
         setIcon(clear, "x");
-        clear.addEventListener("click", evt => {
+        clear.addEventListener("click", (evt) => {
             evt.stopPropagation();
             this.stressLevel = null;
             this.emotionCategory = null;
@@ -173,7 +173,7 @@ export class EmotionalWellbeingPicker {
         this.onChange({
             stressLevel: this.stressLevel,
             emotionCategory: this.emotionCategory,
-            emotionKey: this.emotionKey
+            emotionKey: this.emotionKey,
         });
     }
 }

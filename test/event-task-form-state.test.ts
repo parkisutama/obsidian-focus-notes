@@ -15,9 +15,9 @@ test("initializes an immutable Inbox capture independently of Event and Task", (
             heading: "Inbox",
             position: "start",
             peopleFolders: ["People"],
-            placeFolders: ["Place"]
+            placeFolders: ["Place"],
         },
-        inboxTargetFile: "Daily/2026-08-01.md"
+        inboxTargetFile: "Daily/2026-08-01.md",
     });
 
     assert.equal(state.kind, "inbox");
@@ -43,7 +43,7 @@ test("builds an Inbox record without changing the EventTask record contract", ()
         heading: "Schedule",
         position: "end",
         hubNotesFolder: "Hub",
-        detailNotesFolder: "Details"
+        detailNotesFolder: "Details",
     });
     state.inboxTitle = "  Hubungi vendor  ";
     state.inboxBody = "Catatan #follow-up";
@@ -53,7 +53,7 @@ test("builds an Inbox record without changing the EventTask record contract", ()
         capturedAt: new Date(2026, 7, 1, 15, 40),
         defaultTitle: "2026-08-01 15:40",
         title: "Hubungi vendor",
-        body: "Catatan #follow-up"
+        body: "Catatan #follow-up",
     });
 });
 
@@ -63,7 +63,7 @@ test("keeps Inbox and Event/Task titles independent while switching kinds", () =
         heading: "Schedule",
         position: "end",
         hubNotesFolder: "Hub",
-        detailNotesFolder: "Details"
+        detailNotesFolder: "Details",
     });
 
     state.setTitleForKind("event", "Planning event");
@@ -81,7 +81,7 @@ test("builds the same default event record independently of a renderer", () => {
         heading: "Schedule",
         position: "end",
         hubNotesFolder: "Hub",
-        detailNotesFolder: "Details"
+        detailNotesFolder: "Details",
     });
     state.kind = "event";
     state.title = "  Project review  ";
@@ -102,7 +102,7 @@ test("builds task due, timebox, and reminders from shared form state", () => {
         heading: "Tasks",
         position: "start",
         hubNotesFolder: "",
-        detailNotesFolder: ""
+        detailNotesFolder: "",
     });
     state.kind = "task";
     state.title = "Ship mobile form";
@@ -113,7 +113,7 @@ test("builds task due, timebox, and reminders from shared form state", () => {
     state.taskTimeboxEndTime = "10:00";
     state.reminders = [
         { date: "2026-08-01", time: "08:30" },
-        { date: "", time: "09:00" }
+        { date: "", time: "09:00" },
     ];
 
     const record = state.buildRecord(null);
@@ -121,7 +121,8 @@ test("builds task due, timebox, and reminders from shared form state", () => {
     assert.equal(record.kind, "task");
     assert.equal(record.due?.getTime(), new Date(2026, 7, 1, 10, 15).getTime());
     assert.equal(record.timebox?.start.getTime(), new Date(2026, 7, 1, 9, 0).getTime());
-    assert.deepEqual(record.reminders.map(value => value.getTime()), [
-        new Date(2026, 7, 1, 8, 30).getTime()
-    ]);
+    assert.deepEqual(
+        record.reminders.map((value) => value.getTime()),
+        [new Date(2026, 7, 1, 8, 30).getTime()],
+    );
 });

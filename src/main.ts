@@ -1,5 +1,5 @@
-import { Plugin, WorkspaceLeaf } from "obsidian";
-import { FocusNotesSettings } from "./types";
+import { Plugin, type WorkspaceLeaf } from "obsidian";
+import type { FocusNotesSettings } from "./types";
 import { TimerView, VIEW_TYPE_FOCUS_NOTES } from "./TimerView";
 import { TimelineView, VIEW_TYPE_FOCUS_TIMELINE } from "./TimelineView";
 import { NoteWriter } from "./NoteWriter";
@@ -28,25 +28,30 @@ export default class FocusNotesPlugin extends Plugin {
 
         this.registerHoverLinkSource("focus-notes-inbox", {
             display: "Focus Notes",
-            defaultMod: false
+            defaultMod: false,
         });
 
         this.registerView(
             VIEW_TYPE_FOCUS_NOTES,
-            leaf =>
+            (leaf) =>
                 new TimerView(
                     leaf,
                     () => this.settings,
                     () => this.saveSettings(),
                     () => new NoteWriter(this.app, this.settings),
                     () => new TargetResolver(this.app, this.settings),
-                    () => new RecentEntriesReader(this.app)
-                )
+                    () => new RecentEntriesReader(this.app),
+                ),
         );
 
         this.registerView(
             VIEW_TYPE_FOCUS_TIMELINE,
-            leaf => new TimelineView(leaf, () => this.settings, () => this.saveSettings())
+            (leaf) =>
+                new TimelineView(
+                    leaf,
+                    () => this.settings,
+                    () => this.saveSettings(),
+                ),
         );
 
         this.addRibbonIcon("timer", "Open Focus Notes", () => {
@@ -62,7 +67,7 @@ export default class FocusNotesPlugin extends Plugin {
             name: "Open Focus Notes panel",
             callback: () => {
                 void this.activateView();
-            }
+            },
         });
 
         this.addCommand({
@@ -70,22 +75,15 @@ export default class FocusNotesPlugin extends Plugin {
             name: "Open Focus Timeline",
             callback: () => {
                 void this.activateTimelineView();
-            }
+            },
         });
 
         this.addCommand({
             id: "create-event-task",
             name: "Create event or task",
             callback: () => {
-                openEventTaskForm(
-                    this.app,
-                    () => this.settings,
-                    () => this.saveSettings(),
-                    new Date(),
-                    undefined,
-                    this
-                );
-            }
+                openEventTaskForm(this.app, () => this.settings, new Date(), undefined, this);
+            },
         });
 
         this.addSettingTab(new FocusNotesSettingsTab(this.app, this));
@@ -124,7 +122,7 @@ export default class FocusNotesPlugin extends Plugin {
                 await leaf.setViewState({
                     type: VIEW_TYPE_FOCUS_TIMELINE,
                     active: true,
-                    state: { mode: "day" }
+                    state: { mode: "day" },
                 });
             }
         }

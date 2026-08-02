@@ -1,5 +1,5 @@
-import { App, FuzzySuggestModal, Modal, Notice, Setting, TFile } from "obsidian";
-import { DisplayMode, EmotionCategory, FocusTarget, StressLevel } from "./types";
+import { type App, FuzzySuggestModal, Modal, Notice, Setting, type TFile } from "obsidian";
+import type { DisplayMode, EmotionCategory, FocusTarget, StressLevel } from "./types";
 import { EmotionalWellbeingPicker } from "./EmotionalWellbeingPicker";
 import { FileSuggest } from "./Suggesters";
 import { isTFile } from "./utils";
@@ -55,7 +55,7 @@ export class LogModal extends Modal {
     constructor(
         app: App,
         private context: LogModalContext,
-        private onSubmit: (result: LogModalResult | null) => void
+        private onSubmit: (result: LogModalResult | null) => void,
     ) {
         super(app);
         this.task = context.initialTask;
@@ -80,10 +80,10 @@ export class LogModal extends Modal {
         new Setting(contentEl)
             .setName("What are you doing?")
             .setDesc("Free text or a [[note link]]. Pick from the suggester to link.")
-            .addText(text => {
+            .addText((text) => {
                 text.setPlaceholder("e.g. Read chapter 3, Meditate, Refactor pipeline")
                     .setValue(this.task)
-                    .onChange(value => (this.task = value));
+                    .onChange((value) => (this.task = value));
                 // FileSuggest dispatches "input" not "change" when the user picks
                 // from the dropdown — this listener catches both keystrokes and
                 // suggester selections.
@@ -91,7 +91,7 @@ export class LogModal extends Modal {
                     // If the suggester just dropped a path in, wrap it as a link.
                     // Cheap heuristic: looks like a path, no spaces, ends with .md.
                     const value = text.inputEl.value;
-                    if (/^[^\s\[]+\.md$/.test(value)) {
+                    if (/^[^\s[]+\.md$/.test(value)) {
                         const stem = value.replace(/\.md$/, "");
                         text.inputEl.value = `[[${stem}]]`;
                         this.task = text.inputEl.value;
@@ -104,7 +104,7 @@ export class LogModal extends Modal {
                     text.inputEl.focus();
                     text.inputEl.select();
                 }, 50);
-                text.inputEl.addEventListener("keydown", evt => {
+                text.inputEl.addEventListener("keydown", (evt) => {
                     if (evt.key === "Enter" && !evt.shiftKey) {
                         evt.preventDefault();
                         this.submit();
@@ -116,13 +116,13 @@ export class LogModal extends Modal {
         const wellbeingSection = contentEl.createDiv({ cls: "focus-notes-modal-section" });
         wellbeingSection.createEl("div", {
             cls: "focus-notes-modal-label",
-            text: "Emotional Wellbeing"
+            text: "Emotional Wellbeing",
         });
         wellbeingSection.createEl("div", {
             cls: "focus-notes-modal-desc",
-            text: "Keep it light: choose stress level, then Unpleasant, Neutral, or Pleasant."
+            text: "Keep it light: choose stress level, then Unpleasant, Neutral, or Pleasant.",
         });
-        new EmotionalWellbeingPicker(wellbeingSection, value => {
+        new EmotionalWellbeingPicker(wellbeingSection, (value) => {
             this.stressLevel = value.stressLevel;
             this.emotionCategory = value.emotionCategory;
             this.moodKey = value.emotionKey;
@@ -137,7 +137,7 @@ export class LogModal extends Modal {
         const reflectionHead = reflectionSection.createDiv({ cls: "fn-reflection-head" });
         reflectionHead.createDiv({
             cls: "focus-notes-modal-label",
-            text: "Reflection and notes"
+            text: "Reflection and notes",
         });
         // "Open expanded" button — opens ReflectionFocusModal with wellbeing
         // reminder + CBT guidance for users who want the scaffolding while
@@ -145,26 +145,25 @@ export class LogModal extends Modal {
         // stays one click away.
         const expandBtn = reflectionHead.createEl("button", {
             cls: "fn-reflection-expand",
-            text: "Open expanded ↗"
+            text: "Open expanded ↗",
         });
         reflectionSection.createDiv({
             cls: "focus-notes-modal-desc",
             text:
                 "Anything — task progress, ideas, blockers, or what affected your wellbeing. " +
-                "Open expanded for CBT prompts and a thought-record view."
+                "Open expanded for CBT prompts and a thought-record view.",
         });
         const reflectionTextarea = reflectionSection.createEl("textarea", {
             cls: "fn-reflection-inline-textarea",
             attr: {
-                placeholder:
-                    "What happened? What shifted your stress or emotion? What did you produce?"
-            }
+                placeholder: "What happened? What shifted your stress or emotion? What did you produce?",
+            },
         });
         reflectionTextarea.rows = 6;
         reflectionTextarea.addEventListener("input", () => {
             this.notes = reflectionTextarea.value;
         });
-        expandBtn.addEventListener("click", evt => {
+        expandBtn.addEventListener("click", (evt) => {
             evt.preventDefault();
             new ReflectionFocusModal(
                 this.app,
@@ -172,14 +171,14 @@ export class LogModal extends Modal {
                 {
                     stressLevel: this.stressLevel,
                     emotionCategory: this.emotionCategory,
-                    emotionKey: this.moodKey
+                    emotionKey: this.moodKey,
                 },
-                result => {
+                (result) => {
                     if (result !== null) {
                         this.notes = result;
                         reflectionTextarea.value = result;
                     }
-                }
+                },
             ).open();
         });
 
@@ -187,30 +186,29 @@ export class LogModal extends Modal {
         const linksSection = contentEl.createDiv({ cls: "focus-notes-modal-section" });
         linksSection.createEl("div", {
             cls: "focus-notes-modal-label",
-            text: "Related links"
+            text: "Related links",
         });
         linksSection.createEl("div", {
             cls: "focus-notes-modal-desc",
-            text: "Notes you referenced or want to remember next session."
+            text: "Notes you referenced or want to remember next session.",
         });
         const linksRow = linksSection.createDiv({ cls: "focus-notes-links-row" });
         const linksInput = linksRow.createEl("input", {
             type: "text",
             cls: "focus-notes-links-input",
             attr: {
-                placeholder:
-                    "[[Project X]] [[Performance notes]] — type or click + to pick"
-            }
+                placeholder: "[[Project X]] [[Performance notes]] — type or click + to pick",
+            },
         });
         linksInput.addEventListener("input", () => (this.links = linksInput.value));
         const addBtn = linksRow.createEl("button", {
             cls: "focus-notes-links-add",
-            text: "+ Add note"
+            text: "+ Add note",
         });
-        addBtn.addEventListener("click", evt => {
+        addBtn.addEventListener("click", (evt) => {
             // Prevent the default form-submit behavior of <button> inside a modal.
             evt.preventDefault();
-            new FilePickerSuggester(this.app, file => {
+            new FilePickerSuggester(this.app, (file) => {
                 const stem = file.basename;
                 const link = `[[${stem}]]`;
                 const trimmed = linksInput.value.trim();
@@ -251,23 +249,18 @@ export class LogModal extends Modal {
             stressLevel: this.stressLevel,
             emotionCategory: this.emotionCategory,
             moodKey: this.moodKey,
-            links: this.links
+            links: this.links,
         });
         this.close();
     }
 
     private summarizeContext(): string {
-        const fmt = (d: Date) =>
-            d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const fmt = (d: Date) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         const m = Math.floor(this.context.durationSeconds / 60);
         const s = this.context.durationSeconds % 60;
         const dur = m > 0 ? `${m}m ${s}s` : `${s}s`;
         const label =
-            this.context.mode === "stopwatch"
-                ? "Stopwatch"
-                : this.context.mode === "pomodoro"
-                  ? "Pomodoro"
-                  : "Timer";
+            this.context.mode === "stopwatch" ? "Stopwatch" : this.context.mode === "pomodoro" ? "Pomodoro" : "Timer";
         return `${label} • ${fmt(this.context.startTime)} → ${fmt(this.context.endTime)} • ${dur}`;
     }
 
@@ -284,7 +277,10 @@ export class LogModal extends Modal {
  * FuzzySuggestModal so it feels identical to the link-completer in the editor.
  */
 class FilePickerSuggester extends FuzzySuggestModal<TFile> {
-    constructor(app: App, private onPick: (file: TFile) => void) {
+    constructor(
+        app: App,
+        private onPick: (file: TFile) => void,
+    ) {
         super(app);
         this.setPlaceholder("Pick a note to link…");
     }

@@ -1,16 +1,17 @@
-import { App, TFile } from "obsidian";
-import { ScheduledItemParser } from "./ScheduledItemParser";
-import { ScheduledItem, ScheduledItemSource } from "./ScheduledItemTypes";
+import type { App, TFile } from "obsidian";
+import type { ScheduledItemParser } from "./ScheduledItemParser";
+import type { ScheduledItem, ScheduledItemSource } from "./ScheduledItemTypes";
 import { isTFile } from "./utils";
 
 export class ScheduledItemIndexer {
-    constructor(private app: App, private parser: ScheduledItemParser) {}
+    constructor(
+        private app: App,
+        private parser: ScheduledItemParser,
+    ) {}
 
     async buildIndex(sourceFolders: string[]): Promise<ScheduledItem[]> {
-        const folders = sourceFolders.map(f => f.trim()).filter(Boolean);
-        const files = this.app.vault
-            .getMarkdownFiles()
-            .filter(file => this.isInSourceScope(file, folders));
+        const folders = sourceFolders.map((f) => f.trim()).filter(Boolean);
+        const files = this.app.vault.getMarkdownFiles().filter((file) => this.isInSourceScope(file, folders));
 
         const items: ScheduledItem[] = [];
         for (const file of files) {
@@ -31,7 +32,7 @@ export class ScheduledItemIndexer {
                 filePath: file.path,
                 fileName: file.basename,
                 lineNumber: idx + 1,
-                headingPath: [...headingPath]
+                headingPath: [...headingPath],
             };
             const item = this.parser.parseLine(line, source);
             if (item) items.push(item);
@@ -51,7 +52,6 @@ export class ScheduledItemIndexer {
     private isInSourceScope(file: TFile, folders: string[]): boolean {
         if (!isTFile(file) || file.extension !== "md") return false;
         if (folders.length === 0) return false;
-        return folders.some(folder => file.path === folder || file.path.startsWith(`${folder}/`));
+        return folders.some((folder) => file.path === folder || file.path.startsWith(`${folder}/`));
     }
 }
-

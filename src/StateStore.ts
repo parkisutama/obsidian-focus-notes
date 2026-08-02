@@ -1,5 +1,5 @@
-import { App, normalizePath } from "obsidian";
-import { FocusNotesSettings, mergeSettingsWithDefaults } from "./types";
+import { type App, normalizePath } from "obsidian";
+import { type FocusNotesSettings, mergeSettingsWithDefaults } from "./types";
 
 /**
  * Where persistent settings live.
@@ -32,10 +32,7 @@ function statePath(app: App): string {
  * is then left in place (Obsidian manages it); subsequent saves go to the
  * external file only, so it gradually becomes irrelevant.
  */
-export async function loadState(
-    app: App,
-    legacyLoad: () => Promise<unknown>
-): Promise<FocusNotesSettings> {
+export async function loadState(app: App, legacyLoad: () => Promise<unknown>): Promise<FocusNotesSettings> {
     const adapter = app.vault.adapter;
     const path = statePath(app);
 
@@ -48,7 +45,7 @@ export async function loadState(
     } catch (err) {
         console.error(
             "[Focus Notes] Could not parse state file, falling back to defaults. The corrupted file is left untouched so it can be recovered.",
-            err
+            err,
         );
         return mergeSettingsWithDefaults({});
     }
@@ -72,10 +69,7 @@ export async function loadState(
     return fresh;
 }
 
-export async function saveState(
-    app: App,
-    settings: FocusNotesSettings
-): Promise<void> {
+export async function saveState(app: App, settings: FocusNotesSettings): Promise<void> {
     const path = statePath(app);
     const json = JSON.stringify(settings, null, 2);
     await app.vault.adapter.write(path, json);

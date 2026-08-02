@@ -1,23 +1,16 @@
+import { AbstractInputSuggest, type App, type HoverPopover, Keymap } from "obsidian";
+import { findInboxTrigger, type InboxTrigger } from "./InboxNotesText";
 import {
-    AbstractInputSuggest,
-    App,
-    HoverPopover,
-    Keymap
-} from "obsidian";
-import { findInboxTrigger, InboxTrigger } from "./InboxNotesText";
-import {
-    InboxRichTextPart,
+    type InboxRichTextPart,
     isInboxLineBreakInput,
     parseInboxRichText,
-    serializeInboxRichText
+    serializeInboxRichText,
 } from "./InboxRichText";
 import type { MentionSuggestion } from "./InboxSuggestions";
 import { ObsidianInboxSuggestionSource } from "./ObsidianInboxSuggestionSource";
 import { formatRelativeMarkdownLink } from "./InboxMarkdown";
 
-type InboxNotesSuggestion =
-    | { kind: "mention"; value: MentionSuggestion }
-    | { kind: "tag"; value: string };
+type InboxNotesSuggestion = { kind: "mention"; value: MentionSuggestion } | { kind: "tag"; value: string };
 
 export interface InboxNotesControllerOptions {
     initialValue: string;
@@ -52,7 +45,7 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
     constructor(
         app: App,
         private readonly inputEl: HTMLDivElement,
-        private readonly options: InboxNotesControllerOptions
+        private readonly options: InboxNotesControllerOptions,
     ) {
         super(app, inputEl);
         this.source = new ObsidianInboxSuggestionSource(app);
@@ -77,15 +70,18 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
         if (!this.activeTrigger) return [];
 
         if (this.activeTrigger.kind === "mention") {
-            return this.source.getMentionSuggestions(
-                this.activeTrigger.query,
-                this.options.getPeopleFolders(),
-                this.options.getPlaceFolders(),
-                this.limit
-            ).map(value => ({ kind: "mention" as const, value }));
+            return this.source
+                .getMentionSuggestions(
+                    this.activeTrigger.query,
+                    this.options.getPeopleFolders(),
+                    this.options.getPlaceFolders(),
+                    this.limit,
+                )
+                .map((value) => ({ kind: "mention" as const, value }));
         }
-        return this.source.getTagSuggestions(this.activeTrigger.query, this.limit)
-            .map(value => ({ kind: "tag" as const, value }));
+        return this.source
+            .getTagSuggestions(this.activeTrigger.query, this.limit)
+            .map((value) => ({ kind: "tag" as const, value }));
     }
 
     renderSuggestion(suggestion: InboxNotesSuggestion, el: HTMLElement): void {
@@ -97,16 +93,17 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
         el.createDiv({ text: value.label, cls: "fn-inbox-suggestion-label" });
         el.createDiv({
             text: `${value.kind === "person" ? "People" : "Place"} · ${value.filePath}`,
-            cls: "fn-inbox-suggestion-context"
+            cls: "fn-inbox-suggestion-context",
         });
     }
 
     selectSuggestion(suggestion: InboxNotesSuggestion): void {
         const trigger = this.activeTrigger;
         if (!trigger) return;
-        const replacement = suggestion.kind === "tag"
-            ? this.inputEl.ownerDocument.createTextNode(suggestion.value)
-            : this.createLink(suggestion.value.filePath, suggestion.value.label);
+        const replacement =
+            suggestion.kind === "tag"
+                ? this.inputEl.ownerDocument.createTextNode(suggestion.value)
+                : this.createLink(suggestion.value.filePath, suggestion.value.label);
 
         replaceVisibleRange(this.inputEl, trigger.start, trigger.end, replacement);
         placeCaretAfter(replacement);
@@ -133,15 +130,16 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
     }
 
     private renderInitialValue(markdown: string): void {
-        const parts = parseInboxRichText(markdown, destination => {
+        const parts = parseInboxRichText(markdown, (destination) => {
             const decoded = safeDecodeURIComponent(destination);
             return this.app.metadataCache.getFirstLinkpathDest(decoded, this.targetFile)?.path ?? null;
         });
         this.inputEl.empty();
         for (const part of parts) {
-            this.inputEl.appendChild(part.kind === "text"
-                ? this.inputEl.ownerDocument.createTextNode(part.value)
-                : this.createLink(part.filePath, part.label)
+            this.inputEl.appendChild(
+                part.kind === "text"
+                    ? this.inputEl.ownerDocument.createTextNode(part.value)
+                    : this.createLink(part.filePath, part.label),
             );
         }
     }
@@ -160,11 +158,9 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
     }
 
     private emitMarkdown(): void {
-        this.options.onChange(serializeInboxRichText(
-            readDomParts(this.inputEl),
-            this.targetFile,
-            formatRelativeMarkdownLink
-        ));
+        this.options.onChange(
+            serializeInboxRichText(readDomParts(this.inputEl), this.targetFile, formatRelativeMarkdownLink),
+        );
     }
 
     private readVisibleText(): string {
@@ -186,7 +182,7 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
         void this.app.workspace.openLinkText(
             link.dataset.inboxFilePath ?? "",
             this.targetFile,
-            Keymap.isModEvent(event)
+            Keymap.isModEvent(event),
         );
     }
 
@@ -200,7 +196,7 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
             hoverParent: this,
             targetEl: link,
             linktext: filePath,
-            sourcePath: this.targetFile
+            sourcePath: this.targetFile,
         });
     }
 }
@@ -232,9 +228,7 @@ function readDomParts(root: HTMLElement): InboxRichTextPart[] {
 }
 
 function closestInboxLink(target: EventTarget | null): HTMLAnchorElement | null {
-    return target instanceof Element
-        ? target.closest<HTMLAnchorElement>("a[data-inbox-file-path]")
-        : null;
+    return target instanceof Element ? target.closest<HTMLAnchorElement>("a[data-inbox-file-path]") : null;
 }
 
 function getCaretOffset(root: HTMLElement): number {

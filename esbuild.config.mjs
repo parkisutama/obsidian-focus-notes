@@ -1,8 +1,8 @@
 import esbuild from "esbuild";
-import process from "process";
+import process from "node:process";
 import builtins from "builtin-modules";
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 const banner = `/* Auto-generated bundle. Do not edit directly. */`;
 const prod = process.argv[2] === "production";
@@ -22,10 +22,7 @@ function loadEnvFile(filePath = ".env") {
         let value = trimmed.slice(eqIndex + 1).trim();
         if (!key || process.env[key] !== undefined) continue;
 
-        if (
-            (value.startsWith('"') && value.endsWith('"')) ||
-            (value.startsWith("'") && value.endsWith("'"))
-        ) {
+        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
             value = value.slice(1, -1);
         }
 
@@ -38,7 +35,7 @@ loadEnvFile();
 const copyToVaultPlugin = {
     name: "copy-to-vault",
     setup(build) {
-        build.onEnd(result => {
+        build.onEnd((result) => {
             if (result.errors.length > 0) return;
 
             const vaultPath = process.env.OBSIDIAN_VAULT_PLUGIN_PATH;
@@ -74,7 +71,7 @@ const copyToVaultPlugin = {
 
             console.log(`Copied ${copiedCount}/${filesToCopy.length} build artifacts to Obsidian vault.`);
         });
-    }
+    },
 };
 
 const ctx = await esbuild.context({
@@ -95,7 +92,7 @@ const ctx = await esbuild.context({
         "@lezer/common",
         "@lezer/highlight",
         "@lezer/lr",
-        ...builtins
+        ...builtins,
     ],
     format: "cjs",
     target: "es2018",
@@ -104,7 +101,7 @@ const ctx = await esbuild.context({
     treeShaking: true,
     outfile: "main.js",
     minify: prod,
-    plugins: [copyToVaultPlugin]
+    plugins: [copyToVaultPlugin],
 });
 
 if (prod) {

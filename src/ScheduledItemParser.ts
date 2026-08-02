@@ -1,4 +1,4 @@
-import { ScheduledItem, ScheduledItemSource } from "./ScheduledItemTypes";
+import type { ScheduledItem, ScheduledItemSource } from "./ScheduledItemTypes";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DATETIME_RE = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/;
@@ -11,7 +11,7 @@ export class ScheduledItemParser {
 
     private parseEventLine(line: string, ctx: ScheduledItemSource): ScheduledItem | null {
         const match = line.match(
-            /^-\s+(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\s+-\s+((?:\d{4}-\d{2}-\d{2} )?\d{2}:\d{2})\s+(.+)$/
+            /^-\s+(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\s+-\s+((?:\d{4}-\d{2}-\d{2} )?\d{2}:\d{2})\s+(.+)$/,
         );
         if (!match) return null;
 
@@ -31,7 +31,7 @@ export class ScheduledItemParser {
             remind: null,
             isCompleted: false,
             source: ctx,
-            rawLine: line
+            rawLine: line,
         };
     }
 
@@ -39,7 +39,7 @@ export class ScheduledItemParser {
         const match = line.match(/^-\s+\[( |x|X)\]\s+(.+)$/);
         if (!match) return null;
 
-        const parts = match[2].split("|").map(part => part.trim());
+        const parts = match[2].split("|").map((part) => part.trim());
         const title = this.cleanTitle(parts.shift() ?? "");
         if (!title) return null;
 
@@ -55,7 +55,7 @@ export class ScheduledItemParser {
             remind: metadata.remind,
             isCompleted: match[1].toLowerCase() === "x",
             source: ctx,
-            rawLine: line
+            rawLine: line,
         };
     }
 
@@ -71,7 +71,7 @@ export class ScheduledItemParser {
             remind: null as Date | null,
             start: null as Date | null,
             end: null as Date | null,
-            dueHasTime: false
+            dueHasTime: false,
         };
 
         for (const part of parts) {
@@ -102,14 +102,14 @@ export class ScheduledItemParser {
     private parseDate(value: string): Date | null {
         if (!DATE_RE.test(value)) return null;
         const date = new Date(`${value}T00:00:00`);
-        return isNaN(date.getTime()) ? null : date;
+        return Number.isNaN(date.getTime()) ? null : date;
     }
 
     private parseDateTime(value: string): Date | null {
         const match = value.match(DATETIME_RE);
         if (!match) return null;
         const date = new Date(`${match[1]}T${match[2]}:00`);
-        return isNaN(date.getTime()) ? null : date;
+        return Number.isNaN(date.getTime()) ? null : date;
     }
 
     private parseEventEnd(value: string, start: Date): Date | null {

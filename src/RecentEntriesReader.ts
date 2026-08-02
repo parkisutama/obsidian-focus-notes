@@ -1,5 +1,5 @@
-import { App, normalizePath } from "obsidian";
-import { FocusTarget } from "./types";
+import { type App, normalizePath } from "obsidian";
+import type { FocusTarget } from "./types";
 import { isTFile } from "./utils";
 
 /**
@@ -116,7 +116,7 @@ export class RecentEntriesReader {
             }
             result.push({
                 text: buf.join("\n").trimEnd(),
-                lineNumber: startLine
+                lineNumber: startLine,
             });
         }
         return result;
@@ -125,7 +125,7 @@ export class RecentEntriesReader {
     /** Find immediate child headings of `parent` — one level deeper. */
     private findChildHeadings(
         lines: string[],
-        parent: { start: number; end: number; level: number }
+        parent: { start: number; end: number; level: number },
     ): Array<{ start: number; end: number; level: number }> {
         const headingRegex = /^(#{1,6})\s+/;
         const wantLevel = parent.level + 1;
@@ -155,7 +155,7 @@ export class RecentEntriesReader {
 
     private findHeadingRange(
         lines: string[],
-        targetHeading: string
+        targetHeading: string,
     ): { start: number; end: number; level: number } | null {
         const headingRegex = /^(#{1,6})\s+(.+?)\s*$/;
         const target = targetHeading.toLowerCase();

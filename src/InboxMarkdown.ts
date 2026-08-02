@@ -5,14 +5,12 @@ export function formatInboxEntry(record: InboxRecord): string {
     const timestamp = formatLocalMinute(record.capturedAt);
     const title = record.title.trim();
     const defaultTitle = record.defaultTitle.trim();
-    const heading = !title || title === defaultTitle
-        ? `- ${timestamp}`
-        : `- ${timestamp} — ${title}`;
+    const heading = !title || title === defaultTitle ? `- ${timestamp}` : `- ${timestamp} — ${title}`;
     const bodyLines = record.body
         .split(/\r?\n/)
-        .map(line => line.trim())
+        .map((line) => line.trim())
         .filter(Boolean)
-        .map(line => `    - ${line}`);
+        .map((line) => `    - ${line}`);
 
     return [heading, ...bodyLines].join("\n");
 }
@@ -21,10 +19,7 @@ export function formatInboxEntry(record: InboxRecord): string {
  * Build an encoded path to `linkedFilePath` relative to the file containing
  * the Inbox entry. Both inputs are vault-relative Markdown file paths.
  */
-export function relativeMarkdownPath(
-    targetFilePath: string,
-    linkedFilePath: string
-): string {
+export function relativeMarkdownPath(targetFilePath: string, linkedFilePath: string): string {
     const source = pathSegments(targetFilePath);
     const destination = pathSegments(linkedFilePath);
     const sourceDirectory = source.slice(0, -1);
@@ -38,20 +33,13 @@ export function relativeMarkdownPath(
         common++;
     }
 
-    const relative = [
-        ...sourceDirectory.slice(common).map(() => ".."),
-        ...destination.slice(common)
-    ];
+    const relative = [...sourceDirectory.slice(common).map(() => ".."), ...destination.slice(common)];
     const usable = relative.length > 0 ? relative : destination.slice(-1);
     return usable.map(encodePathSegment).join("/");
 }
 
 /** Create an ordinary relative Markdown link for a selected mention. */
-export function formatRelativeMarkdownLink(
-    targetFilePath: string,
-    linkedFilePath: string,
-    label: string
-): string {
+export function formatRelativeMarkdownLink(targetFilePath: string, linkedFilePath: string, label: string): string {
     return `[${escapeMarkdownLabel(label)}](${relativeMarkdownPath(targetFilePath, linkedFilePath)})`;
 }
 
@@ -70,11 +58,12 @@ function pathSegments(path: string): string[] {
 
 function encodePathSegment(segment: string): string {
     if (segment === "..") return segment;
-    return encodeURIComponent(segment).replace(/[!'()*]/g, char =>
-        `%${char.charCodeAt(0).toString(16).toUpperCase()}`
+    return encodeURIComponent(segment).replace(
+        /[!'()*]/g,
+        (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
     );
 }
 
 function escapeMarkdownLabel(label: string): string {
-    return label.replace(/\\/g, "\\\\").replace(/([\[\]])/g, "\\$1");
+    return label.replace(/\\/g, "\\\\").replace(/([[\]])/g, "\\$1");
 }

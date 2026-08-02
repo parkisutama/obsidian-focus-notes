@@ -5,7 +5,7 @@ import { DEFAULT_SETTINGS, mergeSettingsWithDefaults } from "../src/types.ts";
 test("adds Inbox defaults when loading settings saved before Inbox existed", () => {
     const merged = mergeSettingsWithDefaults({
         pomodoroMinutes: 45,
-        eventTask: { ...DEFAULT_SETTINGS.eventTask, hubNotesFolder: "Hubs" }
+        eventTask: { ...DEFAULT_SETTINGS.eventTask, hubNotesFolder: "Hubs" },
     });
 
     assert.equal(merged.pomodoroMinutes, 45);
@@ -15,14 +15,14 @@ test("adds Inbox defaults when loading settings saved before Inbox existed", () 
         heading: "Inbox",
         position: "end",
         peopleFolders: ["People"],
-        placeFolders: ["Place"]
+        placeFolders: ["Place"],
     });
 });
 
 test("clones saved and default Inbox folder arrays during settings merge", () => {
     const savedPeople = ["CRM/People"];
     const first = mergeSettingsWithDefaults({
-        inbox: { ...DEFAULT_SETTINGS.inbox, peopleFolders: savedPeople }
+        inbox: { ...DEFAULT_SETTINGS.inbox, peopleFolders: savedPeople },
     });
     const second = mergeSettingsWithDefaults({});
 

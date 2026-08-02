@@ -6,13 +6,16 @@
     "main": "main.js",
     "scripts": {
         "dev": "node esbuild.config.mjs",
-        "lint": "node scripts/verify-version-metadata.mjs",
+        "verify:version": "node scripts/verify-version-metadata.mjs",
+        "lint": "biome lint . --error-on-warnings",
+        "format": "biome format --write .",
+        "format:check": "biome format .",
         "typecheck": "tsc --noEmit --skipLibCheck",
         "test": "node --test",
         "build": "pnpm run typecheck && node esbuild.config.mjs production",
         "verify:artifacts": "node scripts/verify-build-artifacts.mjs",
         "package:plugin": "node scripts/package-plugin.mjs",
-        "check": "pnpm run lint && pnpm run typecheck && pnpm run test",
+        "check": "pnpm run format:check && pnpm run lint && pnpm run verify:version && pnpm run typecheck && pnpm run test",
         "check:ci": "pnpm run check && pnpm run build && pnpm run verify:artifacts"
     },
     "keywords": [
@@ -26,6 +29,7 @@
     "author": "Parkis",
     "license": "MIT",
     "devDependencies": {
+        "@biomejs/biome": "2.5.6",
         "@types/node": "^20.0.0",
         "builtin-modules": "^3.3.0",
         "esbuild": "0.28.1",

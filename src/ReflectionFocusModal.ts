@@ -1,11 +1,8 @@
-import { App, Modal } from "obsidian";
+import { type App, Modal } from "obsidian";
 import { getMood } from "./MoodReference";
 import { CBT_PROMPTS, COGNITIVE_DISTORTIONS } from "./CognitiveDistortions";
-import { EmotionCategory, StressLevel } from "./types";
-import {
-    getEmotionCategoryLabel,
-    getStressLevelLabel
-} from "./EmotionalWellbeingReference";
+import type { EmotionCategory, StressLevel } from "./types";
+import { getEmotionCategoryLabel, getStressLevelLabel } from "./EmotionalWellbeingReference";
 
 export interface ReflectionWellbeingContext {
     stressLevel: StressLevel | null;
@@ -50,7 +47,7 @@ export class ReflectionFocusModal extends Modal {
         app: App,
         private initialText: string,
         private wellbeing: ReflectionWellbeingContext,
-        private onResolve: (text: string | null) => void
+        private onResolve: (text: string | null) => void,
     ) {
         super(app);
         this.currentText = initialText;
@@ -76,18 +73,18 @@ export class ReflectionFocusModal extends Modal {
             if (stressLabel) {
                 headText.createDiv({
                     cls: "fn-reflection-mood-quadrant",
-                    text: `Stress: ${stressLabel}`
+                    text: `Stress: ${stressLabel}`,
                 });
             }
             if (mood) {
                 reminder.createDiv({
                     cls: "fn-reflection-mood-def",
-                    text: `Emotion: ${mood.name}${emotionCategoryLabel ? ` (${emotionCategoryLabel})` : ""}`
+                    text: `Emotion: ${mood.name}${emotionCategoryLabel ? ` (${emotionCategoryLabel})` : ""}`,
                 });
             } else if (emotionCategoryLabel) {
                 reminder.createDiv({
                     cls: "fn-reflection-mood-def",
-                    text: `Emotion: ${emotionCategoryLabel}`
+                    text: `Emotion: ${emotionCategoryLabel}`,
                 });
             }
         }
@@ -96,15 +93,15 @@ export class ReflectionFocusModal extends Modal {
         const writeSection = contentEl.createDiv({ cls: "fn-reflection-write" });
         writeSection.createDiv({
             cls: "fn-reflection-write-label",
-            text: "Write freely. The prompts below are guidance — answer in any order, skip what doesn't fit."
+            text: "Write freely. The prompts below are guidance — answer in any order, skip what doesn't fit.",
         });
         const textarea = writeSection.createEl("textarea", {
             cls: "fn-reflection-textarea",
             attr: {
                 placeholder:
                     "What happened, what shifted your stress or emotion, " +
-                    "and what would be a kinder and more accurate description..."
-            }
+                    "and what would be a kinder and more accurate description...",
+            },
         });
         textarea.value = this.initialText;
         textarea.rows = 14;
@@ -128,15 +125,15 @@ export class ReflectionFocusModal extends Modal {
         const defaultOpen = this.wellbeing.emotionCategory === "unpleasant";
 
         const promptsDetails = contentEl.createEl("details", {
-            cls: "fn-reflection-collapsible"
+            cls: "fn-reflection-collapsible",
         });
         if (defaultOpen) promptsDetails.setAttr("open", "");
         promptsDetails.createEl("summary", {
             cls: "fn-reflection-collapsible-summary",
-            text: "Mini-CBT prompts (optional reference)"
+            text: "Mini-CBT prompts (optional reference)",
         });
         const promptsBody = promptsDetails.createDiv({
-            cls: "fn-reflection-collapsible-body"
+            cls: "fn-reflection-collapsible-body",
         });
         const promptsList = promptsBody.createEl("ol", { cls: "fn-cbt-prompts" });
         for (const prompt of CBT_PROMPTS) {
@@ -151,21 +148,21 @@ export class ReflectionFocusModal extends Modal {
 
         // ---- 4. Collapsible cognitive distortions panel -----------------
         const distortionsDetails = contentEl.createEl("details", {
-            cls: "fn-reflection-collapsible"
+            cls: "fn-reflection-collapsible",
         });
         if (defaultOpen) distortionsDetails.setAttr("open", "");
         distortionsDetails.createEl("summary", {
             cls: "fn-reflection-collapsible-summary",
-            text: "Cognitive distortions to check against"
+            text: "Cognitive distortions to check against",
         });
         const distortionsBody = distortionsDetails.createDiv({
-            cls: "fn-reflection-collapsible-body"
+            cls: "fn-reflection-collapsible-body",
         });
         distortionsBody.createDiv({
             cls: "fn-distortions-intro",
             text:
                 "Scan the patterns below for anything that resembles your automatic thought. " +
-                "Naming the pattern reduces its grip. Multiple patterns can apply at once."
+                "Naming the pattern reduces its grip. Multiple patterns can apply at once.",
         });
         const distortionsList = distortionsBody.createDiv({ cls: "fn-distortions-list" });
         for (const d of COGNITIVE_DISTORTIONS) {

@@ -1,5 +1,3 @@
-import { App } from "obsidian";
-
 export interface TimelineSourceSummary {
     filePath: string;
     fileName: string;
@@ -10,14 +8,13 @@ export interface TimelineSourceSummary {
 
 export class TimelineSourceSidebar {
     constructor(
-        private app: App,
         private parent: HTMLElement,
         private opts: {
             sources: TimelineSourceSummary[];
             collapsed: boolean;
             onToggleSource: (filePath: string, visible: boolean) => void;
             onToggleCollapsed: (collapsed: boolean) => void;
-        }
+        },
     ) {}
 
     render(): void {
@@ -33,7 +30,7 @@ export class TimelineSourceSidebar {
         if (this.opts.sources.length === 0) {
             list.createDiv({
                 cls: "focus-timeline-empty",
-                text: "No scheduled items found in configured folders."
+                text: "No scheduled items found in configured folders.",
             });
             return;
         }

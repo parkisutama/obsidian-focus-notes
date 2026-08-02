@@ -21,27 +21,25 @@ export interface InboxTargetSelection {
 
 /** Select the requested file without silently crossing destination modes. */
 export function selectInboxTarget(selection: InboxTargetSelection): FocusTarget | null {
-    const source = selection.mode === "daily-note"
-        ? selection.dailyNoteTarget
-        : selection.eventTaskTarget;
+    const source = selection.mode === "daily-note" ? selection.dailyNoteTarget : selection.eventTaskTarget;
     if (!source?.file.trim()) return null;
 
     return {
         file: source.file,
         heading: selection.heading.replace(/^#+\s*/, "").trim(),
-        position: selection.position
+        position: selection.position,
     };
 }
 
 /** Resolve per-capture overrides and destination mode identically for every renderer. */
-export function resolveInboxFormTarget(
-    resolver: InboxTargetResolver,
-    form: InboxFormTargetState
-): FocusTarget | null {
+export function resolveInboxFormTarget(resolver: InboxTargetResolver, form: InboxFormTargetState): FocusTarget | null {
     if (!form.inboxTargetFile.trim()) return null;
-    return resolver.resolve({
-        file: form.inboxTargetFile.trim(),
-        heading: form.inboxHeading.replace(/^#+\s*/, "").trim(),
-        position: form.inboxPosition
-    }, form.inboxCapturedAt);
+    return resolver.resolve(
+        {
+            file: form.inboxTargetFile.trim(),
+            heading: form.inboxHeading.replace(/^#+\s*/, "").trim(),
+            position: form.inboxPosition,
+        },
+        form.inboxCapturedAt,
+    );
 }

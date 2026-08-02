@@ -1,13 +1,13 @@
 import { setIcon } from "obsidian";
 import {
     BODY_REGIONS,
-    BodyRegion,
+    type BodyRegion,
     MOODS,
-    MoodEntry,
+    type MoodEntry,
     QUADRANTS,
-    Quadrant,
-    SensationRow,
-    moodsInQuadrant
+    type Quadrant,
+    type SensationRow,
+    moodsInQuadrant,
 } from "./MoodReference";
 
 /**
@@ -37,7 +37,10 @@ export class MoodPicker {
     /** Current entry mode for this picker instance. */
     private entryMode: "feeling" | "body" = "feeling";
 
-    constructor(parent: HTMLElement, private onChange: (key: string | null) => void) {
+    constructor(
+        parent: HTMLElement,
+        private onChange: (key: string | null) => void,
+    ) {
         this.container = parent.createDiv({ cls: "fn-mood-picker" });
         this.renderModeTabs();
         this.bodyEl = this.container.createDiv({ cls: "fn-mood-body" });
@@ -72,7 +75,7 @@ export class MoodPicker {
         };
         this.modeTabs = {
             feeling: make("By feeling", "feeling"),
-            body: make("By body", "body")
+            body: make("By body", "body"),
         };
     }
 
@@ -107,7 +110,7 @@ export class MoodPicker {
         this.bodyEl.empty();
         const back = this.bodyEl.createEl("button", {
             cls: "fn-mood-back",
-            text: "← Back to quadrants"
+            text: "← Back to quadrants",
         });
         back.addEventListener("click", () => this.applyEntryMode());
 
@@ -136,7 +139,7 @@ export class MoodPicker {
         this.bodyEl.empty();
         const back = this.bodyEl.createEl("button", {
             cls: "fn-mood-back",
-            text: "← Back to body regions"
+            text: "← Back to body regions",
         });
         back.addEventListener("click", () => this.applyEntryMode());
 
@@ -144,7 +147,7 @@ export class MoodPicker {
         heading.createSpan({ text: `${region.emoji} ${region.name}`, cls: "fn-mood-step-title" });
         heading.createSpan({
             text: "What does the sensation feel like?",
-            cls: "fn-mood-step-subtitle"
+            cls: "fn-mood-step-subtitle",
         });
 
         const list = this.bodyEl.createDiv({ cls: "fn-sensation-list" });
@@ -161,14 +164,14 @@ export class MoodPicker {
         this.bodyEl.empty();
         const back = this.bodyEl.createEl("button", {
             cls: "fn-mood-back",
-            text: `← Back to ${region.name.toLowerCase()} sensations`
+            text: `← Back to ${region.name.toLowerCase()} sensations`,
         });
         back.addEventListener("click", () => this.renderSensations(region));
 
         const heading = this.bodyEl.createDiv({ cls: "fn-mood-step-heading" });
         heading.createSpan({
             text: `${region.emoji} ${row.sensation}`,
-            cls: "fn-mood-step-title"
+            cls: "fn-mood-step-title",
         });
 
         // Disambiguation prompt — when present, render the question and split
@@ -179,7 +182,7 @@ export class MoodPicker {
             into.appendChild(this.renderMoodCard(mood));
         };
 
-        if (row.disambiguation && row.disambiguation.leftKeys && row.disambiguation.rightKeys) {
+        if (row.disambiguation?.leftKeys && row.disambiguation.rightKeys) {
             const promptEl = this.bodyEl.createDiv({ cls: "fn-mood-question" });
             promptEl.createDiv({ text: "Ask yourself:", cls: "fn-mood-question-label" });
             promptEl.createDiv({ text: row.disambiguation.prompt, cls: "fn-mood-question-text" });
@@ -188,7 +191,7 @@ export class MoodPicker {
             const leftCol = split.createDiv({ cls: "fn-mood-split-col" });
             leftCol.createDiv({
                 cls: "fn-mood-split-label",
-                text: row.disambiguation.leftLabel ?? "Option A"
+                text: row.disambiguation.leftLabel ?? "Option A",
             });
             const leftGrid = leftCol.createDiv({ cls: "fn-mood-grid" });
             for (const key of row.disambiguation.leftKeys) {
@@ -199,7 +202,7 @@ export class MoodPicker {
             const rightCol = split.createDiv({ cls: "fn-mood-split-col" });
             rightCol.createDiv({
                 cls: "fn-mood-split-label",
-                text: row.disambiguation.rightLabel ?? "Option B"
+                text: row.disambiguation.rightLabel ?? "Option B",
             });
             const rightGrid = rightCol.createDiv({ cls: "fn-mood-grid" });
             for (const key of row.disambiguation.rightKeys) {
@@ -211,7 +214,7 @@ export class MoodPicker {
             // Optional intro nudges the user to read definitions before picking.
             this.bodyEl.createDiv({
                 cls: "fn-mood-question-text fn-mood-no-split",
-                text: "These overlap — read the definitions and pick what resonates."
+                text: "These overlap — read the definitions and pick what resonates.",
             });
             const grid = this.bodyEl.createDiv({ cls: "fn-mood-grid" });
             for (const key of row.candidateKeys) {
@@ -260,7 +263,7 @@ export class MoodPicker {
         if (!this.selectedKey) {
             this.summaryEl.createSpan({
                 cls: "fn-mood-summary-empty",
-                text: "No mood selected"
+                text: "No mood selected",
             });
             return;
         }
@@ -271,7 +274,7 @@ export class MoodPicker {
         chip.createSpan({ text: mood.name, cls: "fn-mood-summary-name" });
         const clear = chip.createSpan({ cls: "fn-mood-summary-clear", attr: { "aria-label": "Clear mood" } });
         setIcon(clear, "x");
-        clear.addEventListener("click", evt => {
+        clear.addEventListener("click", (evt) => {
             evt.stopPropagation();
             this.setSelectedKey(null);
             // Re-render whatever flow the user is in to reflect the cleared selection.

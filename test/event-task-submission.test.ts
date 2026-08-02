@@ -9,7 +9,7 @@ test("writes the primary record and created notes through a renderer-independent
         heading: "Schedule",
         position: "end",
         hubNotesFolder: "Hub",
-        detailNotesFolder: "Details"
+        detailNotesFolder: "Details",
     });
     state.kind = "event";
     state.title = "Planning";
@@ -26,21 +26,21 @@ test("writes the primary record and created notes through a renderer-independent
         defaultDetailNotesFolder: "Default details",
         resolveTargetFile: () => "Daily/2026-08-01.md",
         findMarkdownFile: () => null,
-        openFile: file => opened.push(file.path),
+        openFile: (file) => opened.push(file.path),
         writer: {
             createHubNote: async () => ({ path: "Hub/Planning hub.md" }),
             createDetailNote: async () => ({ path: "Details/Planning detail.md" }),
             write: async (_record, path, _heading, _position, detail) => {
                 writes.push({ path, hasDetail: Boolean(detail) });
-            }
-        }
+            },
+        },
     });
 
     assert.deepEqual(result, { ok: true, message: "Event saved." });
     assert.deepEqual(opened, ["Hub/Planning hub.md", "Details/Planning detail.md"]);
     assert.deepEqual(writes, [
         { path: "Daily/2026-08-01.md", hasDetail: true },
-        { path: "Hub/Planning hub.md", hasDetail: true }
+        { path: "Hub/Planning hub.md", hasDetail: true },
     ]);
 });
 test("returns a phase-specific failure without reporting success", async () => {
@@ -49,7 +49,7 @@ test("returns a phase-specific failure without reporting success", async () => {
         heading: "Schedule",
         position: "end",
         hubNotesFolder: "Hub",
-        detailNotesFolder: "Details"
+        detailNotesFolder: "Details",
     });
     state.kind = "event";
     state.title = "Planning";
@@ -63,9 +63,11 @@ test("returns a phase-specific failure without reporting success", async () => {
         openFile: () => undefined,
         writer: {
             createHubNote: async () => ({ path: "unused.md" }),
-            createDetailNote: async () => { throw new Error("vault is read-only"); },
-            write: async () => undefined
-        }
+            createDetailNote: async () => {
+                throw new Error("vault is read-only");
+            },
+            write: async () => undefined,
+        },
     });
 
     assert.deepEqual(result, { ok: false, message: "Failed to create detail note: vault is read-only" });
@@ -77,7 +79,7 @@ test("writes Inbox once without invoking Event or Task note workflows", async ()
         heading: "Schedule",
         position: "end",
         hubNotesFolder: "Hub",
-        detailNotesFolder: "Details"
+        detailNotesFolder: "Details",
     });
     state.inboxTitle = "Capture idea";
     state.inboxBody = "Discuss with Andi";
@@ -88,8 +90,8 @@ test("writes Inbox once without invoking Event or Task note workflows", async ()
         writer: {
             writeInbox: async (record, file, heading, position) => {
                 writes.push({ record, file, heading, position });
-            }
-        }
+            },
+        },
     });
 
     assert.deepEqual(result, { ok: true, message: "Inbox saved." });
@@ -98,7 +100,7 @@ test("writes Inbox once without invoking Event or Task note workflows", async ()
         record: state.buildInboxRecord(),
         file: "Daily/2026-08-02.md",
         heading: "Inbox",
-        position: "start"
+        position: "start",
     });
 });
 
@@ -109,17 +111,21 @@ test("does not write Inbox when the selected destination is unavailable", async 
         heading: "Schedule",
         position: "end",
         hubNotesFolder: "Hub",
-        detailNotesFolder: "Details"
+        detailNotesFolder: "Details",
     });
 
     const result = await submitInbox(state, {
         resolveTarget: () => null,
-        writer: { writeInbox: async () => { wrote = true; } }
+        writer: {
+            writeInbox: async () => {
+                wrote = true;
+            },
+        },
     });
 
     assert.deepEqual(result, {
         ok: false,
-        message: "Failed to save Inbox: Selected Inbox destination is unavailable."
+        message: "Failed to save Inbox: Selected Inbox destination is unavailable.",
     });
     assert.equal(wrote, false);
 });
@@ -130,16 +136,20 @@ test("reports an Inbox writer failure without reporting success", async () => {
         heading: "Schedule",
         position: "end",
         hubNotesFolder: "Hub",
-        detailNotesFolder: "Details"
+        detailNotesFolder: "Details",
     });
 
     const result = await submitInbox(state, {
         resolveTarget: () => ({ file: "Daily.md", heading: "Inbox", position: "end" }),
-        writer: { writeInbox: async () => { throw new Error("vault is read-only"); } }
+        writer: {
+            writeInbox: async () => {
+                throw new Error("vault is read-only");
+            },
+        },
     });
 
     assert.deepEqual(result, {
         ok: false,
-        message: "Failed to save Inbox: vault is read-only"
+        message: "Failed to save Inbox: vault is read-only",
     });
 });
