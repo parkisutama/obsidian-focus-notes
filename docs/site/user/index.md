@@ -13,6 +13,7 @@ Tutorial memandu Anda dari awal sampai mendapatkan hasil. Ikuti langkahnya secar
 How-to membantu menyelesaikan satu kebutuhan spesifik. Gunakan setelah Anda memahami dasar penggunaan plugin.
 
 - [Tangkap ide atau konteks dengan cepat ke Inbox](how-to/capture-to-inbox.md)
+- [Hubungkan capture dengan People, Places, atau Activity](how-to/add-contextual-links.md)
 
 ## Ketika Anda perlu memahami lebih dalam
 

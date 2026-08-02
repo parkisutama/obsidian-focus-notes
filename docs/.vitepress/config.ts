@@ -26,7 +26,10 @@ export default defineConfig({
                 },
                 {
                     text: "How-to",
-                    items: [{ text: "Tangkap ide ke Inbox", link: "/user/how-to/capture-to-inbox" }],
+                    items: [
+                        { text: "Tangkap ide ke Inbox", link: "/user/how-to/capture-to-inbox" },
+                        { text: "Tambahkan contextual links", link: "/user/how-to/add-contextual-links" },
+                    ],
                 },
             ],
             "/developer/": [

@@ -21,6 +21,9 @@ Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah ti
 | Format bullet dan relative link | `src/InboxMarkdown.ts` |
 | Mention dan tag suggestions | `src/InboxSuggestions.ts` |
 | Editor link hidup | `src/InboxNotesController.ts` |
+| Resolusi link ke source context | `src/ContextLinkResolver.ts` |
+| Format append-only historical log | `src/RelatedLog.ts` |
+| Receipt dan failed-destination-only retry | `src/RelatedWriteRecovery.ts` |
 | Submission orchestration | `src/EventTaskSubmission.ts` |
 
 ## Event dan Task
@@ -31,6 +34,7 @@ Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah ti
 | Mobile screen | `src/EventTaskMobileScreen.ts` |
 | Record writer | `src/EventTaskWriter.ts` |
 | Shared form state | `src/EventTaskFormState.ts` |
+| Contextual write dan partial outcome | `src/EventTaskSubmission.ts` |
 
 ## Focus Timeline
 
