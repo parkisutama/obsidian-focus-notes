@@ -2,7 +2,7 @@
 
 ## Status
 
-Drafted on 2026-08-02 from the full `main` audit. Implementation is blocked until this specification is reviewed and approved.
+Drafted on 2026-08-02 from the full `main` audit. Phase 1 (Developer Experience foundation) is implemented on `chore/developer-experience-foundation` and locally verified. Phases 2–4 remain planned and must be completed before merge unless an exception is explicitly approved. Current cross-cutting status and merge gates are tracked in [Development status](development-status.md).
 
 ## Objective
 
