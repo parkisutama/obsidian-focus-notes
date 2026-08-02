@@ -59,6 +59,25 @@ export class TargetResolver {
         };
     }
 
+    /**
+     * Resolve the core Daily Notes target for an explicit capture date.
+     * Returns null when that integration is unavailable; callers must surface
+     * the failure instead of falling through to another configured target.
+     */
+    public getDailyNoteTarget(when: Date = new Date()): FocusTarget | null {
+        const dailyNotes = this.readDailyNotesConfig();
+        if (!dailyNotes) return null;
+        const folder = dailyNotes.folder
+            ? `${dailyNotes.folder.replace(/\/+$/, "")}/`
+            : "";
+        const format = dailyNotes.format || this.settings.dailyNoteFormat;
+        return this.resolve({
+            file: `${folder}{{date:${format}}}.md`,
+            heading: "",
+            position: this.settings.defaultTarget.position
+        }, when);
+    }
+
     /** Expand {{date}} / {{date:FORMAT}} tokens in the file path against `when`. */
     public resolve(target: FocusTarget, when: Date = new Date()): FocusTarget {
         return {
