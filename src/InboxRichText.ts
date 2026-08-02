@@ -2,6 +2,10 @@ export type InboxRichTextPart =
     | { kind: "text"; value: string }
     | { kind: "link"; label: string; filePath: string };
 
+export function isInboxLineBreakInput(inputType: string): boolean {
+    return inputType === "insertParagraph" || inputType === "insertLineBreak";
+}
+
 export function parseInboxRichText(
     markdown: string,
     resolveDestination: (destination: string) => string | null

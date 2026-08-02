@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseInboxRichText, serializeInboxRichText } from "../src/InboxRichText.ts";
+import {
+    isInboxLineBreakInput,
+    parseInboxRichText,
+    serializeInboxRichText
+} from "../src/InboxRichText.ts";
 import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
 
 test("parses a Markdown mention into a live-link model and preserves surrounding text", () => {
@@ -38,4 +42,11 @@ test("keeps an unresolved Markdown link editable as source text", () => {
         parseInboxRichText("See [site](https://example.com)", () => null),
         [{ kind: "text", value: "See [site](https://example.com)" }]
     );
+});
+
+test("normalizes browser paragraph and line-break input into plain newlines", () => {
+    assert.equal(isInboxLineBreakInput("insertParagraph"), true);
+    assert.equal(isInboxLineBreakInput("insertLineBreak"), true);
+    assert.equal(isInboxLineBreakInput("insertText"), false);
+    assert.equal(isInboxLineBreakInput("insertCompositionText"), false);
 });

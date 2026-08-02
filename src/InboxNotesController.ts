@@ -7,6 +7,7 @@ import {
 import { findInboxTrigger, InboxTrigger } from "./InboxNotesText";
 import {
     InboxRichTextPart,
+    isInboxLineBreakInput,
     parseInboxRichText,
     serializeInboxRichText
 } from "./InboxRichText";
@@ -33,6 +34,12 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
     private targetFile: string;
     private readonly source: ObsidianInboxSuggestionSource;
     private readonly onInput = (): void => this.emitMarkdown();
+    private readonly onBeforeInput = (event: InputEvent): void => {
+        if (!isInboxLineBreakInput(event.inputType)) return;
+        event.preventDefault();
+        insertAtSelection(this.inputEl, this.inputEl.ownerDocument.createTextNode("\n"));
+        this.emitMarkdown();
+    };
     private readonly onPaste = (event: ClipboardEvent): void => this.pastePlainText(event);
     private readonly onClick = (event: MouseEvent): void => this.openInternalLink(event);
     private readonly onMouseOver = (event: MouseEvent): void => this.previewInternalLink(event);
@@ -56,6 +63,7 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
         inputEl.setAttribute("aria-multiline", "true");
         this.renderInitialValue(options.initialValue);
         inputEl.addEventListener("input", this.onInput);
+        inputEl.addEventListener("beforeinput", this.onBeforeInput);
         inputEl.addEventListener("paste", this.onPaste);
         inputEl.addEventListener("click", this.onClick);
         inputEl.addEventListener("mouseover", this.onMouseOver);
@@ -116,6 +124,7 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
 
     destroy(): void {
         this.inputEl.removeEventListener("input", this.onInput);
+        this.inputEl.removeEventListener("beforeinput", this.onBeforeInput);
         this.inputEl.removeEventListener("paste", this.onPaste);
         this.inputEl.removeEventListener("click", this.onClick);
         this.inputEl.removeEventListener("mouseover", this.onMouseOver);
