@@ -1,0 +1,46 @@
+name: Quality
+
+on:
+    pull_request:
+    push:
+        branches:
+            - main
+
+permissions:
+    contents: read
+
+concurrency:
+    group: quality-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    quality:
+        name: Node 24 quality gate
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v6
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: 24
+
+            - name: Enable pnpm through Corepack
+              run: corepack enable
+
+            - name: Install locked dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Run quality, tests, build, and artifact checks
+              run: pnpm run check:ci
+              env:
+                  OBSIDIAN_VAULT_PLUGIN_PATH: ""
+
+            - name: Report unit-test coverage
+              run: pnpm run test:coverage
+
+            - name: Audit dependencies
+              run: pnpm audit --audit-level moderate
