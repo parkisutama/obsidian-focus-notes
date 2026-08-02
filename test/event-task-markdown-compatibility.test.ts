@@ -31,7 +31,7 @@ test("writer Event Markdown is consumed as a timed Timeline Event", () => {
     assert.equal(
         markdown,
         "- 2026-08-01 09:00 - 10:30 [Review proposal](Projects/Client%20Alpha.md)\n" +
-            "    - First line\nSecond line\n" +
+            "    - First line\n    - Second line\n" +
             "    - detail: [Review details](Details/Review%20proposal.md)",
     );
     assert.equal(item?.kind, "event");

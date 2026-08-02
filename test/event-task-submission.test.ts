@@ -514,7 +514,7 @@ test("writes contextual Inbox and Task logs using their own temporal records", a
     });
 
     assert.equal(inboxResult.status, "success");
-    assert.deepEqual(inboxLogs, ["- 2026-08-02 08:08 — Ask Andi about archive — [Daily Note](../Daily/2026-08-02.md)"]);
+    assert.deepEqual(inboxLogs, ["- 2026-08-02 08:08 — Ask Andi about archive — [2026-08-02](../Daily/2026-08-02.md)"]);
     assert.equal(taskResult.status, "success");
-    assert.deepEqual(taskLogs, ["- 2026-08-02 — Send report — [Daily Note](../Daily/2026-08-02.md)"]);
+    assert.deepEqual(taskLogs, ["- 2026-08-02 — Send report — [2026-08-02](../Daily/2026-08-02.md)"]);
 });

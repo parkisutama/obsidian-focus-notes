@@ -5,25 +5,25 @@ These fixtures represent the append-only Markdown that Task 12 proposes. Each li
 ## People — `People/Andi.md` under `Interactions`
 
 ```md
-- 2026-08-02 09:00–10:00 — Discuss audit methodology at Head Office — [Daily Note](../Daily/2026-08-02.md)
+- 2026-08-02 09:00–10:00 — Discuss audit methodology at Head Office — [2026-08-02](../Daily/2026-08-02.md)
 ```
 
 ## Place — `Places/Head Office.md` under `Mentions`
 
 ```md
-- 2026-08-02 09:00–10:00 — Discuss audit methodology with Andi — [Daily Note](../Daily/2026-08-02.md)
+- 2026-08-02 09:00–10:00 — Discuss audit methodology with Andi — [2026-08-02](../Daily/2026-08-02.md)
 ```
 
 ## Activity Object — `Persona/Work/Activities/Cycling.md` under `Logs`
 
 ```md
-- 2026-08-02 06:30–08:00 — Morning cycling — [Daily Note](../../../Daily/2026-08-02.md)
+- 2026-08-02 06:30–08:00 — Morning cycling — [2026-08-02](../../../Daily/2026-08-02.md)
 ```
 
 ## Book — `Books/Thinking.md` under `Reading Notes`
 
 ```md
-- 2026-08-02 20:15 — Review chapter on associative memory — [Daily Note](../Daily/2026-08-02.md)
+- 2026-08-02 20:15 — Review chapter on associative memory — [2026-08-02](../Daily/2026-08-02.md)
 ```
 
 ## Review decision

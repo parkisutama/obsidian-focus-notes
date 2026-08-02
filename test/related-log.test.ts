@@ -12,7 +12,7 @@ test("formats a self-contained Event historical log", () => {
             primaryFilePath: "Daily/2026-08-02.md",
             destinationFilePath: "People/Andi.md",
         }),
-        "- 2026-08-02 09:00–10:00 — Discuss audit methodology at Head Office — [Daily Note](../Daily/2026-08-02.md)",
+        "- 2026-08-02 09:00–10:00 — Discuss audit methodology at Head Office — [2026-08-02](../Daily/2026-08-02.md)",
     );
 });
 
@@ -32,9 +32,22 @@ test("formats Task and Inbox logs without block identifiers", () => {
         destinationFilePath: "Books/Thinking.md",
     });
 
-    assert.equal(task, "- 2026-08-02 17:00 — Submit audit report — [Daily Note](../../../../../Daily/2026-08-02.md)");
-    assert.equal(inbox, "- 2026-08-02 08:08 — Ask Salma about the archive — [Daily Note](../Daily/2026-08-02.md)");
+    assert.equal(task, "- 2026-08-02 17:00 — Submit audit report — [2026-08-02](../../../../../Daily/2026-08-02.md)");
+    assert.equal(inbox, "- 2026-08-02 08:08 — Ask Salma about the archive — [2026-08-02](../Daily/2026-08-02.md)");
     assert.doesNotMatch(`${task}\n${inbox}`, /\^[A-Za-z0-9-]+/);
+});
+
+test("labels a non-Daily primary link with its file name", () => {
+    assert.match(
+        formatRelatedLog({
+            kind: "task",
+            title: "Review scope",
+            occurredAt: new Date(2026, 7, 2, 10, 0),
+            primaryFilePath: "Projects/Client Alpha.md",
+            destinationFilePath: "People/Andi.md",
+        }),
+        /\[Client Alpha\]\(\.\.\/Projects\/Client%20Alpha\.md\)$/,
+    );
 });
 
 test("formats all-day Events without a misleading time range", () => {

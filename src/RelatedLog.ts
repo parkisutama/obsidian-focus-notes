@@ -18,9 +18,19 @@ export function formatRelatedLog(input: RelatedLogInput): string {
     const sourceLink = formatRelativeMarkdownLink(
         input.destinationFilePath,
         input.primaryFilePath,
-        input.primaryLabel?.trim() || "Daily Note",
+        input.primaryLabel?.trim() || fileBasename(input.primaryFilePath),
     );
     return `- ${timestamp} — ${title} — ${sourceLink}`;
+}
+
+function fileBasename(path: string): string {
+    const fileName = path.replace(/\\/g, "/").split("/").pop() ?? path;
+    const withoutExtension = fileName.replace(/\.md$/i, "");
+    try {
+        return decodeURIComponent(withoutExtension) || "Source note";
+    } catch {
+        return withoutExtension || "Source note";
+    }
 }
 
 function formatTemporalLabel(input: RelatedLogInput): string {

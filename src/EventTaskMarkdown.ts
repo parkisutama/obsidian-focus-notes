@@ -3,8 +3,10 @@ import type { EventRecord, EventTaskRecord, HubNoteRef, TaskRecord } from "./Eve
 export function formatEventTaskEntry(record: EventTaskRecord, detailNoteRef?: HubNoteRef | null): string {
     const line = record.kind === "event" ? formatEventLine(record) : formatTaskLine(record);
     const parts = [line];
-    const description = record.description.trim();
-    if (description) parts.push(`    - ${description}`);
+    for (const descriptionLine of record.description.split(/\r?\n/)) {
+        const description = descriptionLine.trim();
+        if (description) parts.push(`    - ${description}`);
+    }
     if (detailNoteRef) {
         parts.push(`    - detail: [${detailNoteRef.title}](${encodePath(detailNoteRef.path)})`);
     }
