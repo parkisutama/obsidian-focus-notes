@@ -4,7 +4,7 @@
 
 - Date: 2026-08-02
 - Branch: `chore/developer-experience-foundation`
-- Baseline: six commits ahead of local `main`
+- Baseline: development branch ahead of local `main`; use Git for the current commit count
 - Merge status: **not ready for `main`**
 - Scope: engineering quality, feature maturity, documentation readiness, and Obsidian submission compliance
 
@@ -99,10 +99,11 @@ Before public release, split the documentation into:
 3. Complete validation and settings persistence safety.
 4. Add missing core regression coverage.
 5. Resolve Obsidian blockers: `LICENSE`, command ID, and verified `minAppVersion`.
-6. Build proper user and developer documentation, then reconcile the root README with it.
+6. Record the documentation architecture and VitePress decision without adding the site generator to this branch.
 7. Run automated gates from a clean checkout and capture real Obsidian desktop/mobile acceptance.
 8. Review the complete branch diff against `main`, including the one-time Biome formatting baseline.
-9. Merge only after all blocking rows below are closed.
+9. Merge only after the engineering and policy merge gates below are closed.
+10. Immediately after merge, bootstrap VitePress on a new short-lived branch and build the user/developer documentation before public release.
 
 ## Merge gates
 
@@ -116,11 +117,19 @@ Before public release, split the documentation into:
 - [ ] Root `LICENSE` exists and required attribution has been reviewed
 - [ ] Command IDs comply with Obsidian submission requirements
 - [ ] `minAppVersion` is evidence-backed
-- [ ] User documentation is complete and current
-- [ ] Developer and release documentation is complete and current
+- [x] Documentation tooling decision and post-merge sequence are recorded
 - [ ] Clean-checkout CI succeeds on the remote branch
 - [ ] Desktop and real-mobile acceptance evidence is recorded
 - [ ] Final diff review approves merge to `main`
+
+## Post-merge release gates
+
+- [ ] VitePress is pinned, configured, and checked in CI without entering the plugin runtime bundle
+- [ ] User documentation is complete and current
+- [ ] Developer documentation is complete and current
+- [ ] Changelog, compatibility matrix, migrations, known issues, and release instructions are current
+- [ ] Documentation build and link checks pass
+- [ ] Root README is reduced to a clear landing page linked to the documentation
 
 ## Scope discipline
 
@@ -128,4 +137,4 @@ Before public release, split the documentation into:
 - Do not mix policy fixes, runtime correctness changes, and documentation rewrites into one commit.
 - Do not treat the coverage percentage as a release target; close behavioral contracts instead.
 - Do not publish or tag a release until the default branch and release assets are consistent.
-- Preserve `.vscode/` as untracked user workspace configuration unless the user explicitly decides to share it.
+- Keep `.vscode/settings.json` as shared workspace configuration; do not add machine-specific paths, credentials, or personal secrets.

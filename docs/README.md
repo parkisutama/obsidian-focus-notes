@@ -5,6 +5,7 @@ Dokumentasi repository saat ini masih dalam tahap konsolidasi. Gunakan indeks in
 ## Source of truth
 
 - [Development status](development-status.md) — snapshot kesiapan engineering, fitur, dokumentasi, dan gate sebelum merge.
+- [ADR-001: Use VitePress for project documentation](decisions/001-use-vitepress-for-documentation.md) — keputusan tooling dan urutan implementasi dokumentasi setelah merge.
 - [Code quality remediation](spec-code-quality-remediation.md) — rencana perbaikan kualitas setelah fondasi Developer Experience.
 - [Inbox quick capture](spec-inbox-quick-capture.md) — kontrak fitur Inbox.
 - [Mobile event/task modal](spec-mobile-event-task-modal.md) — kontrak modal mobile.
@@ -16,7 +17,7 @@ Dokumentasi repository saat ini masih dalam tahap konsolidasi. Gunakan indeks in
 
 ## Documentation gaps
 
-Dokumentasi berikut belum tersedia dan harus dibuat sebelum release publik:
+VitePress akan di-bootstrap sebagai pekerjaan dokumentasi pertama setelah branch fondasi engineering di-merge ke `main`. Dokumentasi berikut belum tersedia dan harus dibuat sebelum release publik:
 
 - Panduan pengguna terpisah untuk instalasi, timer/logging, Inbox, Event, Task, Timeline, target note, dan troubleshooting.
 - Panduan developer untuk arsitektur, lifecycle Obsidian, persistence, format Markdown, testing, release, dan kontribusi.
