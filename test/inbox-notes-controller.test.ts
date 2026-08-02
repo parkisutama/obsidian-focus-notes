@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { findInboxTrigger } from "../src/InboxNotesText.ts";
+import { findInboxTrigger, suggestionSeparator } from "../src/InboxNotesText.ts";
 
 test("finds mention and tag triggers immediately before the cursor", () => {
     assert.deepEqual(findInboxTrigger("Diskusikan dengan @ndi", 22), {
@@ -30,4 +30,22 @@ test("uses the cursor position instead of a later trigger", () => {
 test("does not trigger inside email addresses or after a completed token", () => {
     assert.equal(findInboxTrigger("kirim ke andi@example.com", 25), null);
     assert.equal(findInboxTrigger("Temui @Andi besok", 17), null);
+});
+
+test("creates an editable separator after a selected suggestion when needed", () => {
+    assert.equal(suggestionSeparator("Meet @andi", 10), " ");
+    assert.equal(suggestionSeparator("Meet @andi tomorrow", 10), "");
+    assert.equal(suggestionSeparator("Meet @andi,then", 10), " ");
+});
+
+test("a second mention remains detectable after the first selected mention", () => {
+    const afterFirstSelection = "Meet Andi ";
+    const secondInput = `${afterFirstSelection}@office`;
+
+    assert.deepEqual(findInboxTrigger(secondInput, secondInput.length), {
+        kind: "mention",
+        start: afterFirstSelection.length,
+        end: secondInput.length,
+        query: "office",
+    });
 });

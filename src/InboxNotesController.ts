@@ -1,5 +1,5 @@
 import { AbstractInputSuggest, type App, type HoverPopover, Keymap } from "obsidian";
-import { findInboxTrigger, type InboxTrigger } from "./InboxNotesText";
+import { findInboxTrigger, type InboxTrigger, suggestionSeparator } from "./InboxNotesText";
 import {
     type InboxRichTextPart,
     isInboxLineBreakInput,
@@ -95,13 +95,16 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     selectSuggestion(suggestion: ContextNotesSuggestion): void {
         const trigger = this.activeTrigger;
         if (!trigger) return;
+        const separator = suggestionSeparator(this.readVisibleText(), trigger.end);
         const replacement =
             suggestion.kind === "tag"
                 ? this.inputEl.ownerDocument.createTextNode(suggestion.value)
                 : this.createLink(suggestion.value.filePath, suggestion.value.label);
 
         replaceVisibleRange(this.inputEl, trigger.start, trigger.end, replacement);
-        placeCaretAfter(replacement);
+        const cursorNode = this.inputEl.ownerDocument.createTextNode(separator);
+        replacement.parentNode?.insertBefore(cursorNode, replacement.nextSibling);
+        placeCaretAtEnd(cursorNode);
         this.emitMarkdown();
         this.activeTrigger = null;
         this.close();
@@ -261,6 +264,18 @@ function pointAtOffset(root: HTMLElement, offset: number): { node: Node; offset:
         node = walker.nextNode();
     }
     return { node: root, offset: root.childNodes.length };
+}
+
+function placeCaretAtEnd(node: Node): void {
+    const document = node.ownerDocument;
+    if (!document) return;
+    const range = document.createRange();
+    range.setStart(node, node.textContent?.length ?? 0);
+    range.collapse(true);
+    const selection = document.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    (node.parentElement as HTMLElement | null)?.focus();
 }
 
 function placeCaretAfter(node: Node): void {

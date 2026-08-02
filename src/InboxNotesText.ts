@@ -23,3 +23,9 @@ export function findInboxTrigger(text: string, cursor: number): InboxTrigger | n
         query: match[2],
     };
 }
+
+/** Keep the caret in editable text after inserting a non-editable live link. */
+export function suggestionSeparator(text: string, replacedUntil: number): string {
+    const nextCharacter = text[replacedUntil] ?? "";
+    return nextCharacter && /\s/.test(nextCharacter) ? "" : " ";
+}
