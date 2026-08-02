@@ -15,7 +15,8 @@ Jalankan `pnpm run docs:dev` untuk menulis secara lokal dan `pnpm run docs:build
 
 - [Development status](development-status.md) — snapshot kesiapan engineering, fitur, dokumentasi, dan gate sebelum merge.
 - [ADR-001: Use VitePress for project documentation](decisions/001-use-vitepress-for-documentation.md) — keputusan tooling dan struktur publikasi dokumentasi.
-- [Role-rooted contextual activity system](ideas/role-rooted-contextual-activity-system.md) — arah produk untuk capture Daily Notes, object context yang extensible, Focus Timeline, promosi, dan historical related logs.
+- [Persona-rooted contextual activity system](ideas/persona-rooted-contextual-activity-system.md) — arah produk untuk capture Daily Notes, object context yang extensible, Focus Timeline, promosi, dan historical related logs.
+- [Persona-rooted implementation plan](../tasks/persona-contextual-activity-plan.md) — dependency graph, prioritas P0–P3, acceptance criteria, checkpoint, risiko, dan batas implementasi.
 - [Code quality remediation](spec-code-quality-remediation.md) — rencana perbaikan kualitas setelah fondasi Developer Experience.
 - [Inbox quick capture](spec-inbox-quick-capture.md) — kontrak fitur Inbox.
 - [Mobile event/task modal](spec-mobile-event-task-modal.md) — kontrak modal mobile.

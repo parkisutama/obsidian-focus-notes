@@ -1,8 +1,10 @@
-# Role-Rooted Contextual Activity System
+# Persona-Rooted Contextual Activity System
 
 ## Status
 
 Refined product direction. This document defines the intended model and MVP boundary; it is not yet an implementation specification.
+
+Prioritized delivery is tracked in the [Persona-rooted implementation plan](../../tasks/persona-contextual-activity-plan.md).
 
 ## Date
 
@@ -10,13 +12,13 @@ Refined product direction. This document defines the intended model and MVP boun
 
 ## Problem statement
 
-How can a Daily Notes user capture Inbox items, activities, tasks, and focus sessions without making structural decisions too early, while still being able to retrieve, promote, physically place, archive, and view that information through life Roles and contextual objects such as People, Places, Activities, and Books?
+How can a Daily Notes user capture Inbox items, activities, tasks, and focus sessions without making structural decisions too early, while still being able to retrieve, promote, physically place, archive, and view that information through life Personas and contextual objects such as People, Places, Activities, and Books?
 
 The system must preserve plain Markdown and properties, remain useful outside Obsidian, support project-level archival snapshots, and avoid forcing every fleeting thought to become a structured file.
 
 ## Recommended direction
 
-Focus Notes becomes the capture, contextual-linking, physical-placement, and temporal-presentation layer for a role-rooted personal knowledge system.
+Focus Notes becomes the capture, contextual-linking, physical-placement, and temporal-presentation layer for a persona-rooted personal knowledge system.
 
 Daily Notes provide a cognitive boundary for one day. They collect what was planned, what happened, what remains pending, focus sessions, and reflective material. They are not the universal owner of every object in the vault. Information may remain a fleeting bullet or later be promoted to a typed Markdown note when its volume, fan-out, lifecycle, or relevance beyond the current day justifies the additional structure.
 
@@ -24,32 +26,32 @@ Obsidian Objects owns object schemas and helps generate Bases. Bases owns list, 
 
 ## Design principles
 
-1. **Capture before structure.** A user can record something without selecting its final Role, Project, Activity, or object type.
+1. **Capture before structure.** A user can record something without selecting its final Persona, Project, Activity, or object type.
 2. **Promote on evidence.** Volume, fan-out, lifecycle, or relevance beyond today triggers promotion; capture alone does not.
 3. **One data model, many presentations.** Markdown, properties, and links remain canonical while Bases and Focus Timeline provide different views.
 4. **Time and context are complementary.** Daily Notes answer _when_; contextual objects answer _who_, _where_, and _what activity_.
-5. **Physical ownership follows real-life responsibility.** Stable Roles own Projects and contextual work objects.
+5. **Physical ownership follows real-life responsibility.** Stable Personas own Projects and contextual work objects.
 6. **Links enrich records but do not make them intelligible.** Historical logs remain meaningful even when an archived snapshot no longer contains the linked Daily Note.
 7. **Portability outranks permanent synchronization.** Plain Markdown and independently useful archives are preferred over hidden databases and two-way sync machinery.
 
 ## Physical object model
 
-Roles are stable top-level life responsibilities, typically five to eight, inspired by the role model in _The 7 Habits of Highly Effective People_.
+Personas are stable top-level life responsibilities, typically five to eight, inspired by the responsibility-centered model in _The 7 Habits of Highly Effective People_.
 
 ```text
-Roles/
+Personas/
 ├── Employee/
 ├── Freelancer/
 ├── Individual/
 └── Family/
 ```
 
-Goals and Clients are flat reference notes below a Role. They are related through properties and links, not used as physical container folders.
+Goals and Clients are flat reference notes below a Persona. They are related through properties and links, not used as physical container folders.
 
 A Project is the primary physical archival unit. It may be copied or zipped with its own `.obsidian` configuration as a standalone snapshot.
 
 ```text
-Roles/Employee/Project A/
+Personas/Employee/Project A/
 ├── Project A.md
 ├── Activities/
 ├── Blocks/
@@ -63,16 +65,16 @@ Roles/Employee/Project A/
 An Activity object may have a parent Project when the Project provides necessary context:
 
 ```text
-Roles/Employee/Project A/Activities/Data Review.md
+Personas/Employee/Project A/Activities/Data Review.md
 ```
 
-An Activity that does not need a Project belongs directly to a Role:
+An Activity that does not need a Project belongs directly to a Persona:
 
 ```text
-Roles/Individual/Activities/Cycling.md
+Personas/Individual/Activities/Cycling.md
 ```
 
-People and Places are global-flat objects. Future global-flat object types may include Books, Foundations, or Calendars. These objects are referenced across Roles and Projects; they do not physically own work objects.
+People and Places are global-flat objects. Future global-flat object types may include Books, Foundations, or Calendars. These objects are referenced across Personas and Projects; they do not physically own work objects.
 
 ## Daily Note as cognitive workspace
 
@@ -105,7 +107,7 @@ An occurrence occupies time and has no completion checkbox:
 It may represent a one-off activity that requires no standalone object, or link to an Activity object that aggregates repeated occurrences:
 
 ```md
-- 2026-08-02 06:30 - 08:00 [Cycling](../Roles/Individual/Activities/Cycling.md)
+- 2026-08-02 06:30 - 08:00 [Cycling](../Personas/Individual/Activities/Cycling.md)
 ```
 
 An Activity object is a persistent context with its own note and historical logs. A one-off activity is merely an occurrence recorded in the Daily Note. Both remain event-format lines for Focus Timeline.
@@ -134,7 +136,7 @@ Every captured item starts with the option to remain fleeting:
 When the item needs its own lifecycle or attributes, the user promotes it manually with the core Note Composer plugin. Note Composer moves the selected content and leaves a concise link at the original location:
 
 ```md
-- [ ] [Draft the audit approach](../Roles/Employee/Project%20A/Tasks/Draft%20the%20audit%20approach.md)
+- [ ] [Draft the audit approach](../Personas/Employee/Project%20A/Tasks/Draft%20the%20audit%20approach.md)
 ```
 
 The initial promoted Task Note may contain only a heading:
@@ -145,7 +147,7 @@ The initial promoted Task Note may contain only a heading:
 
 Page preview can expose the linked note without requiring Focus Notes to build another preview system. Temporal metadata needed by Focus Timeline remains on the Daily Note projection so the Timeline does not need to open every promoted Task Note.
 
-Focus Notes may later help suggest a destination based on Role, Project, Activity, and object type, but it must not reimplement Note Composer extraction and replacement.
+Focus Notes may later help suggest a destination based on Persona, Project, Activity, and object type, but it must not reimplement Note Composer extraction and replacement.
 
 ## Extensible contextual suggestions
 
@@ -262,7 +264,7 @@ Clicking a card should open a stable detail modal rather than a floating page-pr
 | Capture, target routing, contextual suggestions, and related-log writing | Focus Notes |
 | Day and Week temporal visualization | Focus Timeline |
 | Portable relationships | Markdown links and properties |
-| Physical ownership and archive boundary | Role and Project folders |
+| Physical ownership and archive boundary | Persona and Project folders |
 
 ## Key assumptions to validate
 
