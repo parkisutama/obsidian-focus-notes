@@ -3,16 +3,16 @@
 ## Snapshot
 
 - Date: 2026-08-02
-- Branch: `chore/developer-experience-foundation`
-- Baseline: development branch ahead of local `main`; use Git for the current commit count
-- Merge status: **not ready for `main`**
+- Branch baseline: `main` after merge of `chore/developer-experience-foundation`
+- Documentation work: `docs/vitepress-documentation`
+- Release status: **not ready for public release**
 - Scope: engineering quality, feature maturity, documentation readiness, and Obsidian submission compliance
 
 This document is the current development checkpoint. It records verified evidence separately from planned work so a passing build is not mistaken for release readiness.
 
 ## Executive status
 
-The Developer Experience foundation is implemented and locally green. Runtime correctness remediation, core regression coverage, policy compliance, documentation, and repeatable Obsidian acceptance remain incomplete. No merge to `main` should occur until the merge gates in this document are satisfied or an exception is explicitly recorded.
+The Developer Experience foundation is implemented, locally green, and merged to `main`. Runtime correctness remediation, core regression coverage, policy compliance, complete documentation, and repeatable Obsidian acceptance remain incomplete. A passing documentation build must not be interpreted as public-release readiness.
 
 ## Engineering quality baseline
 
@@ -84,7 +84,7 @@ Audit sources:
 
 ## Documentation status
 
-The root README combines product introduction, usage fragments, settings, architecture, and developer commands. It is useful as a starting point but is not a complete user or developer documentation set.
+VitePress is now configured with publishable sources under `docs/site/`. Its primary navigation separates User content (Tutorials and How-to) from Developer content (Explanation and Reference). The root README still combines product introduction, usage fragments, settings, architecture, and developer commands, so the migration is not complete.
 
 Before public release, split the documentation into:
 
@@ -99,11 +99,11 @@ Before public release, split the documentation into:
 3. Complete validation and settings persistence safety.
 4. Add missing core regression coverage.
 5. Resolve Obsidian blockers: `LICENSE`, command ID, and verified `minAppVersion`.
-6. Record the documentation architecture and VitePress decision without adding the site generator to this branch.
+6. Keep the VitePress information architecture and build gate green while content is migrated incrementally.
 7. Run automated gates from a clean checkout and capture real Obsidian desktop/mobile acceptance.
 8. Review the complete branch diff against `main`, including the one-time Biome formatting baseline.
 9. Merge only after the engineering and policy merge gates below are closed.
-10. Immediately after merge, bootstrap VitePress on a new short-lived branch and build the user/developer documentation before public release.
+10. Complete the user/developer documentation and reduce the root README before public release.
 
 ## Merge gates
 
@@ -124,11 +124,11 @@ Before public release, split the documentation into:
 
 ## Post-merge release gates
 
-- [ ] VitePress is pinned, configured, and checked in CI without entering the plugin runtime bundle
+- [x] VitePress is pinned, configured, and checked in CI without entering the plugin runtime bundle
 - [ ] User documentation is complete and current
 - [ ] Developer documentation is complete and current
 - [ ] Changelog, compatibility matrix, migrations, known issues, and release instructions are current
-- [ ] Documentation build and link checks pass
+- [x] Documentation build and internal link checks pass
 - [ ] Root README is reduced to a clear landing page linked to the documentation
 
 ## Scope discipline

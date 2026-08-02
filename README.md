@@ -179,6 +179,16 @@ Related: `{{links}}`.
 
 ## Developer Reference
 
+### Documentation
+
+The VitePress source lives in `docs/site/` and is organized by audience: User documentation contains tutorials and use-case how-tos, while Developer documentation contains explanations and technical references. Internal ADRs, specifications, and development checkpoints remain in `docs/` but are excluded from the published site.
+
+- `pnpm run docs:dev` — start the local documentation server.
+- `pnpm run docs:build` — validate the production build and internal links.
+- `pnpm run docs:preview` — preview the built site locally.
+
+Start from [`docs/README.md`](docs/README.md) for the documentation map.
+
 ### Local quality workflow
 
 Development uses Node.js 24 and the pnpm version declared in `package.json`. Enable Corepack before the first install:

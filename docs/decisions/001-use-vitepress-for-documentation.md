@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted; implementation deferred until the current engineering-foundation branch is merged to `main`.
+Accepted and implemented on `docs/vitepress-documentation` after the engineering-foundation branch was merged to `main`.
 
 ## Date
 
@@ -24,9 +24,9 @@ The documentation system must:
 
 Use VitePress as the documentation site generator.
 
-Bootstrap VitePress as the first documentation task after `chore/developer-experience-foundation` is merged to `main`. Keep its dependencies and scripts development-only, and ensure the Obsidian production bundle remains sourced exclusively from `src/main.ts`.
+VitePress is rooted at `docs/`, with publishable content isolated in `docs/site/` through `srcDir`. Internal specifications, ADRs, and development checkpoints remain under `docs/` but outside the generated site. Keep its dependencies and scripts development-only, and ensure the Obsidian production bundle remains sourced exclusively from `src/main.ts`.
 
-The initial information architecture will separate:
+The initial information architecture separates:
 
 - User guide: installation, first run, timer and logging, Inbox, Event, Task, Timeline, settings, Markdown output, mobile behavior, storage/privacy, and troubleshooting.
 - Developer guide: architecture, module ownership, Obsidian lifecycle and API baseline, persistence, Markdown contracts, testing, CI, release, and contribution workflow.
@@ -51,7 +51,8 @@ The initial information architecture will separate:
 
 ## Consequences
 
-- Documentation bootstrap is intentionally not mixed into the current engineering-foundation branch.
+- Documentation bootstrap was implemented on a dedicated branch after the engineering-foundation merge.
 - Complete user/developer documentation remains a public-release gate, but VitePress setup is not a gate for merging this branch.
-- A later implementation must pin VitePress, add local build/check scripts, add CI validation, and document deployment separately.
+- VitePress is pinned, local build/preview scripts exist, and the production documentation build is part of `check:ci`.
+- Deployment remains a separate decision and is not configured by this ADR.
 - The root README will become a concise project landing page linking to the documentation site and contributor entry points.

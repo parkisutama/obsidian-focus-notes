@@ -4,6 +4,7 @@ export default defineConfig({
     lang: "id-ID",
     title: "Focus Notes",
     description: "Panduan penggunaan dan pengembangan Focus Notes untuk Obsidian.",
+    head: [["link", { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }]],
     srcDir: "./site",
     cleanUrls: true,
     lastUpdated: true,
