@@ -19,7 +19,7 @@ See [the full implementation plan](persona-contextual-activity-plan.md) for depe
 - [x] Task 8: Build the metadata-backed, folder-scoped context suggestion index.
 - [x] Task 9: Generalize the Inbox Markdown controller without changing behavior.
 - [ ] Checkpoint B1: Verify settings migration, index invalidation, and unchanged Inbox behavior.
-- [ ] Task 10: Integrate contextual Markdown into desktop Event and Task details.
+- [x] Task 10: Integrate contextual Markdown into desktop Event and Task details.
 - [ ] Task 11: Integrate contextual Markdown into mobile Event and Task details.
 - [ ] Task 12: Resolve configured contextual links and approve historical-log golden fixtures.
 - [ ] Checkpoint B2: Approve renderer parity and the pure related-log contract.

@@ -11,6 +11,7 @@ import { shouldUseMobileForm } from "./MobileFormPolicy";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { InboxDesktopForm } from "./InboxDesktopForm";
 import { SubmissionPolicy } from "./SubmissionPolicy";
+import { ContextNotesController } from "./InboxNotesController";
 
 export function openEventTaskForm(
     app: App,
@@ -53,6 +54,7 @@ export class EventTaskModal extends Modal {
     private eventTaskFieldsEl!: HTMLElement;
     private inboxSectionEl!: HTMLElement;
     private inboxForm: InboxDesktopForm | null = null;
+    private contextNotesController: ContextNotesController | null = null;
     constructor(
         app: App,
         private getSettings: () => FocusNotesSettings,
@@ -93,6 +95,8 @@ export class EventTaskModal extends Modal {
     onClose(): void {
         document.body.removeClass("fn-event-task-modal-open");
         this.inboxForm?.destroy();
+        this.contextNotesController?.destroy();
+        this.contextNotesController = null;
         this.inboxForm = null;
         this.contentEl.empty();
         if (!this.resolved) this.resolved = true;
@@ -338,12 +342,19 @@ export class EventTaskModal extends Modal {
 
     protected renderDescription(container: HTMLElement): void {
         const content = this.makeRow(container, "align-left");
-        const textarea = content.createEl("textarea", {
+        const editor = content.createDiv({
             cls: "fn-gcal-desc-input",
-            attr: { placeholder: "Add description or attachment...", "aria-label": "Description" },
+            attr: {
+                "data-placeholder": "Add description. Use @ for contextual notes, # for tags.",
+                "aria-label": "Description",
+            },
         });
-        textarea.rows = 3;
-        textarea.addEventListener("input", () => (this.form.description = textarea.value));
+        this.contextNotesController = new ContextNotesController(this.app, editor, {
+            initialValue: this.form.description,
+            targetFile: this.form.targetFile,
+            getContextSources: () => this.getSettings().inbox.contextSources,
+            onChange: (value) => (this.form.description = value),
+        });
     }
 
     // ---- Hub note -----------------------------------------------------------
@@ -499,7 +510,10 @@ export class EventTaskModal extends Modal {
             attr: { placeholder: "Journal/2026-05-27.md", "aria-label": "Save to file" },
         });
         fileEl.value = this.form.targetFile;
-        fileEl.addEventListener("input", () => (this.form.targetFile = fileEl.value));
+        fileEl.addEventListener("input", () => {
+            this.form.targetFile = fileEl.value;
+            this.contextNotesController?.setTargetFile(fileEl.value);
+        });
         new FileSuggest(this.app, fileEl);
 
         const headingEl = fields.createEl("input", {

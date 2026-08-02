@@ -2721,6 +2721,9 @@ body.fn-mobile-event-screen-open .suggestion-container {
     resize: vertical;
     box-sizing: border-box;
     font-family: inherit;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow-y: auto;
 }
 
 .fn-gcal-desc-input:focus {
@@ -2728,8 +2731,10 @@ body.fn-mobile-event-screen-open .suggestion-container {
     outline: none;
 }
 
-.fn-gcal-desc-input::placeholder {
+.fn-gcal-desc-input:empty::before {
+    content: attr(data-placeholder);
     color: var(--text-faint);
+    pointer-events: none;
 }
 
 /* ---- Hub note ----------------------------------------------------------- */
