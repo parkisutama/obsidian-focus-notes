@@ -65,6 +65,16 @@ export class EventTaskWriter {
         await this.insertIntoFile(file, targetHeading, formatInboxEntry(record), position);
     }
 
+    async writeRelated(
+        markdown: string,
+        targetFilePath: string,
+        targetHeading: string,
+        position: InsertPosition,
+    ): Promise<void> {
+        const file = await this.resolveOrCreateFile(targetFilePath);
+        await this.insertIntoFile(file, targetHeading, markdown, position);
+    }
+
     async createHubNote(title: string, record: EventTaskRecord, folder: string): Promise<TFile> {
         const filePath = await this.resolveNotePath(title, folder);
         const existing = this.app.vault.getAbstractFileByPath(filePath);

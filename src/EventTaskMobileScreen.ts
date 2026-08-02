@@ -1,6 +1,12 @@
 import { type App, Component, FuzzySuggestModal, Notice, type TFile, setIcon } from "obsidian";
 import { EventTaskFormState, type EventTaskKind, type HubMode, formatLocalDate } from "./EventTaskFormState";
-import { type EventTaskSubmissionResult, submitEventTask, submitInbox } from "./EventTaskSubmission";
+import {
+    type EventTaskSubmissionResult,
+    type PartialSubmissionResult,
+    retryRelatedSubmission,
+    submitEventTask,
+    submitInbox,
+} from "./EventTaskSubmission";
 import { type EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
 import { getMobileViewportMetrics } from "./MobileViewport";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
@@ -11,6 +17,7 @@ import { InboxMobileForm } from "./InboxMobileForm";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { SubmissionPolicy } from "./SubmissionPolicy";
 import { ContextNotesController } from "./InboxNotesController";
+import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
 
 export class EventTaskMobileScreen extends Component {
     private rootEl: HTMLElement | null = null;
@@ -21,6 +28,9 @@ export class EventTaskMobileScreen extends Component {
     private owner: Component | null = null;
     private readonly form: EventTaskFormState;
     private contextNotesController: ContextNotesController | null = null;
+    private pendingRecovery: PartialSubmissionResult | null = null;
+    private recoveryInFlight = false;
+    private completionNotified = false;
 
     constructor(
         private readonly app: App,
@@ -569,6 +579,10 @@ export class EventTaskMobileScreen extends Component {
 
     private async submit(): Promise<void> {
         if (this.resolved) return;
+        if (this.pendingRecovery) {
+            await this.retryRelatedLogs();
+            return;
+        }
         const settings = this.getSettings();
         const writer = new EventTaskWriter(this.app, settings.eventTask);
         if (this.form.kind === "inbox") {
@@ -576,6 +590,8 @@ export class EventTaskMobileScreen extends Component {
                 submitInbox(this.form, {
                     writer,
                     resolveTarget: () => this.resolveInboxTarget(),
+                    contextNotes: readContextSuggestionNotes(this.app),
+                    contextSources: settings.inbox.contextSources,
                 }),
             );
             return;
@@ -604,6 +620,8 @@ export class EventTaskMobileScreen extends Component {
                     if (isTFile(vaultFile))
                         void this.app.workspace.getLeaf(false).openFile(vaultFile, { active: false });
                 },
+                contextNotes: readContextSuggestionNotes(this.app),
+                contextSources: settings.inbox.contextSources,
             }),
         );
     }
@@ -624,15 +642,37 @@ export class EventTaskMobileScreen extends Component {
         if (!this.saveButtonEl) return;
         this.saveButtonEl.disabled = busy;
         this.saveButtonEl.setAttribute("aria-busy", String(busy));
-        this.saveButtonEl.setText(busy ? "Saving…" : "Save");
+        this.saveButtonEl.setText(busy ? "Saving…" : this.pendingRecovery ? "Retry related logs" : "Save");
     }
 
     private finishSubmission(result: EventTaskSubmissionResult): void {
         new Notice(result.message);
-        if (result.status !== "failure") {
-            this.resolved = true;
+        if (result.status === "failure") return;
+        if (!this.completionNotified) {
+            this.completionNotified = true;
             this.onComplete();
-            this.close();
+        }
+        if (result.status === "partial") {
+            this.pendingRecovery = result;
+            return;
+        }
+        this.pendingRecovery = null;
+        this.resolved = true;
+        this.close();
+    }
+
+    private async retryRelatedLogs(): Promise<void> {
+        const recovery = this.pendingRecovery;
+        if (!recovery || this.recoveryInFlight) return;
+        this.recoveryInFlight = true;
+        this.setSubmissionBusy(true);
+        try {
+            this.finishSubmission(await retryRelatedSubmission(recovery, new EventTaskWriter(this.app)));
+        } catch (error) {
+            new Notice(`Failed to retry related logs: ${error instanceof Error ? error.message : String(error)}`);
+        } finally {
+            this.recoveryInFlight = false;
+            this.setSubmissionBusy(false);
         }
     }
 

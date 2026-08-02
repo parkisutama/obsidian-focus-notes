@@ -1,6 +1,15 @@
 import type { EventTaskFormState, InboxRecord } from "./EventTaskFormState";
 import type { EventTaskRecord, HubNoteRef } from "./EventTaskWriter";
-import type { FocusTarget, InsertPosition } from "./types";
+import { resolveContextLinks, type ContextLinkNote } from "./ContextLinkResolver.ts";
+import { formatEventTaskEntry } from "./EventTaskMarkdown.ts";
+import { formatRelatedLog } from "./RelatedLog.ts";
+import {
+    type RelatedWriteReceipt,
+    type RelatedWriteRequest,
+    retryFailedRelatedWrites,
+    writeRelatedDestinations,
+} from "./RelatedWriteRecovery.ts";
+import type { ContextSourceSettings, FocusTarget, InsertPosition } from "./types";
 
 interface NoteFile {
     path: string;
@@ -22,6 +31,12 @@ interface EventTaskSubmissionWriter {
         position: InsertPosition,
         detailNoteRef?: HubNoteRef | null,
     ): Promise<void>;
+    writeRelated(
+        markdown: string,
+        targetFilePath: string,
+        targetHeading: string,
+        position: InsertPosition,
+    ): Promise<void>;
 }
 
 export interface EventTaskSubmissionDependencies {
@@ -31,6 +46,8 @@ export interface EventTaskSubmissionDependencies {
     resolveTargetFile(record: EventTaskRecord): string;
     findMarkdownFile(path: string): NoteFile | null;
     openFile(file: NoteFile): void;
+    contextNotes?: readonly ContextLinkNote[];
+    contextSources?: readonly ContextSourceSettings[];
 }
 
 interface InboxSubmissionWriter {
@@ -40,11 +57,19 @@ interface InboxSubmissionWriter {
         targetHeading: string,
         position: InsertPosition,
     ): Promise<void>;
+    writeRelated(
+        markdown: string,
+        targetFilePath: string,
+        targetHeading: string,
+        position: InsertPosition,
+    ): Promise<void>;
 }
 
 export interface InboxSubmissionDependencies {
     writer: InboxSubmissionWriter;
     resolveTarget(record: InboxRecord): FocusTarget | null;
+    contextNotes?: readonly ContextLinkNote[];
+    contextSources?: readonly ContextSourceSettings[];
 }
 
 export interface SubmissionCreatedNotes {
@@ -52,26 +77,15 @@ export interface SubmissionCreatedNotes {
     detailPath: string | null;
 }
 
-export interface RelatedWriteRecovery {
-    readonly destinationPath: string;
-    readonly heading: string;
-    readonly position: InsertPosition;
-    readonly record: EventTaskRecord;
-    readonly detailNoteRef: HubNoteRef | null;
-    readonly errorMessage: string;
-}
-
 export type EventTaskSubmissionResult =
     | { status: "success"; message: string; createdNotes: SubmissionCreatedNotes }
     | {
           status: "partial";
+          kind: "inbox" | "event" | "task";
           message: string;
           createdNotes: SubmissionCreatedNotes;
           primaryPath: string;
-          recovery: {
-              readonly completedPaths: readonly string[];
-              readonly failedWrites: readonly RelatedWriteRecovery[];
-          };
+          recovery: RelatedWriteReceipt;
       }
     | {
           status: "failure";
@@ -79,6 +93,27 @@ export type EventTaskSubmissionResult =
           message: string;
           createdNotes: SubmissionCreatedNotes;
       };
+
+export type PartialSubmissionResult = Extract<EventTaskSubmissionResult, { status: "partial" }>;
+
+export async function retryRelatedSubmission(
+    result: PartialSubmissionResult,
+    writer: Pick<EventTaskSubmissionWriter, "writeRelated">,
+): Promise<EventTaskSubmissionResult> {
+    const recovery = await retryFailedRelatedWrites(result.recovery, (request) =>
+        writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
+    );
+    if (recovery.failedWrites.length > 0) {
+        return partialResult(
+            result.kind,
+            result.primaryPath,
+            recovery,
+            result.createdNotes.hubPath,
+            result.createdNotes.detailPath,
+        );
+    }
+    return { status: "success", message: "Related logs saved.", createdNotes: result.createdNotes };
+}
 
 export async function submitEventTask(
     state: EventTaskFormState,
@@ -158,33 +193,24 @@ export async function submitEventTask(
         return failure("primary", "Failed to save", error, createdHubNotePath, detailNoteFilePath);
     }
 
+    const relatedWrites: RelatedWriteRequest[] = [];
     if (state.writeToHubNote && hubNoteFilePath) {
         const targetRef: HubNoteRef = { title: state.title.trim(), path: resolvedTargetFile };
         const relatedRecord = { ...record, hubNoteRef: targetRef };
-        try {
-            await writer.write(relatedRecord, hubNoteFilePath, heading, position, detailNoteRef);
-        } catch (error) {
-            const errorMessage = getErrorMessage(error);
-            return {
-                status: "partial",
-                message: `${state.kind === "event" ? "Event" : "Task"} saved, but related note failed: ${errorMessage}`,
-                createdNotes: { hubPath: createdHubNotePath, detailPath: detailNoteFilePath },
-                primaryPath: resolvedTargetFile,
-                recovery: {
-                    completedPaths: [],
-                    failedWrites: [
-                        {
-                            destinationPath: hubNoteFilePath,
-                            heading,
-                            position,
-                            record: relatedRecord,
-                            detailNoteRef,
-                            errorMessage,
-                        },
-                    ],
-                },
-            };
-        }
+        relatedWrites.push({
+            destinationPath: hubNoteFilePath,
+            heading,
+            position,
+            markdown: formatEventTaskEntry(relatedRecord, detailNoteRef),
+        });
+    }
+    relatedWrites.push(...buildEventTaskContextWrites(state, record, resolvedTargetFile, dependencies));
+
+    const recovery = await writeRelatedDestinations(relatedWrites, (request) =>
+        writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
+    );
+    if (recovery.failedWrites.length > 0) {
+        return partialResult(state.kind, resolvedTargetFile, recovery, createdHubNotePath, detailNoteFilePath);
     }
 
     return {
@@ -210,10 +236,95 @@ export async function submitInbox(
         return failure("inbox", "Failed to save Inbox", error);
     }
 
+    const relatedWrites = buildInboxContextWrites(record, target.file, dependencies);
+    const recovery = await writeRelatedDestinations(relatedWrites, (request) =>
+        dependencies.writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
+    );
+    if (recovery.failedWrites.length > 0) {
+        return partialResult("inbox", target.file, recovery, null, null);
+    }
+
     return {
         status: "success",
         message: "Inbox saved.",
         createdNotes: { hubPath: null, detailPath: null },
+    };
+}
+
+function buildEventTaskContextWrites(
+    state: EventTaskFormState,
+    record: EventTaskRecord,
+    primaryPath: string,
+    dependencies: EventTaskSubmissionDependencies,
+): RelatedWriteRequest[] {
+    const destinations = resolveConfiguredContext(record.description, primaryPath, dependencies);
+    const occurredAt =
+        record.kind === "event" ? record.start : (record.timebox?.start ?? record.due ?? state.inboxCapturedAt);
+    const endedAt = record.kind === "event" ? record.end : (record.timebox?.end ?? null);
+    return destinations.map((destination) => ({
+        destinationPath: destination.filePath,
+        heading: destination.relatedHeading,
+        position: "end",
+        markdown: formatRelatedLog({
+            kind: record.kind,
+            title: record.title,
+            occurredAt,
+            endedAt,
+            allDay:
+                record.kind === "event" ? record.allDay : !record.timebox && record.due !== null && !record.dueHasTime,
+            primaryFilePath: primaryPath,
+            destinationFilePath: destination.filePath,
+        }),
+    }));
+}
+
+function buildInboxContextWrites(
+    record: InboxRecord,
+    primaryPath: string,
+    dependencies: InboxSubmissionDependencies,
+): RelatedWriteRequest[] {
+    const destinations = resolveConfiguredContext(record.body, primaryPath, dependencies);
+    const customTitle = record.title.trim() && record.title.trim() !== record.defaultTitle.trim() ? record.title : "";
+    const title = customTitle || record.body.replace(/\s+/g, " ").trim() || "Inbox capture";
+    return destinations.map((destination) => ({
+        destinationPath: destination.filePath,
+        heading: destination.relatedHeading,
+        position: "end",
+        markdown: formatRelatedLog({
+            kind: "inbox",
+            title,
+            occurredAt: record.capturedAt,
+            primaryFilePath: primaryPath,
+            destinationFilePath: destination.filePath,
+        }),
+    }));
+}
+
+function resolveConfiguredContext(
+    markdown: string,
+    primaryPath: string,
+    dependencies: Pick<EventTaskSubmissionDependencies, "contextNotes" | "contextSources">,
+) {
+    if (!dependencies.contextNotes?.length || !dependencies.contextSources?.length) return [];
+    return resolveContextLinks(markdown, primaryPath, [...dependencies.contextNotes], [...dependencies.contextSources]);
+}
+
+function partialResult(
+    kind: "event" | "task" | "inbox",
+    primaryPath: string,
+    recovery: RelatedWriteReceipt,
+    hubPath: string | null,
+    detailPath: string | null,
+): EventTaskSubmissionResult {
+    const firstError = recovery.failedWrites[0]?.errorMessage ?? "Unknown error";
+    const label = kind === "event" ? "Event" : kind === "task" ? "Task" : "Inbox";
+    return {
+        status: "partial",
+        kind,
+        message: `${label} saved, but ${recovery.failedWrites.length} related log write(s) failed: ${firstError}`,
+        createdNotes: { hubPath, detailPath },
+        primaryPath,
+        recovery,
     };
 }
 

@@ -12,6 +12,18 @@ import {
 } from "./InboxSuggestions";
 import type { ContextSourceSettings } from "./types";
 
+export function readContextSuggestionNotes(app: App): SuggestionNote[] {
+    return app.vault.getMarkdownFiles().map((file) => {
+        const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter ?? null;
+        return {
+            path: file.path,
+            basename: file.basename,
+            aliases: parseFrontMatterAliases(frontmatter) ?? [],
+            properties: frontmatter ?? {},
+        };
+    });
+}
+
 /** Read-only bridge from Obsidian's vault metadata to Inbox suggestion data. */
 export class ObsidianInboxSuggestionSource {
     private readonly snapshot: InboxSuggestionSnapshot;
@@ -62,15 +74,7 @@ export class ObsidianInboxSuggestionSource {
     }
 
     private loadNotes(): SuggestionNote[] {
-        return this.app.vault.getMarkdownFiles().map((file) => {
-            const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter ?? null;
-            return {
-                path: file.path,
-                basename: file.basename,
-                aliases: parseFrontMatterAliases(frontmatter) ?? [],
-                properties: frontmatter ?? {},
-            };
-        });
+        return readContextSuggestionNotes(this.app);
     }
 
     private loadTags(): string[] {

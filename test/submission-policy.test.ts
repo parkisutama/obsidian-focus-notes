@@ -11,6 +11,7 @@ const success: EventTaskSubmissionResult = {
 
 const partial: EventTaskSubmissionResult = {
     status: "partial",
+    kind: "event",
     message: "Saved with a related-note failure.",
     createdNotes: { hubPath: null, detailPath: null },
     primaryPath: "Daily.md",
