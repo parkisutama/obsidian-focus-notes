@@ -133,9 +133,9 @@
 
 **Acceptance criteria:**
 
-- [ ] Defaults are Daily Note, heading `Inbox`, and root `People`/`Place` folders.
-- [ ] Users can add/remove multiple source folders without losing unrelated settings.
-- [ ] Settings controls have clear labels, descriptions, and accessible inputs.
+- [x] Defaults are Daily Note, heading `Inbox`, and root `People`/`Place` folders.
+- [x] Users can add/remove multiple source folders without losing unrelated settings.
+- [x] Settings controls have clear labels, descriptions, and accessible inputs.
 
 **Verification:**
 

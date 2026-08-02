@@ -1,7 +1,8 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type FocusNotesPlugin from "./main";
-import { InsertPosition, TimelineMode } from "./types";
+import { InboxTargetMode, InsertPosition, TimelineMode } from "./types";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
+import { normalizeInboxFolders } from "./InboxFolderSettings";
 
 export class FocusNotesSettingsTab extends PluginSettingTab {
     constructor(app: App, private plugin: FocusNotesPlugin) {
@@ -396,6 +397,80 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     })
             );
 
+        // ---- Inbox Quick Capture -------------------------------------------
+        containerEl.createEl("h3", { text: "Inbox quick capture" });
+
+        containerEl.createEl("p", {
+            cls: "setting-item-description",
+            text:
+                "Choose where quick captures go and which folders provide " +
+                "People and Place suggestions. These defaults can be overridden in Advanced."
+        });
+
+        new Setting(containerEl)
+            .setName("Default destination")
+            .setDesc("Use today's Daily Note or the active Event/Task target file.")
+            .addDropdown(dropdown =>
+                dropdown
+                    .addOption("daily-note", "Daily Note")
+                    .addOption("event-task-target", "Event/Task target")
+                    .setValue(this.plugin.settings.inbox.defaultTargetMode)
+                    .onChange(async value => {
+                        this.plugin.settings.inbox.defaultTargetMode = value as InboxTargetMode;
+                        await this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("Inbox heading")
+            .setDesc("Heading text without #. A missing heading is created at level ##.")
+            .addText(text =>
+                text
+                    .setPlaceholder("Inbox")
+                    .setValue(this.plugin.settings.inbox.heading)
+                    .onChange(async value => {
+                        this.plugin.settings.inbox.heading =
+                            value.replace(/^#+\s*/, "").trim() || "Inbox";
+                        await this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("Inbox insert position")
+            .setDesc("Choose whether new captures appear at the top or bottom of the heading.")
+            .addDropdown(dropdown =>
+                dropdown
+                    .addOption("end", "End of section (newest at bottom)")
+                    .addOption("start", "Start of section (newest at top)")
+                    .setValue(this.plugin.settings.inbox.position)
+                    .onChange(async value => {
+                        this.plugin.settings.inbox.position = value as InsertPosition;
+                        await this.plugin.saveSettings();
+                    })
+            );
+
+        this.renderInboxFolderList(
+            containerEl,
+            "People source folders",
+            "Markdown notes in these folders and subfolders appear in @ suggestions as People.",
+            this.plugin.settings.inbox.peopleFolders,
+            async folders => {
+                this.plugin.settings.inbox.peopleFolders = folders;
+                await this.plugin.saveSettings();
+            }
+        );
+
+        this.renderInboxFolderList(
+            containerEl,
+            "Place source folders",
+            "Markdown notes in these folders and subfolders appear in @ suggestions as Places.",
+            this.plugin.settings.inbox.placeFolders,
+            async folders => {
+                this.plugin.settings.inbox.placeFolders = folders;
+                await this.plugin.saveSettings();
+            }
+        );
+
         // ---- Event & Task Creation -----------------------------------------
         containerEl.createEl("h3", { text: "Event & Task Creation" });
 
@@ -536,5 +611,69 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 })
             );
+    }
+
+    private renderInboxFolderList(
+        container: HTMLElement,
+        title: string,
+        description: string,
+        folders: string[],
+        save: (folders: string[]) => Promise<void>
+    ): void {
+        container.createEl("h4", { text: title });
+        container.createEl("p", { text: description, cls: "setting-item-description" });
+        const rows = container.createDiv({ cls: "fn-inbox-folder-settings" });
+        const values = [...folders];
+        let suggesters: FolderSuggest[] = [];
+
+        const renderRows = (): void => {
+            for (const suggester of suggesters) suggester.close();
+            suggesters = [];
+            rows.empty();
+
+            values.forEach((folder, index) => {
+                new Setting(rows)
+                    .setName(`${title.replace(/s$/, "")} ${index + 1}`)
+                    .addText(text => {
+                        text
+                            .setPlaceholder(
+                                index === 0
+                                    ? (title.startsWith("People") ? "People" : "Place")
+                                    : "Folder/path"
+                            )
+                            .setValue(folder)
+                            .onChange(async value => {
+                                values[index] = value;
+                                await save(normalizeInboxFolders(values));
+                            });
+                        text.inputEl.setAttribute("aria-label", `${title} ${index + 1}`);
+                        suggesters.push(new FolderSuggest(this.app, text.inputEl));
+                    })
+                    .addExtraButton(button =>
+                        button
+                            .setIcon("trash-2")
+                            .setTooltip(`Remove ${title.toLowerCase()} ${index + 1}`)
+                            .onClick(async () => {
+                                values.splice(index, 1);
+                                await save(normalizeInboxFolders(values));
+                                renderRows();
+                            })
+                    );
+            });
+
+            new Setting(rows).addButton(button =>
+                button
+                    .setButtonText("Add folder")
+                    .setTooltip(`Add ${title.toLowerCase()}`)
+                    .onClick(() => {
+                        values.push("");
+                        renderRows();
+                        const inputs = rows.querySelectorAll<HTMLInputElement>("input");
+                        inputs.item(inputs.length - 1)?.focus();
+                    })
+            );
+        };
+
+        renderRows();
     }
 }
