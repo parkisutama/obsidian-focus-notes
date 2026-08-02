@@ -36,7 +36,14 @@ test("writes the primary record and created notes through a renderer-independent
         },
     });
 
-    assert.deepEqual(result, { ok: true, message: "Event saved." });
+    assert.deepEqual(result, {
+        status: "success",
+        message: "Event saved.",
+        createdNotes: {
+            hubPath: "Hub/Planning hub.md",
+            detailPath: "Details/Planning detail.md",
+        },
+    });
     assert.deepEqual(opened, ["Hub/Planning hub.md", "Details/Planning detail.md"]);
     assert.deepEqual(writes, [
         { path: "Daily/2026-08-01.md", hasDetail: true },
@@ -70,7 +77,107 @@ test("returns a phase-specific failure without reporting success", async () => {
         },
     });
 
-    assert.deepEqual(result, { ok: false, message: "Failed to create detail note: vault is read-only" });
+    assert.deepEqual(result, {
+        status: "failure",
+        phase: "detail-note",
+        message: "Failed to create detail note: vault is read-only",
+        createdNotes: { hubPath: null, detailPath: null },
+    });
+});
+
+test("reports notes created before a primary-write failure", async () => {
+    const state = new EventTaskFormState(new Date(2026, 7, 1, 9, 0), {
+        file: "Daily.md",
+        heading: "Schedule",
+        position: "end",
+        hubNotesFolder: "Hub",
+        detailNotesFolder: "Details",
+    });
+    state.kind = "event";
+    state.title = "Planning";
+    state.hubMode = "create";
+    state.detailNoteEnabled = true;
+
+    const result = await submitEventTask(state, {
+        defaultHubNotesFolder: "Hub",
+        defaultDetailNotesFolder: "Details",
+        resolveTargetFile: () => "Daily.md",
+        findMarkdownFile: () => null,
+        openFile: () => undefined,
+        writer: {
+            createHubNote: async () => ({ path: "Hub/Planning.md" }),
+            createDetailNote: async () => ({ path: "Details/Planning.md" }),
+            write: async () => {
+                throw new Error("daily note is read-only");
+            },
+        },
+    });
+
+    assert.deepEqual(result, {
+        status: "failure",
+        phase: "primary",
+        message: "Failed to save: daily note is read-only",
+        createdNotes: {
+            hubPath: "Hub/Planning.md",
+            detailPath: "Details/Planning.md",
+        },
+    });
+});
+
+test("returns partial with a failed-write receipt when the primary write committed", async () => {
+    const state = new EventTaskFormState(new Date(2026, 7, 1, 9, 0), {
+        file: "Daily.md",
+        heading: "Schedule",
+        position: "end",
+        hubNotesFolder: "Hub",
+        detailNotesFolder: "Details",
+    });
+    state.kind = "task";
+    state.title = "Prepare report";
+    state.hubMode = "link";
+    state.hubLinkPath = "Projects/Reporting.md";
+    state.writeToHubNote = true;
+
+    const writes: string[] = [];
+    const result = await submitEventTask(state, {
+        defaultHubNotesFolder: "Hub",
+        defaultDetailNotesFolder: "Details",
+        resolveTargetFile: () => "Daily/2026-08-01.md",
+        findMarkdownFile: (path) => ({ path }),
+        openFile: () => undefined,
+        writer: {
+            createHubNote: async () => ({ path: "unused.md" }),
+            createDetailNote: async () => ({ path: "unused.md" }),
+            write: async (_record, path) => {
+                writes.push(path);
+                if (path === "Projects/Reporting.md") {
+                    throw new Error("hub is read-only");
+                }
+            },
+        },
+    });
+
+    assert.equal(result.status, "partial");
+    if (result.status !== "partial") {
+        return;
+    }
+    assert.equal(result.message, "Task saved, but related note failed: hub is read-only");
+    assert.deepEqual(result.createdNotes, { hubPath: null, detailPath: null });
+    assert.equal(result.primaryPath, "Daily/2026-08-01.md");
+    assert.deepEqual(result.recovery.completedPaths, []);
+    assert.equal(result.recovery.failedWrites.length, 1);
+    const failedWrite = result.recovery.failedWrites[0];
+    assert.equal(failedWrite?.destinationPath, "Projects/Reporting.md");
+    assert.equal(failedWrite?.heading, "Schedule");
+    assert.equal(failedWrite?.position, "end");
+    assert.equal(failedWrite?.record.kind, "task");
+    assert.deepEqual(failedWrite?.record.hubNoteRef, {
+        title: "Prepare report",
+        path: "Daily/2026-08-01.md",
+    });
+    assert.equal(failedWrite?.detailNoteRef, null);
+    assert.equal(failedWrite?.errorMessage, "hub is read-only");
+    assert.deepEqual(writes, ["Daily/2026-08-01.md", "Projects/Reporting.md"]);
 });
 
 test("writes Inbox once without invoking Event or Task note workflows", async () => {
@@ -94,7 +201,11 @@ test("writes Inbox once without invoking Event or Task note workflows", async ()
         },
     });
 
-    assert.deepEqual(result, { ok: true, message: "Inbox saved." });
+    assert.deepEqual(result, {
+        status: "success",
+        message: "Inbox saved.",
+        createdNotes: { hubPath: null, detailPath: null },
+    });
     assert.equal(writes.length, 1);
     assert.deepEqual(writes[0], {
         record: state.buildInboxRecord(),
@@ -124,8 +235,10 @@ test("does not write Inbox when the selected destination is unavailable", async 
     });
 
     assert.deepEqual(result, {
-        ok: false,
+        status: "failure",
+        phase: "inbox",
         message: "Failed to save Inbox: Selected Inbox destination is unavailable.",
+        createdNotes: { hubPath: null, detailPath: null },
     });
     assert.equal(wrote, false);
 });
@@ -149,7 +262,9 @@ test("reports an Inbox writer failure without reporting success", async () => {
     });
 
     assert.deepEqual(result, {
-        ok: false,
+        status: "failure",
+        phase: "inbox",
         message: "Failed to save Inbox: vault is read-only",
+        createdNotes: { hubPath: null, detailPath: null },
     });
 });

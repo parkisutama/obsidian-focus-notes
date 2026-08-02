@@ -2,7 +2,7 @@ import { type App, type Component, FuzzySuggestModal, Modal, Notice, Platform, t
 import type { FocusNotesSettings, FocusTarget } from "./types";
 import { type EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
 import { EventTaskFormState, type EventTaskKind, type HubMode, formatLocalDate } from "./EventTaskFormState";
-import { submitEventTask, submitInbox } from "./EventTaskSubmission";
+import { type EventTaskSubmissionResult, submitEventTask, submitInbox } from "./EventTaskSubmission";
 import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
@@ -591,9 +591,9 @@ export class EventTaskModal extends Modal {
         this.finishSubmission(result);
     }
 
-    private finishSubmission(result: { ok: boolean; message: string }): void {
+    private finishSubmission(result: EventTaskSubmissionResult): void {
         new Notice(result.message);
-        if (result.ok) {
+        if (result.status !== "failure") {
             this.resolved = true;
             this.onComplete();
             this.close();

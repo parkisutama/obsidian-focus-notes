@@ -1,6 +1,6 @@
 import { type App, Component, FuzzySuggestModal, Notice, type TFile, setIcon } from "obsidian";
 import { EventTaskFormState, type EventTaskKind, type HubMode, formatLocalDate } from "./EventTaskFormState";
-import { submitEventTask, submitInbox } from "./EventTaskSubmission";
+import { type EventTaskSubmissionResult, submitEventTask, submitInbox } from "./EventTaskSubmission";
 import { type EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
 import { getMobileViewportMetrics } from "./MobileViewport";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
@@ -589,9 +589,9 @@ export class EventTaskMobileScreen extends Component {
         this.finishSubmission(result);
     }
 
-    private finishSubmission(result: { ok: boolean; message: string }): void {
+    private finishSubmission(result: EventTaskSubmissionResult): void {
         new Notice(result.message);
-        if (result.ok) {
+        if (result.status !== "failure") {
             this.resolved = true;
             this.onComplete();
             this.close();
