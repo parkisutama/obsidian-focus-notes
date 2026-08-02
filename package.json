@@ -15,14 +15,21 @@
         "check": "pnpm run lint && pnpm run typecheck && pnpm run test",
         "check:ci": "pnpm run check && pnpm run build && pnpm run verify:artifacts"
     },
-    "keywords": ["obsidian", "focus", "pomodoro", "timer", "stopwatch", "logger"],
+    "keywords": [
+        "obsidian",
+        "focus",
+        "pomodoro",
+        "timer",
+        "stopwatch",
+        "logger"
+    ],
     "author": "Parkis",
     "license": "MIT",
     "devDependencies": {
         "@types/node": "^20.0.0",
         "builtin-modules": "^3.3.0",
-        "esbuild": "^0.20.0",
-        "obsidian": "latest",
+        "esbuild": "0.28.1",
+        "obsidian": "1.12.3",
         "tslib": "^2.6.0",
         "typescript": "^5.3.0"
     }
