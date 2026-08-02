@@ -2980,6 +2980,90 @@ body.fn-mobile-event-screen-open {
     opacity: 0.75;
 }
 
+/* ---- Inbox quick capture ---------------------------------------------- */
+
+.fn-inbox-notes-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fn-inbox-notes-input {
+    width: 100%;
+    min-height: 112px;
+    padding: 10px 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+    line-height: var(--line-height-normal);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.fn-inbox-notes-input:focus {
+    border-color: var(--interactive-accent);
+}
+
+.fn-inbox-notes-input:empty::before {
+    content: attr(data-placeholder);
+    color: var(--text-faint);
+    pointer-events: none;
+}
+
+.fn-inbox-advanced {
+    margin: 4px 20px 10px 52px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.fn-inbox-advanced > summary {
+    padding: 10px 0;
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+    cursor: pointer;
+}
+
+.fn-inbox-advanced-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+    padding-bottom: 8px;
+}
+
+.fn-inbox-advanced-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+
+.fn-inbox-advanced-fields input,
+.fn-inbox-advanced-fields select,
+.fn-inbox-advanced-fields textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.fn-inbox-target-summary {
+    grid-column: 1 / -1;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    overflow-wrap: anywhere;
+}
+
+.fn-inbox-suggestion-label {
+    color: var(--text-normal);
+}
+
+.fn-inbox-suggestion-context {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+
 /* ---- Utility ----------------------------------------------------------- */
 
 .fn-gcal-hidden {

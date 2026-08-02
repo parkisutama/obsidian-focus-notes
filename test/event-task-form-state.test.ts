@@ -23,6 +23,7 @@ test("initializes an immutable Inbox capture independently of Event and Task", (
     assert.equal(state.inboxTitle, "2026-08-01 15:40");
     assert.equal(state.inboxCapturedAt.getTime(), anchorDate.getTime());
     assert.equal(state.inboxTargetMode, "daily-note");
+    assert.equal(state.inboxTargetFileOverride, "");
     assert.equal(state.inboxHeading, "Inbox");
     assert.equal(state.inboxPosition, "start");
     assert.deepEqual(state.inboxPeopleFoldersOverride, []);
@@ -53,6 +54,23 @@ test("builds an Inbox record without changing the EventTask record contract", ()
         title: "Hubungi vendor",
         body: "Catatan #follow-up"
     });
+});
+
+test("keeps Inbox and Event/Task titles independent while switching kinds", () => {
+    const state = new EventTaskFormState(new Date(2026, 7, 2, 10, 15), {
+        file: "Daily.md",
+        heading: "Schedule",
+        position: "end",
+        hubNotesFolder: "Hub",
+        detailNotesFolder: "Details"
+    });
+
+    state.setTitleForKind("event", "Planning event");
+    state.setTitleForKind("inbox", "Quick thought");
+
+    assert.equal(state.getTitleForKind("task"), "Planning event");
+    assert.equal(state.getTitleForKind("event"), "Planning event");
+    assert.equal(state.getTitleForKind("inbox"), "Quick thought");
 });
 
 test("builds the same default event record independently of a renderer", () => {

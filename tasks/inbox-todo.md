@@ -158,13 +158,13 @@
 
 **Acceptance criteria:**
 
-- [ ] Inbox shows only Title, Notes, Save, and collapsed Advanced in its primary flow.
-- [ ] Advanced overrides destination/heading/position/source folders without changing Settings.
-- [ ] Switching chips preserves each variant's state and Event/Task behavior.
+- [x] Inbox shows only Title, Notes, Save, and collapsed Advanced in its primary flow.
+- [x] Advanced overrides destination/heading/position/source folders without changing Settings.
+- [x] Switching chips preserves each variant's state and Event/Task behavior.
 
 **Verification:**
 
-- [ ] Run all automated gates through Checkpoint 4.
+- [x] Run all automated gates through Checkpoint 4.
 - [ ] Manually save both target modes and inspect/click exact Markdown links.
 
 **Dependencies:** Tasks 3, 5, and 6.

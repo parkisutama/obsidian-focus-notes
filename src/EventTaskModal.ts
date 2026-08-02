@@ -10,13 +10,15 @@ import {
 } from "obsidian";
 import { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
 import { EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
-import { EventTaskFormState, HubMode, formatLocalDate } from "./EventTaskFormState";
-import { submitEventTask } from "./EventTaskSubmission";
+import { EventTaskFormState, EventTaskKind, HubMode, formatLocalDate } from "./EventTaskFormState";
+import { submitEventTask, submitInbox } from "./EventTaskSubmission";
 import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { isTFile } from "./utils";
 import { shouldUseMobileForm } from "./MobileFormPolicy";
+import { selectInboxTarget } from "./InboxTarget";
+import { InboxDesktopForm } from "./InboxDesktopForm";
 
 export function openEventTaskForm(
     app: App,
@@ -54,6 +56,10 @@ export class EventTaskModal extends Modal {
     private remindersListEl!: HTMLElement;
     private detailNoteRowEl!: HTMLElement;
     private detailNoteInputEl!: HTMLInputElement;
+    private titleInputEl!: HTMLInputElement;
+    private eventTaskFieldsEl!: HTMLElement;
+    private inboxSectionEl!: HTMLElement;
+    private inboxForm: InboxDesktopForm | null = null;
     constructor(
         app: App,
         private getSettings: () => FocusNotesSettings,
@@ -71,7 +77,8 @@ export class EventTaskModal extends Modal {
             heading: settings.eventTask.defaultSaveHeading || resolved.heading,
             position: resolved.position,
             hubNotesFolder: settings.eventTask.hubNotesFolder,
-            detailNotesFolder: settings.eventTask.detailNotesFolder
+            detailNotesFolder: settings.eventTask.detailNotesFolder,
+            inbox: settings.inbox
         });
     }
 
@@ -83,6 +90,8 @@ export class EventTaskModal extends Modal {
     }
 
     onClose(): void {
+        this.inboxForm?.destroy();
+        this.inboxForm = null;
         this.contentEl.empty();
         if (!this.resolved) this.resolved = true;
     }
@@ -94,15 +103,25 @@ export class EventTaskModal extends Modal {
         this.renderTabs(contentEl);
 
         const body = contentEl.createDiv({ cls: "fn-gcal-body" });
-        this.eventSectionEl = body.createDiv({ cls: "fn-gcal-tab-section" });
-        this.taskSectionEl = body.createDiv({ cls: "fn-gcal-tab-section fn-gcal-hidden" });
+        this.eventTaskFieldsEl = body.createDiv({ cls: "fn-gcal-event-task-fields" });
+        this.eventSectionEl = this.eventTaskFieldsEl.createDiv({ cls: "fn-gcal-tab-section" });
+        this.taskSectionEl = this.eventTaskFieldsEl.createDiv({ cls: "fn-gcal-tab-section fn-gcal-hidden" });
 
         this.renderEventSection(this.eventSectionEl);
         this.renderTaskSection(this.taskSectionEl);
-        this.renderDescription(body);
-        this.renderHubNote(body);
-        this.renderDetailNote(body);
-        this.renderSaveTo(body);
+        this.renderDescription(this.eventTaskFieldsEl);
+        this.renderHubNote(this.eventTaskFieldsEl);
+        this.renderDetailNote(this.eventTaskFieldsEl);
+        this.renderSaveTo(this.eventTaskFieldsEl);
+
+        this.inboxSectionEl = body.createDiv({ cls: "fn-gcal-tab-section fn-gcal-hidden" });
+        this.inboxForm = new InboxDesktopForm({
+            app: this.app,
+            form: this.form,
+            getSettings: this.getSettings,
+            resolveTarget: () => this.resolveInboxTarget()
+        });
+        this.inboxForm.render(this.inboxSectionEl);
         this.renderButtons(contentEl);
     }
 
@@ -111,25 +130,27 @@ export class EventTaskModal extends Modal {
     // =========================================================================
 
     protected renderTitle(container: HTMLElement): void {
-        const titleInput = container.createEl("input", {
+        this.titleInputEl = container.createEl("input", {
             type: "text",
             cls: "fn-gcal-title-input",
             attr: { placeholder: "Add title", "aria-label": "Title" }
         });
-        titleInput.addEventListener("input", () => {
-            this.setTitleValue(titleInput.value);
+        this.titleInputEl.value = this.form.getTitleForKind(this.form.kind);
+        this.titleInputEl.addEventListener("input", () => {
+            this.setTitleValue(this.titleInputEl.value);
         });
-        titleInput.addEventListener("keydown", evt => {
+        this.titleInputEl.addEventListener("keydown", evt => {
             if (evt.key === "Enter" && !evt.shiftKey) {
                 evt.preventDefault();
                 void this.submit();
             }
         });
-        window.setTimeout(() => titleInput.focus(), 50);
+        window.setTimeout(() => this.titleInputEl.focus(), 50);
     }
 
     protected setTitleValue(value: string): void {
-        this.form.title = value;
+        this.form.setTitleForKind(this.form.kind, value);
+        if (this.form.kind === "inbox") return;
         // Sync hub note name only while still at default
         if (this.form.hubMode === "create" && this.hubInputEl) {
             if (!this.hubInputEl.value || this.hubInputEl.value === this.form.hubCreateName) {
@@ -141,31 +162,71 @@ export class EventTaskModal extends Modal {
 
     protected renderTabs(container: HTMLElement): void {
         const tabs = container.createDiv({ cls: "fn-gcal-tabs" });
+        const inboxBtn = tabs.createEl("button", {
+            cls: "fn-gcal-tab",
+            text: "Inbox",
+            attr: { type: "button", "aria-pressed": "false" }
+        });
         const eventBtn = tabs.createEl("button", {
             cls: "fn-gcal-tab fn-gcal-tab--active",
             text: "Event",
-            attr: { type: "button" }
+            attr: { type: "button", "aria-pressed": "true" }
         });
         const taskBtn = tabs.createEl("button", {
             cls: "fn-gcal-tab",
             text: "Task",
-            attr: { type: "button" }
+            attr: { type: "button", "aria-pressed": "false" }
         });
 
-        eventBtn.addEventListener("click", () => {
-            this.form.kind = "event";
-            eventBtn.addClass("fn-gcal-tab--active");
-            taskBtn.removeClass("fn-gcal-tab--active");
-            this.eventSectionEl.removeClass("fn-gcal-hidden");
-            this.taskSectionEl.addClass("fn-gcal-hidden");
+        const buttons = new Map<EventTaskKind, HTMLButtonElement>([
+            ["inbox", inboxBtn],
+            ["event", eventBtn],
+            ["task", taskBtn]
+        ]);
+        const activate = (kind: EventTaskKind): void => {
+            this.form.kind = kind;
+            this.titleInputEl.value = this.form.getTitleForKind(kind);
+            for (const [value, button] of buttons) {
+                const active = value === kind;
+                button.toggleClass("fn-gcal-tab--active", active);
+                button.setAttribute("aria-pressed", String(active));
+            }
+            this.eventTaskFieldsEl.toggleClass("fn-gcal-hidden", kind === "inbox");
+            this.inboxSectionEl.toggleClass("fn-gcal-hidden", kind !== "inbox");
+            this.eventSectionEl.toggleClass("fn-gcal-hidden", kind !== "event");
+            this.taskSectionEl.toggleClass("fn-gcal-hidden", kind !== "task");
+        };
+        inboxBtn.addEventListener("click", () => activate("inbox"));
+        eventBtn.addEventListener("click", () => activate("event"));
+        taskBtn.addEventListener("click", () => activate("task"));
+    }
+
+    // ---- Inbox section -----------------------------------------------------
+
+    private resolveInboxTarget(): FocusTarget | null {
+        const resolver = new TargetResolver(this.app, this.getSettings());
+        const fileOverride = this.form.inboxTargetFileOverride.trim();
+        if (fileOverride) {
+            return resolver.resolve({
+                file: fileOverride,
+                heading: this.form.inboxHeading.replace(/^#+\s*/, "").trim(),
+                position: this.form.inboxPosition
+            }, this.form.inboxCapturedAt);
+        }
+        const dailyNoteTarget = resolver.getDailyNoteTarget(this.form.inboxCapturedAt);
+        const eventTaskTarget = resolver.resolve({
+            file: this.form.targetFile,
+            heading: this.form.targetHeading,
+            position: this.form.targetPosition
+        }, this.form.inboxCapturedAt);
+        const selected = selectInboxTarget({
+            mode: this.form.inboxTargetMode,
+            dailyNoteTarget,
+            eventTaskTarget,
+            heading: this.form.inboxHeading,
+            position: this.form.inboxPosition
         });
-        taskBtn.addEventListener("click", () => {
-            this.form.kind = "task";
-            taskBtn.addClass("fn-gcal-tab--active");
-            eventBtn.removeClass("fn-gcal-tab--active");
-            this.taskSectionEl.removeClass("fn-gcal-hidden");
-            this.eventSectionEl.addClass("fn-gcal-hidden");
-        });
+        return selected;
     }
 
     // ---- Event section ------------------------------------------------------
@@ -492,6 +553,17 @@ export class EventTaskModal extends Modal {
     protected async submit(): Promise<void> {
         if (this.resolved) return;
 
+        const settings = this.getSettings();
+        const writer = new EventTaskWriter(this.app, settings.eventTask);
+        if (this.form.kind === "inbox") {
+            const result = await submitInbox(this.form, {
+                writer,
+                resolveTarget: () => this.resolveInboxTarget()
+            });
+            this.finishSubmission(result);
+            return;
+        }
+
         if (!this.form.title.trim()) {
             new Notice("Please enter a title.");
             return;
@@ -501,8 +573,6 @@ export class EventTaskModal extends Modal {
             return;
         }
 
-        const settings = this.getSettings();
-        const writer = new EventTaskWriter(this.app, settings.eventTask);
         const result = await submitEventTask(this.form, {
             writer,
             defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
@@ -520,6 +590,10 @@ export class EventTaskModal extends Modal {
             }
         });
 
+        this.finishSubmission(result);
+    }
+
+    private finishSubmission(result: { ok: boolean; message: string }): void {
         new Notice(result.message);
         if (result.ok) {
             this.resolved = true;

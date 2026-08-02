@@ -45,6 +45,7 @@ export class EventTaskFormState {
     inboxTitle: string;
     inboxBody = "";
     inboxTargetMode: InboxTargetMode;
+    inboxTargetFileOverride = "";
     inboxHeading: string;
     inboxPosition: InsertPosition;
     inboxPeopleFoldersOverride: string[] = [];
@@ -160,6 +161,15 @@ export class EventTaskFormState {
             title: this.inboxTitle.trim(),
             body: this.inboxBody
         };
+    }
+
+    getTitleForKind(kind: EventTaskKind): string {
+        return kind === "inbox" ? this.inboxTitle : this.title;
+    }
+
+    setTitleForKind(kind: EventTaskKind, value: string): void {
+        if (kind === "inbox") this.inboxTitle = value;
+        else this.title = value;
     }
 
     private parseDateTime(date: string, time: string): Date {
