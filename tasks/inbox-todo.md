@@ -108,13 +108,13 @@
 
 **Acceptance criteria:**
 
-- [ ] Selecting `@` inserts one relative Markdown link; selecting `#` inserts one ordinary tag.
-- [ ] Cursor-in-middle, multiple triggers, dismissal, and unselected triggers preserve surrounding text.
-- [ ] State synchronization stores plain Markdown and never editor HTML.
+- [x] Selecting `@` inserts one relative Markdown link; selecting `#` inserts one ordinary tag.
+- [x] Cursor-in-middle, multiple triggers, dismissal, and unselected triggers preserve surrounding text.
+- [x] State synchronization stores plain Markdown and never editor HTML.
 
 **Verification:**
 
-- [ ] Unit-test token/range and replacement helpers.
+- [x] Unit-test token/range and replacement helpers.
 - [ ] Perform a minimal Obsidian desktop interaction check before UI integration continues.
 
 **Dependencies:** Tasks 2 and 4.
