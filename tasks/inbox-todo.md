@@ -84,14 +84,14 @@
 
 **Acceptance criteria:**
 
-- [ ] People/Place recursively support multiple roots, filenames, aliases, and duplicate-name context.
-- [ ] Tags merge inline/frontmatter metadata and are de-duplicated.
-- [ ] Missing folders return no group results and matching is bounded/fuzzy.
+- [x] People/Place recursively support multiple roots, filenames, aliases, and duplicate-name context.
+- [x] Tags merge inline/frontmatter metadata and are de-duplicated.
+- [x] Missing folders return no group results and matching is bounded/fuzzy.
 
 **Verification:**
 
-- [ ] Add isolated index/ranking tests using vault/cache fixtures.
-- [ ] Run `pnpm test` and `pnpm run typecheck`.
+- [x] Add isolated index/ranking tests using vault/cache fixtures.
+- [x] Run `pnpm test` and `pnpm run typecheck`.
 
 **Dependencies:** Task 1.
 
