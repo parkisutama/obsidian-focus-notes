@@ -2,18 +2,13 @@ import type { FocusTarget, InboxTargetMode, InsertPosition } from "./types";
 
 interface InboxTargetResolver {
     resolve(target: FocusTarget, when: Date): FocusTarget;
-    getDailyNoteTarget(when: Date): FocusTarget | null;
 }
 
 export interface InboxFormTargetState {
-    inboxTargetFileOverride: string;
-    inboxTargetMode: InboxTargetMode;
+    inboxTargetFile: string;
     inboxHeading: string;
     inboxPosition: InsertPosition;
     inboxCapturedAt: Date;
-    targetFile: string;
-    targetHeading: string;
-    targetPosition: InsertPosition;
 }
 
 export interface InboxTargetSelection {
@@ -43,24 +38,10 @@ export function resolveInboxFormTarget(
     resolver: InboxTargetResolver,
     form: InboxFormTargetState
 ): FocusTarget | null {
-    const fileOverride = form.inboxTargetFileOverride.trim();
-    if (fileOverride) {
-        return resolver.resolve({
-            file: fileOverride,
-            heading: form.inboxHeading.replace(/^#+\s*/, "").trim(),
-            position: form.inboxPosition
-        }, form.inboxCapturedAt);
-    }
-
-    return selectInboxTarget({
-        mode: form.inboxTargetMode,
-        dailyNoteTarget: resolver.getDailyNoteTarget(form.inboxCapturedAt),
-        eventTaskTarget: resolver.resolve({
-            file: form.targetFile,
-            heading: form.targetHeading,
-            position: form.targetPosition
-        }, form.inboxCapturedAt),
-        heading: form.inboxHeading,
+    if (!form.inboxTargetFile.trim()) return null;
+    return resolver.resolve({
+        file: form.inboxTargetFile.trim(),
+        heading: form.inboxHeading.replace(/^#+\s*/, "").trim(),
         position: form.inboxPosition
-    });
+    }, form.inboxCapturedAt);
 }

@@ -1,5 +1,6 @@
 import { App, moment } from "obsidian";
 import { FocusNotesSettings, FocusTarget } from "./types";
+import { normalizeDailyNoteFormat } from "./DailyNotePath";
 
 /**
  * Resolves abstract targets (which may contain template tokens or be empty)
@@ -29,7 +30,7 @@ export class TargetResolver {
             const dn = this.readDailyNotesConfig();
             if (dn) {
                 const folder = dn.folder ? `${dn.folder.replace(/\/+$/, "")}/` : "";
-                const fmt = dn.format || this.settings.dailyNoteFormat;
+                const fmt = normalizeDailyNoteFormat(dn.format, this.settings.dailyNoteFormat);
                 return {
                     file: `${folder}{{date:${fmt}}}.md`,
                     heading: this.settings.defaultTarget.heading,
@@ -70,7 +71,7 @@ export class TargetResolver {
         const folder = dailyNotes.folder
             ? `${dailyNotes.folder.replace(/\/+$/, "")}/`
             : "";
-        const format = dailyNotes.format || this.settings.dailyNoteFormat;
+        const format = normalizeDailyNoteFormat(dailyNotes.format, this.settings.dailyNoteFormat);
         return this.resolve({
             file: `${folder}{{date:${format}}}.md`,
             heading: "",

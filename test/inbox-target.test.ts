@@ -52,24 +52,21 @@ test("does not silently fall back when the selected target cannot resolve", () =
     );
 });
 
-test("gives an explicit file override precedence for every renderer", () => {
+test("uses the directly editable Inbox target for every renderer", () => {
     const capturedAt = new Date(2026, 7, 2, 15, 40);
     const form = new EventTaskFormState(capturedAt, {
         file: "Planning.md",
         heading: "Schedule",
         position: "end",
         hubNotesFolder: "Hub",
-        detailNotesFolder: "Details"
+        detailNotesFolder: "Details",
+        inboxTargetFile: "Captures/Quick.md"
     });
-    form.inboxTargetFileOverride = "Captures/Quick.md";
     form.inboxHeading = "## Quick Inbox";
     form.inboxPosition = "start";
 
     const resolved = resolveInboxFormTarget({
-        resolve: target => ({ ...target, file: target.file.replace("Quick", "2026-08-02") }),
-        getDailyNoteTarget: () => {
-            throw new Error("Daily Note must not be read when an override exists");
-        }
+        resolve: target => ({ ...target, file: target.file.replace("Quick", "2026-08-02") })
     }, form);
 
     assert.deepEqual(resolved, {

@@ -16,14 +16,15 @@ test("initializes an immutable Inbox capture independently of Event and Task", (
             position: "start",
             peopleFolders: ["People"],
             placeFolders: ["Place"]
-        }
+        },
+        inboxTargetFile: "Daily/2026-08-01.md"
     });
 
+    assert.equal(state.kind, "inbox");
     assert.equal(state.inboxDefaultTitle, "2026-08-01 15:40");
     assert.equal(state.inboxTitle, "2026-08-01 15:40");
     assert.equal(state.inboxCapturedAt.getTime(), anchorDate.getTime());
-    assert.equal(state.inboxTargetMode, "daily-note");
-    assert.equal(state.inboxTargetFileOverride, "");
+    assert.equal(state.inboxTargetFile, "Daily/2026-08-01.md");
     assert.equal(state.inboxHeading, "Inbox");
     assert.equal(state.inboxPosition, "start");
     assert.deepEqual(state.inboxPeopleFoldersOverride, []);
@@ -82,6 +83,7 @@ test("builds the same default event record independently of a renderer", () => {
         hubNotesFolder: "Hub",
         detailNotesFolder: "Details"
     });
+    state.kind = "event";
     state.title = "  Project review  ";
     state.description = "Bring the draft";
 

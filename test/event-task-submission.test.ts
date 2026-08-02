@@ -11,6 +11,7 @@ test("writes the primary record and created notes through a renderer-independent
         hubNotesFolder: "Hub",
         detailNotesFolder: "Details"
     });
+    state.kind = "event";
     state.title = "Planning";
     state.hubMode = "create";
     state.hubCreateName = "Planning hub";
@@ -50,6 +51,7 @@ test("returns a phase-specific failure without reporting success", async () => {
         hubNotesFolder: "Hub",
         detailNotesFolder: "Details"
     });
+    state.kind = "event";
     state.title = "Planning";
     state.detailNoteEnabled = true;
 

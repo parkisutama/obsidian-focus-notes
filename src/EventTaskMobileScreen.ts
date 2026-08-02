@@ -15,7 +15,7 @@ import { TargetResolver } from "./TargetResolver";
 import { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
 import { InboxMobileForm } from "./InboxMobileForm";
-import { resolveInboxFormTarget } from "./InboxTarget";
+import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 
 export class EventTaskMobileScreen extends Component {
     private rootEl: HTMLElement | null = null;
@@ -35,13 +35,21 @@ export class EventTaskMobileScreen extends Component {
         const settings = getSettings();
         const resolver = new TargetResolver(app, settings);
         const target = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+        const inboxTarget = selectInboxTarget({
+            mode: settings.inbox.defaultTargetMode,
+            dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),
+            eventTaskTarget: target,
+            heading: settings.inbox.heading,
+            position: settings.inbox.position
+        });
         this.form = new EventTaskFormState(anchorDate, {
             file: target.file,
             heading: settings.eventTask.defaultSaveHeading || target.heading,
             position: target.position,
             hubNotesFolder: settings.eventTask.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
-            inbox: settings.inbox
+            inbox: settings.inbox,
+            inboxTargetFile: inboxTarget?.file ?? ""
         });
     }
 
@@ -113,11 +121,11 @@ export class EventTaskMobileScreen extends Component {
             }
         });
 
-        const eventTaskFields = this.bodyEl.createDiv({ cls: "fn-mobile-event-task-fields" });
+        const eventTaskFields = this.bodyEl.createDiv({ cls: "fn-mobile-event-task-fields fn-gcal-hidden" });
         const eventSection = eventTaskFields.createDiv({ cls: "fn-mobile-event-primary" });
         const taskSection = eventTaskFields.createDiv({ cls: "fn-mobile-event-primary fn-gcal-hidden" });
         const taskOptions = eventTaskFields.createDiv({ cls: "fn-mobile-event-task-options fn-gcal-hidden" });
-        const inboxSection = this.bodyEl.createDiv({ cls: "fn-mobile-inbox-primary fn-gcal-hidden" });
+        const inboxSection = this.bodyEl.createDiv({ cls: "fn-mobile-inbox-primary" });
         this.renderKindSelector(this.bodyEl, kind => {
             title.value = this.form.getTitleForKind(kind);
             const isInbox = kind === "inbox";
@@ -144,6 +152,7 @@ export class EventTaskMobileScreen extends Component {
 
         new InboxMobileForm({
             app: this.app,
+            owner: this,
             form: this.form,
             getSettings: this.getSettings,
             resolveTarget: () => this.resolveInboxTarget(),
@@ -167,14 +176,14 @@ export class EventTaskMobileScreen extends Component {
         });
         container.insertBefore(group, before);
         const inboxButton = group.createEl("button", {
-            cls: "fn-mobile-event-kind-button",
+            cls: "fn-mobile-event-kind-button is-active",
             text: "Inbox",
-            attr: { type: "button", "aria-pressed": "false" }
+            attr: { type: "button", "aria-pressed": "true" }
         });
         const eventButton = group.createEl("button", {
-            cls: "fn-mobile-event-kind-button is-active",
+            cls: "fn-mobile-event-kind-button",
             text: "Event",
-            attr: { type: "button", "aria-pressed": "true" }
+            attr: { type: "button", "aria-pressed": "false" }
         });
         const taskButton = group.createEl("button", {
             cls: "fn-mobile-event-kind-button",

@@ -3056,6 +3056,31 @@ body.fn-mobile-event-screen-open {
     pointer-events: none;
 }
 
+.fn-inbox-link-preview {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-height: 28px;
+    padding-top: 4px;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+
+.fn-inbox-link-preview-label {
+    flex: 0 0 auto;
+}
+
+.fn-inbox-link-preview-links,
+.fn-inbox-link-preview-links p {
+    display: inline;
+    margin: 0;
+}
+
+.fn-inbox-link-preview-links a.internal-link {
+    color: var(--link-color);
+    text-decoration: var(--link-decoration);
+}
+
 .fn-inbox-advanced {
     margin: 4px 20px 10px 52px;
     border-top: 1px solid var(--background-modifier-border);

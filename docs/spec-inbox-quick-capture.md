@@ -96,22 +96,29 @@ Example:
 - A tag typed without selecting a suggestion remains valid, allowing new tags to be created.
 - Duplicate tags are de-duplicated in the suggestion list; selecting a suggestion does not alter other text.
 
-### Destination
+### Save target
 
-Inbox supports two destination modes:
+Settings support two modes for choosing the initial Inbox target:
 
 1. `daily-note`: the resolved Daily Note for `capturedAt`.
 2. `event-task-target`: the same active target file Event/Task would resolve for `capturedAt`.
 
-Settings define the default mode. Advanced may override the mode for the current capture without changing global settings.
+The resolved initial target is copied into an editable `Save to` field when the form opens. Advanced edits the concrete note path directly; it does not expose a second destination-mode selector or a separate override field.
 
 - The default heading is `Inbox` and is configurable globally.
 - Advanced may override the heading for the current capture.
 - Heading values are stored without leading `#`; when missing, the writer creates `## <heading>`.
 - The configured insert position is `start` or `end` and can be overridden for the current capture.
-- The Event/Task target option reuses the existing active target resolution, but replaces its heading with the Inbox heading.
-- The Daily Note option resolves the core Daily Notes folder and date format when available. If it cannot resolve a usable path, submission fails with a clear message and does not silently write to another file.
+- The Event/Task default reuses the existing active target resolution, but replaces its heading with the Inbox heading.
+- The Daily Note default resolves the core Daily Notes folder and date format when available. Trailing separators in the format are normalized so the target never ends in `/.md`.
+- If the initial target cannot resolve, the editable field remains available; saving without a usable target fails clearly and never silently writes elsewhere.
 - Advanced shows the resolved destination summary before saving.
+
+### Live link feedback
+
+- Notes remain editable and persisted as plain Markdown source.
+- Selected Markdown links are also rendered in a compact `Linked context` row through Obsidian's public Markdown renderer.
+- Rendered internal links use the current `Save to` path as their source path, so clicking and Page Preview resolve relative links correctly.
 
 ### Suggestion source configuration
 
@@ -126,6 +133,7 @@ Settings define the default mode. Advanced may override the mode for the current
 
 - UI copy remains English, matching the existing Event/Task form.
 - Desktop and mobile use the same state, suggestion, target-resolution, and submission contracts, but keep their independent renderers.
+- Inbox is the initially selected chip when the create form opens.
 - The user's phrase “normal Markdown link” means `[label](relative/path.md)`, not `[[wikilink]]`.
 - Capture time uses the device's local timezone and is stored to minute precision in visible Markdown.
 - Existing Event and Task Markdown behavior remains byte-for-byte unchanged for equivalent inputs.

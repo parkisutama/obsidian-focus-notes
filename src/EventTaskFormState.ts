@@ -1,5 +1,5 @@
 import type { EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
-import type { InboxSettings, InboxTargetMode, InsertPosition } from "./types";
+import type { InboxSettings, InsertPosition } from "./types";
 
 export type EventTaskKind = "inbox" | "event" | "task";
 export type HubMode = "none" | "link" | "create";
@@ -26,6 +26,7 @@ export interface EventTaskFormDefaults {
     hubNotesFolder: string;
     detailNotesFolder: string;
     inbox?: InboxSettings;
+    inboxTargetFile?: string;
 }
 
 export function formatLocalDate(date: Date): string {
@@ -38,14 +39,13 @@ export function formatLocalDateTime(date: Date): string {
 
 /** Renderer-independent values entered in the event/task form. */
 export class EventTaskFormState {
-    kind: EventTaskKind = "event";
+    kind: EventTaskKind = "inbox";
 
     readonly inboxCapturedAt: Date;
     readonly inboxDefaultTitle: string;
     inboxTitle: string;
     inboxBody = "";
-    inboxTargetMode: InboxTargetMode;
-    inboxTargetFileOverride = "";
+    inboxTargetFile: string;
     inboxHeading: string;
     inboxPosition: InsertPosition;
     inboxPeopleFoldersOverride: string[] = [];
@@ -91,7 +91,7 @@ export class EventTaskFormState {
         this.inboxCapturedAt = new Date(anchorDate.getTime());
         this.inboxDefaultTitle = formatLocalDateTime(this.inboxCapturedAt);
         this.inboxTitle = this.inboxDefaultTitle;
-        this.inboxTargetMode = inboxDefaults.defaultTargetMode;
+        this.inboxTargetFile = defaults.inboxTargetFile ?? "";
         this.inboxHeading = inboxDefaults.heading;
         this.inboxPosition = inboxDefaults.position;
 

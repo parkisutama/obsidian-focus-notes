@@ -17,7 +17,7 @@ import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { isTFile } from "./utils";
 import { shouldUseMobileForm } from "./MobileFormPolicy";
-import { resolveInboxFormTarget } from "./InboxTarget";
+import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { InboxDesktopForm } from "./InboxDesktopForm";
 
 export function openEventTaskForm(
@@ -60,6 +60,7 @@ export class EventTaskModal extends Modal {
     private eventTaskFieldsEl!: HTMLElement;
     private inboxSectionEl!: HTMLElement;
     private inboxForm: InboxDesktopForm | null = null;
+    private inboxRenderOwner: Component | null = null;
     constructor(
         app: App,
         private getSettings: () => FocusNotesSettings,
@@ -72,13 +73,21 @@ export class EventTaskModal extends Modal {
         const settings = getSettings();
         const resolver = new TargetResolver(app, settings);
         const resolved = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+        const inboxTarget = selectInboxTarget({
+            mode: settings.inbox.defaultTargetMode,
+            dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),
+            eventTaskTarget: resolved,
+            heading: settings.inbox.heading,
+            position: settings.inbox.position
+        });
         this.form = new EventTaskFormState(anchorDate, {
             file: resolved.file,
             heading: settings.eventTask.defaultSaveHeading || resolved.heading,
             position: resolved.position,
             hubNotesFolder: settings.eventTask.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
-            inbox: settings.inbox
+            inbox: settings.inbox,
+            inboxTargetFile: inboxTarget?.file ?? ""
         });
     }
 
@@ -92,6 +101,8 @@ export class EventTaskModal extends Modal {
     onClose(): void {
         this.inboxForm?.destroy();
         this.inboxForm = null;
+        this.inboxRenderOwner?.unload();
+        this.inboxRenderOwner = null;
         this.contentEl.empty();
         if (!this.resolved) this.resolved = true;
     }
@@ -103,7 +114,7 @@ export class EventTaskModal extends Modal {
         this.renderTabs(contentEl);
 
         const body = contentEl.createDiv({ cls: "fn-gcal-body" });
-        this.eventTaskFieldsEl = body.createDiv({ cls: "fn-gcal-event-task-fields" });
+        this.eventTaskFieldsEl = body.createDiv({ cls: "fn-gcal-event-task-fields fn-gcal-hidden" });
         this.eventSectionEl = this.eventTaskFieldsEl.createDiv({ cls: "fn-gcal-tab-section" });
         this.taskSectionEl = this.eventTaskFieldsEl.createDiv({ cls: "fn-gcal-tab-section fn-gcal-hidden" });
 
@@ -114,9 +125,12 @@ export class EventTaskModal extends Modal {
         this.renderDetailNote(this.eventTaskFieldsEl);
         this.renderSaveTo(this.eventTaskFieldsEl);
 
-        this.inboxSectionEl = body.createDiv({ cls: "fn-gcal-tab-section fn-gcal-hidden" });
+        this.inboxSectionEl = body.createDiv({ cls: "fn-gcal-tab-section" });
+        this.inboxRenderOwner = new Component();
+        this.inboxRenderOwner.load();
         this.inboxForm = new InboxDesktopForm({
             app: this.app,
+            owner: this.inboxRenderOwner,
             form: this.form,
             getSettings: this.getSettings,
             resolveTarget: () => this.resolveInboxTarget()
@@ -163,14 +177,14 @@ export class EventTaskModal extends Modal {
     protected renderTabs(container: HTMLElement): void {
         const tabs = container.createDiv({ cls: "fn-gcal-tabs" });
         const inboxBtn = tabs.createEl("button", {
-            cls: "fn-gcal-tab",
+            cls: "fn-gcal-tab fn-gcal-tab--active",
             text: "Inbox",
-            attr: { type: "button", "aria-pressed": "false" }
+            attr: { type: "button", "aria-pressed": "true" }
         });
         const eventBtn = tabs.createEl("button", {
-            cls: "fn-gcal-tab fn-gcal-tab--active",
+            cls: "fn-gcal-tab",
             text: "Event",
-            attr: { type: "button", "aria-pressed": "true" }
+            attr: { type: "button", "aria-pressed": "false" }
         });
         const taskBtn = tabs.createEl("button", {
             cls: "fn-gcal-tab",
