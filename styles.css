@@ -289,7 +289,15 @@ body.fn-mobile-event-screen-open .suggestion-container {
     border: 0;
     background: transparent;
     box-shadow: none;
-    resize: vertical;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow-y: auto;
+}
+
+.fn-mobile-event-screen .fn-mobile-event-description:empty::before {
+    content: attr(data-placeholder);
+    color: var(--text-faint);
+    pointer-events: none;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-toggle {

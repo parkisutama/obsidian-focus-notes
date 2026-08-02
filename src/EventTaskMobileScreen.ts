@@ -10,6 +10,7 @@ import { isTFile } from "./utils";
 import { InboxMobileForm } from "./InboxMobileForm";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { SubmissionPolicy } from "./SubmissionPolicy";
+import { ContextNotesController } from "./InboxNotesController";
 
 export class EventTaskMobileScreen extends Component {
     private rootEl: HTMLElement | null = null;
@@ -19,6 +20,7 @@ export class EventTaskMobileScreen extends Component {
     private readonly submissionPolicy = new SubmissionPolicy();
     private owner: Component | null = null;
     private readonly form: EventTaskFormState;
+    private contextNotesController: ContextNotesController | null = null;
 
     constructor(
         private readonly app: App,
@@ -244,12 +246,24 @@ export class EventTaskMobileScreen extends Component {
 
     private renderDescription(container: HTMLElement): void {
         const card = this.fieldGroup(container, "Description", "align-left");
-        const description = card.createEl("textarea", {
+        const editor = card.createDiv({
             cls: "fn-mobile-event-description",
-            attr: { placeholder: "Add description or attachment…", "aria-label": "Description" },
+            attr: {
+                "data-placeholder": "Add description. Use @ for contextual notes, # for tags.",
+                "aria-label": "Description",
+            },
         });
-        description.rows = 2;
-        this.registerDomEvent(description, "input", () => (this.form.description = description.value));
+        const controller = new ContextNotesController(this.app, editor, {
+            initialValue: this.form.description,
+            targetFile: this.form.targetFile,
+            getContextSources: () => this.getSettings().inbox.contextSources,
+            onChange: (value) => (this.form.description = value),
+        });
+        this.contextNotesController = controller;
+        this.register(() => {
+            controller.destroy();
+            if (this.contextNotesController === controller) this.contextNotesController = null;
+        });
     }
 
     private renderTaskTimebox(container: HTMLElement): void {
@@ -398,7 +412,10 @@ export class EventTaskMobileScreen extends Component {
         this.checkbox(container, "Insert at top", this.form.targetPosition === "start", (checked) => {
             this.form.targetPosition = checked ? "start" : "end";
         });
-        this.registerDomEvent(file, "input", () => (this.form.targetFile = file.value));
+        this.registerDomEvent(file, "input", () => {
+            this.form.targetFile = file.value;
+            this.contextNotesController?.setTargetFile(file.value);
+        });
         this.registerDomEvent(heading, "input", () => (this.form.targetHeading = heading.value));
     }
 
