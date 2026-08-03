@@ -14,6 +14,8 @@ const baseItem: ScheduledItem = {
     remind: null,
     isCompleted: false,
     source: {
+        groupId: "daily-notes",
+        groupName: "Daily Notes",
         filePath: "Daily/2026-08-03.md",
         fileName: "2026-08-03.md",
         lineNumber: 12,

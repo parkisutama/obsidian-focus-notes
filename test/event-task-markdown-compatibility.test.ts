@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { formatEventTaskEntry } from "../src/EventTaskMarkdown.ts";
-import { ScheduledItemParser } from "../src/ScheduledItemParser.ts";
 import type { EventRecord, TaskRecord } from "../src/EventTaskWriter.ts";
+import { ScheduledItemParser } from "../src/ScheduledItemParser.ts";
 
 const source = {
+    groupId: "daily-notes",
+    groupName: "Daily Notes",
     filePath: "Daily/2026-08-01.md",
     fileName: "2026-08-01.md",
     lineNumber: 12,

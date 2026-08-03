@@ -9,7 +9,8 @@ import { TimelineGrid } from "./TimelineGrid";
 import { PendingTasksModal, TimelineItemModal } from "./TimelineItemModal";
 import { TimelineLayout } from "./TimelineLayout";
 import { effectiveTimelineSourceFolders, isFileInTimelineSource } from "./TimelineSourceAlignment";
-import { TimelineSourceSidebar, type TimelineSourceSummary } from "./TimelineSourceSidebar";
+import { buildTimelineSourceGroups, timelineSourceHeadings } from "./TimelineSourceGroups";
+import { buildTimelineSourceSummaries, TimelineSourceSidebar } from "./TimelineSourceSidebar";
 import type { FocusNotesSettings } from "./types";
 import { addDays, formatDayKey, getIsoWeek, startOfDay, startOfWeek } from "./utils";
 
@@ -190,8 +191,8 @@ export class TimelineView extends ItemView {
             return;
         }
 
-        const sourceFolders = this.getEffectiveSourceFolders();
-        if (sourceFolders.length === 0) {
+        const sourceGroups = this.getEffectiveSourceGroups();
+        if (sourceGroups.length === 0) {
             this.items = [];
             this.renderContent();
             return;
@@ -199,7 +200,7 @@ export class TimelineView extends ItemView {
 
         try {
             const indexer = new ScheduledItemIndexer(this.app, this.parser);
-            this.items = await indexer.buildIndex(sourceFolders);
+            this.items = await indexer.buildIndex(sourceGroups, this.getEffectiveSourceHeadings());
             this.ensureSourceSettings();
             await this.saveSettings();
             this.renderContent();
@@ -241,21 +242,24 @@ export class TimelineView extends ItemView {
                 settings.timeline.sourceSidebarCollapsed ? "Show sources" : "Hide sources",
             );
         }
-        const sources = this.buildSourceSummaries();
-        const visibleSources = new Set(sources.filter((source) => source.visible).map((source) => source.filePath));
         const range = this.currentRange();
-        const rangeItems = this.query.getItemsForRange(this.items, range, {
-            visibleSources,
+        const allSourceIds = new Set(this.getEffectiveSourceGroups().map((source) => source.id));
+        const allRangeItems = this.query.getItemsForRange(this.items, range, {
+            visibleSources: allSourceIds,
             includeCompleted: settings.timeline.showCompletedTasks,
         });
-        const pendingItems = this.query.getPendingTasks(this.items, this.anchorDate, visibleSources);
+        const allPendingItems = this.query.getPendingTasks(this.items, this.anchorDate, allSourceIds);
+        const sources = this.buildSourceSummaries([...allRangeItems, ...allPendingItems]);
+        const visibleSources = new Set(sources.filter((source) => source.visible).map((source) => source.id));
+        const rangeItems = allRangeItems.filter((item) => visibleSources.has(item.source.groupId));
+        const pendingItems = allPendingItems.filter((item) => visibleSources.has(item.source.groupId));
         const layout = this.layout.build(rangeItems, range);
 
         new TimelineSourceSidebar(this.sidebarEl, {
             sources,
             collapsed: settings.timeline.sourceSidebarCollapsed,
-            onToggleSource: (filePath, visible) => {
-                settings.timeline.sourceVisibility[filePath] = visible;
+            onToggleSource: (sourceId, visible) => {
+                settings.timeline.sourceVisibility[sourceId] = visible;
                 void this.saveSettings();
                 this.renderContent();
             },
@@ -305,37 +309,25 @@ export class TimelineView extends ItemView {
         this.renderContent();
     }
 
-    private buildSourceSummaries(): TimelineSourceSummary[] {
+    private buildSourceSummaries(activeItems: ScheduledItem[]) {
         const settings = this.getSettings();
-        const counts = new Map<string, { fileName: string; count: number }>();
-        for (const item of this.items) {
-            const existing = counts.get(item.source.filePath) ?? {
-                fileName: item.source.fileName,
-                count: 0,
-            };
-            existing.count += 1;
-            counts.set(item.source.filePath, existing);
-        }
-
-        return Array.from(counts.entries())
-            .sort((a, b) => a[0].localeCompare(b[0]))
-            .map(([filePath, value]) => ({
-                filePath,
-                fileName: value.fileName,
-                count: value.count,
-                color: settings.timeline.sourceColors[filePath] ?? this.colorFor(filePath),
-                visible: settings.timeline.sourceVisibility[filePath] ?? true,
-            }));
+        return buildTimelineSourceSummaries(
+            this.getEffectiveSourceGroups(),
+            activeItems,
+            settings.timeline.sourceVisibility,
+            settings.timeline.sourceColors,
+            (sourceId) => this.colorFor(sourceId),
+        );
     }
 
     private ensureSourceSettings(): void {
         const settings = this.getSettings();
-        for (const item of this.items) {
-            if (settings.timeline.sourceVisibility[item.source.filePath] === undefined) {
-                settings.timeline.sourceVisibility[item.source.filePath] = true;
+        for (const source of this.getEffectiveSourceGroups()) {
+            if (settings.timeline.sourceVisibility[source.id] === undefined) {
+                settings.timeline.sourceVisibility[source.id] = true;
             }
-            if (!settings.timeline.sourceColors[item.source.filePath]) {
-                settings.timeline.sourceColors[item.source.filePath] = this.colorFor(item.source.filePath);
+            if (!settings.timeline.sourceColors[source.id]) {
+                settings.timeline.sourceColors[source.id] = this.colorFor(source.id);
             }
         }
     }
@@ -356,6 +348,19 @@ export class TimelineView extends ItemView {
             ? new TargetResolver(this.app, settings).getDailyNoteFolder()
             : null;
         return effectiveTimelineSourceFolders(settings.timeline.sourceFolders, dailyFolder);
+    }
+
+    private getEffectiveSourceGroups() {
+        const settings = this.getSettings();
+        const dailyFolder = settings.useDailyNotesAsDefault
+            ? new TargetResolver(this.app, settings).getDailyNoteFolder()
+            : null;
+        return buildTimelineSourceGroups(settings.timeline.sourceFolders, dailyFolder);
+    }
+
+    private getEffectiveSourceHeadings(): string[] {
+        const settings = this.getSettings();
+        return timelineSourceHeadings(settings.timeline.sourceHeadings, settings.eventTask.defaultSaveHeading);
     }
 
     private openItemDetails(item: ScheduledItem): void {

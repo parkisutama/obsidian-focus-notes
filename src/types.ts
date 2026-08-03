@@ -10,6 +10,8 @@
  * vs "timer" if the user wants that distinction in their {{mode}} token.
  */
 
+import type { TimelineMode } from "./ScheduledItemTypes";
+
 export type DisplayMode = "pomodoro" | "timer" | "stopwatch";
 export type EngineMode = "countdown" | "stopwatch";
 export type TimerStatus = "idle" | "running" | "paused" | "completed";
@@ -17,7 +19,6 @@ export type InsertPosition = "start" | "end";
 export type StressLevel = "low" | "normal" | "medium" | "high";
 export type EmotionCategory = "pleasant" | "neutral" | "unpleasant";
 export type { TimelineMode } from "./ScheduledItemTypes";
-import type { TimelineMode } from "./ScheduledItemTypes";
 
 export function toEngineMode(d: DisplayMode): EngineMode {
     return d === "stopwatch" ? "stopwatch" : "countdown";
@@ -115,6 +116,7 @@ export interface FocusTimelineSettings {
     multiDaySpanDays: number;
     weekStartsOn: number;
     sourceFolders: string[];
+    sourceHeadings: string[];
     showCompletedTasks: boolean;
     showPendingSummary: boolean;
     sourceSidebarCollapsed: boolean;
@@ -243,6 +245,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         multiDaySpanDays: 7,
         weekStartsOn: 1,
         sourceFolders: ["Journal"],
+        sourceHeadings: ["Activities & Tasks"],
         showCompletedTasks: true,
         showPendingSummary: true,
         sourceSidebarCollapsed: false,
@@ -329,6 +332,7 @@ export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): F
             ...DEFAULT_SETTINGS.timeline,
             ...((saved.timeline ?? {}) as Partial<typeof DEFAULT_SETTINGS.timeline>),
             sourceFolders: [...(saved.timeline?.sourceFolders ?? DEFAULT_SETTINGS.timeline.sourceFolders)],
+            sourceHeadings: [...(saved.timeline?.sourceHeadings ?? DEFAULT_SETTINGS.timeline.sourceHeadings)],
             sourceVisibility: {
                 ...DEFAULT_SETTINGS.timeline.sourceVisibility,
                 ...(saved.timeline?.sourceVisibility ?? {}),

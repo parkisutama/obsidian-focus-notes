@@ -11,7 +11,7 @@ export class ScheduledItemQuery {
         },
     ): ScheduledItem[] {
         return items.filter((item) => {
-            if (!opts.visibleSources.has(item.source.filePath)) return false;
+            if (!opts.visibleSources.has(item.source.groupId)) return false;
             if (item.isCompleted && !opts.includeCompleted) return false;
             if (!this.hasSchedule(item)) return false;
             return this.intersectsRange(item, range);
@@ -25,7 +25,7 @@ export class ScheduledItemQuery {
         const earliest = addDays(todayStart, -365);
         return items.filter((item) => {
             if (item.kind !== "task" || item.isCompleted) return false;
-            if (!visibleSources.has(item.source.filePath)) return false;
+            if (!visibleSources.has(item.source.groupId)) return false;
             const pendingAt = this.pendingAnchor(item);
             if (!pendingAt || pendingAt < earliest) return false;
             if (item.due && item.dueHasTime) return pendingAt < timedDueCutoff;

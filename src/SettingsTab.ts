@@ -1,13 +1,18 @@
 import { type App, PluginSettingTab, Setting, setIcon } from "obsidian";
-import type FocusNotesPlugin from "./main";
-import type { ContextSourceSettings, InboxTargetMode, InsertPosition, TimelineMode } from "./types";
-import type { ObjectNotePlacement } from "./types";
-import { FileSuggest, FolderSuggest } from "./Suggesters";
-import { normalizeInboxFolders } from "./InboxFolderSettings";
 import { createContextSource } from "./ContextSourceSettings";
+import { normalizeInboxFolders } from "./InboxFolderSettings";
+import type FocusNotesPlugin from "./main";
 import { type FocusNotesSettingsPage, settingsTabForSection } from "./SettingsLayout";
+import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTarget, effectiveTimelineSourceFolders } from "./TimelineSourceAlignment";
+import type {
+    ContextSourceSettings,
+    InboxTargetMode,
+    InsertPosition,
+    ObjectNotePlacement,
+    TimelineMode,
+} from "./types";
 
 export class FocusNotesSettingsTab extends PluginSettingTab {
     private activePage: FocusNotesSettingsPage = "focus";
@@ -351,6 +356,23 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 });
                 area.inputEl.rows = 5;
+                area.inputEl.style.width = "100%";
+            });
+
+        new Setting(containerEl)
+            .setName("Timeline headings")
+            .setDesc(
+                "Only scheduled Event and Task records below these headings are indexed. The current capture heading is always included.",
+            )
+            .addTextArea((area) => {
+                area.setValue(this.plugin.settings.timeline.sourceHeadings.join("\n")).onChange(async (value) => {
+                    this.plugin.settings.timeline.sourceHeadings = value
+                        .split(/\r?\n/)
+                        .map((line) => line.trim())
+                        .filter(Boolean);
+                    await this.plugin.saveSettings();
+                });
+                area.inputEl.rows = 3;
                 area.inputEl.style.width = "100%";
             });
 

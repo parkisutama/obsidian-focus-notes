@@ -44,6 +44,18 @@ test("uses Activities & Tasks only when no Event/Task heading was previously sav
     assert.equal(customized.eventTask.defaultSaveHeading, "Plan");
 });
 
+test("adds Timeline heading defaults while preserving custom source headings", () => {
+    const legacy = mergeSettingsWithDefaults({
+        timeline: { ...DEFAULT_SETTINGS.timeline, sourceHeadings: undefined } as never,
+    });
+    const customized = mergeSettingsWithDefaults({
+        timeline: { ...DEFAULT_SETTINGS.timeline, sourceHeadings: ["Work Log"] },
+    });
+
+    assert.deepEqual(legacy.timeline.sourceHeadings, ["Activities & Tasks"]);
+    assert.deepEqual(customized.timeline.sourceHeadings, ["Work Log"]);
+});
+
 test("creates defaults on first install and reports a missing state", async () => {
     const writes: string[] = [];
     const store = new StateStore(fakeApp({ exists: false, writes }), mergeSettingsWithDefaults);

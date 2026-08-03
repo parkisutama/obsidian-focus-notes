@@ -2,10 +2,18 @@ export type ScheduledItemKind = "event" | "task";
 export type TimelineMode = "day" | "multi-day";
 
 export interface ScheduledItemSource {
+    groupId: string;
+    groupName: string;
     filePath: string;
     fileName: string;
     lineNumber: number;
     headingPath: string[];
+}
+
+export interface TimelineSourceGroup {
+    id: string;
+    name: string;
+    folder: string;
 }
 
 export interface ScheduledItem {

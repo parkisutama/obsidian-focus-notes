@@ -265,7 +265,7 @@ export class TimelineGrid {
     }
 
     private colorFor(item: ScheduledItem): string {
-        return this.opts.sourceColors[item.source.filePath] ?? "var(--interactive-accent)";
+        return this.opts.sourceColors[item.source.groupId] ?? "var(--interactive-accent)";
     }
 
     private tooltip(item: ScheduledItem): string {
