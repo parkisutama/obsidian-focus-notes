@@ -58,6 +58,6 @@ Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah ti
 | Load, migration, dan save | `src/StateStore.ts` |
 | Plugin lifecycle | `src/main.ts` |
 
-`ContextSourceSettings.templatePath` menyimpan path note template yang sudah dinormalisasi. Object Note creation menyalin template dan memastikan property filter source ada di frontmatter. Field `peopleFolders` dan `placeFolders` hanya dibaca oleh migrasi data lama; runtime dan state kanonik memakai `contextSources` saja.
+`ContextSourceSettings.templatePath` menyimpan path note template opsional yang sudah dinormalisasi. Object Note creation memakai fallback minimal saat template kosong dan selalu memastikan property filter source ada di frontmatter. `placement` menentukan default `flat` atau `folder-note`, tetapi dapat dioverride dalam modal. Field `peopleFolders` dan `placeFolders` hanya dibaca oleh migrasi data lama; runtime dan state kanonik memakai `contextSources` saja.
 
 Status reliability setiap area dicatat di dokumen internal `docs/development-status.md` dan tidak dipublikasikan melalui VitePress.
