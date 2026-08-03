@@ -103,3 +103,28 @@ test("uses the most specific configured folder when sources overlap", () => {
         "audit",
     );
 });
+
+test("resolves a sibling folder note as a contextual destination", () => {
+    const destinations = resolveContextLinks(
+        "Visit [BLOK 05](../Projects/BLOK%2005.md)",
+        "Daily/2026-08-03.md",
+        [{ path: "Projects/BLOK 05.md", properties: { type: "place" } }],
+        [
+            {
+                id: "places",
+                name: "Places",
+                icon: "map-pin",
+                folders: ["Projects/BLOK 05"],
+                filter: { property: "type", value: "place" },
+                relatedHeading: "Related log",
+                templatePath: "Templates/Place.md",
+                enabled: true,
+            },
+        ],
+    );
+
+    assert.deepEqual(
+        destinations.map((item) => item.filePath),
+        ["Projects/BLOK 05.md"],
+    );
+});

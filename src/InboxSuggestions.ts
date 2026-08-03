@@ -1,4 +1,5 @@
 import type { ContextSourceSettings } from "./types";
+import { isPathInContextSourceFolder } from "./ContextSourceScope.ts";
 
 export type MentionMatchSource = "filename" | "alias";
 
@@ -105,7 +106,7 @@ function buildContextGroup(notes: SuggestionNote[], source: ContextSourceSetting
     const results: ContextSuggestion[] = [];
     const seen = new Set<string>();
     for (const note of notes) {
-        if (!roots.some((root) => note.path.startsWith(`${root}/`))) continue;
+        if (!roots.some((root) => isPathInContextSourceFolder(note.path, root))) continue;
         if (!matchesFilter(note.properties, source.filter)) continue;
         addContextSuggestion(results, seen, source, note.path, note.basename, "filename");
         for (const alias of note.aliases) {

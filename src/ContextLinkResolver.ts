@@ -1,4 +1,5 @@
 import type { ContextSourceSettings } from "./types";
+import { isPathInContextSourceFolder } from "./ContextSourceScope.ts";
 
 export interface ContextLinkNote {
     path: string;
@@ -91,7 +92,7 @@ function findSource(
         if (!source.enabled || !matchesProperty(note.properties, source.filter)) return;
         for (const rawFolder of source.folders) {
             const folder = normalizeVaultPath(rawFolder);
-            if (folder && path.startsWith(`${folder}/`)) {
+            if (folder && isPathInContextSourceFolder(path, folder)) {
                 matches.push({ source, folderLength: folder.length, sourceIndex });
             }
         }

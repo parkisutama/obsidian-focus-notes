@@ -55,6 +55,29 @@ test("indexes generic folder-scoped sources with optional property filters", () 
     );
 });
 
+test("includes a sibling folder note with the same path as its configured folder", () => {
+    const source: ContextSourceSettings = {
+        id: "blocks",
+        name: "Blocks",
+        icon: "map",
+        folders: ["Projects/BLOK 05"],
+        filter: null,
+        relatedHeading: "Related log",
+        templatePath: "Templates/Block.md",
+        enabled: true,
+    };
+    const index = new ContextSuggestionIndex([
+        { path: "Projects/BLOK 05.md", basename: "BLOK 05", aliases: [] },
+        { path: "Projects/BLOK 05/Inspection.md", basename: "Inspection", aliases: [] },
+        { path: "Projects/BLOK 06.md", basename: "BLOK 06", aliases: [] },
+    ]);
+
+    assert.deepEqual(
+        index.query([source], () => 0).map((item) => item.filePath),
+        ["Projects/BLOK 05.md", "Projects/BLOK 05/Inspection.md"],
+    );
+});
+
 test("caps and ranks generic results without rebuilding unchanged candidates", () => {
     const source: ContextSourceSettings = {
         id: "activities",
