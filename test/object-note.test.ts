@@ -10,8 +10,9 @@ import {
 import type { ContextSourceSettings } from "../src/types.ts";
 
 test("builds a safe Object Note path inside a configured source folder", () => {
-    assert.equal(buildObjectNotePath("Place", "Kantor: Jakarta/Utara"), "Place/Kantor_ Jakarta_Utara.md");
-    assert.equal(buildObjectNotePath("", ""), "Untitled.md");
+    assert.equal(buildObjectNotePath("Place", "Kantor: Jakarta/Utara", "flat"), "Place/Kantor_ Jakarta_Utara.md");
+    assert.equal(buildObjectNotePath("Projects", "Blok G2", "folder-note"), "Projects/Blok G2/Blok G2.md");
+    assert.equal(buildObjectNotePath("", "", "flat"), "Untitled.md");
 });
 
 test("creates an Object Note from its source template and enforces the source property", async () => {
@@ -45,6 +46,7 @@ test("creates an Object Note from its source template and enforces the source pr
         filter: { property: "type", value: "place" },
         relatedHeading: "Related log",
         templatePath: "Templates/Place.md",
+        placement: "flat",
         enabled: true,
     };
 
@@ -52,6 +54,7 @@ test("creates an Object Note from its source template and enforces the source pr
         name: "Kantor Jakarta",
         folder: "Objects/Places",
         createdAt: new Date(2026, 7, 3, 14, 5),
+        placement: "flat",
     });
 
     assert.equal(created.path, "Objects/Places/Kantor Jakarta.md");
@@ -67,7 +70,7 @@ test("expands portable Object Note template tokens", () => {
     );
 });
 
-test("offers creation only for enabled sources with a folder and template", () => {
+test("offers creation for enabled folder-scoped sources without requiring a template", () => {
     const base: ContextSourceSettings = {
         id: "places",
         name: "Places",
@@ -76,6 +79,7 @@ test("offers creation only for enabled sources with a folder and template", () =
         filter: { property: "type", value: "place" },
         relatedHeading: "Related log",
         templatePath: "Templates/Place.md",
+        placement: "flat",
         enabled: true,
     };
     assert.deepEqual(
@@ -85,6 +89,50 @@ test("offers creation only for enabled sources with a folder and template", () =
             { ...base, id: "folderless", folders: [] },
             { ...base, id: "template-less", templatePath: "" },
         ]).map((source) => source.id),
-        ["places"],
+        ["places", "template-less"],
     );
+});
+
+test("creates a minimal typed Folder Note when no template is configured", async () => {
+    const files = new Map<string, unknown>();
+    let createdContent = "";
+    const frontmatter: Record<string, unknown> = {};
+    const app = {
+        vault: {
+            getAbstractFileByPath: (path: string) => files.get(path) ?? null,
+            createFolder: async (path: string) => files.set(path, { path, children: [] }),
+            create: async (path: string, content: string) => {
+                createdContent = content;
+                const file = { path, extension: "md", stat: {} };
+                files.set(path, file);
+                return file;
+            },
+        },
+        fileManager: {
+            processFrontMatter: async (_file: unknown, mutate: (value: Record<string, unknown>) => void) =>
+                mutate(frontmatter),
+        },
+    } as unknown as App;
+    const source: ContextSourceSettings = {
+        id: "projects",
+        name: "Projects",
+        icon: "folder-kanban",
+        folders: ["Notes"],
+        filter: { property: "type", value: "project" },
+        relatedHeading: "Related log",
+        templatePath: "",
+        placement: "folder-note",
+        enabled: true,
+    };
+
+    const created = await createObjectNote(app, source, {
+        name: "Blok G2",
+        folder: "Notes",
+        placement: "folder-note",
+        createdAt: new Date(2026, 7, 3, 14, 5),
+    });
+
+    assert.equal(created.path, "Notes/Blok G2/Blok G2.md");
+    assert.equal(createdContent, "# Blok G2\n");
+    assert.deepEqual(frontmatter, { type: "project" });
 });

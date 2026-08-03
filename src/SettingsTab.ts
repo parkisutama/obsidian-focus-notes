@@ -1,6 +1,7 @@
 import { type App, PluginSettingTab, Setting, setIcon } from "obsidian";
 import type FocusNotesPlugin from "./main";
 import type { ContextSourceSettings, InboxTargetMode, InsertPosition, TimelineMode } from "./types";
+import type { ObjectNotePlacement } from "./types";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
 import { createContextSource } from "./ContextSourceSettings";
@@ -576,7 +577,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             cls: "setting-item-description",
             text:
                 "Each source labels one object type. Folder scope is required; an optional property filter narrows matches. " +
-                "A template note enables creating new objects directly from the @ suggester.",
+                "Templates are optional; enabled sources with a folder can create objects from the @ suggester.",
         });
         const list = section.createDiv({ cls: "fn-context-source-list" });
         const sources = this.plugin.settings.inbox.contextSources;
@@ -654,6 +655,19 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             source.relatedHeading = value.replace(/^#+\s*/, "").trim() || "Related log";
             await this.saveContextSources();
         });
+        this.contextSelectField(
+            fields,
+            "Default placement",
+            [
+                { value: "flat", label: "Flat note" },
+                { value: "folder-note", label: "Folder note" },
+            ],
+            source.placement,
+            async (value) => {
+                source.placement = value as ObjectNotePlacement;
+                await this.saveContextSources();
+            },
+        );
         const template = this.contextTextField(
             fields,
             "Template note",
@@ -735,6 +749,22 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         input.value = value;
         input.addEventListener("change", () => void onChange(input.value));
         return input;
+    }
+
+    private contextSelectField(
+        container: HTMLElement,
+        label: string,
+        options: Array<{ value: string; label: string }>,
+        value: string,
+        onChange: (value: string) => Promise<void>,
+    ): HTMLSelectElement {
+        const field = container.createEl("label", { cls: "fn-context-source-field" });
+        field.createEl("span", { text: label });
+        const select = field.createEl("select", { attr: { "aria-label": label } });
+        for (const option of options) select.createEl("option", { value: option.value, text: option.label });
+        select.value = value;
+        select.addEventListener("change", () => void onChange(select.value));
+        return select;
     }
 
     private organizeSettingsTabs(container: HTMLElement): void {

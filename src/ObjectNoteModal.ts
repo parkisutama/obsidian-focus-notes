@@ -1,13 +1,15 @@
 import { type App, Modal, Notice, Setting, type TFile } from "obsidian";
 import { createObjectNote, getCreatableObjectSources } from "./ObjectNote";
-import type { ContextSourceSettings } from "./types";
+import type { ContextSourceSettings, ObjectNotePlacement } from "./types";
 
 export class ObjectNoteModal extends Modal {
     private readonly sources: ContextSourceSettings[];
     private sourceId = "";
     private folder = "";
     private name: string;
+    private placement: ObjectNotePlacement = "flat";
     private folderSelect: HTMLSelectElement | null = null;
+    private placementSelect: HTMLSelectElement | null = null;
 
     constructor(
         app: App,
@@ -19,6 +21,7 @@ export class ObjectNoteModal extends Modal {
         this.sources = getCreatableObjectSources(sources);
         this.sourceId = this.sources[0]?.id ?? "";
         this.folder = this.sources[0]?.folders[0] ?? "";
+        this.placement = this.sources[0]?.placement ?? "flat";
         this.name = initialName.trim();
     }
 
@@ -30,7 +33,9 @@ export class ObjectNoteModal extends Modal {
             dropdown.setValue(this.sourceId).onChange((value) => {
                 this.sourceId = value;
                 this.folder = this.currentSource()?.folders[0] ?? "";
+                this.placement = this.currentSource()?.placement ?? "flat";
                 this.renderFolderOptions();
+                if (this.placementSelect) this.placementSelect.value = this.placement;
             });
         });
         new Setting(this.contentEl).setName("Name").addText((text) => {
@@ -44,6 +49,17 @@ export class ObjectNoteModal extends Modal {
             dropdown.onChange((value) => (this.folder = value));
             this.renderFolderOptions();
         });
+        new Setting(this.contentEl)
+            .setName("Placement")
+            .setDesc("Flat note creates Folder/Name.md. Folder note creates Folder/Name/Name.md.")
+            .addDropdown((dropdown) => {
+                this.placementSelect = dropdown.selectEl;
+                dropdown
+                    .addOption("flat", "Flat note")
+                    .addOption("folder-note", "Folder note")
+                    .setValue(this.placement)
+                    .onChange((value) => (this.placement = value as ObjectNotePlacement));
+            });
         const actions = this.contentEl.createDiv({ cls: "fn-object-note-actions" });
         actions.createEl("button", { text: "Cancel" }).addEventListener("click", () => this.close());
         actions
@@ -76,7 +92,11 @@ export class ObjectNoteModal extends Modal {
             return;
         }
         try {
-            const file = await createObjectNote(this.app, source, { name, folder: this.folder });
+            const file = await createObjectNote(this.app, source, {
+                name,
+                folder: this.folder,
+                placement: this.placement,
+            });
             this.onCreated(file, name);
             this.close();
         } catch (error) {

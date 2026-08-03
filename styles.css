@@ -3244,11 +3244,12 @@ body.fn-mobile-event-screen-open .suggestion-container {
 }
 
 .fn-context-source-field:nth-child(5),
-.fn-context-source-field:nth-child(6) {
+.fn-context-source-field:nth-child(7) {
     grid-column: span 2;
 }
 
 .fn-context-source-field input,
+.fn-context-source-field select,
 .fn-context-source-folder-row input {
     width: 100%;
     min-width: 0;
@@ -3298,7 +3299,7 @@ body.fn-mobile-event-screen-open .suggestion-container {
     }
 
     .fn-context-source-field:nth-child(5),
-    .fn-context-source-field:nth-child(6) {
+    .fn-context-source-field:nth-child(7) {
         grid-column: auto;
     }
 

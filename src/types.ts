@@ -150,6 +150,8 @@ export interface ContextSourceFilter {
     value: string;
 }
 
+export type ObjectNotePlacement = "flat" | "folder-note";
+
 export interface ContextSourceSettings {
     id: string;
     name: string;
@@ -159,6 +161,8 @@ export interface ContextSourceSettings {
     relatedHeading: string;
     /** Optional vault-relative template note used when object creation is enabled. */
     templatePath: string;
+    /** Default physical shape for new object notes. */
+    placement: ObjectNotePlacement;
     enabled: boolean;
 }
 
@@ -269,6 +273,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 filter: null,
                 relatedHeading: "Interactions",
                 templatePath: "",
+                placement: "flat",
                 enabled: true,
             },
             {
@@ -279,6 +284,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 filter: null,
                 relatedHeading: "Related log",
                 templatePath: "",
+                placement: "flat",
                 enabled: true,
             },
             {
@@ -289,6 +295,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 filter: { property: "type", value: "activity" },
                 relatedHeading: "Activity log",
                 templatePath: "",
+                placement: "flat",
                 enabled: true,
             },
         ],
@@ -382,6 +389,7 @@ function normalizeContextSources(
             filter: property && value ? { property, value } : null,
             relatedHeading: stringValue(raw.relatedHeading).trim() || "Related log",
             templatePath: normalizeVaultFilePath(stringValue(raw.templatePath)),
+            placement: raw.placement === "folder-note" ? "folder-note" : "flat",
             enabled: raw.enabled === true && folders.length > 0,
         });
     }

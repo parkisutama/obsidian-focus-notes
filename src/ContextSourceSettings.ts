@@ -16,6 +16,7 @@ export function createContextSource(existing: readonly ContextSourceSettings[]):
         filter: null,
         relatedHeading: "Related log",
         templatePath: "",
+        placement: "flat",
         enabled: false,
     };
 }

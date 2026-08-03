@@ -49,6 +49,7 @@ test("normalizes duplicate IDs, invalid folders, and incomplete filters determin
             filter: null,
             relatedHeading: "Related log",
             templatePath: "",
+            placement: "flat",
             enabled: true,
         },
         {
@@ -59,6 +60,7 @@ test("normalizes duplicate IDs, invalid folders, and incomplete filters determin
             filter: null,
             relatedHeading: "Related log",
             templatePath: "",
+            placement: "flat",
             enabled: true,
         },
     ]);
@@ -113,6 +115,7 @@ test("drops malformed values without throwing or enabling full-vault scope", () 
         filter: null,
         relatedHeading: "Related log",
         templatePath: "",
+        placement: "flat",
         enabled: false,
     });
 });
@@ -144,6 +147,7 @@ test("preserves a valid custom Book source and property filter", () => {
         filter: { property: "type", value: "book" },
         relatedHeading: "Reading log",
         templatePath: "Templates/Book.md",
+        placement: "flat",
         enabled: true,
     });
 });
@@ -162,6 +166,7 @@ test("creates a disabled object source with a stable unique ID", () => {
         filter: null,
         relatedHeading: "Related log",
         templatePath: "",
+        placement: "flat",
         enabled: false,
     });
 });

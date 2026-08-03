@@ -1,23 +1,27 @@
 import type { App, TFile } from "obsidian";
-import type { ContextSourceSettings } from "./types";
+import type { ContextSourceSettings, ObjectNotePlacement } from "./types";
 import { ensureFolderPath, isTFile } from "./utils.ts";
 
 export interface CreateObjectNoteInput {
     name: string;
     folder: string;
+    placement: ObjectNotePlacement;
     createdAt?: Date;
 }
 
 export function getCreatableObjectSources(sources: readonly ContextSourceSettings[]): ContextSourceSettings[] {
-    return sources.filter((source) => source.enabled && source.folders.length > 0 && Boolean(source.templatePath));
+    return sources.filter((source) => source.enabled && source.folders.length > 0);
 }
 
-export function buildObjectNotePath(folder: string, name: string): string {
+export function buildObjectNotePath(folder: string, name: string, placement: ObjectNotePlacement): string {
     const safeName = name.replace(/[\\/:*?"<>|]/g, "_").trim() || "Untitled";
     const safeFolder = folder
         .trim()
         .replace(/\\/g, "/")
         .replace(/^\/+|\/+$/g, "");
+    if (placement === "folder-note") {
+        return safeFolder ? `${safeFolder}/${safeName}/${safeName}.md` : `${safeName}/${safeName}.md`;
+    }
     return safeFolder ? `${safeFolder}/${safeName}.md` : `${safeName}.md`;
 }
 
@@ -38,16 +42,17 @@ export async function createObjectNote(
     if (!source.folders.map(normalizeConfiguredFolder).includes(folder)) {
         throw new Error(`Choose a folder configured for ${source.name}.`);
     }
-    if (!source.templatePath) throw new Error(`Configure a template note for ${source.name} first.`);
-
-    const templateFile = app.vault.getAbstractFileByPath(source.templatePath);
-    if (!isTFile(templateFile)) throw new Error(`Template note not found: ${source.templatePath}`);
-
-    const path = buildObjectNotePath(folder, input.name);
+    const path = buildObjectNotePath(folder, input.name, input.placement);
     if (app.vault.getAbstractFileByPath(path)) throw new Error(`Object Note already exists: ${path}`);
-    if (folder) await ensureFolderPath(app, folder);
+    const destinationFolder = path.split("/").slice(0, -1).join("/");
+    if (destinationFolder) await ensureFolderPath(app, destinationFolder);
 
-    const template = await app.vault.read(templateFile);
+    let template = `# {{title}}\n`;
+    if (source.templatePath) {
+        const templateFile = app.vault.getAbstractFileByPath(source.templatePath);
+        if (!isTFile(templateFile)) throw new Error(`Template note not found: ${source.templatePath}`);
+        template = await app.vault.read(templateFile);
+    }
     const created = await app.vault.create(
         path,
         expandObjectNoteTemplate(template, input.name.trim() || "Untitled", input.createdAt ?? new Date()),
