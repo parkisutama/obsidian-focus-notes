@@ -571,7 +571,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             cls: "setting-item-description",
             text:
                 "Each source labels one object type. Folder scope is required; an optional property filter narrows matches. " +
-                "Template note paths are stored now for future object creation.",
+                "A template note enables creating new objects directly from the @ suggester.",
         });
         const list = container.createDiv({ cls: "fn-context-source-list" });
         const sources = this.plugin.settings.inbox.contextSources;
@@ -684,7 +684,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         );
         new Setting(card)
             .setName("Template note path")
-            .setDesc("Optional vault-relative template used by future object creation.")
+            .setDesc("Vault-relative template used when creating a new Object Note from @ suggestions.")
             .addText((text) => {
                 text.setPlaceholder("Templates/Book.md")
                     .setValue(source.templatePath)

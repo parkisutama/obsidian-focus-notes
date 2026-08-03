@@ -3167,6 +3167,17 @@ body.fn-mobile-event-screen-open .suggestion-container {
     border-inline-start: 2px solid var(--background-modifier-border);
 }
 
+.fn-object-note-modal {
+    width: min(92vw, 30rem);
+}
+
+.fn-object-note-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--size-4-2);
+    margin-top: var(--size-4-4);
+}
+
 /* ---- Mobile modal layout ------------------------------------------------ */
 
 @media (max-width: 640px) {

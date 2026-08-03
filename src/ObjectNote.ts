@@ -8,6 +8,10 @@ export interface CreateObjectNoteInput {
     createdAt?: Date;
 }
 
+export function getCreatableObjectSources(sources: readonly ContextSourceSettings[]): ContextSourceSettings[] {
+    return sources.filter((source) => source.enabled && source.folders.length > 0 && Boolean(source.templatePath));
+}
+
 export function buildObjectNotePath(folder: string, name: string): string {
     const safeName = name.replace(/[\\/:*?"<>|]/g, "_").trim() || "Untitled";
     const safeFolder = folder

@@ -8,10 +8,15 @@ import {
 } from "./InboxRichText";
 import type { ContextSuggestion } from "./InboxSuggestions";
 import { ObsidianInboxSuggestionSource } from "./ObsidianInboxSuggestionSource";
+import { getCreatableObjectSources } from "./ObjectNote";
+import { ObjectNoteModal } from "./ObjectNoteModal";
 import { formatRelativeMarkdownLink } from "./InboxMarkdown";
 import type { ContextSourceSettings } from "./types";
 
-type ContextNotesSuggestion = { kind: "mention"; value: ContextSuggestion } | { kind: "tag"; value: string };
+type ContextNotesSuggestion =
+    | { kind: "mention"; value: ContextSuggestion }
+    | { kind: "tag"; value: string }
+    | { kind: "create-object"; value: string };
 
 export interface ContextNotesControllerOptions {
     initialValue: string;
@@ -70,9 +75,13 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
         if (!this.activeTrigger) return [];
 
         if (this.activeTrigger.kind === "mention") {
-            return this.source
-                .getContextSuggestions(this.activeTrigger.query, this.options.getContextSources(), this.limit)
+            const sources = this.options.getContextSources();
+            const matches = this.source
+                .getContextSuggestions(this.activeTrigger.query, sources, this.limit)
                 .map((value) => ({ kind: "mention" as const, value }));
+            const query = this.activeTrigger.query.trim();
+            if (!query || getCreatableObjectSources(sources).length === 0) return matches;
+            return [...matches.slice(0, Math.max(0, this.limit - 1)), { kind: "create-object", value: query }];
         }
         return this.source
             .getTagSuggestions(this.activeTrigger.query, this.limit)
@@ -82,6 +91,11 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     renderSuggestion(suggestion: ContextNotesSuggestion, el: HTMLElement): void {
         if (suggestion.kind === "tag") {
             el.setText(suggestion.value);
+            return;
+        }
+        if (suggestion.kind === "create-object") {
+            el.createDiv({ text: `Create “${suggestion.value}”…`, cls: "fn-inbox-suggestion-label" });
+            el.createDiv({ text: "New Object Note from a configured template", cls: "fn-inbox-suggestion-context" });
             return;
         }
         const { value } = suggestion;
@@ -95,6 +109,13 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     selectSuggestion(suggestion: ContextNotesSuggestion): void {
         const trigger = this.activeTrigger;
         if (!trigger) return;
+        if (suggestion.kind === "create-object") {
+            this.close();
+            new ObjectNoteModal(this.app, this.options.getContextSources(), suggestion.value, (file, label) =>
+                this.replaceTriggerWithLink(trigger, file.path, label),
+            ).open();
+            return;
+        }
         const separator = suggestionSeparator(this.readVisibleText(), trigger.end);
         const replacement =
             suggestion.kind === "tag"
@@ -108,6 +129,17 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
         this.emitMarkdown();
         this.activeTrigger = null;
         this.close();
+    }
+
+    private replaceTriggerWithLink(trigger: InboxTrigger, filePath: string, label: string): void {
+        const separator = suggestionSeparator(this.readVisibleText(), trigger.end);
+        const replacement = this.createLink(filePath, label);
+        replaceVisibleRange(this.inputEl, trigger.start, trigger.end, replacement);
+        const cursorNode = this.inputEl.ownerDocument.createTextNode(separator);
+        replacement.parentNode?.insertBefore(cursorNode, replacement.nextSibling);
+        placeCaretAtEnd(cursorNode);
+        this.emitMarkdown();
+        this.activeTrigger = null;
     }
 
     setTargetFile(nextTargetFile: string): void {

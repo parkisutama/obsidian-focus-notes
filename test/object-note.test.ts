@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { App } from "obsidian";
-import { buildObjectNotePath, createObjectNote, expandObjectNoteTemplate } from "../src/ObjectNote.ts";
+import {
+    buildObjectNotePath,
+    createObjectNote,
+    expandObjectNoteTemplate,
+    getCreatableObjectSources,
+} from "../src/ObjectNote.ts";
 import type { ContextSourceSettings } from "../src/types.ts";
 
 test("builds a safe Object Note path inside a configured source folder", () => {
@@ -59,5 +64,27 @@ test("expands portable Object Note template tokens", () => {
     assert.equal(
         expandObjectNoteTemplate("---\ntype: place\n---\n# {{title}}\ncreated: {{date}} {{time}}", "Kantor", createdAt),
         "---\ntype: place\n---\n# Kantor\ncreated: 2026-08-03 14:05",
+    );
+});
+
+test("offers creation only for enabled sources with a folder and template", () => {
+    const base: ContextSourceSettings = {
+        id: "places",
+        name: "Places",
+        icon: "map-pin",
+        folders: ["Place"],
+        filter: { property: "type", value: "place" },
+        relatedHeading: "Related log",
+        templatePath: "Templates/Place.md",
+        enabled: true,
+    };
+    assert.deepEqual(
+        getCreatableObjectSources([
+            base,
+            { ...base, id: "disabled", enabled: false },
+            { ...base, id: "folderless", folders: [] },
+            { ...base, id: "template-less", templatePath: "" },
+        ]).map((source) => source.id),
+        ["places"],
     );
 });
