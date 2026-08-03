@@ -1,5 +1,5 @@
-import type { ContextSourceSettings } from "./types";
 import { isPathInContextSourceFolder } from "./ContextSourceScope.ts";
+import type { ContextSourceSettings } from "./types";
 
 export interface ContextLinkNote {
     path: string;
@@ -16,6 +16,7 @@ export interface ContextDestination {
 interface SourceMatch {
     source: ContextSourceSettings;
     folderLength: number;
+    filterSpecificity: number;
     sourceIndex: number;
 }
 
@@ -93,11 +94,21 @@ function findSource(
         for (const rawFolder of source.folders) {
             const folder = normalizeVaultPath(rawFolder);
             if (folder && isPathInContextSourceFolder(path, folder)) {
-                matches.push({ source, folderLength: folder.length, sourceIndex });
+                matches.push({
+                    source,
+                    folderLength: folder.length,
+                    filterSpecificity: source.filter ? 1 : 0,
+                    sourceIndex,
+                });
             }
         }
     });
-    matches.sort((a, b) => b.folderLength - a.folderLength || a.sourceIndex - b.sourceIndex);
+    matches.sort(
+        (a, b) =>
+            b.folderLength - a.folderLength ||
+            b.filterSpecificity - a.filterSpecificity ||
+            a.sourceIndex - b.sourceIndex,
+    );
     return matches[0]?.source ?? null;
 }
 

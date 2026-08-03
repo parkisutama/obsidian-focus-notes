@@ -1,5 +1,5 @@
 import { type App, PluginSettingTab, Setting, setIcon } from "obsidian";
-import { createContextSource } from "./ContextSourceSettings";
+import { createContextSource, findSharedFolderConflicts } from "./ContextSourceSettings";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
 import type FocusNotesPlugin from "./main";
 import { type FocusNotesSettingsPage, settingsTabForSection } from "./SettingsLayout";
@@ -635,13 +635,15 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             cls: "setting-item-description",
             text:
                 "Each source labels one object type. Folder scope is required; an optional property filter narrows matches. " +
+                "Multiple object types may share a folder when they use the same Property with distinct Values. " +
                 "Templates are optional; enabled sources with a folder can create objects from the @ suggester.",
         });
         const list = section.createDiv({ cls: "fn-context-source-list" });
         const sources = this.plugin.settings.inbox.contextSources;
+        const sharedFolderConflicts = findSharedFolderConflicts(sources);
 
         sources.forEach((source, index) => {
-            this.renderContextSource(list, source, index);
+            this.renderContextSource(list, source, index, sharedFolderConflicts);
         });
         new Setting(list).addButton((button) =>
             button
@@ -655,7 +657,12 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         );
     }
 
-    private renderContextSource(container: HTMLElement, source: ContextSourceSettings, index: number): void {
+    private renderContextSource(
+        container: HTMLElement,
+        source: ContextSourceSettings,
+        index: number,
+        sharedFolderConflicts: ReadonlyMap<string, string[]>,
+    ): void {
         const card = container.createDiv({ cls: "fn-context-source-card" });
         const header = card.createDiv({ cls: "fn-context-source-header" });
         const identity = header.createDiv();
@@ -670,6 +677,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         enabled.addEventListener("change", async () => {
             source.enabled = enabled.checked;
             await this.saveContextSources();
+            this.display();
         });
         const remove = actions.createEl("button", {
             cls: "clickable-icon",
@@ -737,6 +745,18 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             },
         );
         new FileSuggest(this.app, template);
+
+        const conflictingFolders = Array.from(sharedFolderConflicts.entries())
+            .filter(([, sourceIds]) => sourceIds.includes(source.id))
+            .map(([folder]) => folder);
+        if (conflictingFolders.length > 0) {
+            card.createDiv({
+                cls: "fn-context-source-warning",
+                text:
+                    `Shared folder needs one common Property with a distinct Value for each object type: ` +
+                    conflictingFolders.join(", "),
+            });
+        }
 
         this.renderContextSourceFolders(card, source);
     }

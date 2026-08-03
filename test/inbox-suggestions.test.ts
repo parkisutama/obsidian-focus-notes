@@ -55,6 +55,40 @@ test("indexes generic folder-scoped sources with optional property filters", () 
     );
 });
 
+test("keeps shared-folder suggestions assigned to their property-defined object type", () => {
+    const sharedSources: ContextSourceSettings[] = [
+        {
+            id: "activities",
+            name: "Activities",
+            icon: "activity",
+            folders: ["Persona/Work/Project/Activities"],
+            filter: { property: "type", value: "activity" },
+            relatedHeading: "Activity log",
+            enabled: true,
+        },
+        {
+            id: "books",
+            name: "Books",
+            icon: "book-open",
+            folders: ["Persona/Work/Project/Activities"],
+            filter: { property: "type", value: "book" },
+            relatedHeading: "Reading log",
+            enabled: true,
+        },
+    ];
+
+    assert.deepEqual(
+        new ContextSuggestionIndex(contextNotes)
+            .query(sharedSources, () => 0)
+            .filter(({ matchedBy }) => matchedBy === "filename")
+            .map(({ sourceId, filePath }) => ({ sourceId, filePath })),
+        [
+            { sourceId: "activities", filePath: "Persona/Work/Project/Activities/Reporting.md" },
+            { sourceId: "books", filePath: "Persona/Work/Project/Activities/Reference.md" },
+        ],
+    );
+});
+
 test("includes a sibling folder note with the same path as its configured folder", () => {
     const source: ContextSourceSettings = {
         id: "blocks",

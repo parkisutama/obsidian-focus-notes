@@ -104,6 +104,55 @@ test("uses the most specific configured folder when sources overlap", () => {
     );
 });
 
+test("uses property filters to distinguish object types sharing one folder", () => {
+    const sharedSources: ContextSourceSettings[] = [
+        {
+            id: "objects",
+            name: "Objects",
+            icon: "folder",
+            folders: ["Objects"],
+            filter: null,
+            relatedHeading: "Mentions",
+            enabled: true,
+        },
+        {
+            id: "projects",
+            name: "Projects",
+            icon: "briefcase",
+            folders: ["Objects"],
+            filter: { property: "type", value: "project" },
+            relatedHeading: "Project log",
+            enabled: true,
+        },
+        {
+            id: "activities",
+            name: "Activities",
+            icon: "activity",
+            folders: ["Objects"],
+            filter: { property: "type", value: "activity" },
+            relatedHeading: "Activity log",
+            enabled: true,
+        },
+    ];
+    const sharedNotes = [
+        { path: "Objects/G2.md", properties: { type: "project" } },
+        { path: "Objects/Cycling.md", properties: { type: "activity" } },
+    ];
+
+    assert.deepEqual(
+        resolveContextLinks(
+            "[G2](Objects/G2.md) [Cycling](Objects/Cycling.md)",
+            "Daily.md",
+            sharedNotes,
+            sharedSources,
+        ).map(({ filePath, sourceId }) => ({ filePath, sourceId })),
+        [
+            { filePath: "Objects/G2.md", sourceId: "projects" },
+            { filePath: "Objects/Cycling.md", sourceId: "activities" },
+        ],
+    );
+});
+
 test("resolves a sibling folder note as a contextual destination", () => {
     const destinations = resolveContextLinks(
         "Visit [BLOK 05](../Projects/BLOK%2005.md)",

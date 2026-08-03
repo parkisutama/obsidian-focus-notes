@@ -3290,6 +3290,15 @@ body.fn-mobile-event-screen-open .suggestion-container {
     box-sizing: border-box;
 }
 
+.fn-context-source-warning {
+    margin-top: var(--size-4-3);
+    padding: var(--size-4-2);
+    border-radius: var(--radius-s);
+    background: color-mix(in srgb, var(--text-warning) 10%, transparent);
+    color: var(--text-warning);
+    font-size: var(--font-ui-smaller);
+}
+
 .fn-context-source-folders {
     display: grid;
     grid-template-columns: minmax(6rem, 0.25fr) 1fr;

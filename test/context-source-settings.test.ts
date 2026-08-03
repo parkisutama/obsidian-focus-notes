@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createContextSource, findSharedFolderConflicts } from "../src/ContextSourceSettings.ts";
 import { DEFAULT_SETTINGS, mergeSettingsWithDefaults } from "../src/types.ts";
-import { createContextSource } from "../src/ContextSourceSettings.ts";
 
 test("migrates legacy People and Place folders and adds Activities", () => {
     const merged = mergeSettingsWithDefaults({
@@ -169,4 +169,21 @@ test("creates a disabled object source with a stable unique ID", () => {
         placement: "flat",
         enabled: false,
     });
+});
+
+test("allows a shared folder only when one property has distinct object values", () => {
+    const base = {
+        icon: "link",
+        folders: ["Objects"],
+        relatedHeading: "Related log",
+        enabled: true,
+    };
+    const valid = [
+        { ...base, id: "projects", name: "Projects", filter: { property: "type", value: "project" } },
+        { ...base, id: "activities", name: "Activities", filter: { property: "type", value: "activity" } },
+    ];
+    const ambiguous = [valid[0], { ...base, id: "general", name: "General", filter: null }];
+
+    assert.deepEqual(findSharedFolderConflicts(valid), new Map());
+    assert.deepEqual(findSharedFolderConflicts(ambiguous), new Map([["Objects", ["projects", "general"]]]));
 });
