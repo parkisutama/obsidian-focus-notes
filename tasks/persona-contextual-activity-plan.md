@@ -573,6 +573,28 @@ Parallelizable does not mean one mixed commit. Each numbered task remains an ind
 
 **Estimated scope:** Medium.
 
+### Task 14.1: Group Timeline sources and constrain ledger eligibility
+
+**Priority:** P2
+
+**Description:** Prevent ordinary Daily Note checkboxes and per-file Daily Note sources from overwhelming Focus Timeline while preserving exact source-note navigation.
+
+**Acceptance criteria:**
+
+- [x] Timeline records are accepted only below configured ledger headings; the active Event/Task capture heading is included automatically.
+- [x] A Task requires `due`, `start`, `end`, or `remind`; ordinary checkboxes remain ordinary Markdown.
+- [x] Sidebar visibility, color, and counts use a stable folder-level source group rather than individual Daily Note paths.
+- [x] Daily Notes appear as one source group, overlapping configured folders use the most specific group, and exact file/heading/line provenance is retained.
+- [x] Counts represent items in the active range plus pending items and do not double-count the same item.
+
+**Dependencies:** Task 14. This correction lands before Task 16.
+
+**Verification:**
+
+- [x] Integration fixtures cover unrelated headings, unscheduled checkboxes, scheduled Tasks, Events, nested folders, and exact provenance.
+- [x] Pure source-group tests cover Daily Notes aggregation, custom headings, range-aware counts, and deduplication.
+- [ ] Real desktop and mobile acceptance confirms a large Daily Notes folder produces one sidebar source.
+
 ### Task 16: Confirm planned and actual occurrence semantics
 
 **Priority:** P2

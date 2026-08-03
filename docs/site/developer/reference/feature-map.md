@@ -46,11 +46,14 @@ Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah ti
 | Parsing source Markdown | `src/ScheduledItemParser.ts` |
 | Indexing source folders | `src/ScheduledItemIndexer.ts` |
 | Effective source scope dan target mismatch | `src/TimelineSourceAlignment.ts` |
+| Source groups dan accepted headings | `src/TimelineSourceGroups.ts` |
 | Range dan source queries | `src/ScheduledItemQuery.ts` |
 | Layout model | `src/TimelineLayout.ts` |
 | Model presentasi detail dan pending | `src/TimelineItemModalModel.ts` |
 | Modal detail item dan daftar pending | `src/TimelineItemModal.ts` |
 | Workspace view | `src/TimelineView.ts` |
+
+`ScheduledItem.source.groupId` mengendalikan visibility, warna, dan agregasi sidebar. `ScheduledItem.source.filePath`, heading path, dan line number tetap menjadi provenance untuk navigasi. Indexer hanya menerima record di bawah accepted heading; Task tanpa metadata temporal tidak masuk projection Timeline.
 
 ## Settings dan persistence
 

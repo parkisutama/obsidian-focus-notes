@@ -8,6 +8,16 @@ Ketika **Use Daily Notes plugin settings** aktif dan Daily Notes memakai sebuah 
 
 Daily Notes yang disimpan langsung di root vault tidak ditambahkan otomatis karena itu akan membuat Timeline memindai seluruh vault. Tetapkan folder Daily Notes atau tambahkan source folder yang lebih spesifik.
 
+Semua file di folder Daily Notes ditampilkan sebagai satu source **Daily Notes**. Nama file individual tetap tersedia pada modal detail dan **Open source note**, tetapi tidak memenuhi sidebar.
+
+Focus Timeline hanya mengindeks:
+
+- Event dengan format Focus Notes;
+- Task yang mempunyai `due`, `start`, `end`, atau `remind`;
+- record di bawah heading Timeline yang diterima.
+
+Checkbox journal atau checklist biasa tidak menjadi Timeline Task. Heading default adalah `Activities & Tasks`. Tambahkan heading ledger lain melalui **Settings → Focus Notes → Timeline headings**. Heading tujuan Event/Task yang sedang aktif selalu disertakan otomatis.
+
 ## Hub dan Project Note
 
 Event atau Task dapat disimpan pada note aktif, hub, atau Project Note. Pada bagian **Save to**, Focus Notes menampilkan salah satu status berikut:
@@ -16,6 +26,8 @@ Event atau Task dapat disimpan pada note aktif, hub, atau Project Note. Pada bag
 - **Outside Focus Timeline sources** — capture tetap dapat disimpan, tetapi tidak akan muncul di Timeline.
 
 Jika target berada di luar scope, tambahkan folder induk yang sesuai melalui **Settings → Focus Notes → Timeline → Source folders**. Pilih scope terkecil yang mencakup note terkait; jangan gunakan root vault hanya untuk menghilangkan warning.
+
+Folder source menjadi unit filter di sidebar. Jika beberapa source folder bertumpuk, file memakai folder cocok yang paling spesifik. Path file aslinya tidak berubah.
 
 ## Buka detail dan note asal
 
