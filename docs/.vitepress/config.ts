@@ -29,6 +29,7 @@ export default defineConfig({
                     items: [
                         { text: "Tangkap ide ke Inbox", link: "/user/how-to/capture-to-inbox" },
                         { text: "Tambahkan contextual links", link: "/user/how-to/add-contextual-links" },
+                        { text: "Selaraskan capture dan Timeline", link: "/user/how-to/align-capture-with-timeline" },
                     ],
                 },
             ],

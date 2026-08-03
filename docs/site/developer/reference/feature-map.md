@@ -45,6 +45,7 @@ Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah ti
 |---|---|
 | Parsing source Markdown | `src/ScheduledItemParser.ts` |
 | Indexing source folders | `src/ScheduledItemIndexer.ts` |
+| Effective source scope dan target mismatch | `src/TimelineSourceAlignment.ts` |
 | Range dan source queries | `src/ScheduledItemQuery.ts` |
 | Layout model | `src/TimelineLayout.ts` |
 | Workspace view | `src/TimelineView.ts` |
