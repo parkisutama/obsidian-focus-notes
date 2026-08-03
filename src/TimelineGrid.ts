@@ -17,8 +17,7 @@ export class TimelineGrid {
             layout: TimelineLayoutResult;
             sourceColors: Record<string, string>;
             showPendingSummary: boolean;
-            openPendingSummary?: boolean;
-            onOpenPendingSummary?: () => void;
+            onOpenPendingItems: (items: ScheduledItem[]) => void;
             onOpenItem: (item: ScheduledItem) => void;
         },
     ) {
@@ -239,75 +238,7 @@ export class TimelineGrid {
         });
         btn.title = `${this.opts.pendingItems.length} pending tasks`;
 
-        const preview = wrap.createDiv({ cls: "ftl-pending-preview" });
-        const previewHead = preview.createDiv({ cls: "ftl-pending-head" });
-        const titleWrap = previewHead.createDiv();
-        titleWrap.createDiv({ cls: "ftl-pending-title", text: "Pending tasks" });
-        titleWrap.createDiv({ cls: "ftl-pending-subtitle", text: "In the past 365 days" });
-        const closeBtn = previewHead.createEl("button", {
-            cls: "ftl-pending-close",
-            attr: { "aria-label": "Close pending tasks" },
-        });
-        closeBtn.createSpan({ attr: { "aria-hidden": "true" } });
-
-        for (const item of this.opts.pendingItems.slice(0, 8)) {
-            const row = preview.createEl("button", { cls: "ftl-pending-row" });
-            row.createDiv({ cls: "ftl-pending-check", attr: { "aria-hidden": "true" } });
-            const body = row.createDiv({ cls: "ftl-pending-body" });
-            body.createDiv({ cls: "ftl-pending-name", text: item.title });
-            body.createDiv({
-                cls: "ftl-pending-meta",
-                text: this.formatPendingMeta(item),
-            });
-            row.addEventListener("click", () => this.opts.onOpenItem(item));
-        }
-
-        if (this.opts.pendingItems.length > 8) {
-            preview.createDiv({
-                cls: "ftl-pending-more",
-                text: `+${this.opts.pendingItems.length - 8} more pending tasks`,
-            });
-        }
-
-        btn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            if (this.opts.mode === "day" && this.opts.onOpenPendingSummary) {
-                this.opts.onOpenPendingSummary();
-                return;
-            }
-            const shouldOpen = !wrap.hasClass("ftl-pending-open");
-            if (shouldOpen) this.positionPendingPreview(btn, preview);
-            wrap.toggleClass("ftl-pending-open", shouldOpen);
-            if (shouldOpen) {
-                window.setTimeout(() => {
-                    document.addEventListener("click", () => wrap.removeClass("ftl-pending-open"), { once: true });
-                });
-            }
-        });
-        preview.addEventListener("click", (event) => event.stopPropagation());
-        closeBtn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            wrap.removeClass("ftl-pending-open");
-        });
-
-        if (this.opts.openPendingSummary && this.opts.mode !== "day") {
-            requestAnimationFrame(() => {
-                this.positionPendingPreview(btn, preview);
-                wrap.addClass("ftl-pending-open");
-            });
-        }
-    }
-
-    private positionPendingPreview(anchor: HTMLElement, preview: HTMLElement): void {
-        const margin = 12;
-        const rect = anchor.getBoundingClientRect();
-        const width = Math.min(420, window.innerWidth - margin * 2);
-        const left = Math.min(Math.max(margin, rect.left), Math.max(margin, window.innerWidth - width - margin));
-        const top = Math.min(rect.bottom + 8, Math.max(margin, window.innerHeight - 120));
-        preview.style.width = `${width}px`;
-        preview.style.left = `${left}px`;
-        preview.style.top = `${top}px`;
-        preview.style.maxHeight = `${Math.max(220, window.innerHeight - top - margin)}px`;
+        btn.addEventListener("click", () => this.opts.onOpenPendingItems(this.opts.pendingItems));
     }
 
     private buildDays(): Date[] {
@@ -327,20 +258,6 @@ export class TimelineGrid {
             return formatDayKey(day) === formatDayKey(today);
         }
         return formatDayKey(day) === formatDayKey(this.opts.range.start);
-    }
-
-    private formatPendingMeta(item: ScheduledItem): string {
-        const at = this.pendingAnchor(item);
-        if (!at) return item.source.fileName;
-        const due = startOfDay(at);
-        const today = startOfDay(new Date());
-        const days = Math.max(1, Math.round((today.getTime() - due.getTime()) / 86400000));
-        const relative = days === 1 ? "Yesterday" : `${days} days ago`;
-        return `${relative} · ${formatDayKey(at)} · ${item.source.fileName}`;
-    }
-
-    private pendingAnchor(item: ScheduledItem): Date | null {
-        return item.due ?? item.end ?? item.start ?? item.remind;
     }
 
     private toPx(date: Date): number {

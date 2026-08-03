@@ -1,16 +1,17 @@
-import { ItemView, Notice, TFile, type ViewStateResult, type WorkspaceLeaf, setIcon } from "obsidian";
+import { ItemView, Notice, setIcon, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
+import { openEventTaskForm } from "./EventTaskModal";
 import { ScheduledItemIndexer } from "./ScheduledItemIndexer";
 import { ScheduledItemParser } from "./ScheduledItemParser";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
 import type { ScheduledItem, TimelineMode, TimelineRange } from "./ScheduledItemTypes";
+import { TargetResolver } from "./TargetResolver";
 import { TimelineGrid } from "./TimelineGrid";
+import { PendingTasksModal, TimelineItemModal } from "./TimelineItemModal";
 import { TimelineLayout } from "./TimelineLayout";
+import { effectiveTimelineSourceFolders, isFileInTimelineSource } from "./TimelineSourceAlignment";
 import { TimelineSourceSidebar, type TimelineSourceSummary } from "./TimelineSourceSidebar";
 import type { FocusNotesSettings } from "./types";
 import { addDays, formatDayKey, getIsoWeek, startOfDay, startOfWeek } from "./utils";
-import { openEventTaskForm } from "./EventTaskModal";
-import { TargetResolver } from "./TargetResolver";
-import { effectiveTimelineSourceFolders, isFileInTimelineSource } from "./TimelineSourceAlignment";
 
 export const VIEW_TYPE_FOCUS_TIMELINE = "focus-timeline-view";
 
@@ -31,7 +32,6 @@ export class TimelineView extends ItemView {
     private weeklyOpenButton!: HTMLButtonElement;
     private weekLabel!: HTMLElement;
     private sourceToggleButton!: HTMLButtonElement;
-    private openPendingAfterRender = false;
 
     constructor(
         leaf: WorkspaceLeaf,
@@ -59,20 +59,18 @@ export class TimelineView extends ItemView {
             ...super.getState(),
             mode: this.mode,
             anchorDate: formatDayKey(this.anchorDate),
-            openPendingSummary: this.openPendingAfterRender,
         };
     }
 
     async setState(state: unknown, result: ViewStateResult): Promise<void> {
         await super.setState(state, result);
         if (state && typeof state === "object") {
-            const next = state as { mode?: unknown; anchorDate?: unknown; openPendingSummary?: unknown };
+            const next = state as { mode?: unknown; anchorDate?: unknown };
             if (next.mode === "day" || next.mode === "multi-day") this.mode = next.mode;
             if (typeof next.anchorDate === "string") {
                 const parsed = new Date(`${next.anchorDate}T00:00:00`);
                 if (!Number.isNaN(parsed.getTime())) this.anchorDate = parsed;
             }
-            this.openPendingAfterRender = next.openPendingSummary === true;
         }
         if (this.modeSelect) this.modeSelect.value = this.mode;
         if (this.gridEl) this.renderContent();
@@ -137,7 +135,7 @@ export class TimelineView extends ItemView {
         });
         setIcon(this.weeklyOpenButton, "calendar-range");
         this.weeklyOpenButton.addEventListener("click", () => {
-            void this.openWeeklyPlanner(false);
+            void this.openWeeklyPlanner();
         });
 
         this.modeSelect = controls.createEl("select", { cls: "focus-timeline-mode-select" });
@@ -148,7 +146,7 @@ export class TimelineView extends ItemView {
             const nextMode = this.modeSelect.value as TimelineMode;
             if (nextMode === "multi-day" && this.mode === "day") {
                 this.modeSelect.value = "day";
-                void this.openWeeklyPlanner(false);
+                void this.openWeeklyPlanner();
                 return;
             }
 
@@ -171,7 +169,7 @@ export class TimelineView extends ItemView {
         return button;
     }
 
-    private async openWeeklyPlanner(openPendingSummary: boolean): Promise<void> {
+    private async openWeeklyPlanner(): Promise<void> {
         const leaf = this.app.workspace.getLeaf("tab");
         await leaf.setViewState({
             type: VIEW_TYPE_FOCUS_TIMELINE,
@@ -179,7 +177,6 @@ export class TimelineView extends ItemView {
             state: {
                 mode: "multi-day",
                 anchorDate: formatDayKey(this.anchorDate),
-                openPendingSummary,
             },
         });
         this.app.workspace.revealLeaf(leaf);
@@ -280,8 +277,6 @@ export class TimelineView extends ItemView {
             return;
         }
 
-        const openPendingSummary = this.openPendingAfterRender;
-        this.openPendingAfterRender = false;
         new TimelineGrid(this.gridEl, {
             mode: this.mode,
             range,
@@ -290,9 +285,8 @@ export class TimelineView extends ItemView {
             layout,
             sourceColors: settings.timeline.sourceColors,
             showPendingSummary: settings.timeline.showPendingSummary,
-            openPendingSummary,
-            onOpenPendingSummary: () => void this.openWeeklyPlanner(true),
-            onOpenItem: (item) => void this.openItem(item),
+            onOpenPendingItems: (items) => this.openPendingItems(items),
+            onOpenItem: (item) => this.openItemDetails(item),
         }).render();
     }
 
@@ -364,7 +358,15 @@ export class TimelineView extends ItemView {
         return effectiveTimelineSourceFolders(settings.timeline.sourceFolders, dailyFolder);
     }
 
-    private async openItem(item: ScheduledItem): Promise<void> {
+    private openItemDetails(item: ScheduledItem): void {
+        new TimelineItemModal(this.app, item, (selected) => void this.openSourceItem(selected)).open();
+    }
+
+    private openPendingItems(items: ScheduledItem[]): void {
+        new PendingTasksModal(this.app, items, (item) => this.openItemDetails(item)).open();
+    }
+
+    private async openSourceItem(item: ScheduledItem): Promise<void> {
         const file = this.app.vault.getAbstractFileByPath(item.source.filePath);
         if (!(file instanceof TFile)) {
             new Notice(`Source note not found: ${item.source.filePath}`);
