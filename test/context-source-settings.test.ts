@@ -10,7 +10,7 @@ test("migrates legacy People and Place folders and adds Activities", () => {
             peopleFolders: ["CRM/People"],
             placeFolders: ["Atlas/Places"],
             contextSources: undefined as never,
-        },
+        } as unknown as typeof DEFAULT_SETTINGS.inbox,
     });
 
     assert.deepEqual(
@@ -21,6 +21,8 @@ test("migrates legacy People and Place folders and adds Activities", () => {
             { id: "activities", folders: ["Activities"] },
         ],
     );
+    assert.equal("peopleFolders" in merged.inbox, false);
+    assert.equal("placeFolders" in merged.inbox, false);
 });
 
 test("normalizes duplicate IDs, invalid folders, and incomplete filters deterministically", () => {

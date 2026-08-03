@@ -1,6 +1,5 @@
 import { type App, setIcon } from "obsidian";
 import type { EventTaskFormState } from "./EventTaskFormState";
-import { applyInboxContextOverrides, normalizeInboxFolders } from "./InboxFolderSettings";
 import { InboxNotesController } from "./InboxNotesController";
 import { FileSuggest } from "./Suggesters";
 import type { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
@@ -32,12 +31,7 @@ export class InboxMobileForm {
         this.notesController = new InboxNotesController(this.options.app, notesEl, {
             initialValue: this.options.form.inboxBody,
             targetFile: this.options.resolveTarget()?.file ?? "",
-            getContextSources: () =>
-                applyInboxContextOverrides(
-                    this.options.getSettings().inbox.contextSources,
-                    this.options.form.inboxPeopleFoldersOverride,
-                    this.options.form.inboxPlaceFoldersOverride,
-                ),
+            getContextSources: () => this.options.getSettings().inbox.contextSources,
             onChange: (value) => (this.options.form.inboxBody = value),
         });
         this.options.registerCleanup(() => this.destroy());
@@ -93,14 +87,6 @@ export class InboxMobileForm {
         position.addEventListener("change", () => {
             this.options.form.inboxPosition = position.value as InsertPosition;
         });
-
-        const settings = this.options.getSettings().inbox;
-        this.folderField(container, "People folders", settings.peopleFolders, (value) => {
-            this.options.form.inboxPeopleFoldersOverride = value;
-        });
-        this.folderField(container, "Place folders", settings.placeFolders, (value) => {
-            this.options.form.inboxPlaceFoldersOverride = value;
-        });
     }
 
     private fieldRow(container: HTMLElement, icon: string, label: string): HTMLElement {
@@ -136,24 +122,6 @@ export class InboxMobileForm {
         for (const option of options) select.createEl("option", { value: option.value, text: option.label });
         select.value = initial;
         return select;
-    }
-
-    private folderField(
-        container: HTMLElement,
-        label: string,
-        defaults: string[],
-        onChange: (folders: string[]) => void,
-    ): void {
-        const content = this.fieldRow(container, "folder", label);
-        const input = content.createEl("textarea", {
-            cls: "fn-mobile-event-description",
-            attr: {
-                "aria-label": `${label} override`,
-                placeholder: `Using Settings: ${defaults.join(", ")}`,
-            },
-        });
-        input.rows = 2;
-        input.addEventListener("input", () => onChange(normalizeInboxFolders(input.value.split(/\r?\n/))));
     }
 
     private refreshTarget(updateNotes = true): void {

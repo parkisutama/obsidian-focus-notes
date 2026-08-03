@@ -169,11 +169,7 @@ export interface InboxSettings {
     heading: string;
     /** Where a new capture is inserted inside the Inbox heading. */
     position: InsertPosition;
-    /** Recursive vault folders used for People mention suggestions. */
-    peopleFolders: string[];
-    /** Recursive vault folders used for Place mention suggestions. */
-    placeFolders: string[];
-    /** Canonical contextual object sources. Legacy folder pairs remain during migration. */
+    /** Canonical contextual object sources. */
     contextSources: ContextSourceSettings[];
 }
 
@@ -264,8 +260,6 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         defaultTargetMode: "daily-note",
         heading: "Inbox",
         position: "end",
-        peopleFolders: ["People"],
-        placeFolders: ["Place"],
         contextSources: [
             {
                 id: "people",
@@ -306,14 +300,12 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
  * Kept independent of Obsidian runtime APIs so migrations are unit-testable.
  */
 export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): FocusNotesSettings {
-    const savedInbox = saved.inbox as Partial<InboxSettings> | undefined;
-    const peopleFolders = [...(savedInbox?.peopleFolders ?? DEFAULT_SETTINGS.inbox.peopleFolders)];
-    const placeFolders = [...(savedInbox?.placeFolders ?? DEFAULT_SETTINGS.inbox.placeFolders)];
+    const savedInbox = saved.inbox as LegacyInboxSettings | undefined;
     const contextSources = normalizeContextSources(
         savedInbox?.contextSources,
         DEFAULT_SETTINGS.inbox.contextSources,
-        peopleFolders,
-        placeFolders,
+        savedInbox?.peopleFolders,
+        savedInbox?.placeFolders,
     );
     return {
         ...DEFAULT_SETTINGS,
@@ -345,9 +337,9 @@ export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): F
         },
         inbox: {
             ...DEFAULT_SETTINGS.inbox,
-            ...(savedInbox ?? {}),
-            peopleFolders,
-            placeFolders,
+            defaultTargetMode: savedInbox?.defaultTargetMode ?? DEFAULT_SETTINGS.inbox.defaultTargetMode,
+            heading: savedInbox?.heading ?? DEFAULT_SETTINGS.inbox.heading,
+            position: savedInbox?.position ?? DEFAULT_SETTINGS.inbox.position,
             contextSources,
         },
     };
@@ -356,17 +348,17 @@ export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): F
 function normalizeContextSources(
     saved: unknown,
     defaults: ContextSourceSettings[],
-    legacyPeopleFolders: string[],
-    legacyPlaceFolders: string[],
+    legacyPeopleFolders?: string[],
+    legacyPlaceFolders?: string[],
 ): ContextSourceSettings[] {
     const candidates = Array.isArray(saved)
         ? saved
         : defaults.map((source) => ({
               ...source,
               folders:
-                  source.id === "people"
+                  source.id === "people" && legacyPeopleFolders
                       ? legacyPeopleFolders
-                      : source.id === "places"
+                      : source.id === "places" && legacyPlaceFolders
                         ? legacyPlaceFolders
                         : source.folders,
           }));
@@ -395,6 +387,11 @@ function normalizeContextSources(
     }
     return result;
 }
+
+type LegacyInboxSettings = Partial<InboxSettings> & {
+    peopleFolders?: string[];
+    placeFolders?: string[];
+};
 
 function normalizeVaultFilePath(path: string): string {
     const normalized = path

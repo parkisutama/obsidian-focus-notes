@@ -1,12 +1,9 @@
 import { type App, type EventRef, getAllTags, parseFrontMatterAliases, prepareFuzzySearch } from "obsidian";
 import {
-    buildMentionSuggestions,
     buildTagSuggestions,
-    filterMentionSuggestions,
     InboxSuggestionSnapshot,
     ContextSuggestionIndex,
     type ContextSuggestion,
-    type MentionSuggestion,
     type SuggestionMatcher,
     type SuggestionNote,
 } from "./InboxSuggestions";
@@ -47,16 +44,6 @@ export class ObsidianInboxSuggestionSource {
     getContextSuggestions(query: string, sources: ContextSourceSettings[], limit = 20): ContextSuggestion[] {
         this.contextIndex ??= new ContextSuggestionIndex(this.snapshot.getNotes());
         return this.contextIndex.query(sources, this.matcher(query), limit);
-    }
-
-    getMentionSuggestions(
-        query: string,
-        peopleFolders: string[],
-        placeFolders: string[],
-        limit = 20,
-    ): MentionSuggestion[] {
-        const candidates = buildMentionSuggestions(this.snapshot.getNotes(), peopleFolders, placeFolders);
-        return filterMentionSuggestions(candidates, this.matcher(query), limit);
     }
 
     getTagSuggestions(query: string, limit = 20): string[] {

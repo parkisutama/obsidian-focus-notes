@@ -14,8 +14,7 @@ test("initializes an immutable Inbox capture independently of Event and Task", (
             defaultTargetMode: "daily-note",
             heading: "Inbox",
             position: "start",
-            peopleFolders: ["People"],
-            placeFolders: ["Place"],
+            contextSources: [],
         },
         inboxTargetFile: "Daily/2026-08-01.md",
     });
@@ -27,8 +26,6 @@ test("initializes an immutable Inbox capture independently of Event and Task", (
     assert.equal(state.inboxTargetFile, "Daily/2026-08-01.md");
     assert.equal(state.inboxHeading, "Inbox");
     assert.equal(state.inboxPosition, "start");
-    assert.deepEqual(state.inboxPeopleFoldersOverride, []);
-    assert.deepEqual(state.inboxPlaceFoldersOverride, []);
 
     state.kind = "task";
     state.kind = "inbox";

@@ -1,6 +1,5 @@
 import type { ContextSourceSettings } from "./types";
 
-export type InboxMentionKind = "person" | "place";
 export type MentionMatchSource = "filename" | "alias";
 
 export interface SuggestionNote {
@@ -10,14 +9,11 @@ export interface SuggestionNote {
     properties?: Record<string, unknown>;
 }
 
-export interface MentionSuggestion {
-    kind: InboxMentionKind;
+export interface ContextSuggestion {
+    kind: "object";
     filePath: string;
     label: string;
     matchedBy: MentionMatchSource;
-}
-
-export interface ContextSuggestion extends MentionSuggestion {
     sourceId: string;
     sourceName: string;
     sourceIcon: string;
@@ -88,22 +84,6 @@ export class ContextSuggestionIndex {
     }
 }
 
-export function buildMentionSuggestions(
-    notes: SuggestionNote[],
-    peopleFolders: string[],
-    placeFolders: string[],
-): MentionSuggestion[] {
-    return [...buildGroup(notes, peopleFolders, "person"), ...buildGroup(notes, placeFolders, "place")];
-}
-
-export function filterMentionSuggestions(
-    candidates: MentionSuggestion[],
-    matcher: SuggestionMatcher,
-    limit = 20,
-): MentionSuggestion[] {
-    return rankAndLimit(candidates, matcher, (item) => item.label, limit);
-}
-
 export function buildTagSuggestions(tags: string[], matcher: SuggestionMatcher, limit = 20): string[] {
     const seen = new Set<string>();
     const unique: string[] = [];
@@ -117,22 +97,6 @@ export function buildTagSuggestions(tags: string[], matcher: SuggestionMatcher, 
         unique.push(tag);
     }
     return rankAndLimit(unique, matcher, (tag) => tag, limit);
-}
-
-function buildGroup(notes: SuggestionNote[], folders: string[], kind: InboxMentionKind): MentionSuggestion[] {
-    const roots = folders.map(normalizeFolder).filter(Boolean);
-    if (roots.length === 0) return [];
-    const results: MentionSuggestion[] = [];
-    const seen = new Set<string>();
-
-    for (const note of notes) {
-        if (!roots.some((root) => note.path.startsWith(`${root}/`))) continue;
-        addSuggestion(results, seen, kind, note.path, note.basename, "filename");
-        for (const alias of note.aliases) {
-            addSuggestion(results, seen, kind, note.path, alias.trim(), "alias");
-        }
-    }
-    return results;
 }
 
 function buildContextGroup(notes: SuggestionNote[], source: ContextSourceSettings): ContextSuggestion[] {
@@ -164,7 +128,7 @@ function addContextSuggestion(
     if (seen.has(key)) return;
     seen.add(key);
     results.push({
-        kind: source.id === "people" ? "person" : "place",
+        kind: "object",
         sourceId: source.id,
         sourceName: source.name,
         sourceIcon: source.icon,
@@ -183,21 +147,6 @@ function matchesFilter(
     const expected = filter.value.toLowerCase();
     if (Array.isArray(actual)) return actual.some((value) => String(value).toLowerCase() === expected);
     return actual !== undefined && String(actual).toLowerCase() === expected;
-}
-
-function addSuggestion(
-    results: MentionSuggestion[],
-    seen: Set<string>,
-    kind: InboxMentionKind,
-    filePath: string,
-    label: string,
-    matchedBy: MentionMatchSource,
-): void {
-    if (!label) return;
-    const key = `${kind}\u0000${filePath}\u0000${label.toLowerCase()}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    results.push({ kind, filePath, label, matchedBy });
 }
 
 function normalizeFolder(folder: string): string {

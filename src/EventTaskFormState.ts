@@ -50,8 +50,6 @@ export class EventTaskFormState {
     inboxTargetFile: string;
     inboxHeading: string;
     inboxPosition: InsertPosition;
-    inboxPeopleFoldersOverride: string[] = [];
-    inboxPlaceFoldersOverride: string[] = [];
 
     eventDate: string;
     eventStartTime: string;
@@ -87,8 +85,7 @@ export class EventTaskFormState {
             defaultTargetMode: "daily-note",
             heading: "Inbox",
             position: "end",
-            peopleFolders: ["People"],
-            placeFolders: ["Place"],
+            contextSources: [],
         };
         this.inboxCapturedAt = new Date(anchorDate.getTime());
         this.inboxDefaultTitle = formatLocalDateTime(this.inboxCapturedAt);

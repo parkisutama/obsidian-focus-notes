@@ -1,21 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-    buildMentionSuggestions,
-    buildTagSuggestions,
-    ContextSuggestionIndex,
-    filterMentionSuggestions,
-    InboxSuggestionSnapshot,
-} from "../src/InboxSuggestions.ts";
+import { buildTagSuggestions, ContextSuggestionIndex, InboxSuggestionSnapshot } from "../src/InboxSuggestions.ts";
 import type { ContextSourceSettings } from "../src/types.ts";
 
-const notes = [
-    { path: "People/Muhammad Andi.md", basename: "Muhammad Andi", aliases: ["Andi", "Pak Andi"] },
-    { path: "People/Clients/Sinta.md", basename: "Sinta", aliases: [] },
-    { path: "Archive/People/Budi.md", basename: "Budi", aliases: [] },
-    { path: "Place/Kantor.md", basename: "Kantor", aliases: ["HQ", "Andi"] },
-    { path: "Travel/Jakarta.md", basename: "Jakarta", aliases: [] },
-];
+const notes = [{ path: "Objects/Example.md", basename: "Example", aliases: [] }];
 
 const contextNotes = [
     { path: "People/Ana.md", basename: "Ana", aliases: ["An"], properties: { type: "person" } },
@@ -57,12 +45,12 @@ test("indexes generic folder-scoped sources with optional property filters", () 
     const index = new ContextSuggestionIndex(contextNotes);
 
     assert.deepEqual(
-        index.query(sources, () => 0, 20).map((item) => [item.sourceId, item.label, item.filePath]),
+        index.query(sources, () => 0, 20).map((item) => [item.kind, item.sourceId, item.label, item.filePath]),
         [
-            ["people", "Ana", "People/Ana.md"],
-            ["people", "An", "People/Ana.md"],
-            ["activities", "Reporting", "Persona/Work/Project/Activities/Reporting.md"],
-            ["activities", "Monthly report", "Persona/Work/Project/Activities/Reporting.md"],
+            ["object", "people", "Ana", "People/Ana.md"],
+            ["object", "people", "An", "People/Ana.md"],
+            ["object", "activities", "Reporting", "Persona/Work/Project/Activities/Reporting.md"],
+            ["object", "activities", "Monthly report", "Persona/Work/Project/Activities/Reporting.md"],
         ],
     );
 });
@@ -86,57 +74,6 @@ test("caps and ranks generic results without rebuilding unchanged candidates", (
     assert.equal(index.candidateBuildCount, 1);
     index.query([source], () => 0, 20);
     assert.equal(index.candidateBuildCount, 1);
-});
-
-test("indexes recursive multi-root People and Place suggestions", () => {
-    const suggestions = buildMentionSuggestions(notes, ["People"], ["Place", "Travel"]);
-
-    assert.deepEqual(
-        suggestions.map((item) => [item.kind, item.label, item.filePath, item.matchedBy]),
-        [
-            ["person", "Muhammad Andi", "People/Muhammad Andi.md", "filename"],
-            ["person", "Andi", "People/Muhammad Andi.md", "alias"],
-            ["person", "Pak Andi", "People/Muhammad Andi.md", "alias"],
-            ["person", "Sinta", "People/Clients/Sinta.md", "filename"],
-            ["place", "Kantor", "Place/Kantor.md", "filename"],
-            ["place", "HQ", "Place/Kantor.md", "alias"],
-            ["place", "Andi", "Place/Kantor.md", "alias"],
-            ["place", "Jakarta", "Travel/Jakarta.md", "filename"],
-        ],
-    );
-});
-
-test("keeps duplicate labels distinguishable by kind and path", () => {
-    const suggestions = buildMentionSuggestions(notes, ["People"], ["Place"]).filter((item) => item.label === "Andi");
-
-    assert.deepEqual(
-        suggestions.map((item) => [item.kind, item.filePath]),
-        [
-            ["person", "People/Muhammad Andi.md"],
-            ["place", "Place/Kantor.md"],
-        ],
-    );
-});
-
-test("returns no mention results for missing or empty source folders", () => {
-    assert.deepEqual(buildMentionSuggestions(notes, ["Missing"], []), []);
-});
-
-test("filters and bounds mention results with the supplied fuzzy matcher", () => {
-    const candidates = buildMentionSuggestions(notes, ["People"], ["Place", "Travel"]);
-    const results = filterMentionSuggestions(
-        candidates,
-        (text) => (text.toLowerCase().includes("ndi") ? text.length : null),
-        2,
-    );
-
-    assert.deepEqual(
-        results.map((item) => [item.label, item.kind]),
-        [
-            ["Andi", "person"],
-            ["Andi", "place"],
-        ],
-    );
 });
 
 test("normalizes and de-duplicates existing vault tags", () => {

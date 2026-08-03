@@ -14,23 +14,15 @@ test("adds Inbox defaults when loading settings saved before Inbox existed", () 
     assert.deepEqual(merged.inbox, DEFAULT_SETTINGS.inbox);
 });
 
-test("clones saved and default Inbox folder arrays during settings merge", () => {
-    const savedPeople = ["CRM/People"];
+test("clones Object Source state during settings merge", () => {
     const first = mergeSettingsWithDefaults({
-        inbox: { ...DEFAULT_SETTINGS.inbox, peopleFolders: savedPeople },
+        inbox: { ...DEFAULT_SETTINGS.inbox },
     });
     const second = mergeSettingsWithDefaults({});
 
-    first.inbox.peopleFolders.push("Clients");
-    first.inbox.placeFolders.push("Travel");
     first.inbox.contextSources[0]?.folders.push("Private");
     if (first.inbox.contextSources[2]?.filter) first.inbox.contextSources[2].filter.value = "changed";
 
-    assert.deepEqual(savedPeople, ["CRM/People"]);
-    assert.deepEqual(second.inbox.peopleFolders, ["People"]);
-    assert.deepEqual(second.inbox.placeFolders, ["Place"]);
-    assert.deepEqual(DEFAULT_SETTINGS.inbox.peopleFolders, ["People"]);
-    assert.deepEqual(DEFAULT_SETTINGS.inbox.placeFolders, ["Place"]);
     assert.deepEqual(second.inbox.contextSources[0]?.folders, ["People"]);
     assert.equal(second.inbox.contextSources[2]?.filter?.value, "activity");
     assert.deepEqual(DEFAULT_SETTINGS.inbox.contextSources[0]?.folders, ["People"]);

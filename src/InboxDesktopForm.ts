@@ -1,6 +1,5 @@
 import { type App, setIcon } from "obsidian";
 import type { EventTaskFormState } from "./EventTaskFormState";
-import { applyInboxContextOverrides, normalizeInboxFolders } from "./InboxFolderSettings";
 import { InboxNotesController } from "./InboxNotesController";
 import { FileSuggest } from "./Suggesters";
 import type { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
@@ -33,12 +32,7 @@ export class InboxDesktopForm {
         this.notesController = new InboxNotesController(this.options.app, notesEl, {
             initialValue: this.options.form.inboxBody,
             targetFile: this.options.resolveTarget()?.file ?? "",
-            getContextSources: () =>
-                applyInboxContextOverrides(
-                    this.options.getSettings().inbox.contextSources,
-                    this.options.form.inboxPeopleFoldersOverride,
-                    this.options.form.inboxPlaceFoldersOverride,
-                ),
+            getContextSources: () => this.options.getSettings().inbox.contextSources,
             onChange: (value) => (this.options.form.inboxBody = value),
         });
 
@@ -94,39 +88,6 @@ export class InboxDesktopForm {
         position.value = this.options.form.inboxPosition;
         position.addEventListener("change", () => {
             this.options.form.inboxPosition = position.value as InsertPosition;
-        });
-
-        const settings = this.options.getSettings().inbox;
-        this.renderFolderOverride(
-            fields,
-            "People folders override",
-            settings.peopleFolders,
-            (value) => (this.options.form.inboxPeopleFoldersOverride = value),
-        );
-        this.renderFolderOverride(
-            fields,
-            "Place folders override",
-            settings.placeFolders,
-            (value) => (this.options.form.inboxPlaceFoldersOverride = value),
-        );
-    }
-
-    private renderFolderOverride(
-        container: HTMLElement,
-        label: string,
-        defaults: string[],
-        onChange: (folders: string[]) => void,
-    ): void {
-        const wrap = container.createEl("label", { text: label });
-        const input = wrap.createEl("textarea", {
-            attr: {
-                placeholder: `Using Settings: ${defaults.join(", ")}`,
-                "aria-label": label,
-            },
-        });
-        input.rows = 2;
-        input.addEventListener("input", () => {
-            onChange(normalizeInboxFolders(input.value.split(/\r?\n/)));
         });
     }
 

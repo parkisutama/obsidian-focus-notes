@@ -750,13 +750,6 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
     }
 
     private async saveContextSources(): Promise<void> {
-        const sources = this.plugin.settings.inbox.contextSources;
-        this.plugin.settings.inbox.peopleFolders = [
-            ...(sources.find((source) => source.id === "people")?.folders ?? []),
-        ];
-        this.plugin.settings.inbox.placeFolders = [
-            ...(sources.find((source) => source.id === "places")?.folders ?? []),
-        ];
         await this.plugin.saveSettings();
     }
 }
