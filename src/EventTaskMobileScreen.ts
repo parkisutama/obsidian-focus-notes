@@ -19,6 +19,7 @@ import { SubmissionPolicy } from "./SubmissionPolicy";
 import { ContextNotesController } from "./InboxNotesController";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
 import { preferActiveNoteTarget } from "./CaptureTarget";
+import { assessTimelineTarget, effectiveTimelineSourceFolders } from "./TimelineSourceAlignment";
 
 export class EventTaskMobileScreen extends Component {
     private rootEl: HTMLElement | null = null;
@@ -414,6 +415,17 @@ export class EventTaskMobileScreen extends Component {
 
     private renderSaveTarget(container: HTMLElement): void {
         const file = this.iconInput(container, "file-text", "Save to file", this.form.targetFile, "Note path").input;
+        const alignment = container.createDiv({ cls: "fn-capture-timeline-alignment" });
+        const updateAlignment = (): void => {
+            const settings = this.getSettings();
+            const resolver = new TargetResolver(this.app, settings);
+            const dailyFolder = settings.useDailyNotesAsDefault ? resolver.getDailyNoteFolder() : null;
+            const folders = effectiveTimelineSourceFolders(settings.timeline.sourceFolders, dailyFolder);
+            const status = assessTimelineTarget(file.value, folders);
+            alignment.setText(status === "aligned" ? "Indexed by Focus Timeline" : "Outside Focus Timeline sources");
+            alignment.toggleClass("is-warning", status !== "aligned");
+        };
+        updateAlignment();
         const heading = this.iconInput(
             container,
             "hash",
@@ -428,6 +440,7 @@ export class EventTaskMobileScreen extends Component {
         this.registerDomEvent(file, "input", () => {
             this.form.targetFile = file.value;
             this.contextNotesController?.setTargetFile(file.value);
+            updateAlignment();
         });
         this.registerDomEvent(heading, "input", () => (this.form.targetHeading = heading.value));
     }

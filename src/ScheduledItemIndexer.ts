@@ -1,13 +1,17 @@
 import type { App, TFile } from "obsidian";
 import type { ScheduledItemParser } from "./ScheduledItemParser";
 import type { ScheduledItem, ScheduledItemSource } from "./ScheduledItemTypes";
-import { isTFile } from "./utils";
+import { isTFile } from "./utils.ts";
+import { isFileInTimelineSource } from "./TimelineSourceAlignment.ts";
 
 export class ScheduledItemIndexer {
-    constructor(
-        private app: App,
-        private parser: ScheduledItemParser,
-    ) {}
+    private readonly app: App;
+    private readonly parser: ScheduledItemParser;
+
+    constructor(app: App, parser: ScheduledItemParser) {
+        this.app = app;
+        this.parser = parser;
+    }
 
     async buildIndex(sourceFolders: string[]): Promise<ScheduledItem[]> {
         const folders = sourceFolders.map((f) => f.trim()).filter(Boolean);
@@ -52,6 +56,6 @@ export class ScheduledItemIndexer {
     private isInSourceScope(file: TFile, folders: string[]): boolean {
         if (!isTFile(file) || file.extension !== "md") return false;
         if (folders.length === 0) return false;
-        return folders.some((folder) => file.path === folder || file.path.startsWith(`${folder}/`));
+        return isFileInTimelineSource(file.path, folders);
     }
 }

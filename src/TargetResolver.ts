@@ -83,6 +83,15 @@ export class TargetResolver {
         );
     }
 
+    /** Configured Daily Notes base folder, or null when unavailable/root-scoped. */
+    public getDailyNoteFolder(): string | null {
+        const folder = this.readDailyNotesConfig()
+            ?.folder?.trim()
+            .replace(/\\/g, "/")
+            .replace(/^\/+|\/+$/g, "");
+        return folder || null;
+    }
+
     /** Expand {{date}} / {{date:FORMAT}} tokens in the file path against `when`. */
     public resolve(target: FocusTarget, when: Date = new Date()): FocusTarget {
         return {

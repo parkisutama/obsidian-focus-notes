@@ -3189,6 +3189,26 @@ body.fn-mobile-event-screen-open .suggestion-container {
     margin-top: var(--size-4-4);
 }
 
+.fn-timeline-alignment,
+.fn-capture-timeline-alignment {
+    margin-block: var(--size-4-2);
+    padding: var(--size-4-2) var(--size-4-3);
+    border-radius: var(--radius-s);
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+
+.fn-timeline-alignment.is-success,
+.fn-capture-timeline-alignment:not(.is-warning) {
+    color: var(--text-success);
+}
+
+.fn-timeline-alignment.is-warning,
+.fn-capture-timeline-alignment.is-warning {
+    color: var(--text-warning);
+}
+
 .fn-context-source-list {
     display: grid;
     gap: var(--size-4-3);

@@ -9,6 +9,8 @@ import { TimelineSourceSidebar, type TimelineSourceSummary } from "./TimelineSou
 import type { FocusNotesSettings } from "./types";
 import { addDays, formatDayKey, getIsoWeek, startOfDay, startOfWeek } from "./utils";
 import { openEventTaskForm } from "./EventTaskModal";
+import { TargetResolver } from "./TargetResolver";
+import { effectiveTimelineSourceFolders, isFileInTimelineSource } from "./TimelineSourceAlignment";
 
 export const VIEW_TYPE_FOCUS_TIMELINE = "focus-timeline-view";
 
@@ -191,7 +193,8 @@ export class TimelineView extends ItemView {
             return;
         }
 
-        if (settings.timeline.sourceFolders.length === 0) {
+        const sourceFolders = this.getEffectiveSourceFolders();
+        if (sourceFolders.length === 0) {
             this.items = [];
             this.renderContent();
             return;
@@ -199,7 +202,7 @@ export class TimelineView extends ItemView {
 
         try {
             const indexer = new ScheduledItemIndexer(this.app, this.parser);
-            this.items = await indexer.buildIndex(settings.timeline.sourceFolders);
+            this.items = await indexer.buildIndex(sourceFolders);
             this.ensureSourceSettings();
             await this.saveSettings();
             this.renderContent();
@@ -268,7 +271,7 @@ export class TimelineView extends ItemView {
 
         this.gridEl.toggleClass("focus-timeline-main-expanded", settings.timeline.sourceSidebarCollapsed);
 
-        if (settings.timeline.sourceFolders.length === 0) {
+        if (this.getEffectiveSourceFolders().length === 0) {
             this.gridEl.empty();
             this.gridEl.createDiv({
                 cls: "focus-timeline-empty",
@@ -350,10 +353,15 @@ export class TimelineView extends ItemView {
     }
 
     private isInSourceScope(path: string): boolean {
-        const folders = this.getSettings()
-            .timeline.sourceFolders.map((folder) => folder.trim())
-            .filter(Boolean);
-        return folders.some((folder) => path === folder || path.startsWith(`${folder}/`));
+        return isFileInTimelineSource(path, this.getEffectiveSourceFolders());
+    }
+
+    private getEffectiveSourceFolders(): string[] {
+        const settings = this.getSettings();
+        const dailyFolder = settings.useDailyNotesAsDefault
+            ? new TargetResolver(this.app, settings).getDailyNoteFolder()
+            : null;
+        return effectiveTimelineSourceFolders(settings.timeline.sourceFolders, dailyFolder);
     }
 
     private async openItem(item: ScheduledItem): Promise<void> {

@@ -6,6 +6,8 @@ import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
 import { createContextSource } from "./ContextSourceSettings";
 import { type FocusNotesSettingsPage, settingsTabForSection } from "./SettingsLayout";
+import { TargetResolver } from "./TargetResolver";
+import { assessTimelineTarget, effectiveTimelineSourceFolders } from "./TimelineSourceAlignment";
 
 export class FocusNotesSettingsTab extends PluginSettingTab {
     private activePage: FocusNotesSettingsPage = "focus";
@@ -339,7 +341,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Source folders")
-            .setDesc("One folder per line. Timeline indexing is disabled until at least one folder is configured.")
+            .setDesc("One folder per line. The configured Daily Notes folder is included automatically when available.")
             .addTextArea((area) => {
                 area.setValue(this.plugin.settings.timeline.sourceFolders.join("\n")).onChange(async (v) => {
                     this.plugin.settings.timeline.sourceFolders = v
@@ -351,6 +353,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 area.inputEl.rows = 5;
                 area.inputEl.style.width = "100%";
             });
+
+        this.renderTimelineAlignmentStatus(containerEl);
 
         new Setting(containerEl).setName("Show completed tasks").addToggle((toggle) =>
             toggle.setValue(this.plugin.settings.timeline.showCompletedTasks).onChange(async (v) => {
@@ -568,6 +572,38 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             );
 
         this.organizeSettingsTabs(containerEl);
+    }
+
+    private renderTimelineAlignmentStatus(container: HTMLElement): void {
+        const settings = this.plugin.settings;
+        const resolver = new TargetResolver(this.app, settings);
+        const dailyFolder = settings.useDailyNotesAsDefault ? resolver.getDailyNoteFolder() : null;
+        const effectiveFolders = effectiveTimelineSourceFolders(settings.timeline.sourceFolders, dailyFolder);
+        const target = resolver.resolve(resolver.getActiveTarget()).file;
+        const alignment = assessTimelineTarget(target, effectiveFolders);
+        const status = container.createDiv({ cls: "fn-timeline-alignment" });
+
+        if (dailyFolder) {
+            status.createDiv({ text: `Automatically indexed Daily Notes folder: ${dailyFolder}` });
+        } else if (settings.useDailyNotesAsDefault) {
+            status.createDiv({
+                text: "Daily Notes uses the vault root or could not be resolved; it is not auto-added.",
+            });
+        }
+
+        if (alignment === "aligned") {
+            status.addClass("is-success");
+            status.createDiv({ text: `Default capture target is indexed: ${target}` });
+        } else if (alignment === "mismatch") {
+            status.addClass("is-warning");
+            status.createDiv({ text: `Capture target is outside Timeline sources: ${target}` });
+        } else if (alignment === "unconfigured") {
+            status.addClass("is-warning");
+            status.createDiv({ text: "Timeline has no folder-scoped source." });
+        } else {
+            status.addClass("is-warning");
+            status.createDiv({ text: "The default capture target could not be resolved." });
+        }
     }
 
     private renderContextSources(container: HTMLElement): void {

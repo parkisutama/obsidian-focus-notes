@@ -20,6 +20,7 @@ import { SubmissionPolicy } from "./SubmissionPolicy";
 import { ContextNotesController } from "./InboxNotesController";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
 import { preferActiveNoteTarget } from "./CaptureTarget";
+import { assessTimelineTarget, effectiveTimelineSourceFolders } from "./TimelineSourceAlignment";
 
 export function openEventTaskForm(
     app: App,
@@ -523,9 +524,21 @@ export class EventTaskModal extends Modal {
             attr: { placeholder: "Journal/2026-05-27.md", "aria-label": "Save to file" },
         });
         fileEl.value = this.form.targetFile;
+        const alignment = wrap.createDiv({ cls: "fn-capture-timeline-alignment" });
+        const updateAlignment = (): void => {
+            const settings = this.getSettings();
+            const resolver = new TargetResolver(this.app, settings);
+            const dailyFolder = settings.useDailyNotesAsDefault ? resolver.getDailyNoteFolder() : null;
+            const folders = effectiveTimelineSourceFolders(settings.timeline.sourceFolders, dailyFolder);
+            const status = assessTimelineTarget(fileEl.value, folders);
+            alignment.setText(status === "aligned" ? "Indexed by Focus Timeline" : "Outside Focus Timeline sources");
+            alignment.toggleClass("is-warning", status !== "aligned");
+        };
+        updateAlignment();
         fileEl.addEventListener("input", () => {
             this.form.targetFile = fileEl.value;
             this.contextNotesController?.setTargetFile(fileEl.value);
+            updateAlignment();
         });
         new FileSuggest(this.app, fileEl);
 
