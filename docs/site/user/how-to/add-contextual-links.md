@@ -57,8 +57,10 @@ Object Source adalah definisi jenisnya, misalnya Places. Object Note adalah inst
 
 1. Ketik `@` dan nama object baru dalam Notes atau Description.
 2. Pilih **Create “nama”…**.
-3. Pilih Object Type dan salah satu folder yang sudah dikonfigurasi.
+3. Pilih Object Type, lalu pilih atau ketik folder tujuan. Folder boleh berupa source root atau turunan sedalam apa pun; folder turunan yang belum ada akan dibuat otomatis.
 4. Pilih **Flat note** untuk menghasilkan `Folder/Nama.md`, atau **Folder note** untuk menghasilkan `Folder/Nama/Nama.md`.
 5. Pilih **Create**.
 
 Focus Notes menyalin isi template, mengganti token `{{title}}`, `{{name}}`, `{{date}}`, dan `{{time}}`, lalu memastikan property filter source tercatat di frontmatter. Object Note baru langsung menjadi link pada capture. File yang sudah ada tidak ditimpa.
+
+Folder pada Object Source berfungsi sebagai batas scope, bukan tujuan final. Misalnya source root `persona` mengizinkan tujuan `persona/Karyawan/Projects/Blok G2/Activities`, tetapi menolak tujuan di luar `persona`. Dengan demikian posisi fisik tetap fleksibel tanpa melepaskan object dari schema dan suggester source-nya.
