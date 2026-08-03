@@ -37,10 +37,18 @@ export async function createObjectNote(
     source: ContextSourceSettings,
     input: CreateObjectNoteInput,
 ): Promise<TFile> {
+    if (
+        input.folder
+            .replace(/\\/g, "/")
+            .split("/")
+            .some((part) => part === "." || part === "..")
+    ) {
+        throw new Error("The destination has an invalid folder path; remove . or .. segments.");
+    }
     const folder = normalizeConfiguredFolder(input.folder);
     if (!source.enabled) throw new Error(`${source.name} is disabled.`);
-    if (!source.folders.map(normalizeConfiguredFolder).includes(folder)) {
-        throw new Error(`Choose a folder configured for ${source.name}.`);
+    if (!source.folders.some((root) => isFolderWithinRoot(folder, root))) {
+        throw new Error(`Choose a folder inside a configured source folder for ${source.name}.`);
     }
     const path = buildObjectNotePath(folder, input.name, input.placement);
     if (app.vault.getAbstractFileByPath(path)) throw new Error(`Object Note already exists: ${path}`);
@@ -70,4 +78,13 @@ function normalizeConfiguredFolder(folder: string): string {
         .trim()
         .replace(/\\/g, "/")
         .replace(/^\/+|\/+$/g, "");
+}
+
+function isFolderWithinRoot(folder: string, root: string): boolean {
+    const normalizedFolder = normalizeConfiguredFolder(folder);
+    const normalizedRoot = normalizeConfiguredFolder(root);
+    return (
+        Boolean(normalizedRoot) &&
+        (normalizedFolder === normalizedRoot || normalizedFolder.startsWith(`${normalizedRoot}/`))
+    );
 }

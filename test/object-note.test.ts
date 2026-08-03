@@ -136,3 +136,53 @@ test("creates a minimal typed Folder Note when no template is configured", async
     assert.equal(createdContent, "# Blok G2\n");
     assert.deepEqual(frontmatter, { type: "project" });
 });
+
+test("allows an Object Note destination at any depth below a configured source root", async () => {
+    const createdPaths: string[] = [];
+    const app = {
+        vault: {
+            getAbstractFileByPath: () => null,
+            createFolder: async () => {},
+            create: async (path: string) => {
+                createdPaths.push(path);
+                return { path, extension: "md", stat: {} };
+            },
+        },
+        fileManager: { processFrontMatter: async () => {} },
+    } as unknown as App;
+    const source: ContextSourceSettings = {
+        id: "activities",
+        name: "Activities",
+        icon: "activity",
+        folders: ["persona"],
+        filter: { property: "type", value: "activity" },
+        relatedHeading: "Activity log",
+        templatePath: "",
+        placement: "flat",
+        enabled: true,
+    };
+
+    await createObjectNote(app, source, {
+        name: "Field Review",
+        folder: "persona/Karyawan/Projects/Blok G2/Activities",
+        placement: "flat",
+    });
+
+    assert.deepEqual(createdPaths, ["persona/Karyawan/Projects/Blok G2/Activities/Field Review.md"]);
+    await assert.rejects(
+        createObjectNote(app, source, {
+            name: "Outside",
+            folder: "Archive",
+            placement: "flat",
+        }),
+        /inside a configured source folder/,
+    );
+    await assert.rejects(
+        createObjectNote(app, source, {
+            name: "Traversal",
+            folder: "persona/../Archive",
+            placement: "flat",
+        }),
+        /invalid folder path/,
+    );
+});

@@ -1,5 +1,6 @@
 import { type App, Modal, Notice, Setting, type TFile } from "obsidian";
 import { createObjectNote, getCreatableObjectSources } from "./ObjectNote";
+import { FolderSuggest } from "./Suggesters";
 import type { ContextSourceSettings, ObjectNotePlacement } from "./types";
 
 export class ObjectNoteModal extends Modal {
@@ -8,7 +9,7 @@ export class ObjectNoteModal extends Modal {
     private folder = "";
     private name: string;
     private placement: ObjectNotePlacement = "flat";
-    private folderSelect: HTMLSelectElement | null = null;
+    private folderInput: HTMLInputElement | null = null;
     private placementSelect: HTMLSelectElement | null = null;
 
     constructor(
@@ -34,7 +35,10 @@ export class ObjectNoteModal extends Modal {
                 this.sourceId = value;
                 this.folder = this.currentSource()?.folders[0] ?? "";
                 this.placement = this.currentSource()?.placement ?? "flat";
-                this.renderFolderOptions();
+                if (this.folderInput) {
+                    this.folderInput.value = this.folder;
+                    this.folderInput.placeholder = this.folderPlaceholder();
+                }
                 if (this.placementSelect) this.placementSelect.value = this.placement;
             });
         });
@@ -43,11 +47,18 @@ export class ObjectNoteModal extends Modal {
                 .setValue(this.name)
                 .onChange((value) => (this.name = value));
             window.setTimeout(() => text.inputEl.focus());
-        });
-        new Setting(this.contentEl).setName("Folder").addDropdown((dropdown) => {
-            this.folderSelect = dropdown.selectEl;
-            dropdown.onChange((value) => (this.folder = value));
-            this.renderFolderOptions();
+            new Setting(this.contentEl)
+                .setName("Destination folder")
+                .setDesc(
+                    "Choose a source root or any descendant folder. New descendant folders are created when needed.",
+                )
+                .addText((text) => {
+                    this.folderInput = text.inputEl;
+                    text.setValue(this.folder)
+                        .setPlaceholder(this.folderPlaceholder())
+                        .onChange((value) => (this.folder = value));
+                    new FolderSuggest(this.app, text.inputEl);
+                });
         });
         new Setting(this.contentEl)
             .setName("Placement")
@@ -75,13 +86,8 @@ export class ObjectNoteModal extends Modal {
         return this.sources.find((source) => source.id === this.sourceId) ?? null;
     }
 
-    private renderFolderOptions(): void {
-        if (!this.folderSelect) return;
-        this.folderSelect.empty();
-        for (const folder of this.currentSource()?.folders ?? []) {
-            this.folderSelect.createEl("option", { value: folder, text: folder || "Vault root" });
-        }
-        this.folderSelect.value = this.folder;
+    private folderPlaceholder(): string {
+        return (this.currentSource()?.folders ?? []).join(" or ") || "Objects";
     }
 
     private async submit(): Promise<void> {
