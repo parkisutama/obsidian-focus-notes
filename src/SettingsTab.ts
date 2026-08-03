@@ -387,11 +387,11 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Default destination")
-            .setDesc("Use today's Daily Note or the active Event/Task target file.")
+            .setDesc("Prefer the active Markdown note for flexible capture, or always use today's Daily Note.")
             .addDropdown((dropdown) =>
                 dropdown
                     .addOption("daily-note", "Daily Note")
-                    .addOption("event-task-target", "Event/Task target")
+                    .addOption("event-task-target", "Active note / capture target")
                     .setValue(this.plugin.settings.inbox.defaultTargetMode)
                     .onChange(async (value) => {
                         this.plugin.settings.inbox.defaultTargetMode = value as InboxTargetMode;

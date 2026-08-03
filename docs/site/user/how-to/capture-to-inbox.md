@@ -20,7 +20,7 @@ Pilihan `@` berubah menjadi link Markdown relatif terhadap note tujuan. Karakter
 
 Buka bagian **More options** untuk mengganti target file, heading Inbox, posisi insertion, atau sumber folder suggestion pada capture tersebut.
 
-Default capture dapat diarahkan ke Daily Note di bawah heading Inbox atau mengikuti target Event/Task, sesuai Settings.
+Secara default capture mengikuti note Markdown yang sedang aktif sehingga Inbox, Event, dan Task dapat dicatat langsung pada hub atau Project Note. Di Settings, Anda tetap dapat memilih Daily Note agar Inbox selalu ditulis di bawah heading Inbox harian.
 
 ## Simpan
 

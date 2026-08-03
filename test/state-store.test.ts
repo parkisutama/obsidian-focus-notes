@@ -12,6 +12,7 @@ test("adds Inbox defaults when loading settings saved before Inbox existed", () 
     assert.equal(merged.pomodoroMinutes, 45);
     assert.equal(merged.eventTask.hubNotesFolder, "Hubs");
     assert.deepEqual(merged.inbox, DEFAULT_SETTINGS.inbox);
+    assert.equal(merged.inbox.defaultTargetMode, "event-task-target");
 });
 
 test("clones Object Source state during settings merge", () => {

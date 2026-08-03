@@ -257,7 +257,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         includeTags: true,
     },
     inbox: {
-        defaultTargetMode: "daily-note",
+        defaultTargetMode: "event-task-target",
         heading: "Inbox",
         position: "end",
         contextSources: [
