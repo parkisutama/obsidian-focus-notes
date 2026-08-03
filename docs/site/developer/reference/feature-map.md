@@ -48,6 +48,8 @@ Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah ti
 | Effective source scope dan target mismatch | `src/TimelineSourceAlignment.ts` |
 | Range dan source queries | `src/ScheduledItemQuery.ts` |
 | Layout model | `src/TimelineLayout.ts` |
+| Model presentasi detail dan pending | `src/TimelineItemModalModel.ts` |
+| Modal detail item dan daftar pending | `src/TimelineItemModal.ts` |
 | Workspace view | `src/TimelineView.ts` |
 
 ## Settings dan persistence
