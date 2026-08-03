@@ -1,11 +1,13 @@
-import { type App, PluginSettingTab, Setting } from "obsidian";
+import { type App, PluginSettingTab, Setting, setIcon } from "obsidian";
 import type FocusNotesPlugin from "./main";
 import type { ContextSourceSettings, InboxTargetMode, InsertPosition, TimelineMode } from "./types";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
 import { createContextSource } from "./ContextSourceSettings";
+import { type FocusNotesSettingsPage, settingsTabForSection } from "./SettingsLayout";
 
 export class FocusNotesSettingsTab extends PluginSettingTab {
+    private activePage: FocusNotesSettingsPage = "focus";
     constructor(
         app: App,
         private plugin: FocusNotesPlugin,
@@ -563,17 +565,20 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }),
             );
+
+        this.organizeSettingsTabs(containerEl);
     }
 
     private renderContextSources(container: HTMLElement): void {
-        container.createEl("h4", { text: "Object Sources" });
-        container.createEl("p", {
+        const section = container.createDiv({ cls: "fn-settings-object-section" });
+        section.createEl("h3", { text: "Object Sources" });
+        section.createEl("p", {
             cls: "setting-item-description",
             text:
                 "Each source labels one object type. Folder scope is required; an optional property filter narrows matches. " +
                 "A template note enables creating new objects directly from the @ suggester.",
         });
-        const list = container.createDiv({ cls: "fn-context-source-list" });
+        const list = section.createDiv({ cls: "fn-context-source-list" });
         const sources = this.plugin.settings.inbox.contextSources;
 
         sources.forEach((source, index) => {
@@ -593,52 +598,30 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
 
     private renderContextSource(container: HTMLElement, source: ContextSourceSettings, index: number): void {
         const card = container.createDiv({ cls: "fn-context-source-card" });
-        new Setting(card)
-            .setName(source.name)
-            .setDesc(`Stable ID: ${source.id}`)
-            .addToggle((toggle) =>
-                toggle.setValue(source.enabled).onChange(async (value) => {
-                    source.enabled = value;
-                    await this.saveContextSources();
-                }),
-            )
-            .addExtraButton((button) =>
-                button
-                    .setIcon("trash-2")
-                    .setTooltip(`Remove ${source.name}`)
-                    .onClick(async () => {
-                        this.plugin.settings.inbox.contextSources.splice(index, 1);
-                        await this.saveContextSources();
-                        this.display();
-                    }),
-            );
-
-        new Setting(card)
-            .setName("Object label")
-            .setDesc("Shown in @ suggestions.")
-            .addText((text) =>
-                text
-                    .setPlaceholder("Books")
-                    .setValue(source.name)
-                    .onChange(async (value) => {
-                        source.name = value.trim() || source.id;
-                        await this.saveContextSources();
-                    }),
-            );
-        new Setting(card)
-            .setName("Icon")
-            .setDesc("Lucide icon name used in the interface.")
-            .addText((text) =>
-                text
-                    .setPlaceholder("book-open")
-                    .setValue(source.icon)
-                    .onChange(async (value) => {
-                        source.icon = value.trim() || "link";
-                        await this.saveContextSources();
-                    }),
-            );
-
-        this.renderContextSourceFolders(card, source);
+        const header = card.createDiv({ cls: "fn-context-source-header" });
+        const identity = header.createDiv();
+        identity.createEl("strong", { text: source.name });
+        identity.createEl("small", { text: `ID: ${source.id}` });
+        const actions = header.createDiv({ cls: "fn-context-source-actions" });
+        const enabled = actions.createEl("input", {
+            type: "checkbox",
+            attr: { "aria-label": `Enable ${source.name}` },
+        });
+        enabled.checked = source.enabled;
+        enabled.addEventListener("change", async () => {
+            source.enabled = enabled.checked;
+            await this.saveContextSources();
+        });
+        const remove = actions.createEl("button", {
+            cls: "clickable-icon",
+            attr: { "aria-label": `Remove ${source.name}` },
+        });
+        setIcon(remove, "trash-2");
+        remove.addEventListener("click", async () => {
+            this.plugin.settings.inbox.contextSources.splice(index, 1);
+            await this.saveContextSources();
+            this.display();
+        });
 
         let filterProperty = source.filter?.property ?? "";
         let filterValue = source.filter?.value ?? "";
@@ -649,104 +632,164 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     : null;
             await this.saveContextSources();
         };
-        new Setting(card)
-            .setName("Property filter")
-            .setDesc("Optional frontmatter property name, for example type.")
-            .addText((text) =>
-                text
-                    .setPlaceholder("type")
-                    .setValue(filterProperty)
-                    .onChange(async (value) => {
-                        filterProperty = value;
-                        await saveFilter();
-                    }),
-            );
-        new Setting(card)
-            .setName("Property value")
-            .setDesc("Exact value required when a property filter is set.")
-            .addText((text) =>
-                text
-                    .setPlaceholder("book")
-                    .setValue(filterValue)
-                    .onChange(async (value) => {
-                        filterValue = value;
-                        await saveFilter();
-                    }),
-            );
-        new Setting(card).setName("Historical log heading").addText((text) =>
-            text
-                .setPlaceholder("Reading log")
-                .setValue(source.relatedHeading)
-                .onChange(async (value) => {
-                    source.relatedHeading = value.replace(/^#+\s*/, "").trim() || "Related log";
-                    await this.saveContextSources();
-                }),
+        const fields = card.createDiv({ cls: "fn-context-source-grid" });
+        this.contextTextField(fields, "Object label", "Books", source.name, async (value) => {
+            source.name = value.trim() || source.id;
+            identity.querySelector("strong")?.setText(source.name);
+            await this.saveContextSources();
+        });
+        this.contextTextField(fields, "Icon", "book-open", source.icon, async (value) => {
+            source.icon = value.trim() || "link";
+            await this.saveContextSources();
+        });
+        this.contextTextField(fields, "Property", "type", filterProperty, async (value) => {
+            filterProperty = value;
+            await saveFilter();
+        });
+        this.contextTextField(fields, "Value", "book", filterValue, async (value) => {
+            filterValue = value;
+            await saveFilter();
+        });
+        this.contextTextField(fields, "Log heading", "Reading log", source.relatedHeading, async (value) => {
+            source.relatedHeading = value.replace(/^#+\s*/, "").trim() || "Related log";
+            await this.saveContextSources();
+        });
+        const template = this.contextTextField(
+            fields,
+            "Template note",
+            "Templates/Book.md",
+            source.templatePath,
+            async (value) => {
+                source.templatePath = value.trim().replace(/^\/+/, "");
+                await this.saveContextSources();
+            },
         );
-        new Setting(card)
-            .setName("Template note path")
-            .setDesc("Vault-relative template used when creating a new Object Note from @ suggestions.")
-            .addText((text) => {
-                text.setPlaceholder("Templates/Book.md")
-                    .setValue(source.templatePath)
-                    .onChange(async (value) => {
-                        source.templatePath = value.trim().replace(/^\/+/, "");
-                        await this.saveContextSources();
-                    });
-                new FileSuggest(this.app, text.inputEl);
-            });
+        new FileSuggest(this.app, template);
+
+        this.renderContextSourceFolders(card, source);
     }
 
     private renderContextSourceFolders(container: HTMLElement, source: ContextSourceSettings): void {
         const rows = container.createDiv({ cls: "fn-context-source-folders" });
+        rows.createEl("span", { cls: "fn-context-source-folders-label", text: "Source folders" });
+        const list = rows.createDiv({ cls: "fn-context-source-folder-list" });
         const values = [...source.folders];
         let suggesters: FolderSuggest[] = [];
 
         const renderRows = (): void => {
             for (const suggester of suggesters) suggester.close();
             suggesters = [];
-            rows.empty();
+            list.empty();
 
             values.forEach((folder, index) => {
-                new Setting(rows)
-                    .setName(`Source folder ${index + 1}`)
-                    .addText((text) => {
-                        text.setPlaceholder(index === 0 ? "Objects" : "Folder/path")
-                            .setValue(folder)
-                            .onChange(async (value) => {
-                                values[index] = value;
-                                source.folders = normalizeInboxFolders(values);
-                                await this.saveContextSources();
-                            });
-                        text.inputEl.setAttribute("aria-label", `${source.name} source folder ${index + 1}`);
-                        suggesters.push(new FolderSuggest(this.app, text.inputEl));
-                    })
-                    .addExtraButton((button) =>
-                        button
-                            .setIcon("trash-2")
-                            .setTooltip(`Remove ${source.name} folder ${index + 1}`)
-                            .onClick(async () => {
-                                values.splice(index, 1);
-                                source.folders = normalizeInboxFolders(values);
-                                await this.saveContextSources();
-                                renderRows();
-                            }),
-                    );
+                const row = list.createDiv({ cls: "fn-context-source-folder-row" });
+                const input = row.createEl("input", {
+                    type: "text",
+                    attr: {
+                        placeholder: index === 0 ? "Objects" : "Folder/path",
+                        "aria-label": `${source.name} source folder ${index + 1}`,
+                    },
+                });
+                input.value = folder;
+                input.addEventListener("change", async () => {
+                    values[index] = input.value;
+                    source.folders = normalizeInboxFolders(values);
+                    await this.saveContextSources();
+                });
+                suggesters.push(new FolderSuggest(this.app, input));
+                const remove = row.createEl("button", {
+                    cls: "clickable-icon",
+                    attr: { "aria-label": `Remove ${source.name} folder ${index + 1}` },
+                });
+                setIcon(remove, "x");
+                remove.addEventListener("click", async () => {
+                    values.splice(index, 1);
+                    source.folders = normalizeInboxFolders(values);
+                    await this.saveContextSources();
+                    renderRows();
+                });
             });
 
-            new Setting(rows).addButton((button) =>
-                button
-                    .setButtonText("Add folder")
-                    .setTooltip(`Add ${source.name} folder`)
-                    .onClick(() => {
-                        values.push("");
-                        renderRows();
-                        const inputs = rows.querySelectorAll<HTMLInputElement>("input");
-                        inputs.item(inputs.length - 1)?.focus();
-                    }),
-            );
+            const add = list.createEl("button", { text: "+ Add folder", cls: "fn-context-source-add-folder" });
+            add.addEventListener("click", () => {
+                values.push("");
+                renderRows();
+                const inputs = list.querySelectorAll<HTMLInputElement>("input");
+                inputs.item(inputs.length - 1)?.focus();
+            });
         };
 
         renderRows();
+    }
+
+    private contextTextField(
+        container: HTMLElement,
+        label: string,
+        placeholder: string,
+        value: string,
+        onChange: (value: string) => Promise<void>,
+    ): HTMLInputElement {
+        const field = container.createEl("label", { cls: "fn-context-source-field" });
+        field.createEl("span", { text: label });
+        const input = field.createEl("input", { type: "text", attr: { placeholder, "aria-label": label } });
+        input.value = value;
+        input.addEventListener("change", () => void onChange(input.value));
+        return input;
+    }
+
+    private organizeSettingsTabs(container: HTMLElement): void {
+        const pages: Array<{ id: FocusNotesSettingsPage; label: string }> = [
+            { id: "focus", label: "Focus" },
+            { id: "timeline", label: "Timeline" },
+            { id: "capture", label: "Capture" },
+            { id: "objects", label: "Objects" },
+        ];
+        const nav = container.createDiv({ cls: "fn-settings-tabs", attr: { role: "tablist" } });
+        const panels = new Map<FocusNotesSettingsPage, HTMLElement>();
+        for (const page of pages) {
+            panels.set(
+                page.id,
+                container.createDiv({
+                    cls: "fn-settings-panel",
+                    attr: { id: `fn-settings-${page.id}`, role: "tabpanel" },
+                }),
+            );
+        }
+
+        let current: FocusNotesSettingsPage = "focus";
+        const movable = Array.from(container.children).filter(
+            (child) => child !== nav && !child.classList.contains("fn-settings-panel") && child.tagName !== "H2",
+        );
+        movable.shift();
+        for (const child of movable) {
+            if (child.classList.contains("fn-settings-object-section")) current = "objects";
+            else if (child.tagName === "H3") current = settingsTabForSection(child.textContent ?? "");
+            panels.get(current)?.appendChild(child);
+        }
+
+        const activate = (page: FocusNotesSettingsPage): void => {
+            this.activePage = page;
+            for (const [id, panel] of panels) panel.toggleClass("fn-settings-panel-active", id === page);
+            for (const button of Array.from(nav.querySelectorAll<HTMLButtonElement>("button[role=tab]"))) {
+                const selected = button.dataset.page === page;
+                button.toggleClass("is-active", selected);
+                button.setAttribute("aria-selected", String(selected));
+                button.tabIndex = selected ? 0 : -1;
+            }
+        };
+        for (const page of pages) {
+            const button = nav.createEl("button", {
+                text: page.label,
+                attr: {
+                    role: "tab",
+                    "aria-controls": `fn-settings-${page.id}`,
+                    "data-page": page.id,
+                },
+            });
+            button.addEventListener("click", () => activate(page.id));
+        }
+        container.querySelector("h2")?.insertAdjacentElement("afterend", nav);
+        activate(this.activePage);
     }
 
     private async saveContextSources(): Promise<void> {
