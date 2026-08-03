@@ -66,4 +66,6 @@ Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah ti
 
 `ContextSourceSettings.templatePath` menyimpan path note template opsional yang sudah dinormalisasi. Object Note creation memakai fallback minimal saat template kosong dan selalu memastikan property filter source ada di frontmatter. `placement` menentukan default `flat` atau `folder-note`, tetapi dapat dioverride dalam modal. Field `peopleFolders` dan `placeFolders` hanya dibaca oleh migrasi data lama; runtime dan state kanonik memakai `contextSources` saja.
 
+Object Sources dapat berbagi folder jika seluruh source terkait memakai property yang sama dengan value unik. Pada folder dengan panjang scope yang sama, `ContextLinkResolver` memprioritaskan kecocokan property-filtered sebelum source folder-only; urutan konfigurasi hanya menjadi tie-breaker terakhir.
+
 Status reliability setiap area dicatat di dokumen internal `docs/development-status.md` dan tidak dipublikasikan melalui VitePress.

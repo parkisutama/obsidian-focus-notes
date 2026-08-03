@@ -51,6 +51,15 @@ Buka **Settings → Focus Notes → Object sources** untuk menentukan kelompok n
 
 Gunakan path note template di dalam vault, misalnya `Templates/Person.md`. Source aktif yang memiliki folder dapat membuat Object Note meskipun template kosong. Dalam kondisi tersebut Focus Notes membuat heading minimal dan memastikan property filter source tersedia di frontmatter.
 
+Beberapa Object Source boleh memakai folder yang sama. Agar setiap note tetap memiliki tipe yang pasti, gunakan satu nama **Property** yang sama dan **Value** berbeda, misalnya:
+
+| Object Source | Folder | Property | Value |
+|---|---|---|---|
+| Projects | `Objects` | `type` | `project` |
+| Activities | `Objects` | `type` | `activity` |
+
+Focus Notes memprioritaskan source dengan property yang cocok dibanding source folder umum. Settings menampilkan warning jika shared folder tidak mempunyai discriminator yang aman. Template Object Note otomatis menuliskan property/value dari source yang dipilih.
+
 ## Buat Object Note baru
 
 Object Source adalah definisi jenisnya, misalnya Places. Object Note adalah instansinya, misalnya Kantor Jakarta.
