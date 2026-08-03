@@ -22,6 +22,8 @@ Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah ti
 | Mention dan tag suggestions | `src/InboxSuggestions.ts` |
 | Editor link hidup | `src/InboxNotesController.ts` |
 | Model dan ID Object Sources baru | `src/ContextSourceSettings.ts` |
+| Path, template expansion, dan Object Note writer | `src/ObjectNote.ts` |
+| Modal pembuatan Object Note | `src/ObjectNoteModal.ts` |
 | Resolusi link ke source context | `src/ContextLinkResolver.ts` |
 | Format append-only historical log | `src/RelatedLog.ts` |
 | Receipt dan failed-destination-only retry | `src/RelatedWriteRecovery.ts` |
@@ -56,6 +58,6 @@ Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah ti
 | Load, migration, dan save | `src/StateStore.ts` |
 | Plugin lifecycle | `src/main.ts` |
 
-`ContextSourceSettings.templatePath` menyimpan path note template yang sudah dinormalisasi. Field ini belum menjalankan template atau membuat note; consumer pembuatan object harus diimplementasikan secara terpisah. Folder People dan Places lama tetap disinkronkan dari source bawaan untuk menjaga kompatibilitas selama migrasi.
+`ContextSourceSettings.templatePath` menyimpan path note template yang sudah dinormalisasi. Object Note creation menyalin template dan memastikan property filter source ada di frontmatter. Field `peopleFolders` dan `placeFolders` hanya dibaca oleh migrasi data lama; runtime dan state kanonik memakai `contextSources` saja.
 
 Status reliability setiap area dicatat di dokumen internal `docs/development-status.md` dan tidak dipublikasikan melalui VitePress.

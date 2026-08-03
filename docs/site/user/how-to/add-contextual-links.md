@@ -46,6 +46,17 @@ Buka **Settings → Focus Notes → Object sources** untuk menentukan kelompok n
 - satu atau beberapa folder sumber;
 - property filter opsional untuk mempersempit note di dalam folder;
 - heading tujuan historical log;
-- template note path yang akan dipakai oleh alur pembuatan object pada pengembangan berikutnya.
+- template note path yang dipakai untuk membuat Object Note baru dari contextual suggester.
 
-Gunakan path note template di dalam vault, misalnya `Templates/Person.md`. Menetapkan template path saat ini tidak otomatis membuat object note; konfigurasi tersebut disimpan sebagai fondasi untuk fitur pembuatan object berikutnya.
+Gunakan path note template di dalam vault, misalnya `Templates/Person.md`. Source tanpa folder, tanpa template path, atau dalam keadaan disabled tetap dapat diatur, tetapi tidak menawarkan aksi pembuatan Object Note.
+
+## Buat Object Note baru
+
+Object Source adalah definisi jenisnya, misalnya Places. Object Note adalah instansinya, misalnya Kantor Jakarta.
+
+1. Ketik `@` dan nama object baru dalam Notes atau Description.
+2. Pilih **Create “nama”…**.
+3. Pilih Object Type dan salah satu folder yang sudah dikonfigurasi.
+4. Pilih **Create**.
+
+Focus Notes menyalin isi template, mengganti token `{{title}}`, `{{name}}`, `{{date}}`, dan `{{time}}`, lalu memastikan property filter source tercatat di frontmatter. Object Note baru langsung menjadi link pada capture. File yang sudah ada tidak ditimpa.
