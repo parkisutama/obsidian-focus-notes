@@ -1,4 +1,5 @@
-import { type App, type TFile, type TFolder, AbstractInputSuggest } from "obsidian";
+import { AbstractInputSuggest, type App, type TFile, type TFolder } from "obsidian";
+import { applyInputSuggestion } from "./SuggestionSelection";
 import { isTFile, isTFolder } from "./utils";
 
 /**
@@ -28,8 +29,7 @@ export class FileSuggest extends AbstractInputSuggest<TFile> {
     }
 
     selectSuggestion(file: TFile): void {
-        this.inputEl.value = file.path;
-        this.inputEl.trigger("input");
+        applyInputSuggestion(this.inputEl, file.path);
         this.close();
     }
 }
@@ -58,8 +58,7 @@ export class FolderSuggest extends AbstractInputSuggest<TFolder> {
     }
 
     selectSuggestion(folder: TFolder): void {
-        this.inputEl.value = folder.path;
-        this.inputEl.trigger("input");
+        applyInputSuggestion(this.inputEl, folder.path);
         this.close();
     }
 }
@@ -100,8 +99,7 @@ export class HeadingSuggest extends AbstractInputSuggest<string> {
     }
 
     selectSuggestion(heading: string): void {
-        this.inputEl.value = heading;
-        this.inputEl.trigger("input");
+        applyInputSuggestion(this.inputEl, heading);
         this.close();
     }
 }

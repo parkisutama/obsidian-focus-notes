@@ -783,9 +783,11 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     },
                 });
                 input.value = folder;
-                input.addEventListener("change", async () => {
+                input.addEventListener("input", () => {
                     values[index] = input.value;
                     source.folders = normalizeInboxFolders(values);
+                });
+                input.addEventListener("change", async () => {
                     await this.saveContextSources();
                 });
                 suggesters.push(new FolderSuggest(this.app, input));
