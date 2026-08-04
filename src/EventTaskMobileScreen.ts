@@ -1,5 +1,6 @@
-import { type App, Component, FuzzySuggestModal, Notice, type TFile, setIcon } from "obsidian";
-import { EventTaskFormState, type EventTaskKind, type HubMode, formatLocalDate } from "./EventTaskFormState";
+import { type App, Component, FuzzySuggestModal, Notice, setIcon, type TFile } from "obsidian";
+import { preferActiveNoteTarget } from "./CaptureTarget";
+import { EventTaskFormState, type EventTaskKind, formatLocalDate, type HubMode } from "./EventTaskFormState";
 import {
     type EventTaskSubmissionResult,
     type PartialSubmissionResult,
@@ -8,18 +9,17 @@ import {
     submitInbox,
 } from "./EventTaskSubmission";
 import { type EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
+import { InboxMobileForm } from "./InboxMobileForm";
+import { ContextNotesController } from "./InboxNotesController";
+import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { getMobileViewportMetrics } from "./MobileViewport";
+import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
+import { SubmissionPolicy } from "./SubmissionPolicy";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
+import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
 import type { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
-import { InboxMobileForm } from "./InboxMobileForm";
-import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
-import { SubmissionPolicy } from "./SubmissionPolicy";
-import { ContextNotesController } from "./InboxNotesController";
-import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
-import { preferActiveNoteTarget } from "./CaptureTarget";
-import { assessTimelineTarget, effectiveTimelineSourceFolders } from "./TimelineSourceAlignment";
 
 export class EventTaskMobileScreen extends Component {
     private rootEl: HTMLElement | null = null;
@@ -420,8 +420,16 @@ export class EventTaskMobileScreen extends Component {
             const settings = this.getSettings();
             const resolver = new TargetResolver(this.app, settings);
             const dailyFolder = settings.useDailyNotesAsDefault ? resolver.getDailyNoteFolder() : null;
-            const folders = effectiveTimelineSourceFolders(settings.timeline.sourceFolders, dailyFolder);
-            const status = assessTimelineTarget(file.value, folders);
+            const groups = buildTimelineSourceGroups(
+                settings.timeline.sourceFolders,
+                dailyFolder,
+                settings.inbox.contextSources,
+            );
+            const target = this.app.vault.getAbstractFileByPath(file.value);
+            const properties = isTFile(target)
+                ? (this.app.metadataCache.getFileCache(target)?.frontmatter as Record<string, unknown> | undefined)
+                : undefined;
+            const status = assessTimelineTargetGroups(file.value, properties, groups);
             alignment.setText(status === "aligned" ? "Indexed by Focus Timeline" : "Outside Focus Timeline sources");
             alignment.toggleClass("is-warning", status !== "aligned");
         };

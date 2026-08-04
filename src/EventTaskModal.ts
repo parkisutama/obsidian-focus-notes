@@ -1,7 +1,7 @@
-import { type App, type Component, FuzzySuggestModal, Modal, Notice, Platform, type TFile, setIcon } from "obsidian";
-import type { FocusNotesSettings, FocusTarget } from "./types";
-import { type EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
-import { EventTaskFormState, type EventTaskKind, type HubMode, formatLocalDate } from "./EventTaskFormState";
+import { type App, type Component, FuzzySuggestModal, Modal, Notice, Platform, setIcon, type TFile } from "obsidian";
+import { preferActiveNoteTarget } from "./CaptureTarget";
+import { EventTaskFormState, type EventTaskKind, formatLocalDate, type HubMode } from "./EventTaskFormState";
+import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
 import {
     type EventTaskSubmissionResult,
     type PartialSubmissionResult,
@@ -9,18 +9,18 @@ import {
     submitEventTask,
     submitInbox,
 } from "./EventTaskSubmission";
-import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
+import { type EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
+import { InboxDesktopForm } from "./InboxDesktopForm";
+import { ContextNotesController } from "./InboxNotesController";
+import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
+import { shouldUseMobileForm } from "./MobileFormPolicy";
+import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
+import { SubmissionPolicy } from "./SubmissionPolicy";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
+import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
+import type { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
-import { shouldUseMobileForm } from "./MobileFormPolicy";
-import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
-import { InboxDesktopForm } from "./InboxDesktopForm";
-import { SubmissionPolicy } from "./SubmissionPolicy";
-import { ContextNotesController } from "./InboxNotesController";
-import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
-import { preferActiveNoteTarget } from "./CaptureTarget";
-import { assessTimelineTarget, effectiveTimelineSourceFolders } from "./TimelineSourceAlignment";
 
 export function openEventTaskForm(
     app: App,
@@ -529,8 +529,16 @@ export class EventTaskModal extends Modal {
             const settings = this.getSettings();
             const resolver = new TargetResolver(this.app, settings);
             const dailyFolder = settings.useDailyNotesAsDefault ? resolver.getDailyNoteFolder() : null;
-            const folders = effectiveTimelineSourceFolders(settings.timeline.sourceFolders, dailyFolder);
-            const status = assessTimelineTarget(fileEl.value, folders);
+            const groups = buildTimelineSourceGroups(
+                settings.timeline.sourceFolders,
+                dailyFolder,
+                settings.inbox.contextSources,
+            );
+            const target = this.app.vault.getAbstractFileByPath(fileEl.value);
+            const properties = isTFile(target)
+                ? (this.app.metadataCache.getFileCache(target)?.frontmatter as Record<string, unknown> | undefined)
+                : undefined;
+            const status = assessTimelineTargetGroups(fileEl.value, properties, groups);
             alignment.setText(status === "aligned" ? "Indexed by Focus Timeline" : "Outside Focus Timeline sources");
             alignment.toggleClass("is-warning", status !== "aligned");
         };

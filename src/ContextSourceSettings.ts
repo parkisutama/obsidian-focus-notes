@@ -18,6 +18,7 @@ export function createContextSource(existing: readonly ContextSourceSettings[]):
         templatePath: "",
         placement: "flat",
         enabled: false,
+        includeInTimeline: false,
     };
 }
 

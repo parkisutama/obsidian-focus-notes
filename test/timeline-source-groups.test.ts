@@ -1,21 +1,108 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ScheduledItem } from "../src/ScheduledItemTypes.ts";
-import { buildTimelineSourceGroups, timelineSourceHeadings } from "../src/TimelineSourceGroups.ts";
+import {
+    assessTimelineTargetGroups,
+    buildTimelineSourceGroups,
+    timelineSourceHeadings,
+} from "../src/TimelineSourceGroups.ts";
 import { buildTimelineSourceSummaries } from "../src/TimelineSourceSidebar.ts";
 
 test("groups every Daily Note under one stable Daily Notes source", () => {
-    assert.deepEqual(buildTimelineSourceGroups(["Projects", "calendar"], "calendar"), [
-        { id: "folder:Projects", name: "Projects", folder: "Projects" },
-        { id: "daily-notes:calendar", name: "Daily Notes", folder: "calendar" },
+    assert.deepEqual(buildTimelineSourceGroups(["Projects", "calendar"], "calendar", []), [
+        { id: "folder:Projects", name: "Projects", folders: ["Projects"], filter: null },
+        { id: "daily-notes:calendar", name: "Daily Notes", folders: ["calendar"], filter: null },
     ]);
 });
 
 test("keeps nested configured folders as distinct source groups", () => {
-    assert.deepEqual(buildTimelineSourceGroups(["Persona/Work/Projects", "Persona/Work/Projects/G2"], null), [
-        { id: "folder:Persona/Work/Projects", name: "Projects", folder: "Persona/Work/Projects" },
-        { id: "folder:Persona/Work/Projects/G2", name: "G2", folder: "Persona/Work/Projects/G2" },
+    assert.deepEqual(buildTimelineSourceGroups(["Persona/Work/Projects", "Persona/Work/Projects/G2"], null, []), [
+        { id: "folder:Persona/Work/Projects", name: "Projects", folders: ["Persona/Work/Projects"], filter: null },
+        { id: "folder:Persona/Work/Projects/G2", name: "G2", folders: ["Persona/Work/Projects/G2"], filter: null },
     ]);
+});
+
+test("builds property-filtered Timeline groups from temporal Object Sources sharing a Persona root", () => {
+    const objectSources = [
+        {
+            id: "projects",
+            name: "Projects",
+            icon: "briefcase",
+            folders: ["persona"],
+            filter: { property: "type", value: "project" },
+            relatedHeading: "Project log",
+            templatePath: "",
+            placement: "folder-note" as const,
+            enabled: true,
+            includeInTimeline: true,
+        },
+        {
+            id: "activities",
+            name: "Activities",
+            icon: "activity",
+            folders: ["persona"],
+            filter: { property: "type", value: "activity" },
+            relatedHeading: "Activity log",
+            templatePath: "",
+            placement: "flat" as const,
+            enabled: true,
+            includeInTimeline: true,
+        },
+        {
+            id: "people",
+            name: "People",
+            icon: "user",
+            folders: ["persona"],
+            filter: { property: "type", value: "person" },
+            relatedHeading: "Interactions",
+            templatePath: "",
+            placement: "flat" as const,
+            enabled: true,
+            includeInTimeline: false,
+        },
+    ];
+
+    assert.deepEqual(buildTimelineSourceGroups([], null, objectSources), [
+        {
+            id: "object:projects",
+            name: "Projects",
+            folders: ["persona"],
+            filter: { property: "type", value: "project" },
+        },
+        {
+            id: "object:activities",
+            name: "Activities",
+            folders: ["persona"],
+            filter: { property: "type", value: "activity" },
+        },
+    ]);
+});
+
+test("target alignment requires the Object Source property while Daily Notes remain folder-based", () => {
+    const groups = [
+        {
+            id: "daily-notes:calendar",
+            name: "Daily Notes",
+            folders: ["calendar"],
+            filter: null,
+        },
+        {
+            id: "object:projects",
+            name: "Projects",
+            folders: ["persona"],
+            filter: { property: "type", value: "project" },
+        },
+    ];
+
+    assert.equal(assessTimelineTargetGroups("calendar/2026-08-04.md", undefined, groups), "aligned");
+    assert.equal(
+        assessTimelineTargetGroups("persona/Karyawan/BLOK 05/BLOK 05.md", { type: "project" }, groups),
+        "aligned",
+    );
+    assert.equal(
+        assessTimelineTargetGroups("persona/Karyawan/BLOK 05/BLOK 05.md", { type: "person" }, groups),
+        "mismatch",
+    );
 });
 
 test("always includes the active capture heading without duplicating configured headings", () => {
@@ -27,7 +114,7 @@ test("always includes the active capture heading without duplicating configured 
 });
 
 test("summarizes many Daily Note files as one range-aware source", () => {
-    const groups = buildTimelineSourceGroups([], "calendar");
+    const groups = buildTimelineSourceGroups([], "calendar", []);
     const makeItem = (id: string, filePath: string): ScheduledItem => ({
         id,
         kind: "task",
@@ -57,7 +144,7 @@ test("summarizes many Daily Note files as one range-aware source", () => {
         {
             id: "daily-notes:calendar",
             name: "Daily Notes",
-            folder: "calendar",
+            scope: "calendar",
             count: 2,
             color: "teal",
             visible: true,

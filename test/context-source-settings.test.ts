@@ -51,6 +51,7 @@ test("normalizes duplicate IDs, invalid folders, and incomplete filters determin
             templatePath: "",
             placement: "flat",
             enabled: true,
+            includeInTimeline: false,
         },
         {
             id: "my-source-2",
@@ -62,6 +63,7 @@ test("normalizes duplicate IDs, invalid folders, and incomplete filters determin
             templatePath: "",
             placement: "flat",
             enabled: true,
+            includeInTimeline: false,
         },
     ]);
 });
@@ -117,6 +119,7 @@ test("drops malformed values without throwing or enabling full-vault scope", () 
         templatePath: "",
         placement: "flat",
         enabled: false,
+        includeInTimeline: false,
     });
 });
 
@@ -149,6 +152,7 @@ test("preserves a valid custom Book source and property filter", () => {
         templatePath: "Templates/Book.md",
         placement: "flat",
         enabled: true,
+        includeInTimeline: false,
     });
 });
 
@@ -168,7 +172,52 @@ test("creates a disabled object source with a stable unique ID", () => {
         templatePath: "",
         placement: "flat",
         enabled: false,
+        includeInTimeline: false,
     });
+});
+
+test("migrates temporal object types into Timeline while preserving an explicit opt-out", () => {
+    const base = {
+        icon: "activity",
+        folders: ["persona"],
+        relatedHeading: "Related log",
+        enabled: true,
+    };
+    const merged = mergeSettingsWithDefaults({
+        inbox: {
+            ...DEFAULT_SETTINGS.inbox,
+            contextSources: [
+                {
+                    ...base,
+                    id: "projects",
+                    name: "Projects",
+                    filter: { property: "type", value: "project" },
+                },
+                {
+                    ...base,
+                    id: "activities",
+                    name: "Activities",
+                    filter: { property: "type", value: "activity" },
+                    includeInTimeline: false,
+                },
+                {
+                    ...base,
+                    id: "books",
+                    name: "Books",
+                    filter: { property: "type", value: "book" },
+                },
+            ],
+        },
+    });
+
+    assert.deepEqual(
+        merged.inbox.contextSources.map(({ id, includeInTimeline }) => ({ id, includeInTimeline })),
+        [
+            { id: "projects", includeInTimeline: true },
+            { id: "activities", includeInTimeline: false },
+            { id: "books", includeInTimeline: false },
+        ],
+    );
 });
 
 test("allows a shared folder only when one property has distinct object values", () => {

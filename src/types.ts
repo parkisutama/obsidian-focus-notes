@@ -166,6 +166,8 @@ export interface ContextSourceSettings {
     /** Default physical shape for new object notes. */
     placement: ObjectNotePlacement;
     enabled: boolean;
+    /** Make matching object notes available as a property-filtered Focus Timeline source. */
+    includeInTimeline: boolean;
 }
 
 export interface InboxSettings {
@@ -244,7 +246,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         defaultMode: "day",
         multiDaySpanDays: 7,
         weekStartsOn: 1,
-        sourceFolders: ["Journal"],
+        sourceFolders: [],
         sourceHeadings: ["Activities & Tasks"],
         showCompletedTasks: true,
         showPendingSummary: true,
@@ -278,6 +280,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 templatePath: "",
                 placement: "flat",
                 enabled: true,
+                includeInTimeline: false,
             },
             {
                 id: "places",
@@ -289,6 +292,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 templatePath: "",
                 placement: "flat",
                 enabled: true,
+                includeInTimeline: false,
             },
             {
                 id: "activities",
@@ -300,6 +304,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 templatePath: "",
                 placement: "flat",
                 enabled: true,
+                includeInTimeline: true,
             },
         ],
     },
@@ -395,6 +400,9 @@ function normalizeContextSources(
             templatePath: normalizeVaultFilePath(stringValue(raw.templatePath)),
             placement: raw.placement === "folder-note" ? "folder-note" : "flat",
             enabled: raw.enabled === true && folders.length > 0,
+            includeInTimeline:
+                raw.includeInTimeline === true ||
+                (raw.includeInTimeline === undefined && ["activity", "project"].includes(value.toLowerCase())),
         });
     }
     return result;

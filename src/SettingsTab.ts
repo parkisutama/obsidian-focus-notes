@@ -5,7 +5,7 @@ import type FocusNotesPlugin from "./main";
 import { type FocusNotesSettingsPage, settingsTabForSection } from "./SettingsLayout";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
-import { assessTimelineTarget, effectiveTimelineSourceFolders } from "./TimelineSourceAlignment";
+import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
 import type {
     ContextSourceSettings,
     InboxTargetMode,
@@ -13,6 +13,7 @@ import type {
     ObjectNotePlacement,
     TimelineMode,
 } from "./types";
+import { isTFile } from "./utils";
 
 export class FocusNotesSettingsTab extends PluginSettingTab {
     private activePage: FocusNotesSettingsPage = "focus";
@@ -345,8 +346,10 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Source folders")
-            .setDesc("One folder per line. The configured Daily Notes folder is included automatically when available.")
+            .setName("Additional source folders")
+            .setDesc(
+                "Optional folders for non-object hub notes. Daily Notes and opted-in Object Sources are included automatically.",
+            )
             .addTextArea((area) => {
                 area.setValue(this.plugin.settings.timeline.sourceFolders.join("\n")).onChange(async (v) => {
                     this.plugin.settings.timeline.sourceFolders = v
@@ -600,9 +603,17 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         const settings = this.plugin.settings;
         const resolver = new TargetResolver(this.app, settings);
         const dailyFolder = settings.useDailyNotesAsDefault ? resolver.getDailyNoteFolder() : null;
-        const effectiveFolders = effectiveTimelineSourceFolders(settings.timeline.sourceFolders, dailyFolder);
+        const groups = buildTimelineSourceGroups(
+            settings.timeline.sourceFolders,
+            dailyFolder,
+            settings.inbox.contextSources,
+        );
         const target = resolver.resolve(resolver.getActiveTarget()).file;
-        const alignment = assessTimelineTarget(target, effectiveFolders);
+        const targetFile = this.app.vault.getAbstractFileByPath(target);
+        const properties = isTFile(targetFile)
+            ? (this.app.metadataCache.getFileCache(targetFile)?.frontmatter as Record<string, unknown> | undefined)
+            : undefined;
+        const alignment = assessTimelineTargetGroups(target, properties, groups);
         const status = container.createDiv({ cls: "fn-timeline-alignment" });
 
         if (dailyFolder) {
@@ -734,6 +745,17 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 await this.saveContextSources();
             },
         );
+        const timelineField = fields.createEl("label", { cls: "fn-context-source-field" });
+        timelineField.createEl("span", { text: "Include in Focus Timeline" });
+        const timelineToggle = timelineField.createEl("input", {
+            type: "checkbox",
+            attr: { "aria-label": `Include ${source.name} in Focus Timeline` },
+        });
+        timelineToggle.checked = source.includeInTimeline;
+        timelineToggle.addEventListener("change", async () => {
+            source.includeInTimeline = timelineToggle.checked;
+            await this.saveContextSources();
+        });
         const template = this.contextTextField(
             fields,
             "Template note",

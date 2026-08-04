@@ -8,8 +8,8 @@ import { TargetResolver } from "./TargetResolver";
 import { TimelineGrid } from "./TimelineGrid";
 import { PendingTasksModal, TimelineItemModal } from "./TimelineItemModal";
 import { TimelineLayout } from "./TimelineLayout";
-import { effectiveTimelineSourceFolders, isFileInTimelineSource } from "./TimelineSourceAlignment";
-import { buildTimelineSourceGroups, timelineSourceHeadings } from "./TimelineSourceGroups";
+import { isFileInTimelineSource } from "./TimelineSourceAlignment";
+import { buildTimelineSourceGroups, timelineSourceFolders, timelineSourceHeadings } from "./TimelineSourceGroups";
 import { buildTimelineSourceSummaries, TimelineSourceSidebar } from "./TimelineSourceSidebar";
 import type { FocusNotesSettings } from "./types";
 import { addDays, formatDayKey, getIsoWeek, startOfDay, startOfWeek } from "./utils";
@@ -343,11 +343,7 @@ export class TimelineView extends ItemView {
     }
 
     private getEffectiveSourceFolders(): string[] {
-        const settings = this.getSettings();
-        const dailyFolder = settings.useDailyNotesAsDefault
-            ? new TargetResolver(this.app, settings).getDailyNoteFolder()
-            : null;
-        return effectiveTimelineSourceFolders(settings.timeline.sourceFolders, dailyFolder);
+        return timelineSourceFolders(this.getEffectiveSourceGroups());
     }
 
     private getEffectiveSourceGroups() {
@@ -355,7 +351,7 @@ export class TimelineView extends ItemView {
         const dailyFolder = settings.useDailyNotesAsDefault
             ? new TargetResolver(this.app, settings).getDailyNoteFolder()
             : null;
-        return buildTimelineSourceGroups(settings.timeline.sourceFolders, dailyFolder);
+        return buildTimelineSourceGroups(settings.timeline.sourceFolders, dailyFolder, settings.inbox.contextSources);
     }
 
     private getEffectiveSourceHeadings(): string[] {

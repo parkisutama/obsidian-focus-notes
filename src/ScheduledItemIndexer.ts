@@ -1,7 +1,7 @@
 import type { App, TFile } from "obsidian";
 import type { ScheduledItemParser } from "./ScheduledItemParser";
 import type { ScheduledItem, ScheduledItemSource, TimelineSourceGroup } from "./ScheduledItemTypes";
-import { isFileInTimelineSource } from "./TimelineSourceAlignment.ts";
+import { matchTimelineSourceGroup } from "./TimelineSourceGroups.ts";
 import { isTFile } from "./utils.ts";
 
 export class ScheduledItemIndexer {
@@ -14,14 +14,13 @@ export class ScheduledItemIndexer {
     }
 
     async buildIndex(sourceGroups: TimelineSourceGroup[], acceptedHeadings: string[]): Promise<ScheduledItem[]> {
-        const groups = [...sourceGroups].sort((a, b) => b.folder.length - a.folder.length);
         const headings = new Set(acceptedHeadings.map((heading) => heading.trim().toLowerCase()).filter(Boolean));
-        const files = this.app.vault.getMarkdownFiles().filter((file) => this.findSourceGroup(file, groups));
+        const files = this.app.vault.getMarkdownFiles().filter((file) => this.findSourceGroup(file, sourceGroups));
 
         const items: ScheduledItem[] = [];
         for (const file of files) {
             const content = await this.app.vault.cachedRead(file);
-            const group = this.findSourceGroup(file, groups);
+            const group = this.findSourceGroup(file, sourceGroups);
             if (group) items.push(...this.parseFile(file, content, group, headings));
         }
         return items;
@@ -65,7 +64,10 @@ export class ScheduledItemIndexer {
 
     private findSourceGroup(file: TFile, groups: TimelineSourceGroup[]): TimelineSourceGroup | null {
         if (!isTFile(file) || file.extension !== "md") return null;
-        return groups.find((group) => isFileInTimelineSource(file.path, [group.folder])) ?? null;
+        const frontmatter = this.app.metadataCache?.getFileCache(file)?.frontmatter as
+            | Record<string, unknown>
+            | undefined;
+        return matchTimelineSourceGroup(file.path, frontmatter, groups);
     }
 
     private isAcceptedHeading(headingPath: string[], acceptedHeadings: ReadonlySet<string>): boolean {

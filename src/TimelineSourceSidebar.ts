@@ -3,7 +3,7 @@ import type { ScheduledItem, TimelineSourceGroup } from "./ScheduledItemTypes";
 export interface TimelineSourceSummary {
     id: string;
     name: string;
-    folder: string;
+    scope: string;
     count: number;
     color: string;
     visible: boolean;
@@ -25,7 +25,9 @@ export function buildTimelineSourceSummaries(
     }
 
     return groups.map((group) => ({
-        ...group,
+        id: group.id,
+        name: group.name,
+        scope: group.folders.join(", "),
         count: counts.get(group.id) ?? 0,
         color: colors[group.id] ?? defaultColor(group.id),
         visible: visibility[group.id] ?? true,
@@ -84,7 +86,7 @@ export class TimelineSourceSidebar {
 
             const label = row.createDiv({ cls: "focus-timeline-source-label" });
             label.createDiv({ cls: "focus-timeline-source-name", text: source.name });
-            label.createDiv({ cls: "focus-timeline-source-path", text: source.folder });
+            label.createDiv({ cls: "focus-timeline-source-path", text: source.scope });
             row.createDiv({ cls: "focus-timeline-source-count", text: String(source.count) });
         }
     }

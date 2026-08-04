@@ -13,7 +13,8 @@ export interface ScheduledItemSource {
 export interface TimelineSourceGroup {
     id: string;
     name: string;
-    folder: string;
+    folders: string[];
+    filter: ContextSourceFilter | null;
 }
 
 export interface ScheduledItem {
@@ -39,3 +40,5 @@ export interface TimelineSourceState {
     visible: boolean;
     color: string;
 }
+
+import type { ContextSourceFilter } from "./types";
