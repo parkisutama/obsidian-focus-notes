@@ -33,6 +33,7 @@ export class TimelineView extends ItemView {
     private weeklyOpenButton!: HTMLButtonElement;
     private weekLabel!: HTMLElement;
     private sourceToggleButton!: HTMLButtonElement;
+    private indexRefreshTimer: number | null = null;
 
     constructor(
         leaf: WorkspaceLeaf,
@@ -86,10 +87,48 @@ export class TimelineView extends ItemView {
         this.renderShell(root);
         this.registerEvent(
             this.app.vault.on("modify", (file) => {
-                if (file instanceof TFile && this.isInSourceScope(file.path)) void this.refreshIndex();
+                if (file instanceof TFile && this.isInSourceScope(file.path)) this.scheduleIndexRefresh();
             }),
         );
+        this.registerEvent(
+            this.app.vault.on("create", (file) => {
+                if (file instanceof TFile && this.isInSourceScope(file.path)) this.scheduleIndexRefresh();
+            }),
+        );
+        this.registerEvent(
+            this.app.vault.on("delete", (file) => {
+                if (file instanceof TFile && this.isInSourceScope(file.path)) this.scheduleIndexRefresh();
+            }),
+        );
+        this.registerEvent(
+            this.app.vault.on("rename", (file, oldPath) => {
+                if (file instanceof TFile && (this.isInSourceScope(file.path) || this.isInSourceScope(oldPath))) {
+                    this.scheduleIndexRefresh();
+                }
+            }),
+        );
+        this.registerEvent(
+            this.app.metadataCache.on("changed", (file) => {
+                if (this.isInSourceScope(file.path)) this.scheduleIndexRefresh();
+            }),
+        );
+        this.registerEvent(
+            this.app.metadataCache.on("resolved", () => {
+                this.scheduleIndexRefresh();
+            }),
+        );
+        this.register(() => {
+            if (this.indexRefreshTimer !== null) window.clearTimeout(this.indexRefreshTimer);
+        });
         await this.refreshIndex();
+    }
+
+    private scheduleIndexRefresh(): void {
+        if (this.indexRefreshTimer !== null) window.clearTimeout(this.indexRefreshTimer);
+        this.indexRefreshTimer = window.setTimeout(() => {
+            this.indexRefreshTimer = null;
+            void this.refreshIndex();
+        }, 150);
     }
 
     private renderShell(root: HTMLElement): void {
