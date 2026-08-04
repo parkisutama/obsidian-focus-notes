@@ -595,6 +595,29 @@ Parallelizable does not mean one mixed commit. Each numbered task remains an ind
 - [x] Pure source-group tests cover Daily Notes aggregation, custom headings, range-aware counts, and deduplication.
 - [ ] Real desktop and mobile acceptance confirms a large Daily Notes folder produces one sidebar source.
 
+### Task 14.2: Derive temporal sources from Persona-rooted Object Sources
+
+**Priority:** P2
+
+**Description:** Remove the global `projects/` assumption by allowing opted-in Object Sources to feed Timeline through their existing folder and property filters.
+
+**Acceptance criteria:**
+
+- [x] Daily Notes remain an automatic Timeline source without duplicated configuration.
+- [x] An Object Source can opt into Timeline indexing while People, Place, Book, and other non-temporal sources remain excluded by default.
+- [x] Project and Activity sources may share `persona` and are classified through distinct `type` property values at arbitrary folder depth.
+- [x] Exact file, heading, and line provenance remains available for source navigation.
+- [x] Manual Timeline folders remain an optional unfiltered fallback for non-object hub notes.
+- [x] New installs do not assume global `Journal`, `projects`, or `activities` folders.
+
+**Dependencies:** Tasks 7, 14, and 14.1. This correction lands before Task 16 and Card/List View.
+
+**Verification:**
+
+- [x] Pure tests cover source migration, opt-in/opt-out, shared Persona roots, and multi-folder groups.
+- [x] Integration fixtures classify nested Project and Activity notes by frontmatter property while preserving source paths.
+- [ ] Real desktop/mobile acceptance confirms Object Source toggles, sidebar groups, and source navigation.
+
 ### Task 16: Confirm planned and actual occurrence semantics
 
 **Priority:** P2

@@ -25,9 +25,20 @@ Event atau Task dapat disimpan pada note aktif, hub, atau Project Note. Pada bag
 - **Indexed by Focus Timeline** — target berada di dalam source folder efektif;
 - **Outside Focus Timeline sources** — capture tetap dapat disimpan, tetapi tidak akan muncul di Timeline.
 
-Jika target berada di luar scope, tambahkan folder induk yang sesuai melalui **Settings → Focus Notes → Timeline → Source folders**. Pilih scope terkecil yang mencakup note terkait; jangan gunakan root vault hanya untuk menghilangkan warning.
+Project dan Activity tidak perlu berada di folder global khusus. Pada Object Source terkait, aktifkan **Include in Focus Timeline**. Focus Notes kemudian memakai folder dan property filter Object Source secara bersamaan, misalnya:
 
-Folder source menjadi unit filter di sidebar. Jika beberapa source folder bertumpuk, file memakai folder cocok yang paling spesifik. Path file aslinya tidak berubah.
+| Source | Folder | Property | Value |
+|---|---|---|---|
+| Projects | `persona` | `type` | `project` |
+| Activities | `persona` | `type` | `activity` |
+
+Keduanya boleh berada pada root yang sama dan pada kedalaman berbeda. `persona/Karyawan IAT/BLOK 05/BLOK 05.md` tetap menjadi Project karena `type: project`, sedangkan Activity di dalam Project tetap menjadi Activity karena `type: activity`.
+
+Setelah Project dan Activity diikutkan melalui Object Source, hapus `persona` dari **Additional source folders** kecuali Anda memang ingin note tanpa property temporal di bawah `persona` ikut menjadi fallback source umum.
+
+Jika target non-object berada di luar scope, tambahkan folder induk melalui **Settings → Focus Notes → Timeline → Additional source folders**. Pilih scope terkecil yang mencakup note terkait; jangan gunakan root vault hanya untuk menghilangkan warning.
+
+Object Source menjadi unit filter di sidebar. Jika manual folder dan Object Source bertumpuk, kecocokan property-filtered menang; setelah itu folder paling spesifik dan urutan konfigurasi menjadi tie-breaker. Path file aslinya tidak berubah.
 
 ## Buka detail dan note asal
 

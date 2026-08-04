@@ -55,6 +55,8 @@ Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah ti
 
 `ScheduledItem.source.groupId` mengendalikan visibility, warna, dan agregasi sidebar. `ScheduledItem.source.filePath`, heading path, dan line number tetap menjadi provenance untuk navigasi. Indexer hanya menerima record di bawah accepted heading; Task tanpa metadata temporal tidak masuk projection Timeline.
 
+`ContextSourceSettings.includeInTimeline` mengubah Object Source menjadi `TimelineSourceGroup` dengan multi-folder scope dan optional property filter. Daily Notes tetap menjadi source otomatis; `timeline.sourceFolders` hanya menjadi fallback untuk hub non-object. Pada scope yang bertumpuk, indexer memilih folder paling spesifik lalu property-filtered group sebelum fallback manual.
+
 ## Settings dan persistence
 
 | Concern | Implementasi utama |

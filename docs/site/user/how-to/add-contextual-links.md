@@ -60,6 +60,8 @@ Beberapa Object Source boleh memakai folder yang sama. Agar setiap note tetap me
 
 Focus Notes memprioritaskan source dengan property yang cocok dibanding source folder umum. Settings menampilkan warning jika shared folder tidak mempunyai discriminator yang aman. Template Object Note otomatis menuliskan property/value dari source yang dipilih.
 
+Aktifkan **Include in Focus Timeline** untuk object temporal seperti Project dan Activity. People, Place, Book, atau object lain tetap tidak masuk Timeline secara default. Toggle ini menggunakan folder dan property filter yang sama; tidak diperlukan folder global `projects/` atau `activities/`.
+
 ## Buat Object Note baru
 
 Object Source adalah definisi jenisnya, misalnya Places. Object Note adalah instansinya, misalnya Kantor Jakarta.
