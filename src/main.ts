@@ -12,10 +12,9 @@ import { openEventTaskForm } from "./EventTaskModal";
 /**
  * Plugin shell.
  *
- * State persistence: settings live at `.obsidian/focus-notes-state.json`
- * rather than the plugin-local data.json, so they survive uninstall/reinstall
- * and ride along with Obsidian Sync. See StateStore for the rationale and
- * the one-time data.json migration.
+ * State persistence uses Obsidian's Plugin.loadData()/saveData() contract so
+ * plugin configuration sync treats it consistently across platforms.
+ * StateStore retains ordered writes and migrates the former config-root file.
  *
  * Builders (rather than direct refs) are passed into TimerView so the view
  * always sees the latest settings without us needing a subscription model.
@@ -91,10 +90,11 @@ export default class FocusNotesPlugin extends Plugin {
     }
 
     async loadSettings(): Promise<void> {
-        // Pass loadData as a thunk so StateStore can perform the one-time
-        // migration from the legacy data.json without coupling the two layers.
         this.stateStore = new StateStore(this.app, mergeSettingsWithDefaults);
-        const result = await this.stateStore.load(() => this.loadData());
+        const result = await this.stateStore.load(
+            () => this.loadData(),
+            (settings) => this.saveData(settings),
+        );
         this.settings = result.settings;
     }
 

@@ -1,14 +1,12 @@
 import type { FocusNotesSettings } from "./types";
 
-// This file intentionally lives directly in the vault config directory rather
-// than plugin-local data.json so settings survive uninstall/reinstall and can
-// travel with Obsidian Sync. The legacy loader below performs the one-time move.
-const STATE_FILENAME = "focus-notes-state.json";
+// Releases before this migration stored settings outside the plugin directory.
+// Keep this path read-only so existing users can move safely to data.json.
+const LEGACY_STATE_FILENAME = "focus-notes-state.json";
 
 interface StateAdapter {
     exists(path: string): Promise<boolean>;
     read(path: string): Promise<string>;
-    write(path: string, contents: string): Promise<void>;
 }
 
 export interface StateStoreApp {
@@ -26,85 +24,82 @@ export interface StateLoadResult {
     canSave: boolean;
 }
 
+type LoadPluginData = () => Promise<unknown>;
+type SavePluginData = (settings: FocusNotesSettings) => Promise<void>;
+
 /**
- * Owns the external settings file lifecycle and serializes writes from immutable
- * JSON snapshots. A malformed or unreadable existing file stays protected for
- * the lifetime of this store instance so background settings writes cannot
- * destroy the user's recovery source.
+ * Keeps settings writes ordered while delegating canonical persistence to
+ * Obsidian's Plugin.loadData()/saveData(). The old config-root file is only
+ * read when data.json is absent, then migrated into standard plugin data.
  */
 export class StateStore {
     private readonly app: StateStoreApp;
     private readonly mergeSettings: (saved: Partial<FocusNotesSettings>) => FocusNotesSettings;
-    private readonly path: string;
+    private readonly legacyPath: string;
     private canSave = true;
+    private savePluginData: SavePluginData | null = null;
     private writeQueue: Promise<void> = Promise.resolve();
 
     constructor(app: StateStoreApp, mergeSettings: (saved: Partial<FocusNotesSettings>) => FocusNotesSettings) {
         this.app = app;
         this.mergeSettings = mergeSettings;
-        this.path = normalizeStatePath(`${app.vault.configDir}/${STATE_FILENAME}`);
+        this.legacyPath = normalizeStatePath(`${app.vault.configDir}/${LEGACY_STATE_FILENAME}`);
     }
 
-    async load(legacyLoad: () => Promise<unknown>): Promise<StateLoadResult> {
-        let exists: boolean;
-        try {
-            exists = await this.app.vault.adapter.exists(this.path);
-        } catch (error) {
-            return this.protectedFallback("unreadable", "Could not inspect state file.", error);
-        }
-
-        if (exists) return this.loadExisting();
+    async load(loadPluginData: LoadPluginData, savePluginData: SavePluginData): Promise<StateLoadResult> {
+        this.savePluginData = savePluginData;
 
         try {
-            const legacy = await legacyLoad();
-            if (legacy && typeof legacy === "object" && !Array.isArray(legacy)) {
-                const settings = this.mergeSettings(legacy as Partial<FocusNotesSettings>);
-                await this.writeSnapshot(JSON.stringify(settings, null, 2));
-                return { status: "migrated", settings, canSave: true };
+            const stored = await loadPluginData();
+            if (isSettingsObject(stored)) {
+                return { status: "loaded", settings: this.mergeSettings(stored), canSave: true };
             }
         } catch (error) {
-            console.warn("[Focus Notes] Legacy data migration skipped.", error);
+            return this.protectedFallback("unreadable", "Could not read standard plugin data.", error);
         }
 
+        let legacyExists: boolean;
+        try {
+            legacyExists = await this.app.vault.adapter.exists(this.legacyPath);
+        } catch (error) {
+            return this.protectedFallback("unreadable", "Could not inspect legacy state file.", error);
+        }
+
+        if (legacyExists) return this.migrateLegacyState();
+
         const settings = this.mergeSettings({});
-        await this.writeSnapshot(JSON.stringify(settings, null, 2));
+        await this.persistSnapshot(settings);
         return { status: "missing", settings, canSave: true };
     }
 
     save(settings: FocusNotesSettings): Promise<boolean> {
-        if (!this.canSave) {
-            console.warn("[Focus Notes] Settings save skipped to protect an unreadable or malformed state file.");
+        if (!this.canSave || !this.savePluginData) {
+            console.warn("[Focus Notes] Settings save skipped to protect unavailable settings data.");
             return Promise.resolve(false);
         }
 
-        const snapshot = JSON.stringify(settings, null, 2);
-        const write = this.writeQueue
-            .catch(() => undefined)
-            .then(() => this.app.vault.adapter.write(this.path, snapshot));
+        const snapshot = cloneSettings(settings);
+        const write = this.writeQueue.catch(() => undefined).then(() => this.persistSnapshot(snapshot));
         this.writeQueue = write;
         return write.then(() => true);
     }
 
-    private async loadExisting(): Promise<StateLoadResult> {
+    private async migrateLegacyState(): Promise<StateLoadResult> {
         let raw: string;
         try {
-            raw = await this.app.vault.adapter.read(this.path);
+            raw = await this.app.vault.adapter.read(this.legacyPath);
         } catch (error) {
-            return this.protectedFallback("unreadable", "Could not read state file.", error);
+            return this.protectedFallback("unreadable", "Could not read legacy state file.", error);
         }
 
         try {
             const parsed = JSON.parse(raw) as unknown;
-            if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-                throw new Error("State root must be an object.");
-            }
-            return {
-                status: "loaded",
-                settings: this.mergeSettings(parsed as Partial<FocusNotesSettings>),
-                canSave: true,
-            };
+            if (!isSettingsObject(parsed)) throw new Error("State root must be an object.");
+            const settings = this.mergeSettings(parsed);
+            await this.persistSnapshot(settings);
+            return { status: "migrated", settings, canSave: true };
         } catch (error) {
-            return this.protectedFallback("malformed", "Could not parse state file.", error);
+            return this.protectedFallback("malformed", "Could not parse legacy state file.", error);
         }
     }
 
@@ -114,9 +109,18 @@ export class StateStore {
         return { status, settings: this.mergeSettings({}), canSave: false };
     }
 
-    private async writeSnapshot(snapshot: string): Promise<void> {
-        await this.app.vault.adapter.write(this.path, snapshot);
+    private async persistSnapshot(settings: FocusNotesSettings): Promise<void> {
+        if (!this.savePluginData) throw new Error("Plugin settings persistence is not initialized.");
+        await this.savePluginData(cloneSettings(settings));
     }
+}
+
+function isSettingsObject(value: unknown): value is Partial<FocusNotesSettings> {
+    return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function cloneSettings(settings: FocusNotesSettings): FocusNotesSettings {
+    return JSON.parse(JSON.stringify(settings)) as FocusNotesSettings;
 }
 
 function normalizeStatePath(path: string): string {

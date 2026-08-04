@@ -80,7 +80,9 @@ Audit sources:
 - Build-only use of `fs`, `path`, and `process` is not bundled as plugin runtime behavior.
 - No obvious sample-plugin placeholders or dynamic code execution were found.
 - Direct development dependencies use permissive licenses, but this does not replace the missing project `LICENSE` or a full transitive attribution review.
-- State is stored inside `vault.configDir` and the behavior is disclosed in the root README; it does not access files outside the vault.
+- Settings use Obsidian's `Plugin.loadData()` and `Plugin.saveData()` APIs. The
+  adapter is used read-only only for migration from the former
+  `vault.configDir/focus-notes-state.json` location.
 
 ## Documentation status
 

@@ -16,9 +16,7 @@ test("adds Inbox defaults when loading settings saved before Inbox existed", () 
 });
 
 test("clones Object Source state during settings merge", () => {
-    const first = mergeSettingsWithDefaults({
-        inbox: { ...DEFAULT_SETTINGS.inbox },
-    });
+    const first = mergeSettingsWithDefaults({ inbox: { ...DEFAULT_SETTINGS.inbox } });
     const second = mergeSettingsWithDefaults({});
 
     first.inbox.contextSources[0]?.folders.push("Private");
@@ -56,74 +54,87 @@ test("adds Timeline heading defaults while preserving custom source headings", (
     assert.deepEqual(customized.timeline.sourceHeadings, ["Work Log"]);
 });
 
-test("creates defaults on first install and reports a missing state", async () => {
-    const writes: string[] = [];
-    const store = new StateStore(fakeApp({ exists: false, writes }), mergeSettingsWithDefaults);
-
-    const result = await store.load(async () => null);
-
-    assert.equal(result.status, "missing");
-    assert.equal(result.canSave, true);
-    assert.equal(result.settings.pomodoroMinutes, DEFAULT_SETTINGS.pomodoroMinutes);
-    assert.equal(writes.length, 1);
-});
-
-test("migrates legacy settings when the external state is missing", async () => {
-    const writes: string[] = [];
-    const store = new StateStore(fakeApp({ exists: false, writes }), mergeSettingsWithDefaults);
-
-    const result = await store.load(async () => ({ pomodoroMinutes: 45 }));
-
-    assert.equal(result.status, "migrated");
-    assert.equal(result.settings.pomodoroMinutes, 45);
-    assert.equal(JSON.parse(writes[0] ?? "{}").pomodoroMinutes, 45);
-});
-
-test("protects malformed state from automatic overwrite", async () => {
-    const writes: string[] = [];
-    const store = new StateStore(fakeApp({ exists: true, raw: "{broken", writes }), mergeSettingsWithDefaults);
-
-    const result = await store.load(async () => null);
-    const saved = await store.save({ ...result.settings, pomodoroMinutes: 50 });
-
-    assert.equal(result.status, "malformed");
-    assert.equal(result.canSave, false);
-    assert.equal(saved, false);
-    assert.deepEqual(writes, []);
-});
-
-test("distinguishes transient read failure and protects the existing file", async () => {
-    const writes: string[] = [];
+test("loads standard plugin data as the canonical settings source", async () => {
+    const saved: unknown[] = [];
     const store = new StateStore(
-        fakeApp({ exists: true, readError: new Error("temporarily unavailable"), writes }),
+        fakeApp({ externalExists: true, externalRaw: JSON.stringify({ pomodoroMinutes: 60 }) }),
         mergeSettingsWithDefaults,
     );
 
-    const result = await store.load(async () => null);
-    const saved = await store.save(result.settings);
+    const result = await store.load(
+        async () => ({ pomodoroMinutes: 45 }),
+        async (settings) => saved.push(settings),
+    );
 
-    assert.equal(result.status, "unreadable");
-    assert.equal(result.canSave, false);
-    assert.equal(saved, false);
-    assert.deepEqual(writes, []);
+    assert.equal(result.status, "loaded");
+    assert.equal(result.settings.pomodoroMinutes, 45);
+    assert.deepEqual(saved, []);
 });
 
-test("serializes concurrent saves in call order from immutable snapshots", async () => {
-    const writes: string[] = [];
+test("migrates the external state into standard plugin data when data.json is missing", async () => {
+    const saved: unknown[] = [];
+    const store = new StateStore(
+        fakeApp({ externalExists: true, externalRaw: JSON.stringify({ pomodoroMinutes: 45 }) }),
+        mergeSettingsWithDefaults,
+    );
+
+    const result = await store.load(
+        async () => null,
+        async (settings) => saved.push(settings),
+    );
+
+    assert.equal(result.status, "migrated");
+    assert.equal(result.settings.pomodoroMinutes, 45);
+    assert.equal((saved[0] as { pomodoroMinutes: number }).pomodoroMinutes, 45);
+});
+
+test("creates and persists defaults on first install", async () => {
+    const saved: unknown[] = [];
+    const store = new StateStore(fakeApp({ externalExists: false }), mergeSettingsWithDefaults);
+
+    const result = await store.load(
+        async () => null,
+        async (settings) => saved.push(settings),
+    );
+
+    assert.equal(result.status, "missing");
+    assert.equal(result.settings.pomodoroMinutes, DEFAULT_SETTINGS.pomodoroMinutes);
+    assert.equal(saved.length, 1);
+});
+
+test("protects malformed external migration state from automatic overwrite", async () => {
+    const saved: unknown[] = [];
+    const store = new StateStore(fakeApp({ externalExists: true, externalRaw: "{broken" }), mergeSettingsWithDefaults);
+
+    const result = await store.load(
+        async () => null,
+        async (settings) => saved.push(settings),
+    );
+    const didSave = await store.save({ ...result.settings, pomodoroMinutes: 50 });
+
+    assert.equal(result.status, "malformed");
+    assert.equal(result.canSave, false);
+    assert.equal(didSave, false);
+    assert.deepEqual(saved, []);
+});
+
+test("serializes standard plugin saves in call order from immutable snapshots", async () => {
+    const saved: unknown[] = [];
     let releaseFirst: (() => void) | undefined;
     const firstWriteGate = new Promise<void>((resolve) => {
         releaseFirst = resolve;
     });
     let writeNumber = 0;
-    const app = fakeApp({ exists: false, writes });
-    app.vault.adapter.write = async (_path, value) => {
-        writeNumber += 1;
-        if (writeNumber === 2) await firstWriteGate;
-        writes.push(value);
-    };
-    const store = new StateStore(app, mergeSettingsWithDefaults);
-    const loaded = await store.load(async () => null);
-    writes.length = 0;
+    const store = new StateStore(fakeApp({ externalExists: false }), mergeSettingsWithDefaults);
+    const loaded = await store.load(
+        async () => null,
+        async (settings) => {
+            writeNumber += 1;
+            if (writeNumber === 2) await firstWriteGate;
+            saved.push(settings);
+        },
+    );
+    saved.length = 0;
 
     const settings = loaded.settings;
     settings.pomodoroMinutes = 30;
@@ -131,21 +142,20 @@ test("serializes concurrent saves in call order from immutable snapshots", async
     settings.pomodoroMinutes = 60;
     const second = store.save(settings);
     await Promise.resolve();
-    assert.deepEqual(writes, []);
+    assert.deepEqual(saved, []);
     releaseFirst?.();
     await Promise.all([first, second]);
 
     assert.deepEqual(
-        writes.map((value) => JSON.parse(value).pomodoroMinutes),
+        saved.map((value) => (value as { pomodoroMinutes: number }).pomodoroMinutes),
         [30, 60],
     );
 });
 
 interface FakeStateOptions {
-    exists: boolean;
-    raw?: string;
+    externalExists: boolean;
+    externalRaw?: string;
     readError?: Error;
-    writes: string[];
 }
 
 function fakeApp(options: FakeStateOptions) {
@@ -153,13 +163,10 @@ function fakeApp(options: FakeStateOptions) {
         vault: {
             configDir: ".obsidian",
             adapter: {
-                exists: async () => options.exists,
+                exists: async () => options.externalExists,
                 read: async () => {
                     if (options.readError) throw options.readError;
-                    return options.raw ?? JSON.stringify({ pomodoroMinutes: 35 });
-                },
-                write: async (_path: string, value: string) => {
-                    options.writes.push(value);
+                    return options.externalRaw ?? "";
                 },
             },
         },
