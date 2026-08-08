@@ -248,6 +248,56 @@ export class EventTaskModal extends Modal {
             this.form.eventAllDay = checked;
             this.eventTimeRowEl.toggleClass("fn-gcal-hidden", checked);
         });
+        this.renderEventLifecycleSection(container);
+    }
+
+    protected renderEventLifecycleSection(container: HTMLElement): void {
+        const statusContent = this.makeRow(container, "circle-dot");
+        statusContent.createDiv({ cls: "fn-gcal-field-label", text: "Event status" });
+        const status = statusContent.createEl("select", { attr: { "aria-label": "Event status" } });
+        for (const [value, label] of [
+            ["planned", "Planned"],
+            ["completed", "Completed"],
+            ["cancelled", "Cancelled"],
+        ] as const) {
+            status.createEl("option", { value, text: label });
+        }
+        status.value = this.form.eventStatus;
+
+        const actualContent = this.makeRow(container, "clock-check");
+        const actualWrap = actualContent.createDiv();
+        let actualFields: HTMLElement;
+        const actualToggle = this.makeCheckboxRow(
+            actualWrap,
+            "Record different actual time",
+            "fn-gcal-event-actual-time",
+            (checked) => {
+                this.form.eventActualTimeEnabled = checked;
+                actualFields.toggleClass("fn-gcal-hidden", !checked);
+            },
+        );
+        actualFields = actualWrap.createDiv({ cls: "fn-gcal-datetime-row fn-gcal-hidden" });
+        const actualStartDate = this.makeDateInput(actualFields, this.form.eventActualStartDate, "Actual start date");
+        const actualStartTime = this.makeTimeInput(actualFields, this.form.eventActualStartTime, "Actual start time");
+        const actualEndDate = this.makeDateInput(actualFields, this.form.eventActualEndDate, "Actual end date");
+        const actualEndTime = this.makeTimeInput(actualFields, this.form.eventActualEndTime, "Actual end time");
+        actualStartDate.addEventListener("change", () => (this.form.eventActualStartDate = actualStartDate.value));
+        actualStartTime.addEventListener("change", () => (this.form.eventActualStartTime = actualStartTime.value));
+        actualEndDate.addEventListener("change", () => (this.form.eventActualEndDate = actualEndDate.value));
+        actualEndTime.addEventListener("change", () => (this.form.eventActualEndTime = actualEndTime.value));
+
+        const syncStatus = (): void => {
+            this.form.eventStatus = status.value as typeof this.form.eventStatus;
+            const canRecordActual = this.form.eventStatus === "completed";
+            actualContent.toggleClass("fn-gcal-hidden", !canRecordActual);
+            if (!canRecordActual) {
+                actualToggle.checked = false;
+                this.form.eventActualTimeEnabled = false;
+                actualFields.addClass("fn-gcal-hidden");
+            }
+        };
+        status.addEventListener("change", syncStatus);
+        syncStatus();
     }
 
     // ---- Task section -------------------------------------------------------

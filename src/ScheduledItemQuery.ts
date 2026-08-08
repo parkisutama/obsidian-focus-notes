@@ -14,7 +14,7 @@ export class ScheduledItemQuery {
     ): ScheduledItem[] {
         return items.filter((item) => {
             if (!opts.visibleSources.has(item.source.groupId)) return false;
-            if (item.isCompleted && !opts.includeCompleted) return false;
+            if (item.kind === "task" && item.isCompleted && !opts.includeCompleted) return false;
             if (!this.hasSchedule(item)) return false;
             return this.intersectsRange(item, range);
         });

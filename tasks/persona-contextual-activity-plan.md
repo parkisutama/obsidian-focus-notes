@@ -623,7 +623,7 @@ Implementation and pure-model verification are complete. Runtime interaction acc
 - [x] Integration fixtures classify nested Project and Activity notes by frontmatter property while preserving source paths.
 - [ ] Real desktop/mobile acceptance confirms Object Source toggles, sidebar groups, and source navigation.
 
-### Task 16: Confirm planned and actual occurrence semantics
+### Task 16: Implement planned and actual occurrence semantics
 
 **Priority:** P2
 
@@ -631,23 +631,30 @@ Implementation and pure-model verification are complete. Runtime interaction acc
 
 **Acceptance criteria:**
 
-- [ ] A short implementation spec defines planned, completed, cancelled, and actual occurrence behavior.
-- [ ] The chosen format remains readable Markdown and does not make Task checkbox semantics ambiguous.
-- [ ] Migration and backward compatibility with existing Event lines are explicit.
+- [x] A short implementation spec defines planned, completed, cancelled, and actual occurrence behavior.
+- [x] The chosen format remains readable Markdown and does not make Task checkbox semantics ambiguous.
+- [x] Migration and backward compatibility with existing Event lines are explicit.
 
 **Verification:**
 
-- [ ] Representative Markdown examples are approved by the user.
-- [ ] Parser fixtures prove old and proposed formats before runtime implementation begins.
+- [x] Representative Markdown examples are approved by the user.
+- [x] Parser fixtures prove old and approved formats, invalid combinations, and all-day classification.
+- [x] `pnpm run check:ci` passes with lifecycle, query, layout, and presentation fixtures.
+- [ ] Repeatable desktop/mobile acceptance verifies lifecycle controls, all-day presentation, and source navigation.
 
-**Dependencies:** Task 5. This decision/spec task does not require related logs or the detail modal and may proceed once the existing grammar is locked by tests.
+Runtime model, writer/parser round trip, desktop/mobile creation fields, Timeline detail presentation, and automated gates
+are complete. Repeatable desktop/mobile acceptance remains open.
+
+**Dependencies:** Tasks 5 and 15. Writer/parser compatibility is the grammar foundation; the stable detail modal owns
+lifecycle and actual-time presentation. Related-log delivery remains unchanged.
 
 **Files likely touched:**
 
 - `docs/spec-event-occurrence-lifecycle.md`
-- `test/scheduled-item-parser.test.ts` when the format is approved
+- lifecycle domain, form, writer/parser, query, layout, and modal-model files
+- `test/event-occurrence-lifecycle.test.ts` and focused integration fixtures
 
-**Estimated scope:** Small.
+**Estimated scope:** Medium.
 
 ### Task 16.1: Add orthogonal Task priority semantics
 
@@ -685,6 +692,34 @@ on Event lifecycle implementation.
 - focused compatibility and presentation tests
 
 **Estimated scope:** Medium, delivered as one tested vertical slice.
+
+### Task 16.2: Edit existing Task and Event ledger records safely
+
+**Priority:** P2
+
+**Description:** Extend the stable Timeline detail flow into editing without treating a stale file/line number as mutable
+identity. Start with Task editing, then reuse the approved preservation and conflict contract for Event lifecycle fields.
+
+**Acceptance criteria:**
+
+- [ ] A lossless parsed-source model preserves title links, indentation, description lines, unknown metadata, and exact
+      source provenance while exposing owned Task/Event fields for editing.
+- [ ] Save rewrites only the intended ledger record and refuses a stale, moved, deleted, or ambiguous source rather than
+      mutating another line.
+- [ ] Task editing covers checkbox, priority, due, timebox, and reminders before Event editing adds lifecycle, planned,
+      actual, and all-day fields.
+- [ ] Related logs are not duplicated or silently synchronized; any later propagation requires its own approved policy.
+
+**Verification:**
+
+- [ ] Pure serializer fixtures prove lossless no-op round trips and preservation of unknown metadata/indented children.
+- [ ] Conflict fixtures cover concurrent modify, rename, delete, duplicate-looking lines, and changed line numbers.
+- [ ] Desktop/mobile modal acceptance covers edit, cancel, validation, conflict recovery, and exact source navigation.
+
+**Dependencies:** Tasks 15, 16, and 16.1. The source-preservation and conflict contract must land before an Edit button can
+write to the vault.
+
+**Estimated scope:** Large; split into Task edit foundation, conflict-safe writer, then Event edit extension.
 
 ## Checkpoint C — Temporal experience
 
@@ -792,5 +827,5 @@ Implementation must pause for user review at these points:
 1. After Checkpoint A, before settings migration and generalizing related-note writes.
 2. After Task 12 golden log fixtures, before generalizing related-note writes.
 3. After Checkpoint B, before changing Timeline interaction.
-4. At Task 16, before extending Event lifecycle grammar.
+4. Before Task 16.2 writes historical ledger records from an edit modal.
 5. After real mobile acceptance, before merging the complete feature line to `main`.

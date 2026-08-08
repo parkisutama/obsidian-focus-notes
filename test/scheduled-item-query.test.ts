@@ -14,6 +14,10 @@ function task(id: string, due: Date, priority: TaskPriority): ScheduledItem {
         dueHasTime: false,
         remind: null,
         priority,
+        eventStatus: null,
+        actualStart: null,
+        actualEnd: null,
+        allDay: false,
         isCompleted: false,
         source: {
             groupId: "daily-notes",
@@ -42,5 +46,39 @@ test("pending Tasks sort by overdue anchor before priority and priority breaks d
     assert.deepEqual(
         pending.map((item) => item.id),
         ["high-old", "medium-old", "low-old", "normal-recent"],
+    );
+});
+
+test("completed and cancelled Events remain visible when completed Tasks are hidden", () => {
+    const query = new ScheduledItemQuery();
+    const completedEvent: ScheduledItem = {
+        ...task("event", new Date(2026, 7, 8), "normal"),
+        kind: "event",
+        start: new Date(2026, 7, 8, 9, 0),
+        end: new Date(2026, 7, 8, 10, 0),
+        due: null,
+        priority: null,
+        eventStatus: "completed",
+        isCompleted: true,
+    };
+    const cancelledEvent: ScheduledItem = {
+        ...completedEvent,
+        id: "cancelled",
+        start: new Date(2026, 7, 8, 11, 0),
+        end: new Date(2026, 7, 8, 12, 0),
+        eventStatus: "cancelled",
+        isCompleted: false,
+    };
+    const completedTask = { ...task("task", new Date(2026, 7, 8), "normal"), isCompleted: true };
+
+    const visible = query.getItemsForRange(
+        [completedEvent, cancelledEvent, completedTask],
+        { start: new Date(2026, 7, 8), end: new Date(2026, 7, 9) },
+        { visibleSources: new Set(["daily-notes"]), includeCompleted: false },
+    );
+
+    assert.deepEqual(
+        visible.map((item) => item.id),
+        ["event", "cancelled"],
     );
 });

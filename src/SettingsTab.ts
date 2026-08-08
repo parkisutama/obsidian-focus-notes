@@ -568,7 +568,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Include 'status' field")
-            .setDesc("Adds status: scheduled (event) / open (task) to the detail note frontmatter.")
+            .setDesc("Adds the selected Event lifecycle status or Task open status to detail note frontmatter.")
             .addToggle((toggle) =>
                 toggle.setValue(this.plugin.settings.eventTask.includeStatus).onChange(async (v) => {
                     this.plugin.settings.eventTask.includeStatus = v;

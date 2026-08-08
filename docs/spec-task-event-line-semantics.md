@@ -153,9 +153,9 @@ Implemented behavior:
   dated bullet as an Event because that would capture ordinary Markdown. This is a known compatibility boundary, not a
   reliable all-day lifecycle contract.
 
-## Event occurrence lifecycle — Proposed
+## Event occurrence lifecycle — Implemented; acceptance pending
 
-The proposed Event lifecycle is intentionally separate from Task checkbox completion:
+The implemented Event lifecycle is intentionally separate from Task checkbox completion:
 
 | Status | Meaning |
 |---|---|
@@ -163,7 +163,7 @@ The proposed Event lifecycle is intentionally separate from Task checkbox comple
 | `completed` | The occurrence happened; without actual fields it happened according to plan |
 | `cancelled` | The occurrence did not happen and cannot carry actual time |
 
-Proposed examples:
+Canonical examples:
 
 ```markdown
 - 2026-08-10 09:00 - 10:00 Review proposal | status:completed
@@ -172,22 +172,23 @@ Proposed examples:
 - 2026-08-10 Company holiday | type:event | all-day:true
 ```
 
-Proposed reserved Event attributes are `type`, `all-day`, `status`, `actual-start`, and `actual-end`. Actual start/end must
+Reserved Event attributes are `type`, `all-day`, `status`, `actual-start`, and `actual-end`. Actual start/end must
 appear as a valid ordered pair and only on a completed Event. Detailed validation, compatibility, migration, and open product
 questions remain governed by [Event Occurrence Lifecycle](spec-event-occurrence-lifecycle.md).
 
-These fields are not implemented. Existing runtime code will not provide lifecycle filtering, actual-time presentation, or
-reliable all-day classification from these examples.
+The domain model, parser, writer, desktop/mobile creation forms, validation, all-day Timeline projection, lifecycle styling,
+and actual-time detail presentation are implemented with automated verification. Editing an existing source occurrence and
+repeatable real-device acceptance remain separate open work.
 
 ## Semantic separation
 
 | Concern | Task | Event |
 |---|---|---|
 | Core meaning | Completable commitment | Time-bound occurrence |
-| Primary state | Checkbox `[ ]` or `[x]` | Proposed `planned`, `completed`, `cancelled` |
+| Primary state | Checkbox `[ ]` or `[x]` | `planned`, `completed`, `cancelled` |
 | Planned time | Optional due/timebox/reminders | Required interval for implemented timed Events |
-| Actual time | Not defined | Proposed optional completed-occurrence pair |
-| Priority | Proposed independent attribute | Not proposed by this contract |
+| Actual time | Not defined | Optional completed-occurrence pair |
+| Priority | Independent `high`, `medium`, `normal`, `low` attribute | Not defined by this contract |
 | Canonical authority | Markdown ledger line | Markdown ledger line |
 
 Never infer one concept from another: a high-priority Task is not necessarily urgent, a timeboxed Task is not an Event, and
@@ -199,7 +200,7 @@ Before adding a Task or Event attribute:
 
 1. Define which record kinds own it and whether omission has a deterministic meaning.
 2. Define validation, duplicate-key behavior, unknown-value behavior, sorting/filtering effects, and source-line preservation.
-3. Add representative legacy and proposed Markdown fixtures before changing the parser.
+3. Add representative legacy and candidate Markdown fixtures before changing the parser.
 4. Update domain types, writer, parser, query/projection, detail presentation, desktop/mobile forms, and public documentation.
 5. Prove writer/parser round trips and ensure old valid Markdown remains byte-for-byte compatible.
 6. Record real Obsidian desktop/mobile acceptance separately from automated verification.

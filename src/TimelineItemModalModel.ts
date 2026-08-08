@@ -3,9 +3,10 @@ import type { ScheduledItem } from "./ScheduledItemTypes";
 export interface TimelineItemModalModel {
     title: string;
     kindLabel: "Event" | "Task";
-    statusLabel: "Scheduled" | "Pending" | "Completed";
+    statusLabel: "Scheduled" | "Pending" | "Completed" | "Cancelled";
     priorityLabel: "High" | "Medium" | "Normal" | "Low" | null;
     scheduleLabel: string;
+    actualScheduleLabel: string | null;
     sourceLabel: string;
     sourcePath: string;
 }
@@ -37,12 +38,23 @@ export function buildTimelineItemModalModel(item: ScheduledItem): TimelineItemMo
     return {
         title: item.title,
         kindLabel: item.kind === "event" ? "Event" : "Task",
-        statusLabel: item.isCompleted ? "Completed" : item.kind === "task" ? "Pending" : "Scheduled",
+        statusLabel: formatStatus(item),
         priorityLabel: item.kind === "task" ? formatPriority(item.priority ?? "normal") : null,
         scheduleLabel: formatSchedule(item),
+        actualScheduleLabel:
+            item.kind === "event" && item.actualStart && item.actualEnd
+                ? formatInterval(item.actualStart, item.actualEnd)
+                : null,
         sourceLabel: [item.source.fileName, heading, `Line ${item.source.lineNumber}`].filter(Boolean).join(" · "),
         sourcePath: item.source.filePath,
     };
+}
+
+function formatStatus(item: ScheduledItem): "Scheduled" | "Pending" | "Completed" | "Cancelled" {
+    if (item.kind === "task") return item.isCompleted ? "Completed" : "Pending";
+    if (item.eventStatus === "completed") return "Completed";
+    if (item.eventStatus === "cancelled") return "Cancelled";
+    return "Scheduled";
 }
 
 function formatPriority(priority: "high" | "medium" | "normal" | "low"): "High" | "Medium" | "Normal" | "Low" {
@@ -58,8 +70,9 @@ export function buildPendingTaskModalModel(items: ScheduledItem[], now = new Dat
 }
 
 function formatSchedule(item: ScheduledItem): string {
+    if (item.allDay && item.start) return `All day · ${DATE_FORMAT.format(item.start)}`;
     if (item.start && item.end) {
-        return `${DATE_FORMAT.format(item.start)} · ${TIME_FORMAT.format(item.start)}–${TIME_FORMAT.format(item.end)}`;
+        return formatInterval(item.start, item.end);
     }
     if (item.start) return `${DATE_FORMAT.format(item.start)} · ${TIME_FORMAT.format(item.start)}`;
     if (item.due) {
@@ -68,6 +81,11 @@ function formatSchedule(item: ScheduledItem): string {
     }
     if (item.remind) return `Reminder ${DATE_FORMAT.format(item.remind)} · ${TIME_FORMAT.format(item.remind)}`;
     return "No schedule";
+}
+
+function formatInterval(start: Date, end: Date): string {
+    const endDate = DATE_FORMAT.format(end) === DATE_FORMAT.format(start) ? "" : `${DATE_FORMAT.format(end)} · `;
+    return `${DATE_FORMAT.format(start)} · ${TIME_FORMAT.format(start)}–${endDate}${TIME_FORMAT.format(end)}`;
 }
 
 function formatPendingMeta(item: ScheduledItem, now: Date): string {

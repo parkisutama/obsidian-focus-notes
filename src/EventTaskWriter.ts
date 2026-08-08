@@ -4,7 +4,7 @@ import type { InboxRecord } from "./EventTaskFormState";
 import { formatInboxEntry } from "./InboxMarkdown";
 import { ensureFolderPath, isTFile } from "./utils";
 import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTaskMarkdown";
-import type { TaskPriority } from "./ScheduledItemTypes";
+import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItemTypes";
 
 /** Reference to a hub note, used to build a markdown link. */
 export interface HubNoteRef {
@@ -20,6 +20,9 @@ export interface EventRecord {
     start: Date;
     end: Date;
     allDay: boolean;
+    status: EventOccurrenceStatus;
+    actualStart: Date | null;
+    actualEnd: Date | null;
     description: string;
     hubNoteRef: HubNoteRef | null;
 }
@@ -159,7 +162,11 @@ export class EventTaskWriter {
                 lines.push(`start: "${this.fmtTime(record.start)}"`);
                 lines.push(`end: "${this.fmtTime(record.end)}"`);
             }
-            if (s?.includeStatus ?? true) lines.push("status: scheduled");
+            if (s?.includeStatus ?? true) lines.push(`status: ${record.status}`);
+            if (record.actualStart && record.actualEnd) {
+                lines.push(`actual-start: "${this.fmtDate(record.actualStart)} ${this.fmtTime(record.actualStart)}"`);
+                lines.push(`actual-end: "${this.fmtDate(record.actualEnd)} ${this.fmtTime(record.actualEnd)}"`);
+            }
             if (s?.includeTags ?? true) lines.push("tags: [event]");
         } else {
             lines.push("type: task");

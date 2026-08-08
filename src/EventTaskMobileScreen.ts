@@ -154,6 +154,7 @@ export class EventTaskMobileScreen extends Component {
             eventTaskFields,
         );
         this.renderEventFields(eventSection);
+        this.renderEventLifecycleFields(eventSection);
         this.renderTaskDueFields(taskSection);
         this.renderTaskPriorityFields(taskSection);
         this.renderDescription(eventTaskFields);
@@ -258,6 +259,47 @@ export class EventTaskMobileScreen extends Component {
         this.registerDomEvent(start, "change", () => (this.form.eventStartTime = start.value));
         this.registerDomEvent(end, "change", () => (this.form.eventEndTime = end.value));
         allDay.checked = this.form.eventAllDay;
+    }
+
+    private renderEventLifecycleFields(container: HTMLElement): void {
+        const statusCard = this.fieldGroup(container, "Status", "circle-dot");
+        const actualCard = this.fieldGroup(container, "Actual time", "clock-check");
+        let actualFields: HTMLElement;
+        const actualToggle = this.checkbox(actualCard, "Record different actual time", false, (checked) => {
+            this.form.eventActualTimeEnabled = checked;
+            actualFields.toggleClass("fn-gcal-hidden", !checked);
+        });
+        actualFields = actualCard.createDiv({ cls: "fn-mobile-event-conditional fn-gcal-hidden" });
+        const startRow = actualFields.createDiv({ cls: "fn-mobile-event-grid" });
+        const startDate = this.input(startRow, "date", "Actual start date", this.form.eventActualStartDate);
+        const startTime = this.input(startRow, "time", "Actual start time", this.form.eventActualStartTime);
+        const endRow = actualFields.createDiv({ cls: "fn-mobile-event-grid" });
+        const endDate = this.input(endRow, "date", "Actual end date", this.form.eventActualEndDate);
+        const endTime = this.input(endRow, "time", "Actual end time", this.form.eventActualEndTime);
+        this.segmented(
+            statusCard,
+            [
+                { value: "planned", label: "Planned" },
+                { value: "completed", label: "Completed" },
+                { value: "cancelled", label: "Cancelled" },
+            ],
+            this.form.eventStatus,
+            (status) => {
+                this.form.eventStatus = status;
+                const canRecordActual = status === "completed";
+                actualCard.toggleClass("fn-gcal-hidden", !canRecordActual);
+                if (!canRecordActual) {
+                    actualToggle.checked = false;
+                    this.form.eventActualTimeEnabled = false;
+                    actualFields.addClass("fn-gcal-hidden");
+                }
+            },
+        );
+        actualCard.addClass("fn-gcal-hidden");
+        this.registerDomEvent(startDate, "change", () => (this.form.eventActualStartDate = startDate.value));
+        this.registerDomEvent(startTime, "change", () => (this.form.eventActualStartTime = startTime.value));
+        this.registerDomEvent(endDate, "change", () => (this.form.eventActualEndDate = endDate.value));
+        this.registerDomEvent(endTime, "change", () => (this.form.eventActualEndTime = endTime.value));
     }
 
     private renderTaskDueFields(container: HTMLElement): void {

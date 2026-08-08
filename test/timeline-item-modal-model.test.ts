@@ -13,6 +13,10 @@ const baseItem: ScheduledItem = {
     dueHasTime: false,
     remind: null,
     priority: null,
+    eventStatus: "planned",
+    actualStart: null,
+    actualEnd: null,
+    allDay: false,
     isCompleted: false,
     source: {
         groupId: "daily-notes",
@@ -30,6 +34,7 @@ test("Timeline item modal model presents an Event schedule and exact source", ()
 
     assert.equal(model.kindLabel, "Event");
     assert.equal(model.statusLabel, "Scheduled");
+    assert.equal(model.actualScheduleLabel, null);
     assert.equal(model.scheduleLabel, "Aug 3, 2026 · 09:00–10:30");
     assert.equal(model.sourceLabel, "2026-08-03.md · Activities & Tasks · Line 12");
     assert.equal(model.sourcePath, "Daily/2026-08-03.md");
@@ -44,6 +49,7 @@ test("Timeline item modal model preserves completed and due-only Task semantics"
         end: null,
         due: new Date(2026, 7, 2),
         priority: "high",
+        eventStatus: null,
         isCompleted: true,
     };
 
@@ -52,6 +58,21 @@ test("Timeline item modal model preserves completed and due-only Task semantics"
     assert.equal(model.statusLabel, "Completed");
     assert.equal(model.priorityLabel, "High");
     assert.equal(model.scheduleLabel, "Due Aug 2, 2026");
+});
+
+test("Timeline Event details distinguish cancellation and completed actual time", () => {
+    const cancelled = buildTimelineItemModalModel({ ...baseItem, eventStatus: "cancelled" });
+    const completed = buildTimelineItemModalModel({
+        ...baseItem,
+        eventStatus: "completed",
+        isCompleted: true,
+        actualStart: new Date(2026, 7, 3, 9, 12),
+        actualEnd: new Date(2026, 7, 3, 10, 18),
+    });
+
+    assert.equal(cancelled.statusLabel, "Cancelled");
+    assert.equal(completed.statusLabel, "Completed");
+    assert.equal(completed.actualScheduleLabel, "Aug 3, 2026 · 09:12–10:18");
 });
 
 test("Timeline item modal model handles an item without schedule or heading metadata", () => {

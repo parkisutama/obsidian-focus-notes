@@ -1,6 +1,6 @@
 import type { EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
 import type { InboxSettings, InsertPosition } from "./types";
-import type { TaskPriority } from "./ScheduledItemTypes";
+import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItemTypes";
 
 export type EventTaskKind = "inbox" | "event" | "task";
 export type HubMode = "none" | "link" | "create";
@@ -56,6 +56,12 @@ export class EventTaskFormState {
     eventStartTime: string;
     eventEndTime: string;
     eventAllDay = false;
+    eventStatus: EventOccurrenceStatus = "planned";
+    eventActualTimeEnabled = false;
+    eventActualStartDate: string;
+    eventActualStartTime: string;
+    eventActualEndDate: string;
+    eventActualEndTime: string;
 
     taskDueDate: string;
     taskDueTime = "09:00";
@@ -100,6 +106,10 @@ export class EventTaskFormState {
         this.eventDate = formatLocalDate(anchorDate);
         this.eventStartTime = `${String(hour).padStart(2, "0")}:00`;
         this.eventEndTime = hour === 23 ? "23:59" : `${String(hour + 1).padStart(2, "0")}:00`;
+        this.eventActualStartDate = this.eventDate;
+        this.eventActualStartTime = this.eventStartTime;
+        this.eventActualEndDate = this.eventDate;
+        this.eventActualEndTime = this.eventEndTime;
         this.taskDueDate = this.eventDate;
         this.taskTimeboxDate = this.eventDate;
         this.taskTimeboxStartTime = this.eventStartTime;
@@ -115,13 +125,27 @@ export class EventTaskFormState {
     buildRecord(hubNoteRef: HubNoteRef | null): EventTaskRecord {
         if (this.kind === "event") {
             const eventTime = this.eventAllDay ? "00:00" : this.eventStartTime;
-            const eventEndTime = this.eventAllDay ? "00:00" : this.eventEndTime;
+            const start = this.parseDateTime(this.eventDate, eventTime);
+            const end = this.eventAllDay
+                ? new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1)
+                : this.parseDateTime(this.eventDate, this.eventEndTime);
+            const actualStart =
+                this.eventStatus === "completed" && this.eventActualTimeEnabled
+                    ? this.parseDateTime(this.eventActualStartDate, this.eventActualStartTime)
+                    : null;
+            const actualEnd =
+                this.eventStatus === "completed" && this.eventActualTimeEnabled
+                    ? this.parseDateTime(this.eventActualEndDate, this.eventActualEndTime)
+                    : null;
             return {
                 kind: "event",
                 title: this.title.trim(),
-                start: this.parseDateTime(this.eventDate, eventTime),
-                end: this.parseDateTime(this.eventDate, eventEndTime),
+                start,
+                end,
                 allDay: this.eventAllDay,
+                status: this.eventStatus,
+                actualStart,
+                actualEnd,
                 description: this.description,
                 hubNoteRef,
             };
@@ -181,14 +205,36 @@ export class EventTaskFormState {
 
         if (this.kind === "event") {
             if (!isValidLocalDate(this.eventDate)) return invalid("Event date is invalid.");
-            if (this.eventAllDay) return { valid: true };
-            if (!isValidLocalTime(this.eventStartTime)) return invalid("Event start time is invalid.");
-            if (!isValidLocalTime(this.eventEndTime)) return invalid("Event end time is invalid.");
-            if (
-                this.parseDateTime(this.eventDate, this.eventEndTime) <=
-                this.parseDateTime(this.eventDate, this.eventStartTime)
-            ) {
-                return invalid("Event end must be later than start.");
+            if (!this.eventAllDay) {
+                if (!isValidLocalTime(this.eventStartTime)) return invalid("Event start time is invalid.");
+                if (!isValidLocalTime(this.eventEndTime)) return invalid("Event end time is invalid.");
+                if (
+                    this.parseDateTime(this.eventDate, this.eventEndTime) <=
+                    this.parseDateTime(this.eventDate, this.eventStartTime)
+                ) {
+                    return invalid("Event end must be later than start.");
+                }
+            }
+            if (this.eventActualTimeEnabled && this.eventStatus !== "completed") {
+                return invalid(
+                    this.eventStatus === "cancelled"
+                        ? "Cancelled Events cannot include actual time."
+                        : "Actual time requires a completed Event.",
+                );
+            }
+            if (this.eventActualTimeEnabled) {
+                if (!isValidLocalDate(this.eventActualStartDate) || !isValidLocalTime(this.eventActualStartTime)) {
+                    return invalid("Event actual start is invalid.");
+                }
+                if (!isValidLocalDate(this.eventActualEndDate) || !isValidLocalTime(this.eventActualEndTime)) {
+                    return invalid("Event actual end is invalid.");
+                }
+                if (
+                    this.parseDateTime(this.eventActualEndDate, this.eventActualEndTime) <=
+                    this.parseDateTime(this.eventActualStartDate, this.eventActualStartTime)
+                ) {
+                    return invalid("Event actual end must be later than actual start.");
+                }
             }
             return { valid: true };
         }

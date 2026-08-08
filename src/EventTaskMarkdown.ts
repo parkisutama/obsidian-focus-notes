@@ -20,8 +20,15 @@ export function formatTaskPriorityFrontmatter(priority: TaskPriority, enabled: b
 
 function formatEventLine(record: EventRecord): string {
     const title = record.hubNoteRef ? `[${record.title}](${encodePath(record.hubNoteRef.path)})` : record.title;
-    if (record.allDay) return `- ${formatDate(record.start)} ${title}`;
-    return `- ${formatDateTime(record.start)} - ${formatTime(record.end)} ${title}`;
+    let line = record.allDay
+        ? `- ${formatDate(record.start)} ${title} | type:event | all-day:true`
+        : `- ${formatDateTime(record.start)} - ${formatEventEnd(record.start, record.end)} ${title}`;
+    if (record.status !== "planned") line += ` | status:${record.status}`;
+    if (record.actualStart && record.actualEnd) {
+        line += ` | actual-start:${formatDateTime(record.actualStart)}`;
+        line += ` | actual-end:${formatDateTime(record.actualEnd)}`;
+    }
+    return line;
 }
 
 function formatTaskLine(record: TaskRecord): string {
@@ -58,4 +65,8 @@ function formatTime(date: Date): string {
 
 function formatDateTime(date: Date): string {
     return `${formatDate(date)} ${formatTime(date)}`;
+}
+
+function formatEventEnd(start: Date, end: Date): string {
+    return formatDate(start) === formatDate(end) ? formatTime(end) : formatDateTime(end);
 }

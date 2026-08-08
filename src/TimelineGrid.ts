@@ -162,7 +162,7 @@ export class TimelineGrid {
         const widthPct = 100 / columnCount;
 
         const block = parent.createEl("button", {
-            cls: `ftl-block ftl-${item.kind}${item.isCompleted ? " ftl-completed" : ""}`,
+            cls: `ftl-block ftl-${item.kind}${this.lifecycleClass(item)}`,
         });
         block.style.top = `${topPx}px`;
         block.style.height = `${heightPx}px`;
@@ -197,7 +197,7 @@ export class TimelineGrid {
         const topPx = this.toPx(at);
 
         const point = parent.createEl("button", {
-            cls: `ftl-point ftl-${item.kind}${item.isCompleted ? " ftl-completed" : ""}`,
+            cls: `ftl-point ftl-${item.kind}${this.lifecycleClass(item)}`,
         });
         point.style.top = `${topPx}px`;
         point.style.setProperty("--ftl-color", this.colorFor(item));
@@ -214,14 +214,14 @@ export class TimelineGrid {
 
     private renderDueChip(parent: HTMLElement, item: ScheduledItem): void {
         const chip = parent.createEl("button", {
-            cls: `ftl-due-chip ftl-${item.kind}${item.isCompleted ? " ftl-completed" : ""}`,
+            cls: `ftl-due-chip ftl-${item.kind}${this.lifecycleClass(item)}`,
         });
         chip.style.setProperty("--ftl-color", this.colorFor(item));
         if (item.kind === "task")
             chip.createSpan({ cls: "ftl-bullet ftl-bullet--sm", attr: { "aria-hidden": "true" } });
         chip.createSpan({
             cls: "ftl-due-text",
-            text: item.kind === "task" ? item.title : `${item.isCompleted ? "Done: " : "Due: "}${item.title}`,
+            text: item.title,
         });
         chip.addEventListener("click", () => this.opts.onOpenItem(item));
     }
@@ -266,6 +266,11 @@ export class TimelineGrid {
 
     private colorFor(item: ScheduledItem): string {
         return this.opts.sourceColors[item.source.groupId] ?? "var(--interactive-accent)";
+    }
+
+    private lifecycleClass(item: ScheduledItem): string {
+        if (item.eventStatus === "cancelled") return " ftl-cancelled";
+        return item.isCompleted ? " ftl-completed" : "";
     }
 
     private tooltip(item: ScheduledItem): string {

@@ -1716,6 +1716,11 @@ body.fn-mobile-event-screen-open .suggestion-container {
     opacity: 0.45;
 }
 
+.ftl-cancelled {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
 .ftl-block-time {
     font-size: 10px;
     font-weight: 500;

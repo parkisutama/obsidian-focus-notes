@@ -41,10 +41,12 @@ operator acceptance.
       the mobile metadata-index refresh fix are complete; synced-build desktop/mobile acceptance remains open.
 - [ ] Task 15: Replace pending preview with a stable detail modal and source navigation. Implementation and pure model
       tests are complete; sidebar, full-tab, layering, focus, Escape/back, and source-navigation acceptance remain open.
-- [ ] Task 16: Specify planned, actual, completed, and cancelled Event occurrence semantics. A committed draft exists and
-      awaits architecture/grammar approval; lifecycle parser, writer, UI, fixtures, and migration work have not started.
+- [ ] Task 16: Implement planned, actual, completed, cancelled, and explicit all-day Event occurrence semantics. Runtime
+      implementation and automated verification are complete; repeatable desktop/mobile acceptance remains open.
 - [ ] Task 16.1: Add orthogonal Task priority semantics (`high`, `medium`, `normal`, `low`). Runtime implementation and
       automated verification are complete; repeatable desktop/mobile acceptance remains open.
+- [ ] Task 16.2: Edit existing Task/Event ledger records safely. Approved order: lossless source model and conflict guard,
+      Task editing first, then Event lifecycle editing; implementation has not started.
 - [ ] Checkpoint C: Verify distinct Event/Task behavior in Day and Week views.
 
 ## P3 — Hardening and release evidence

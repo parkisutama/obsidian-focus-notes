@@ -1,5 +1,5 @@
 import type { ScheduledItem, TimelineRange } from "./ScheduledItemTypes";
-import { addDays, endOfDay, formatDayKey, startOfDay } from "./utils";
+import { addDays, endOfDay, formatDayKey, startOfDay } from "./utils.ts";
 
 export interface TimelineBlockSegment {
     itemId: string;
@@ -33,6 +33,10 @@ export class TimelineLayout {
         const dues: TimelineDueItem[] = [];
 
         for (const item of items) {
+            if (item.allDay && item.start) {
+                dues.push({ itemId: item.id, dayKey: formatDayKey(item.start) });
+                continue;
+            }
             if (item.start && item.end && item.end > item.start) {
                 blocks.push(...this.splitBlock(item, range));
                 continue;

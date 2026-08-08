@@ -2,7 +2,8 @@
 
 ## Status
 
-Draft for user approval. This document defines grammar and behavior only. Parser, writer, UI, and migration changes must not begin until the representative Markdown examples are approved.
+Implemented with automated verification; repeatable real Obsidian desktop/mobile acceptance remains open. The approved
+grammar is canonical for new writes, while legacy timed Event lines remain compatible without file mutation.
 
 ## Objective
 
@@ -25,7 +26,7 @@ The same parsed record will feed Focus Timeline and the future Activity & Tasks 
 - **Event status**: `planned`, `completed`, or `cancelled`.
 - **Task completion**: represented only by Markdown checkbox state and never by Event status metadata.
 
-## Proposed Markdown grammar
+## Canonical Markdown grammar
 
 ### Planned timed Event
 
@@ -161,7 +162,7 @@ Existing `ScheduledItem.start` and `end` remain the planned interval during the 
 
 ### Always
 
-- Lock old and proposed lines in parser fixtures before modifying runtime behavior.
+- Keep old and canonical lines locked in parser fixtures before modifying runtime behavior.
 - Keep Event status distinct from Task checkbox completion.
 - Preserve planned time when actual time is recorded.
 - Retain exact source file, heading, and line provenance.
@@ -203,7 +204,7 @@ pnpm run check:ci
 
 ## Testing strategy
 
-1. Parser fixtures establish backward compatibility and proposed lifecycle semantics.
+1. Parser fixtures establish backward compatibility and canonical lifecycle semantics.
 2. Writer/parser round-trip tests prove emitted metadata is consumed without corrupting linked titles.
 3. Query tests prove planned, completed, and cancelled Events can be filtered independently from Tasks.
 4. Presentation-model tests cover planned/actual labels and missing optional actual time.
@@ -218,9 +219,9 @@ pnpm run check:ci
 - Timeline and Card/List View can consume one lifecycle model without owning separate state.
 - Representative Markdown examples receive explicit user approval before implementation.
 
-## Open questions for approval
+## Approved decisions
 
-1. Is `completed` the preferred Event term, or should the user-facing label be `actual` while Markdown remains `completed`?
-2. Should a completed Event without actual fields mean “occurred as planned,” as proposed?
-3. Is the explicit new all-day marker `type:event | all-day:true` acceptable despite being more verbose?
-4. Should cancelled Events remain visible by default in Timeline, or only in Card/List View?
+1. `completed` is the canonical Event lifecycle term.
+2. A completed Event without actual fields means that it occurred according to plan.
+3. New all-day Events use the explicit `type:event | all-day:true` marker.
+4. Cancelled Events remain visible by default in Timeline with distinct presentation.

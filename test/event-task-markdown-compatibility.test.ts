@@ -20,6 +20,9 @@ test("writer Event Markdown is consumed as a timed Timeline Event", () => {
         start: new Date(2026, 7, 1, 9, 0),
         end: new Date(2026, 7, 1, 10, 30),
         allDay: false,
+        status: "planned",
+        actualStart: null,
+        actualEnd: null,
         description: "First line\nSecond line",
         hubNoteRef: { title: "Review proposal", path: "Projects/Client Alpha.md" },
     };

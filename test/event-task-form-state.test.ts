@@ -170,6 +170,30 @@ test("allows an all-day Event without requiring a positive time range", () => {
     assert.equal(record.kind, "event");
     assert.equal(record.start.getHours(), 0);
     assert.equal(record.end.getHours(), 0);
+    assert.equal(record.end.getDate(), record.start.getDate() + 1);
+});
+
+test("validates completed actual Event intervals and forbids actual time on cancellation", () => {
+    const state = createState();
+    state.kind = "event";
+    state.eventStatus = "completed";
+    state.eventActualTimeEnabled = true;
+    state.eventActualStartDate = "2026-08-01";
+    state.eventActualStartTime = "09:15";
+    state.eventActualEndDate = "2026-08-01";
+    state.eventActualEndTime = "10:20";
+
+    assert.deepEqual(state.validateTemporalFields(), { valid: true });
+    const completed = state.buildRecord(null);
+    assert.equal(completed.kind, "event");
+    assert.equal(completed.status, "completed");
+    assert.equal(completed.actualStart?.getTime(), new Date(2026, 7, 1, 9, 15).getTime());
+
+    state.eventStatus = "cancelled";
+    assert.deepEqual(state.validateTemporalFields(), {
+        valid: false,
+        message: "Cancelled Events cannot include actual time.",
+    });
 });
 
 test("keeps late-night defaults valid at the 23:00 boundary", () => {
