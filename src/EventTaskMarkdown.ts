@@ -1,4 +1,5 @@
 import type { EventRecord, EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
+import type { TaskPriority } from "./ScheduledItemTypes";
 
 export function formatEventTaskEntry(record: EventTaskRecord, detailNoteRef?: HubNoteRef | null): string {
     const line = record.kind === "event" ? formatEventLine(record) : formatTaskLine(record);
@@ -13,6 +14,10 @@ export function formatEventTaskEntry(record: EventTaskRecord, detailNoteRef?: Hu
     return parts.join("\n");
 }
 
+export function formatTaskPriorityFrontmatter(priority: TaskPriority, enabled: boolean): string | null {
+    return enabled ? `priority: ${priority}` : null;
+}
+
 function formatEventLine(record: EventRecord): string {
     const title = record.hubNoteRef ? `[${record.title}](${encodePath(record.hubNoteRef.path)})` : record.title;
     if (record.allDay) return `- ${formatDate(record.start)} ${title}`;
@@ -22,6 +27,7 @@ function formatEventLine(record: EventRecord): string {
 function formatTaskLine(record: TaskRecord): string {
     const title = record.hubNoteRef ? `[${record.title}](${encodePath(record.hubNoteRef.path)})` : record.title;
     let line = `- [ ] ${title}`;
+    if (record.priority !== "normal") line += ` | priority:${record.priority}`;
     if (record.due) {
         line += ` | due:${record.dueHasTime ? formatDateTime(record.due) : formatDate(record.due)}`;
     }

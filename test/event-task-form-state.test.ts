@@ -103,6 +103,7 @@ test("builds task due, timebox, and reminders from shared form state", () => {
     });
     state.kind = "task";
     state.title = "Ship mobile form";
+    state.taskPriority = "high";
     state.taskDueHasTime = true;
     state.taskDueTime = "10:15";
     state.taskTimeboxEnabled = true;
@@ -116,6 +117,7 @@ test("builds task due, timebox, and reminders from shared form state", () => {
     const record = state.buildRecord(null);
 
     assert.equal(record.kind, "task");
+    assert.equal(record.priority, "high");
     assert.equal(record.due?.getTime(), new Date(2026, 7, 1, 10, 15).getTime());
     assert.equal(record.timebox?.start.getTime(), new Date(2026, 7, 1, 9, 0).getTime());
     assert.deepEqual(

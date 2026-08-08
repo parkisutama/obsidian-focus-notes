@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatEventTaskEntry } from "../src/EventTaskMarkdown.ts";
+import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "../src/EventTaskMarkdown.ts";
 import type { EventRecord, TaskRecord } from "../src/EventTaskWriter.ts";
 import { ScheduledItemParser } from "../src/ScheduledItemParser.ts";
 
@@ -46,6 +46,7 @@ test("writer timeboxed Task Markdown preserves schedule metadata and linked titl
     const record: TaskRecord = {
         kind: "task",
         title: "Prepare report",
+        priority: "high",
         due: new Date(2026, 7, 1, 17, 0),
         dueHasTime: true,
         timebox: {
@@ -61,6 +62,7 @@ test("writer timeboxed Task Markdown preserves schedule metadata and linked titl
     const item = new ScheduledItemParser().parseLine(markdown.split("\n")[0] ?? "", source);
 
     assert.equal(item?.kind, "task");
+    assert.equal(item?.priority, "high");
     assert.equal(item?.title, "Prepare report");
     assert.equal(item?.start?.getTime(), record.timebox?.start.getTime());
     assert.equal(item?.end?.getTime(), record.timebox?.end.getTime());
@@ -73,6 +75,7 @@ test("writer due-only Task and completed Task fixture retain distinct semantics"
     const dueOnly: TaskRecord = {
         kind: "task",
         title: "Submit invoice",
+        priority: "normal",
         due: new Date(2026, 7, 2, 0, 0),
         dueHasTime: false,
         timebox: null,
@@ -85,9 +88,27 @@ test("writer due-only Task and completed Task fixture retain distinct semantics"
     const completed = parser.parseLine("- [x] Submit invoice | due:2026-08-02", source);
 
     assert.equal(pending?.kind, "task");
+    assert.equal(formatEventTaskEntry(dueOnly), "- [ ] Submit invoice | due:2026-08-02");
+    assert.equal(pending?.priority, "normal");
     assert.equal(pending?.isCompleted, false);
     assert.equal(pending?.start, null);
     assert.equal(pending?.dueHasTime, false);
     assert.equal(completed?.isCompleted, true);
     assert.equal(completed?.due?.getTime(), dueOnly.due?.getTime());
+});
+
+test("Task priority parser accepts canonical values and safely defaults invalid values", () => {
+    const parser = new ScheduledItemParser();
+
+    assert.equal(parser.parseLine("- [ ] Critical | priority:HIGH", source)?.priority, "high");
+    assert.equal(parser.parseLine("- [ ] Important | priority:medium", source)?.priority, "medium");
+    assert.equal(parser.parseLine("- [ ] Routine | priority:low", source)?.priority, "low");
+    assert.equal(parser.parseLine("- [ ] Legacy", source)?.priority, "normal");
+    assert.equal(parser.parseLine("- [ ] Unknown | priority:urgent", source)?.priority, "normal");
+    assert.equal(parser.parseLine("- [ ] Ambiguous | priority:high | priority:low", source)?.priority, "normal");
+});
+
+test("Task detail frontmatter reflects selected priority only when enabled", () => {
+    assert.equal(formatTaskPriorityFrontmatter("high", true), "priority: high");
+    assert.equal(formatTaskPriorityFrontmatter("low", false), null);
 });

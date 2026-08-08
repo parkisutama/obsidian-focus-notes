@@ -4,6 +4,7 @@ export interface TimelineItemModalModel {
     title: string;
     kindLabel: "Event" | "Task";
     statusLabel: "Scheduled" | "Pending" | "Completed";
+    priorityLabel: "High" | "Medium" | "Normal" | "Low" | null;
     scheduleLabel: string;
     sourceLabel: string;
     sourcePath: string;
@@ -37,10 +38,15 @@ export function buildTimelineItemModalModel(item: ScheduledItem): TimelineItemMo
         title: item.title,
         kindLabel: item.kind === "event" ? "Event" : "Task",
         statusLabel: item.isCompleted ? "Completed" : item.kind === "task" ? "Pending" : "Scheduled",
+        priorityLabel: item.kind === "task" ? formatPriority(item.priority ?? "normal") : null,
         scheduleLabel: formatSchedule(item),
         sourceLabel: [item.source.fileName, heading, `Line ${item.source.lineNumber}`].filter(Boolean).join(" · "),
         sourcePath: item.source.filePath,
     };
+}
+
+function formatPriority(priority: "high" | "medium" | "normal" | "low"): "High" | "Medium" | "Normal" | "Low" {
+    return `${priority.charAt(0).toUpperCase()}${priority.slice(1)}` as "High" | "Medium" | "Normal" | "Low";
 }
 
 export function buildPendingTaskModalModel(items: ScheduledItem[], now = new Date()): PendingTaskModalModel {

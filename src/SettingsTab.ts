@@ -578,7 +578,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Include 'priority' field (task)")
-            .setDesc("Adds priority: medium to the task detail note frontmatter.")
+            .setDesc("Adds the selected Task priority to the detail note frontmatter.")
             .addToggle((toggle) =>
                 toggle.setValue(this.plugin.settings.eventTask.includePriority).onChange(async (v) => {
                     this.plugin.settings.eventTask.includePriority = v;

@@ -1,5 +1,7 @@
 import type { ScheduledItem, TimelineRange } from "./ScheduledItemTypes";
-import { addDays, endOfDay, formatDayKey, startOfDay } from "./utils";
+import { addDays, endOfDay, formatDayKey, startOfDay } from "./utils.ts";
+
+const PRIORITY_ORDER = { high: 0, medium: 1, normal: 2, low: 3 } as const;
 
 export class ScheduledItemQuery {
     getItemsForRange(
@@ -23,14 +25,21 @@ export class ScheduledItemQuery {
         const now = new Date();
         const timedDueCutoff = formatDayKey(today) === formatDayKey(now) ? now : todayStart;
         const earliest = addDays(todayStart, -365);
-        return items.filter((item) => {
-            if (item.kind !== "task" || item.isCompleted) return false;
-            if (!visibleSources.has(item.source.groupId)) return false;
-            const pendingAt = this.pendingAnchor(item);
-            if (!pendingAt || pendingAt < earliest) return false;
-            if (item.due && item.dueHasTime) return pendingAt < timedDueCutoff;
-            return startOfDay(pendingAt) < todayStart;
-        });
+        return items
+            .filter((item) => {
+                if (item.kind !== "task" || item.isCompleted) return false;
+                if (!visibleSources.has(item.source.groupId)) return false;
+                const pendingAt = this.pendingAnchor(item);
+                if (!pendingAt || pendingAt < earliest) return false;
+                if (item.due && item.dueHasTime) return pendingAt < timedDueCutoff;
+                return startOfDay(pendingAt) < todayStart;
+            })
+            .sort((a, b) => {
+                const anchorDifference =
+                    (this.pendingAnchor(a)?.getTime() ?? 0) - (this.pendingAnchor(b)?.getTime() ?? 0);
+                if (anchorDifference !== 0) return anchorDifference;
+                return PRIORITY_ORDER[a.priority ?? "normal"] - PRIORITY_ORDER[b.priority ?? "normal"];
+            });
     }
 
     private pendingAnchor(item: ScheduledItem): Date | null {

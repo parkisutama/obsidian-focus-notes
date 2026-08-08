@@ -155,6 +155,7 @@ export class EventTaskMobileScreen extends Component {
         );
         this.renderEventFields(eventSection);
         this.renderTaskDueFields(taskSection);
+        this.renderTaskPriorityFields(taskSection);
         this.renderDescription(eventTaskFields);
 
         const options = this.disclosure(
@@ -184,6 +185,21 @@ export class EventTaskMobileScreen extends Component {
         this.registerDomEvent(save, "click", () => void this.submit());
         const focusTimer = window.setTimeout(() => title.focus(), 50);
         this.register(() => window.clearTimeout(focusTimer));
+    }
+
+    private renderTaskPriorityFields(container: HTMLElement): void {
+        const card = this.fieldGroup(container, "Priority", "signal");
+        this.segmented(
+            card,
+            [
+                { value: "normal", label: "Normal" },
+                { value: "low", label: "Low" },
+                { value: "medium", label: "Medium" },
+                { value: "high", label: "High" },
+            ],
+            this.form.taskPriority,
+            (priority) => (this.form.taskPriority = priority),
+        );
     }
 
     private renderKindSelector(

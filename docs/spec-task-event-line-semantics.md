@@ -2,9 +2,11 @@
 
 ## Status
 
-Living contract with two maturity levels:
+Living contract with three maturity levels:
 
 - **Implemented** describes Markdown currently written and parsed by Focus Notes.
+- **Implemented; acceptance pending** describes runtime and automated verification that still lacks recorded real-device
+  acceptance.
 - **Proposed** describes an approved direction that still requires explicit implementation work before users can rely on it.
 
 Examples marked Proposed are not runtime documentation. A proposal becomes Implemented only after the domain types, writer,
@@ -91,9 +93,9 @@ Canonical examples:
 The current parser ignores unrecognized metadata segments rather than storing their semantics. Writers and integrations
 must not rely on an ignored segment until it becomes part of this contract.
 
-## Task priority — Proposed
+## Task priority — Implemented; acceptance pending
 
-Priority is an attribute orthogonal to checkbox completion and schedule. The proposed canonical grammar is:
+Priority is an attribute orthogonal to checkbox completion and schedule. The canonical grammar is:
 
 ```markdown
 - [ ] Resolve production regression | priority:high
@@ -101,7 +103,7 @@ Priority is an attribute orthogonal to checkbox completion and schedule. The pro
 - [ ] Organize references | priority:low
 ```
 
-Proposed values:
+Implemented values:
 
 | Value | Meaning |
 |---|---|
@@ -110,16 +112,20 @@ Proposed values:
 | `normal` | Default; no special priority treatment |
 | `low` | Intentionally lower than ordinary work |
 
-Proposed rules:
+Implemented rules:
 
-- Omitted `priority` means `normal`; the writer should omit `priority:normal` for concise Markdown.
+- Omitted `priority` means `normal`; the writer omits `priority:normal` for concise Markdown.
 - Priority does not imply due date, completion, cancellation, blocking, or Event status.
 - Historical priority remains on a completed Task unless a user explicitly edits the source line.
-- The UI must accept only canonical values. A parser must not silently map an unknown value such as `urgent` to `high`.
+- Desktop and mobile Task forms accept only canonical values.
+- A parser does not silently map an unknown value such as `urgent` to `high`; invalid or duplicate priority metadata safely
+  projects as `normal` while the original Markdown remains untouched.
 - Overdue/due-time ordering remains stronger than priority in pending views; priority breaks ties among comparable work.
-- Implementation requires domain-model, parser, writer, desktop/mobile form, modal, query, and round-trip fixture changes.
+- Timeline detail exposes the selected priority.
+- When Task detail-note priority frontmatter is enabled, it uses the selected value instead of a hardcoded default.
 
-Until those changes land, `priority:` is readable user-authored Markdown but is ignored by the Focus Notes runtime.
+Domain-model, parser, writer, desktop/mobile form, modal, pending-query, frontmatter, and round-trip tests are implemented.
+Repeatable real Obsidian desktop/mobile acceptance remains open.
 
 ## Event semantics — Implemented
 

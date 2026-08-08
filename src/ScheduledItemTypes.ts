@@ -1,4 +1,5 @@
 export type ScheduledItemKind = "event" | "task";
+export type TaskPriority = "high" | "medium" | "normal" | "low";
 export type TimelineMode = "day" | "multi-day";
 
 export interface ScheduledItemSource {
@@ -26,6 +27,7 @@ export interface ScheduledItem {
     due: Date | null;
     dueHasTime: boolean;
     remind: Date | null;
+    priority: TaskPriority | null;
     isCompleted: boolean;
     source: ScheduledItemSource;
     rawLine: string;

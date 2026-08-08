@@ -124,6 +124,7 @@ test("summarizes many Daily Note files as one range-aware source", () => {
         due: new Date(2026, 7, 3),
         dueHasTime: false,
         remind: null,
+        priority: "normal",
         isCompleted: false,
         source: {
             groupId: "daily-notes:calendar",

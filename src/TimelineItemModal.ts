@@ -23,6 +23,7 @@ export class TimelineItemModal extends Modal {
 
         const details = this.contentEl.createDiv({ cls: "fn-timeline-modal-details" });
         this.renderDetail(details, "calendar-clock", "When", model.scheduleLabel);
+        if (model.priorityLabel) this.renderDetail(details, "signal", "Priority", model.priorityLabel);
         this.renderDetail(details, "file-text", "Source", model.sourceLabel, model.sourcePath);
 
         const actions = this.contentEl.createDiv({ cls: "fn-timeline-modal-actions" });

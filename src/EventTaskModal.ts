@@ -253,9 +253,28 @@ export class EventTaskModal extends Modal {
     // ---- Task section -------------------------------------------------------
 
     protected renderTaskSection(container: HTMLElement): void {
+        this.renderTaskPrioritySection(container);
         this.renderTaskDueSection(container);
         this.renderTaskTimeboxSection(container);
         this.renderTaskRemindersSection(container);
+    }
+
+    protected renderTaskPrioritySection(container: HTMLElement): void {
+        const content = this.makeRow(container, "signal");
+        content.createDiv({ cls: "fn-gcal-field-label", text: "Priority" });
+        const select = content.createEl("select", { attr: { "aria-label": "Task priority" } });
+        for (const [value, label] of [
+            ["normal", "Normal"],
+            ["low", "Low"],
+            ["medium", "Medium"],
+            ["high", "High"],
+        ] as const) {
+            select.createEl("option", { value, text: label });
+        }
+        select.value = this.form.taskPriority;
+        select.addEventListener("change", () => {
+            this.form.taskPriority = select.value as typeof this.form.taskPriority;
+        });
     }
 
     protected renderTaskDueSection(container: HTMLElement): void {

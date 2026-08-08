@@ -3,7 +3,8 @@ import type { EventTaskSettings, InsertPosition } from "./types";
 import type { InboxRecord } from "./EventTaskFormState";
 import { formatInboxEntry } from "./InboxMarkdown";
 import { ensureFolderPath, isTFile } from "./utils";
-import { formatEventTaskEntry } from "./EventTaskMarkdown";
+import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTaskMarkdown";
+import type { TaskPriority } from "./ScheduledItemTypes";
 
 /** Reference to a hub note, used to build a markdown link. */
 export interface HubNoteRef {
@@ -26,6 +27,7 @@ export interface EventRecord {
 export interface TaskRecord {
     kind: "task";
     title: string;
+    priority: TaskPriority;
     due: Date | null;
     dueHasTime: boolean;
     /** Optional timeblock/timebox: a start–end window for focused work. */
@@ -164,7 +166,8 @@ export class EventTaskWriter {
             lines.push(`title: "${this.escapeYaml(record.title)}"`);
             if (record.due) lines.push(`due: ${this.fmtDate(record.due)}`);
             if (s?.includeStatus ?? true) lines.push("status: open");
-            if (s?.includePriority ?? true) lines.push("priority: medium");
+            const priority = formatTaskPriorityFrontmatter(record.priority, s?.includePriority ?? true);
+            if (priority) lines.push(priority);
             if (s?.includeTags ?? true) lines.push("tags: [task]");
         }
 

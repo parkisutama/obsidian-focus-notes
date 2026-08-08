@@ -12,6 +12,7 @@ const baseItem: ScheduledItem = {
     due: null,
     dueHasTime: false,
     remind: null,
+    priority: null,
     isCompleted: false,
     source: {
         groupId: "daily-notes",
@@ -42,12 +43,14 @@ test("Timeline item modal model preserves completed and due-only Task semantics"
         start: null,
         end: null,
         due: new Date(2026, 7, 2),
+        priority: "high",
         isCompleted: true,
     };
 
     const model = buildTimelineItemModalModel(task);
     assert.equal(model.kindLabel, "Task");
     assert.equal(model.statusLabel, "Completed");
+    assert.equal(model.priorityLabel, "High");
     assert.equal(model.scheduleLabel, "Due Aug 2, 2026");
 });
 
@@ -62,6 +65,7 @@ test("Timeline item modal model handles an item without schedule or heading meta
     const model = buildTimelineItemModalModel(item);
     assert.equal(model.scheduleLabel, "No schedule");
     assert.equal(model.sourceLabel, "2026-08-03.md · Line 12");
+    assert.equal(model.priorityLabel, null);
 });
 
 test("pending modal model reports varying dates and file depths without losing source identity", () => {

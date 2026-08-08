@@ -649,6 +649,43 @@ Implementation and pure-model verification are complete. Runtime interaction acc
 
 **Estimated scope:** Small.
 
+### Task 16.1: Add orthogonal Task priority semantics
+
+**Priority:** P2
+
+**Description:** Add TickTick-style Task priority without coupling importance to checkbox completion, scheduling, or the
+separate Event occurrence lifecycle. Markdown remains canonical and existing Task lines default to normal priority.
+
+**Acceptance criteria:**
+
+- [x] Task records support `high`, `medium`, `normal`, and `low`; omission means `normal` and the writer omits
+      `priority:normal`.
+- [x] Desktop and mobile Task forms select priority, while Event and Inbox records remain unchanged.
+- [x] Timeline details expose Task priority and pending ordering uses due/overdue time before priority.
+- [x] Detail-note frontmatter uses the selected Task priority instead of a hardcoded value when the field is enabled.
+
+**Verification:**
+
+- [x] Parser/writer round-trip fixtures cover priority emission, omission, invalid/duplicate values, and legacy Task
+      compatibility.
+- [x] Form-state, pending-query, modal-model, and detail-note tests prove the complete semantic path.
+- [x] `pnpm run check:ci` passes; desktop and real-mobile interaction acceptance remain recorded separately.
+
+**Dependencies:** Task 5 and the approved priority contract in `docs/spec-task-event-line-semantics.md`. It does not depend
+on Event lifecycle implementation.
+
+**Files likely touched:**
+
+- `src/EventTaskFormState.ts`
+- `src/EventTaskMarkdown.ts`
+- `src/ScheduledItemParser.ts`
+- `src/ScheduledItemTypes.ts`
+- `src/ScheduledItemQuery.ts`
+- desktop/mobile form and Timeline modal files
+- focused compatibility and presentation tests
+
+**Estimated scope:** Medium, delivered as one tested vertical slice.
+
 ## Checkpoint C — Temporal experience
 
 - [ ] Day and Week views render Event and Task semantics distinctly.

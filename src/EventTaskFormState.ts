@@ -1,5 +1,6 @@
 import type { EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
 import type { InboxSettings, InsertPosition } from "./types";
+import type { TaskPriority } from "./ScheduledItemTypes";
 
 export type EventTaskKind = "inbox" | "event" | "task";
 export type HubMode = "none" | "link" | "create";
@@ -59,6 +60,7 @@ export class EventTaskFormState {
     taskDueDate: string;
     taskDueTime = "09:00";
     taskDueHasTime = false;
+    taskPriority: TaskPriority = "normal";
     taskTimeboxEnabled = false;
     taskTimeboxDate: string;
     taskTimeboxStartTime: string;
@@ -143,6 +145,7 @@ export class EventTaskFormState {
         return {
             kind: "task",
             title: this.title.trim(),
+            priority: this.taskPriority,
             due: this.taskDueDate
                 ? this.parseDateTime(this.taskDueDate, this.taskDueHasTime ? this.taskDueTime : "00:00")
                 : null,

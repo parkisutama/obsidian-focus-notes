@@ -1,4 +1,4 @@
-import type { ScheduledItem, ScheduledItemSource } from "./ScheduledItemTypes";
+import type { ScheduledItem, ScheduledItemSource, TaskPriority } from "./ScheduledItemTypes";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DATETIME_RE = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/;
@@ -29,6 +29,7 @@ export class ScheduledItemParser {
             due: null,
             dueHasTime: false,
             remind: null,
+            priority: null,
             isCompleted: false,
             source: ctx,
             rawLine: line,
@@ -53,6 +54,7 @@ export class ScheduledItemParser {
             due: metadata.due,
             dueHasTime: metadata.dueHasTime,
             remind: metadata.remind,
+            priority: metadata.priority,
             isCompleted: match[1].toLowerCase() === "x",
             source: ctx,
             rawLine: line,
@@ -65,6 +67,7 @@ export class ScheduledItemParser {
         start: Date | null;
         end: Date | null;
         dueHasTime: boolean;
+        priority: TaskPriority;
     } {
         const result = {
             due: null as Date | null,
@@ -72,7 +75,9 @@ export class ScheduledItemParser {
             start: null as Date | null,
             end: null as Date | null,
             dueHasTime: false,
+            priority: "normal" as TaskPriority,
         };
+        let priorityCount = 0;
 
         for (const part of parts) {
             const separator = part.indexOf(":");
@@ -88,9 +93,22 @@ export class ScheduledItemParser {
             if (key === "remind") result.remind = this.parseDateTime(value);
             if (key === "start") result.start = this.parseDateTime(value);
             if (key === "end") result.end = this.parseDateTime(value);
+            if (key === "priority") {
+                priorityCount += 1;
+                result.priority = this.parseTaskPriority(value);
+            }
         }
 
+        if (priorityCount > 1) result.priority = "normal";
+
         return result;
+    }
+
+    private parseTaskPriority(value: string): TaskPriority {
+        const normalized = value.toLowerCase();
+        return normalized === "high" || normalized === "medium" || normalized === "low" || normalized === "normal"
+            ? normalized
+            : "normal";
     }
 
     private parseDateOrDateTime(value: string): { date: Date | null; hasTime: boolean } {

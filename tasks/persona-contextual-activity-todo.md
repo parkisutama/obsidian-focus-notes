@@ -43,6 +43,8 @@ operator acceptance.
       tests are complete; sidebar, full-tab, layering, focus, Escape/back, and source-navigation acceptance remain open.
 - [ ] Task 16: Specify planned, actual, completed, and cancelled Event occurrence semantics. A committed draft exists and
       awaits architecture/grammar approval; lifecycle parser, writer, UI, fixtures, and migration work have not started.
+- [ ] Task 16.1: Add orthogonal Task priority semantics (`high`, `medium`, `normal`, `low`). Runtime implementation and
+      automated verification are complete; repeatable desktop/mobile acceptance remains open.
 - [ ] Checkpoint C: Verify distinct Event/Task behavior in Day and Week views.
 
 ## P3 — Hardening and release evidence
