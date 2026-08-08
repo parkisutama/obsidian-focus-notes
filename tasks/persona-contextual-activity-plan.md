@@ -523,14 +523,17 @@ Parallelizable does not mean one mixed commit. Each numbered task remains an ind
 
 **Acceptance criteria:**
 
-- [ ] A new-install Event or Task saved to the default Daily Note is indexed by Focus Timeline.
-- [ ] Custom target and source-folder settings surface a clear mismatch rather than silently hiding captured records.
-- [ ] Timeline indexing remains folder-scoped and does not default to whole-vault scanning.
+- [x] A new-install Event or Task saved to the default Daily Note is indexed by Focus Timeline.
+- [x] Custom target and source-folder settings surface a clear mismatch rather than silently hiding captured records.
+- [x] Timeline indexing remains folder-scoped and does not default to whole-vault scanning.
 
 **Verification:**
 
-- [ ] Integration fixtures cover Daily Notes default, manual target, source mismatch, Event, timeboxed Task, and due-only Task.
-- [ ] `pnpm test` and `pnpm run build` pass.
+- [x] Integration fixtures cover Daily Notes default, manual target, source mismatch, Event, timeboxed Task, and due-only Task.
+- [x] `pnpm test` and `pnpm run build` pass.
+
+Implementation and automated verification are complete. Real Obsidian desktop/mobile acceptance remains tracked by
+Checkpoint C and Task 18.
 
 **Dependencies:** Tasks 5 and 6. Related-log delivery is not required for Timeline source alignment.
 
@@ -551,15 +554,17 @@ Parallelizable does not mean one mixed commit. Each numbered task remains an ind
 
 **Acceptance criteria:**
 
-- [ ] Clicking a pending Task opens a modal that shows kind, status, schedule, source, and available contextual links.
-- [ ] `Open source note` navigates to the source line and closes or preserves the modal predictably.
+- [x] Clicking a pending Task opens a modal that shows kind, status, schedule, source, and available contextual links.
+- [x] `Open source note` navigates to the source line and closes or preserves the modal predictably.
 - [ ] The modal remains usable from sidebar, full tab, desktop, and mobile layouts.
 
 **Verification:**
 
-- [ ] Pure presentation-model tests cover Event, Task, missing metadata, and completed state.
+- [x] Pure presentation-model tests cover Event, Task, missing metadata, and completed state.
 - [ ] Manual desktop/sidebar and mobile acceptance verifies layering, focus, Escape/back behavior, and source navigation.
-- [ ] `pnpm test` and `pnpm run build` pass.
+- [x] `pnpm test` and `pnpm run build` pass.
+
+Implementation and pure-model verification are complete. Runtime interaction acceptance remains open.
 
 **Dependencies:** Task 14.
 

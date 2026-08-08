@@ -20,6 +20,10 @@ Jalankan `pnpm run docs:dev` untuk menulis secara lokal dan `pnpm run docs:build
 - [Code quality remediation](spec-code-quality-remediation.md) — rencana perbaikan kualitas setelah fondasi Developer Experience.
 - [Inbox quick capture](spec-inbox-quick-capture.md) — kontrak fitur Inbox.
 - [Mobile event/task modal](spec-mobile-event-task-modal.md) — kontrak modal mobile.
+- [Task and Event single-line semantics](spec-task-event-line-semantics.md) — kontrak kanonis grammar, atribut,
+  lifecycle, batas implementasi saat ini, dan proposal ekstensi Task/Event.
+- [Event occurrence lifecycle](spec-event-occurrence-lifecycle.md) — proposal lifecycle Event yang belum
+  diimplementasikan dan masih menunggu persetujuan semantic.
 
 ## Supporting notes
 
