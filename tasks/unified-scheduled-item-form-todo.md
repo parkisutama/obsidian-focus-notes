@@ -28,9 +28,9 @@
 
 **Acceptance criteria:**
 
-- [ ] Parse descriptions and reserved detail links while preserving nested checklists and unknown children.
-- [ ] Replace owned fields without changing preserved content or LF/CRLF.
-- [ ] Reject stale, missing, duplicated, moved, or ambiguous blocks.
+- [x] Parse descriptions and reserved detail links while preserving nested checklists and unknown children.
+- [x] Replace owned fields without changing preserved content or LF/CRLF.
+- [x] Reject stale, missing, duplicated, moved, or ambiguous blocks.
 
 **Verification:** `node --test test/scheduled-item-block-editor.test.ts`; full local gate.
 

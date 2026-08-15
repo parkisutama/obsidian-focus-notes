@@ -99,3 +99,23 @@ export function replaceLedgerRecord(
             content.slice(current.snapshot.endOffset),
     };
 }
+
+export function replaceLedgerRecordBlock(
+    content: string,
+    snapshot: LedgerRecordSnapshot,
+    newBlock: string,
+): ReplaceLedgerRecordResult {
+    const occurrences = content.split(snapshot.rawBlock).length - 1;
+    if (occurrences > 1) return { status: "conflict", reason: "ambiguous" };
+
+    const current = captureAtLine(content, snapshot);
+    if (current.status === "conflict") return current;
+    if (current.snapshot.rawBlock !== snapshot.rawBlock) {
+        return { status: "conflict", reason: "block-changed" };
+    }
+
+    return {
+        status: "ready",
+        content: content.slice(0, current.snapshot.startOffset) + newBlock + content.slice(current.snapshot.endOffset),
+    };
+}
