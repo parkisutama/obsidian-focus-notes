@@ -1,14 +1,11 @@
 import { ItemView, Notice, setIcon, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import { openEventTaskForm } from "./EventTaskModal";
-import { openEventEditForm } from "./EventEditModal";
-import { captureEventLedgerEdit } from "./EventLedgerEditor";
+import { openScheduledItemEditor } from "./ScheduledItemEditor";
 import { ScheduledItemIndexer } from "./ScheduledItemIndexer";
 import { ScheduledItemParser } from "./ScheduledItemParser";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
 import type { ScheduledItem, TimelineMode, TimelineRange } from "./ScheduledItemTypes";
 import { TargetResolver } from "./TargetResolver";
-import { openTaskEditForm } from "./TaskEditModal";
-import { captureTaskLedgerEdit } from "./TaskLedgerEditor";
 import { TimelineGrid } from "./TimelineGrid";
 import { PendingTasksModal, TimelineItemModal } from "./TimelineItemModal";
 import { TimelineLayout } from "./TimelineLayout";
@@ -412,35 +409,7 @@ export class TimelineView extends ItemView {
     }
 
     private async openItemEditor(item: ScheduledItem): Promise<void> {
-        const source = {
-            filePath: item.source.filePath,
-            lineNumber: item.source.lineNumber,
-            rawLine: item.rawLine,
-        };
-        if (item.kind === "event") {
-            const captured = await captureEventLedgerEdit(this.app, source);
-            if (captured.status !== "captured") {
-                new Notice(
-                    captured.status === "conflict"
-                        ? "Event source changed or moved. Refresh the Timeline and try again."
-                        : "This Event contains ambiguous or invalid editable metadata.",
-                );
-                return;
-            }
-            openEventEditForm(this.app, item.title, captured.snapshot, captured.edit, () => void this.refreshIndex());
-            return;
-        }
-
-        const captured = await captureTaskLedgerEdit(this.app, source);
-        if (captured.status !== "captured") {
-            new Notice(
-                captured.status === "conflict"
-                    ? "Task source changed or moved. Refresh the Timeline and try again."
-                    : "This Task contains ambiguous or invalid editable metadata.",
-            );
-            return;
-        }
-        openTaskEditForm(this.app, item.title, captured.snapshot, captured.edit, () => void this.refreshIndex());
+        await openScheduledItemEditor(this.app, item, () => void this.refreshIndex());
     }
 
     private openPendingItems(items: ScheduledItem[]): void {

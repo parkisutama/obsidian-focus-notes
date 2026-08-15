@@ -1,6 +1,7 @@
 import { type App, Component, FuzzySuggestModal, Notice, setIcon, type TFile } from "obsidian";
 import { preferActiveNoteTarget } from "./CaptureTarget";
 import { EventTaskFormState, type EventTaskKind, formatLocalDate, type HubMode } from "./EventTaskFormState";
+import type { OpenEventTaskFormOptions } from "./EventTaskModal";
 import {
     type EventTaskSubmissionResult,
     type PartialSubmissionResult,
@@ -39,13 +40,17 @@ export class EventTaskMobileScreen extends Component {
         private readonly getSettings: () => FocusNotesSettings,
         private readonly anchorDate: Date = new Date(),
         private readonly onComplete: () => void = () => {},
+        options: OpenEventTaskFormOptions = {},
     ) {
         super();
         const settings = getSettings();
         const resolver = new TargetResolver(app, settings);
         const configured = resolver.resolve(resolver.getActiveTarget(), anchorDate);
         const activeFile = app.workspace.getActiveFile();
-        const target = preferActiveNoteTarget(configured, activeFile?.extension === "md" ? activeFile.path : null);
+        const target = preferActiveNoteTarget(
+            configured,
+            options.targetFile ?? (activeFile?.extension === "md" ? activeFile.path : null),
+        );
         const inboxTarget = selectInboxTarget({
             mode: settings.inbox.defaultTargetMode,
             dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),
@@ -62,6 +67,7 @@ export class EventTaskMobileScreen extends Component {
             inbox: settings.inbox,
             inboxTargetFile: inboxTarget?.file ?? "",
         });
+        this.form.kind = options.initialKind ?? "inbox";
     }
 
     open(owner?: Component): void {
@@ -243,6 +249,7 @@ export class EventTaskMobileScreen extends Component {
         this.registerDomEvent(inboxButton, "click", () => activate("inbox"));
         this.registerDomEvent(eventButton, "click", () => activate("event"));
         this.registerDomEvent(taskButton, "click", () => activate("task"));
+        activate(this.form.kind);
     }
 
     private renderEventFields(container: HTMLElement): void {

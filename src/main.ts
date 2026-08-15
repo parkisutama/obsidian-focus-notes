@@ -1,13 +1,18 @@
-import { Plugin, type WorkspaceLeaf } from "obsidian";
-import { type FocusNotesSettings, mergeSettingsWithDefaults } from "./types";
-import { TimerView, VIEW_TYPE_FOCUS_NOTES } from "./TimerView";
-import { TimelineView, VIEW_TYPE_FOCUS_TIMELINE } from "./TimelineView";
+import { Notice, Plugin, TFile, type WorkspaceLeaf } from "obsidian";
+import { scanActiveNoteLedger } from "./ActiveNoteLedger";
+import { ActiveNoteManagerModal } from "./ActiveNoteManagerModal";
+import { openEventTaskForm } from "./EventTaskModal";
 import { NoteWriter } from "./NoteWriter";
-import { TargetResolver } from "./TargetResolver";
 import { RecentEntriesReader } from "./RecentEntriesReader";
+import { openScheduledItemEditor } from "./ScheduledItemEditor";
+import { ScheduledItemParser } from "./ScheduledItemParser";
 import { FocusNotesSettingsTab } from "./SettingsTab";
 import { StateStore } from "./StateStore";
-import { openEventTaskForm } from "./EventTaskModal";
+import { TargetResolver } from "./TargetResolver";
+import { timelineSourceHeadings } from "./TimelineSourceGroups";
+import { TimelineView, VIEW_TYPE_FOCUS_TIMELINE } from "./TimelineView";
+import { TimerView, VIEW_TYPE_FOCUS_NOTES } from "./TimerView";
+import { type FocusNotesSettings, mergeSettingsWithDefaults } from "./types";
 
 /**
  * Plugin shell.
@@ -71,6 +76,17 @@ export default class FocusNotesPlugin extends Plugin {
         });
 
         this.addCommand({
+            id: "manage-active-note-events-tasks",
+            name: "Manage events and tasks in active note",
+            checkCallback: (checking) => {
+                const file = this.app.workspace.getActiveFile();
+                const available = file instanceof TFile && file.extension === "md";
+                if (available && !checking) void this.openActiveNoteManager(file);
+                return available;
+            },
+        });
+
+        this.addCommand({
             id: "open-focus-timeline",
             name: "Open Focus Timeline",
             callback: () => {
@@ -100,6 +116,26 @@ export default class FocusNotesPlugin extends Plugin {
 
     async saveSettings(): Promise<void> {
         await this.stateStore.save(this.settings);
+    }
+
+    private async openActiveNoteManager(file: TFile): Promise<void> {
+        const content = await this.app.vault.cachedRead(file);
+        const headings = timelineSourceHeadings(
+            this.settings.timeline.sourceHeadings,
+            this.settings.eventTask.defaultSaveHeading,
+        );
+        const items = scanActiveNoteLedger(file.path, file.name, content, headings, new ScheduledItemParser());
+        new ActiveNoteManagerModal(
+            this.app,
+            file.name,
+            items,
+            (kind) =>
+                openEventTaskForm(this.app, () => this.settings, new Date(), undefined, this, {
+                    initialKind: kind,
+                    targetFile: file.path,
+                }),
+            (item) => void openScheduledItemEditor(this.app, item, () => new Notice("Task or Event updated.")),
+        ).open();
     }
 
     private async activateView(): Promise<void> {

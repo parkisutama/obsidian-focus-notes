@@ -1955,9 +1955,144 @@ body.fn-mobile-event-screen-open .suggestion-container {
 .fn-timeline-pending-modal,
 .fn-timeline-item-modal,
 .fn-task-edit-modal,
-.fn-event-edit-modal {
+.fn-event-edit-modal,
+.fn-active-note-manager-modal {
     width: min(520px, calc(100vw - 32px));
     max-height: min(720px, calc(100vh - 48px));
+}
+
+.fn-active-note-manager-modal .modal-content {
+    padding: 24px;
+}
+
+.fn-active-note-manager-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.fn-active-note-manager-header h2 {
+    margin: 0 0 4px;
+}
+
+.fn-active-note-manager-subtitle,
+.fn-active-note-manager-empty {
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+}
+
+.fn-active-note-manager-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.fn-active-note-manager-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fn-active-note-manager-actions svg {
+    width: 16px;
+    height: 16px;
+}
+
+.fn-active-note-manager-empty {
+    margin-top: 24px;
+    padding: 24px;
+    border: 1px dashed var(--background-modifier-border);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.fn-active-note-manager-list {
+    max-height: min(520px, 60vh);
+    margin-top: 20px;
+    overflow-y: auto;
+}
+
+.fn-active-note-manager-group + .fn-active-note-manager-group {
+    margin-top: 18px;
+}
+
+.fn-active-note-manager-group-title {
+    padding: 0 6px 6px;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.fn-active-note-manager-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    min-height: 56px;
+    height: auto;
+    padding: 9px 6px;
+    border: none;
+    border-radius: 8px;
+    background: transparent !important;
+    color: var(--text-normal);
+    text-align: left;
+    box-shadow: none;
+    white-space: normal;
+}
+
+.fn-active-note-manager-row:hover,
+.fn-active-note-manager-row:focus-visible {
+    background: var(--background-modifier-hover) !important;
+}
+
+.fn-active-note-manager-kind {
+    margin-top: 2px;
+    color: var(--text-muted);
+}
+
+.fn-active-note-manager-kind svg {
+    width: 20px;
+    height: 20px;
+}
+
+.fn-active-note-manager-body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+}
+
+.fn-active-note-manager-name {
+    width: 100%;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+}
+
+.fn-active-note-manager-meta {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+
+@media (max-width: 520px) {
+    .fn-active-note-manager-header {
+        flex-direction: column;
+    }
+
+    .fn-active-note-manager-actions,
+    .fn-active-note-manager-actions button {
+        width: 100%;
+    }
+
+    .fn-active-note-manager-actions button {
+        justify-content: center;
+        min-height: 44px;
+    }
 }
 
 .fn-timeline-item-modal .modal-content,

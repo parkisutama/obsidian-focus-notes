@@ -22,19 +22,25 @@ import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./Timelin
 import type { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
 
+export interface OpenEventTaskFormOptions {
+    initialKind?: EventTaskKind;
+    targetFile?: string;
+}
+
 export function openEventTaskForm(
     app: App,
     getSettings: () => FocusNotesSettings,
     anchorDate: Date = new Date(),
     onComplete: () => void = () => {},
     owner?: Component,
+    options: OpenEventTaskFormOptions = {},
 ): void {
     if (shouldUseMobileForm(Platform.isMobile, window.innerWidth)) {
-        new EventTaskMobileScreen(app, getSettings, anchorDate, onComplete).open(owner);
+        new EventTaskMobileScreen(app, getSettings, anchorDate, onComplete, options).open(owner);
         return;
     }
 
-    new EventTaskModal(app, getSettings, anchorDate, onComplete).open();
+    new EventTaskModal(app, getSettings, anchorDate, onComplete, options).open();
 }
 
 export class EventTaskModal extends Modal {
@@ -72,6 +78,7 @@ export class EventTaskModal extends Modal {
         private getSettings: () => FocusNotesSettings,
         private anchorDate: Date = new Date(),
         private onComplete: () => void = () => {},
+        options: OpenEventTaskFormOptions = {},
     ) {
         super(app);
 
@@ -79,7 +86,10 @@ export class EventTaskModal extends Modal {
         const resolver = new TargetResolver(app, settings);
         const configured = resolver.resolve(resolver.getActiveTarget(), anchorDate);
         const activeFile = app.workspace.getActiveFile();
-        const resolved = preferActiveNoteTarget(configured, activeFile?.extension === "md" ? activeFile.path : null);
+        const resolved = preferActiveNoteTarget(
+            configured,
+            options.targetFile ?? (activeFile?.extension === "md" ? activeFile.path : null),
+        );
         const inboxTarget = selectInboxTarget({
             mode: settings.inbox.defaultTargetMode,
             dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),
@@ -96,6 +106,7 @@ export class EventTaskModal extends Modal {
             inbox: settings.inbox,
             inboxTargetFile: inboxTarget?.file ?? "",
         });
+        this.form.kind = options.initialKind ?? "inbox";
     }
 
     onOpen(): void {
@@ -123,9 +134,13 @@ export class EventTaskModal extends Modal {
         this.renderTabs(contentEl);
 
         const body = contentEl.createDiv({ cls: "fn-gcal-body" });
-        this.eventTaskFieldsEl = body.createDiv({ cls: "fn-gcal-event-task-fields fn-gcal-hidden" });
+        this.eventTaskFieldsEl = body.createDiv({
+            cls: `fn-gcal-event-task-fields${this.form.kind === "inbox" ? " fn-gcal-hidden" : ""}`,
+        });
         this.eventSectionEl = this.eventTaskFieldsEl.createDiv({ cls: "fn-gcal-tab-section" });
-        this.taskSectionEl = this.eventTaskFieldsEl.createDiv({ cls: "fn-gcal-tab-section fn-gcal-hidden" });
+        this.eventSectionEl.toggleClass("fn-gcal-hidden", this.form.kind !== "event");
+        this.taskSectionEl = this.eventTaskFieldsEl.createDiv({ cls: "fn-gcal-tab-section" });
+        this.taskSectionEl.toggleClass("fn-gcal-hidden", this.form.kind !== "task");
 
         this.renderEventSection(this.eventSectionEl);
         this.renderTaskSection(this.taskSectionEl);
@@ -135,6 +150,7 @@ export class EventTaskModal extends Modal {
         this.renderSaveTo(this.eventTaskFieldsEl);
 
         this.inboxSectionEl = body.createDiv({ cls: "fn-gcal-tab-section" });
+        this.inboxSectionEl.toggleClass("fn-gcal-hidden", this.form.kind !== "inbox");
         this.inboxForm = new InboxDesktopForm({
             app: this.app,
             form: this.form,
@@ -183,19 +199,19 @@ export class EventTaskModal extends Modal {
     protected renderTabs(container: HTMLElement): void {
         const tabs = container.createDiv({ cls: "fn-gcal-tabs" });
         const inboxBtn = tabs.createEl("button", {
-            cls: "fn-gcal-tab fn-gcal-tab--active",
+            cls: `fn-gcal-tab${this.form.kind === "inbox" ? " fn-gcal-tab--active" : ""}`,
             text: "Inbox",
-            attr: { type: "button", "aria-pressed": "true" },
+            attr: { type: "button", "aria-pressed": String(this.form.kind === "inbox") },
         });
         const eventBtn = tabs.createEl("button", {
-            cls: "fn-gcal-tab",
+            cls: `fn-gcal-tab${this.form.kind === "event" ? " fn-gcal-tab--active" : ""}`,
             text: "Event",
-            attr: { type: "button", "aria-pressed": "false" },
+            attr: { type: "button", "aria-pressed": String(this.form.kind === "event") },
         });
         const taskBtn = tabs.createEl("button", {
-            cls: "fn-gcal-tab",
+            cls: `fn-gcal-tab${this.form.kind === "task" ? " fn-gcal-tab--active" : ""}`,
             text: "Task",
-            attr: { type: "button", "aria-pressed": "false" },
+            attr: { type: "button", "aria-pressed": String(this.form.kind === "task") },
         });
 
         const buttons = new Map<EventTaskKind, HTMLButtonElement>([
