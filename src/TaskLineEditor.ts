@@ -114,11 +114,20 @@ export function parseTaskLineEdit(line: string): ParseTaskLineEditResult {
 const OWNED_PRIORITIES: ReadonlySet<string> = new Set(["high", "medium", "normal", "low"]);
 
 export function editTaskLine(line: string, edit: TaskLineEdit): EditTaskLineResult {
+    return editTaskLineWithOptionalTitle(line, null, edit);
+}
+
+export function editTaskLineWithTitle(line: string, title: string, edit: TaskLineEdit): EditTaskLineResult {
+    return editTaskLineWithOptionalTitle(line, title, edit);
+}
+
+function editTaskLineWithOptionalTitle(line: string, titleEdit: string | null, edit: TaskLineEdit): EditTaskLineResult {
     const match = line.match(/^(\s*-\s+\[)( |x|X)(\]\s+)(.+)$/);
     if (!match) return { status: "invalid", reason: "not-task" };
 
     const segments = match[4].split(" | ");
-    const title = segments.shift() ?? "";
+    const originalTitle = segments.shift() ?? "";
+    const title = titleEdit === null ? originalTitle : renderEditedTitle(originalTitle, titleEdit);
     const desired = desiredMetadata(edit);
     const consumed: Record<OwnedKey, number> = { priority: 0, due: 0, start: 0, end: 0, remind: 0 };
     const metadata: string[] = [];
@@ -159,4 +168,15 @@ export function editTaskLine(line: string, edit: TaskLineEdit): EditTaskLineResu
     const checkboxValue = originalCheckboxMatches ? match[2] : checkbox;
     const payload = [title, ...metadata].join(" | ");
     return { status: "ready", line: `${match[1]}${checkboxValue}${match[3]}${payload}` };
+}
+
+function renderEditedTitle(original: string, title: string): string {
+    const markdown = original.match(/^\[([^\]]*)\]\(([^)]+)\)$/);
+    if (markdown) return markdown[1] === title ? original : `[${title}](${markdown[2]})`;
+    const wiki = original.match(/^\[\[([^|\]]+)(?:\|([^\]]*))?\]\]$/);
+    if (wiki) {
+        const displayed = wiki[2] ?? wiki[1].split("/").pop()?.replace(/\.md$/i, "") ?? wiki[1];
+        return displayed === title ? original : `[[${wiki[1]}|${title}]]`;
+    }
+    return original === title ? original : title;
 }

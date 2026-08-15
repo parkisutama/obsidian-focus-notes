@@ -40,9 +40,9 @@
 
 **Acceptance criteria:**
 
-- [ ] Create and Edit hydrate and validate the same form data.
-- [ ] Task/Event output remains compatible with existing canonical Markdown.
-- [ ] Mode-specific target/snapshot data never leaks into semantic fields.
+- [x] Create and Edit hydrate and validate the same form data.
+- [x] Task/Event output remains compatible with existing canonical Markdown.
+- [x] Mode-specific target/snapshot data never leaks into semantic fields.
 
 **Verification:** focused adapter tests; `pnpm run typecheck`.
 

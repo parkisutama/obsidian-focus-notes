@@ -135,22 +135,47 @@ export function parseEventLineEdit(line: string): ParseEventLineEditResult {
 }
 
 export function editEventLine(line: string, edit: EventLineEdit): EditEventLineResult {
+    return editEventLineWithOptionalTitle(line, null, edit);
+}
+
+export function editEventLineWithTitle(line: string, title: string, edit: EventLineEdit): EditEventLineResult {
+    return editEventLineWithOptionalTitle(line, title, edit);
+}
+
+function editEventLineWithOptionalTitle(
+    line: string,
+    titleEdit: string | null,
+    edit: EventLineEdit,
+): EditEventLineResult {
     const parsed = parseEventLineEdit(line);
     if (parsed.status === "invalid") return parsed;
     const invalid = validateEdit(edit);
     if (invalid) return { status: "invalid", reason: invalid };
-    if (JSON.stringify(parsed.edit) === JSON.stringify(edit)) return { status: "ready", line };
-
     const structure = parseStructure(line);
     if (!structure) return { status: "invalid", reason: "not-event" };
+    const title = titleEdit === null ? structure.title : renderEditedTitle(structure.title, titleEdit);
+    if (JSON.stringify(parsed.edit) === JSON.stringify(edit) && title === structure.title) {
+        return { status: "ready", line };
+    }
     const metadata = structure.metadata.filter((segment) => !OWNED_KEYS.has(keyOf(segment) ?? ""));
     const prefix = edit.allDay
-        ? `- ${edit.start} ${structure.title}`
-        : `- ${edit.start} - ${formatEnd(edit.start, edit.end ?? "")} ${structure.title}`;
+        ? `- ${edit.start} ${title}`
+        : `- ${edit.start} - ${formatEnd(edit.start, edit.end ?? "")} ${title}`;
     if (edit.allDay) metadata.push("type:event", "all-day:true");
     if (edit.status !== "planned") metadata.push(`status:${edit.status}`);
     if (edit.actual) metadata.push(`actual-start:${edit.actual.start}`, `actual-end:${edit.actual.end}`);
     return { status: "ready", line: [prefix, ...metadata].join(" | ") };
+}
+
+function renderEditedTitle(original: string, title: string): string {
+    const markdown = original.match(/^\[([^\]]*)\]\(([^)]+)\)$/);
+    if (markdown) return markdown[1] === title ? original : `[${title}](${markdown[2]})`;
+    const wiki = original.match(/^\[\[([^|\]]+)(?:\|([^\]]*))?\]\]$/);
+    if (wiki) {
+        const displayed = wiki[2] ?? wiki[1].split("/").pop()?.replace(/\.md$/i, "") ?? wiki[1];
+        return displayed === title ? original : `[[${wiki[1]}|${title}]]`;
+    }
+    return original === title ? original : title;
 }
 
 function formatEnd(start: string, end: string): string {
