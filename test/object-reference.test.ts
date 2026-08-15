@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+    addedResolvedObjectReferencePaths,
     normalizeObjectReferencePath,
     parseObjectReferences,
     serializeObjectReference,
@@ -42,4 +43,14 @@ test("serializes unresolved text and resolved paths without Markdown links", () 
         "@{People/Rachel Smith.md}",
     );
     assert.equal(serializeObjectReference({ label: "Rachel Smith", vaultPath: null }), "@Rachel_Smith");
+});
+
+test("returns only newly added unique resolved Object paths", () => {
+    assert.deepEqual(
+        addedResolvedObjectReferencePaths(
+            "Ask @{People/Ana.md} and @Unresolved",
+            "Ask @{People/Ana.md}, @{Places/Office.md}, and again @{Places/Office.md}",
+        ),
+        ["Places/Office.md"],
+    );
 });

@@ -66,6 +66,23 @@ export function serializeObjectReference(reference: ObjectReference): string {
     return `@${label || "Object"}`;
 }
 
+export function resolvedObjectReferencePaths(text: string): string[] {
+    const paths: string[] = [];
+    const seen = new Set<string>();
+    for (const occurrence of parseObjectReferences(text)) {
+        const path = occurrence.reference.vaultPath;
+        if (!path || seen.has(path)) continue;
+        seen.add(path);
+        paths.push(path);
+    }
+    return paths;
+}
+
+export function addedResolvedObjectReferencePaths(originalText: string, nextText: string): string[] {
+    const original = new Set(resolvedObjectReferencePaths(originalText));
+    return resolvedObjectReferencePaths(nextText).filter((path) => !original.has(path));
+}
+
 function labelFromPath(vaultPath: string): string {
     const fileName = vaultPath.split("/").at(-1) ?? vaultPath;
     return fileName.replace(/\.md$/i, "");

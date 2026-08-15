@@ -53,8 +53,8 @@
 **Acceptance criteria:**
 
 - [ ] Create/Edit both use contextual `@` suggestions and the approved portable path syntax.
-- [ ] Edit writes related logs only for newly resolved Object paths.
-- [ ] Related-log partial recovery cannot repeat the primary write.
+- [x] Edit writes related logs only for newly resolved Object paths.
+- [x] Related-log partial recovery cannot repeat the primary write.
 
 **Verification:** focused controller/submission tests; full local gate.
 
