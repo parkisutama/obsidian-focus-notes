@@ -22,7 +22,7 @@ export function buildActiveNoteManagerModel(fileName: string, items: ScheduledIt
     }
 
     return {
-        title: "Manage events and tasks",
+        title: "Tasks & events",
         subtitle: fileName,
         emptyMessage: "No Task or Event records found under the configured ledger headings.",
         groups: Array.from(groups, ([heading, entries]) => ({ heading, items: entries })),

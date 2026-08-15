@@ -19,10 +19,9 @@ export class ActiveNoteManagerModal extends Modal {
         this.contentEl.empty();
 
         const header = this.contentEl.createDiv({ cls: "fn-active-note-manager-header" });
-        const heading = header.createDiv();
-        heading.createEl("h2", { text: model.title });
-        heading.createDiv({ cls: "fn-active-note-manager-subtitle", text: model.subtitle });
-        const actions = header.createDiv({ cls: "fn-active-note-manager-actions" });
+        header.createEl("h2", { text: model.title });
+        header.createDiv({ cls: "fn-active-note-manager-subtitle", text: model.subtitle });
+        const actions = this.contentEl.createDiv({ cls: "fn-active-note-manager-actions" });
         this.renderAddButton(actions, "calendar-plus", "Add Event", "event");
         this.renderAddButton(actions, "list-plus", "Add Task", "task");
 
