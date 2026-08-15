@@ -60,6 +60,38 @@ body.fn-mobile-event-screen-open .suggestion-container {
     background: var(--background-primary);
 }
 
+.fn-mobile-event-screen .fn-mobile-scheduled-title {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-normal);
+    font-size: var(--font-ui-medium);
+    font-weight: var(--font-semibold);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fn-mobile-event-screen .fn-mobile-scheduled-context {
+    overflow-wrap: anywhere;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+
+.fn-mobile-event-screen.fn-mobile-scheduled-item-form .setting-item {
+    align-items: flex-start;
+    gap: var(--size-4-3);
+    padding: var(--size-4-3) 0;
+}
+
+.fn-mobile-event-screen.fn-mobile-scheduled-item-form .setting-item-control {
+    min-width: min(52%, 15rem);
+}
+
+.fn-mobile-event-screen.fn-mobile-scheduled-item-form .setting-item-control input,
+.fn-mobile-event-screen.fn-mobile-scheduled-item-form .setting-item-control select {
+    width: 100%;
+    min-height: 44px;
+}
+
 .fn-mobile-event-screen .fn-mobile-event-cancel,
 .fn-mobile-event-screen .fn-mobile-event-save {
     min-height: 40px;
