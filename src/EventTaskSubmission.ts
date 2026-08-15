@@ -1,6 +1,6 @@
 import type { EventTaskFormState, InboxRecord } from "./EventTaskFormState";
 import type { EventTaskRecord, HubNoteRef } from "./EventTaskWriter";
-import { resolveContextLinks, type ContextLinkNote } from "./ContextLinkResolver.ts";
+import { resolveContextLinks, resolveContextPaths, type ContextLinkNote } from "./ContextLinkResolver.ts";
 import { formatEventTaskEntry } from "./EventTaskMarkdown.ts";
 import { formatRelatedLog } from "./RelatedLog.ts";
 import {
@@ -10,6 +10,7 @@ import {
     writeRelatedDestinations,
 } from "./RelatedWriteRecovery.ts";
 import type { ContextSourceSettings, FocusTarget, InsertPosition } from "./types";
+import { parseObjectReferences } from "./ObjectReference.ts";
 
 interface NoteFile {
     path: string;
@@ -306,7 +307,17 @@ function resolveConfiguredContext(
     dependencies: Pick<EventTaskSubmissionDependencies, "contextNotes" | "contextSources">,
 ) {
     if (!dependencies.contextNotes?.length || !dependencies.contextSources?.length) return [];
-    return resolveContextLinks(markdown, primaryPath, [...dependencies.contextNotes], [...dependencies.contextSources]);
+    const notes = [...dependencies.contextNotes];
+    const sources = [...dependencies.contextSources];
+    const objectPaths = parseObjectReferences(markdown)
+        .map((occurrence) => occurrence.reference.vaultPath)
+        .filter((path): path is string => path !== null);
+    const destinations = resolveContextPaths(objectPaths, notes, sources);
+    const seen = new Set(destinations.map((destination) => destination.filePath));
+    for (const destination of resolveContextLinks(markdown, primaryPath, notes, sources)) {
+        if (!seen.has(destination.filePath)) destinations.push(destination);
+    }
+    return destinations;
 }
 
 function partialResult(

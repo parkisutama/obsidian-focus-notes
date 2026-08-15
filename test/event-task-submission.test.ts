@@ -398,6 +398,58 @@ test("writes contextual Event logs after the primary and receipts only failed de
     );
 });
 
+test("writes contextual logs for portable Object References while retaining legacy link support", async () => {
+    const state = new EventTaskFormState(new Date(2026, 7, 2, 9, 0), {
+        file: "Daily.md",
+        heading: "Activities & Tasks",
+        position: "end",
+        hubNotesFolder: "Hub",
+        detailNotesFolder: "Details",
+    });
+    state.kind = "task";
+    state.title = "Coordinate review";
+    state.description = "Ask @{People/Andi.md} at [Office](../Places/Office.md) and @Unresolved";
+    const destinations: string[] = [];
+
+    const result = await submitEventTask(state, {
+        defaultHubNotesFolder: "Hub",
+        defaultDetailNotesFolder: "Details",
+        resolveTargetFile: () => "Daily/2026-08-02.md",
+        findMarkdownFile: () => null,
+        openFile: () => undefined,
+        contextNotes: [{ path: "People/Andi.md" }, { path: "Places/Office.md" }],
+        contextSources: [
+            {
+                id: "people",
+                name: "People",
+                icon: "users",
+                folders: ["People"],
+                filter: null,
+                relatedHeading: "Interactions",
+                enabled: true,
+            },
+            {
+                id: "places",
+                name: "Places",
+                icon: "map-pin",
+                folders: ["Places"],
+                filter: null,
+                relatedHeading: "Mentions",
+                enabled: true,
+            },
+        ],
+        writer: {
+            createHubNote: async () => ({ path: "unused.md" }),
+            createDetailNote: async () => ({ path: "unused.md" }),
+            write: async () => undefined,
+            writeRelated: async (_markdown, path) => destinations.push(path),
+        },
+    });
+
+    assert.equal(result.status, "success");
+    assert.deepEqual(destinations, ["People/Andi.md", "Places/Office.md"]);
+});
+
 test("related submission recovery retries only the receipt failures until success", async () => {
     const attempts: string[] = [];
     const initial = {

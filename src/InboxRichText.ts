@@ -1,3 +1,5 @@
+import { parseObjectReferences, serializeObjectReference } from "./ObjectReference.ts";
+
 export type InboxRichTextPart = { kind: "text"; value: string } | { kind: "link"; label: string; filePath: string };
 
 export function isInboxLineBreakInput(inputType: string): boolean {
@@ -47,4 +49,25 @@ export function serializeInboxRichText(
     return parts
         .map((part) => (part.kind === "text" ? part.value : formatLink(targetFile, part.filePath, part.label)))
         .join("");
+}
+
+export function parseObjectReferenceRichText(markdown: string): InboxRichTextPart[] {
+    const parts: InboxRichTextPart[] = [];
+    let cursor = 0;
+    for (const occurrence of parseObjectReferences(markdown)) {
+        if (!occurrence.reference.vaultPath) continue;
+        if (occurrence.start > cursor) parts.push({ kind: "text", value: markdown.slice(cursor, occurrence.start) });
+        parts.push({
+            kind: "link",
+            label: occurrence.reference.label,
+            filePath: occurrence.reference.vaultPath,
+        });
+        cursor = occurrence.end;
+    }
+    if (cursor < markdown.length) parts.push({ kind: "text", value: markdown.slice(cursor) });
+    return parts;
+}
+
+export function formatObjectReferencePart(_targetFile: string, filePath: string, label: string): string {
+    return serializeObjectReference({ label, vaultPath: filePath });
 }

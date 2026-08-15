@@ -55,6 +55,32 @@ export function resolveContextLinks(
     return destinations;
 }
 
+export function resolveContextPaths(
+    paths: readonly string[],
+    notes: ContextLinkNote[],
+    sources: ContextSourceSettings[],
+): ContextDestination[] {
+    const notesByPath = new Map(notes.map((note) => [normalizeVaultPath(note.path), note]));
+    const destinations: ContextDestination[] = [];
+    const seen = new Set<string>();
+    for (const rawPath of paths) {
+        const path = normalizeVaultPath(rawPath);
+        if (!path || seen.has(path)) continue;
+        const note = notesByPath.get(path);
+        if (!note) continue;
+        const source = findSource(note, path, sources);
+        if (!source) continue;
+        seen.add(path);
+        destinations.push({
+            filePath: path,
+            sourceId: source.id,
+            sourceName: source.name,
+            relatedHeading: source.relatedHeading,
+        });
+    }
+    return destinations;
+}
+
 function resolveMarkdownDestination(sourceFilePath: string, rawDestination: string): string | null {
     const raw = rawDestination.replace(/^<|>$/g, "");
     if (!raw || /^[a-z][a-z\d+.-]*:/i.test(raw) || raw.startsWith("#") || raw.startsWith("//")) return null;

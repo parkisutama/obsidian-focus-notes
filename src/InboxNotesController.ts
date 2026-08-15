@@ -4,7 +4,9 @@ import {
     type InboxRichTextPart,
     isInboxLineBreakInput,
     parseInboxRichText,
+    parseObjectReferenceRichText,
     serializeInboxRichText,
+    formatObjectReferencePart,
 } from "./InboxRichText";
 import type { ContextSuggestion } from "./InboxSuggestions";
 import { ObsidianInboxSuggestionSource } from "./ObsidianInboxSuggestionSource";
@@ -23,6 +25,7 @@ export interface ContextNotesControllerOptions {
     targetFile: string;
     getContextSources(): ContextSourceSettings[];
     onChange(value: string): void;
+    referenceFormat?: "markdown-link" | "object-reference";
 }
 
 /** Rich contenteditable controller that persists portable Markdown, never editor HTML. */
@@ -161,10 +164,13 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     }
 
     private renderInitialValue(markdown: string): void {
-        const parts = parseInboxRichText(markdown, (destination) => {
-            const decoded = safeDecodeURIComponent(destination);
-            return this.app.metadataCache.getFirstLinkpathDest(decoded, this.targetFile)?.path ?? null;
-        });
+        const parts =
+            this.options.referenceFormat === "object-reference"
+                ? parseObjectReferenceRichText(markdown)
+                : parseInboxRichText(markdown, (destination) => {
+                      const decoded = safeDecodeURIComponent(destination);
+                      return this.app.metadataCache.getFirstLinkpathDest(decoded, this.targetFile)?.path ?? null;
+                  });
         this.inputEl.empty();
         for (const part of parts) {
             this.inputEl.appendChild(
@@ -189,9 +195,11 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     }
 
     private emitMarkdown(): void {
-        this.options.onChange(
-            serializeInboxRichText(readDomParts(this.inputEl), this.targetFile, formatRelativeMarkdownLink),
-        );
+        const formatter =
+            this.options.referenceFormat === "object-reference"
+                ? formatObjectReferencePart
+                : formatRelativeMarkdownLink;
+        this.options.onChange(serializeInboxRichText(readDomParts(this.inputEl), this.targetFile, formatter));
     }
 
     private readVisibleText(): string {

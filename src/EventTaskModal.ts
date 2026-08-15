@@ -453,6 +453,7 @@ export class EventTaskModal extends Modal {
             targetFile: this.form.targetFile,
             getContextSources: () => this.getSettings().inbox.contextSources,
             onChange: (value) => (this.form.description = value),
+            referenceFormat: "object-reference",
         });
     }
 
