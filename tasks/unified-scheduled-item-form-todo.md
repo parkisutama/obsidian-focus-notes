@@ -112,9 +112,9 @@
 
 **Acceptance criteria:**
 
-- [ ] Semantic docs distinguish Object References, Object Notes, Detail Notes, and legacy hub behavior.
+- [x] Semantic docs distinguish Object References, Object Notes, Detail Notes, and legacy hub behavior.
 - [ ] Full CI-equivalent local gate passes from a clean worktree.
-- [ ] Desktop and mobile runtime acceptance results are recorded without conflating them with automated checks.
+- [x] Desktop and mobile runtime acceptance results are recorded without conflating them with automated checks.
 
 **Verification:** `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci`; `git diff --check`; explicit runtime checklist.
 

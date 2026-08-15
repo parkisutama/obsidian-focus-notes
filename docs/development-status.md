@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-- Date: 2026-08-08
+- Date: 2026-08-15
 - Branch: `feature/persona-reliability-foundation`
 - Remote state: local semantic documentation, Task-priority, and Event-lifecycle work are ahead of
   `origin/feature/persona-reliability-foundation`;
@@ -15,9 +15,9 @@ This document is the current development checkpoint. It records verified evidenc
 ## Executive status
 
 The reliability foundation, contextual capture loop, Timeline source alignment/grouping, object-backed Timeline sources,
-stable Timeline item modal, Task priority, and Event occurrence lifecycle semantics are implemented on the feature branch.
-The local automated gate is green. Existing-record editing, representative performance evidence, complete documentation,
-policy closure, and repeatable real Obsidian
+stable Timeline item modal, shared Task/Event Create/Edit forms, Task priority, and Event occurrence lifecycle semantics are
+implemented on the feature branch. The local automated gate is green. Representative performance evidence, complete
+documentation, policy closure, and repeatable real Obsidian
 desktop/mobile acceptance remain incomplete. A passing automated gate must not be interpreted as public-release
 readiness.
 
@@ -32,8 +32,8 @@ readiness.
 - Node.js 24 and the built-in `node:test` runner are the test contract.
 - `pnpm run test:coverage` reports coverage for source modules loaded by tests.
 - GitHub Actions runs the local quality contract on pull requests and pushes to `main`.
-- On 2026-08-08, `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` passed formatting, lint, version metadata,
-  typecheck, all 33 discovered test files, production build, artifact validation, and the documentation build.
+- On 2026-08-15, `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` passed formatting, lint, version metadata,
+  typecheck, all 56 discovered test files, production build, artifact validation, and the documentation build.
 - The older recorded loaded-module coverage baseline was 94.25% lines, 85.48% branches, and 85.07% functions. It is
   not repository-wide runtime coverage and was not refreshed by the 2026-08-08 gate.
 
@@ -57,8 +57,8 @@ The detailed acceptance criteria and order remain in [Code quality remediation](
 | Area | Implemented evidence | Remaining engineering or acceptance work | Status |
 |---|---|---|---|
 | Timer and session logging | Pomodoro, timer, stopwatch, logging target, wellbeing, reflection, and recent entries exist | Direct timer/writer/reader regression coverage is incomplete | Needs hardening |
-| Focus Timeline | Day and multi-day views, aligned/grouped sources, object-backed source filters, stable detail modal, Event lifecycle presentation, parsing, layout, and source navigation exist | Existing-record editing, bounded representative performance evidence, and real desktop/mobile acceptance remain open | Feature complete, not release-ready |
-| Event and Task capture | Desktop and dedicated mobile renderers, shared validation/submission policy, typed partial outcomes, Task priority, Event lifecycle fields, and related-log recovery have automated coverage | Existing-record editing and repeatable desktop/mobile acceptance remain open | Feature complete, not release-ready |
+| Focus Timeline | Day and multi-day views, aligned/grouped sources, object-backed source filters, stable detail modal, conflict-safe existing-record editing, Event lifecycle presentation, parsing, layout, and source navigation exist | Bounded representative performance evidence and real desktop/mobile acceptance remain open | Feature complete, not release-ready |
+| Event and Task capture | Shared Create/Edit data contract, separate shared desktop/mobile renderers, typed partial outcomes, Task priority, Event lifecycle fields, Object References, Detail Note promotion, and related-log recovery have automated coverage | Repeatable desktop/mobile acceptance remains open | Feature complete, not release-ready |
 | Inbox quick capture | Inbox-first chip, editable destination, mention/tag suggestions, relative Markdown links, shared submission safety, and desktop/mobile UI exist | Acceptance evidence remains conversational rather than a repeatable record | Feature complete, not release-ready |
 | Mobile modal UX | Dedicated mobile layout, viewport/keyboard policy, and suggestion layering exist | Test again on representative Android and iOS devices after runtime remediation | Provisional |
 | Settings persistence | Recoverable load classification, migration through plugin data, ordered snapshot writes, and regression tests exist | Representative migrated-state acceptance and recovery UX confirmation remain open | Needs acceptance |

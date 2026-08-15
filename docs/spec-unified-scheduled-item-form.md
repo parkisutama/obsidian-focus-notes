@@ -19,23 +19,48 @@ reintroducing separate create/edit field models.
   conflict-safely replaced.
 - Desktop and mobile have separate renderers, but neither renderer duplicates Create/Edit form implementations.
 
+## Semantic roles
+
+| Concept | Stored form | Responsibility | Side effect |
+|---|---|---|---|
+| Object Reference | Unresolved `@Rachel` or resolved `@{People/Rachel.md}` text in the description | Identifies an object context using a portable vault-root path | A newly added resolved reference may append one related log to its configured Object Note |
+| Object Note | Ordinary Markdown file such as `People/Rachel.md` | Owns contextual history and related logs for one object | Created only through an explicit Object Note workflow; unresolved `@Name` never creates it automatically |
+| Detail Note | Immediate child `detail: [Title](vault/path.md)` | Promotes one Task or Event into a dedicated page | Link existing or explicitly create new; creation never overwrites an existing file |
+| Legacy hub link | Markdown or Wikilink used as the Task/Event title | Compatibility-only representation produced by the retired Related Note workflow | Remains readable and losslessly editable; no save or startup migration rewrites it |
+
+Object References do not turn the Task/Event title into a link. Detail Notes do not receive contextual related logs merely
+because they are attached. Legacy hub links are preserved as source syntax, but new Create/Edit views do not expose hub
+selection or “write to related note” controls.
+
 ## Canonical data contract
 
 ```ts
-interface ScheduledItemFormData {
-    kind: "task" | "event";
+interface ScheduledItemFormBase {
     title: string;
     description: string;
     objectReferences: ObjectReference[];
     detailNote: DetailNoteSelection;
-    task: TaskFormFields;
-    event: EventFormFields;
 }
 
-interface ObjectReference {
-    label: string;
-    vaultPath: string | null;
+interface ScheduledTaskFormData extends ScheduledItemFormBase {
+    kind: "task";
+    completed: boolean;
+    priority: "high" | "medium" | "normal" | "low";
+    due: string | null;
+    timebox: { start: string; end: string } | null;
+    reminders: string[];
 }
+
+interface ScheduledEventFormData extends ScheduledItemFormBase {
+    kind: "event";
+    allDay: boolean;
+    start: string;
+    end: string | null;
+    status: "planned" | "completed" | "cancelled";
+    actual: { start: string; end: string } | null;
+}
+
+type ScheduledItemFormData = ScheduledTaskFormData | ScheduledEventFormData;
 ```
 
 Create/Edit differences live outside the form data:
@@ -91,6 +116,7 @@ it does not select a different field implementation.
 - Typecheck: `pnpm run typecheck`
 - Full local gate: `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci`
 - Markdown whitespace: `git diff --check`
+- Runtime ledger: [Unified Scheduled Item runtime acceptance](unified-scheduled-item-runtime-acceptance.md)
 
 ## Boundaries
 
