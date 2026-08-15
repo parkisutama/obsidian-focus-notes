@@ -129,6 +129,7 @@ export default class FocusNotesPlugin extends Plugin {
         new ActiveNoteManagerModal(
             this.app,
             file.name,
+            file.path,
             items,
             checklistScopes,
             (kind) =>
@@ -137,6 +138,7 @@ export default class FocusNotesPlugin extends Plugin {
                     targetFile: file.path,
                 }),
             (item) => void openScheduledItemEditor(this.app, item, () => new Notice("Task or Event updated.")),
+            () => void this.openActiveNoteManager(file),
         ).open();
     }
 

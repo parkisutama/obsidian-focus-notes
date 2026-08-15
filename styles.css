@@ -1956,7 +1956,8 @@ body.fn-mobile-event-screen-open .suggestion-container {
 .fn-timeline-item-modal,
 .fn-task-edit-modal,
 .fn-event-edit-modal,
-.fn-active-note-manager-modal {
+.fn-active-note-manager-modal,
+.fn-task-format-preview-modal {
     width: min(520px, calc(100vw - 32px));
     max-height: min(720px, calc(100vh - 48px));
 }
@@ -2009,7 +2010,7 @@ body.fn-mobile-event-screen-open .suggestion-container {
 
 .fn-active-note-manager-scope {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 12px;
     margin-top: 16px;
@@ -2026,6 +2027,73 @@ body.fn-mobile-event-screen-open .suggestion-container {
 .fn-active-note-manager-scope select {
     min-width: 0;
     width: 100%;
+}
+
+.fn-active-note-manager-scope button {
+    min-height: 32px;
+}
+
+.fn-task-format-preview-modal .modal-content {
+    padding: 20px;
+}
+
+.fn-task-format-preview-modal h2 {
+    margin: 0;
+    font-size: var(--font-ui-large);
+}
+
+.fn-task-format-preview-subtitle {
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+}
+
+.fn-task-format-preview-list {
+    max-height: min(520px, 60vh);
+    margin-top: 16px;
+    overflow-y: auto;
+    border-block: 1px solid var(--background-modifier-border);
+}
+
+.fn-task-format-preview-entry {
+    padding: 12px 0;
+}
+
+.fn-task-format-preview-entry + .fn-task-format-preview-entry {
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.fn-task-format-preview-line,
+.fn-task-format-preview-label {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    font-weight: 600;
+}
+
+.fn-task-format-preview-block {
+    margin-top: 8px;
+}
+
+.fn-task-format-preview-block code {
+    display: block;
+    margin-top: 3px;
+    padding: 8px;
+    overflow-x: auto;
+    background: var(--background-secondary);
+    color: var(--text-normal);
+    font-size: var(--font-ui-smaller);
+    white-space: pre;
+}
+
+@media (max-width: 520px) {
+    .fn-active-note-manager-scope {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .fn-active-note-manager-scope button {
+        grid-column: 1 / -1;
+        min-height: 44px;
+    }
 }
 
 .fn-active-note-manager-empty {

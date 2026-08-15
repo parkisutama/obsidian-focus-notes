@@ -7,16 +7,20 @@ import {
     buildActiveNoteManagerScopeOptions,
 } from "./ActiveNoteManagerModel";
 import type { ScheduledItem, ScheduledItemKind } from "./ScheduledItemTypes";
+import { TaskFormatPreviewModal } from "./TaskFormatPreviewModal";
+import type { TaskFormatChange } from "./TaskFormatWriter";
 import { inspectTaskLine, taskLineLintLabel } from "./TaskLineLint";
 
 export class ActiveNoteManagerModal extends Modal {
     constructor(
         app: App,
         private fileName: string,
+        private filePath: string,
         ledgerItems: ScheduledItem[],
         checklistScopes: ActiveNoteChecklistScopes,
         private onAdd: (kind: ScheduledItemKind) => void,
         private onEdit: (item: ScheduledItem) => void,
+        private onFormatComplete: () => void,
     ) {
         super(app);
         this.scopes = buildActiveNoteManagerScopeOptions(ledgerItems, checklistScopes);
@@ -41,6 +45,7 @@ export class ActiveNoteManagerModal extends Modal {
         const select = scopeRow.createEl("select", {
             attr: { id: "fn-active-note-manager-scope-select", "aria-label": "Task and Event scope" },
         });
+        const formatButton = scopeRow.createEl("button", { text: "Format" });
         for (const scope of this.scopes) {
             select.createEl("option", { value: scope.id, text: `${scope.label} (${scope.items.length})` });
         }
@@ -49,8 +54,40 @@ export class ActiveNoteManagerModal extends Modal {
         select.addEventListener("change", () => {
             this.selectedScopeId = select.value;
             this.renderResults(results);
+            this.syncFormatButton(formatButton);
         });
+        formatButton.addEventListener("click", () => this.openFormatPreview());
+        this.syncFormatButton(formatButton);
         this.renderResults(results);
+    }
+
+    private formatChanges(): TaskFormatChange[] {
+        const scope = this.scopes.find((candidate) => candidate.id === this.selectedScopeId) ?? this.scopes[0];
+        return (scope?.items ?? []).flatMap((item) => {
+            if (item.kind !== "task") return [];
+            const inspection = inspectTaskLine(item.rawLine);
+            if (inspection.status !== "needs-format" || !inspection.normalizedLine) return [];
+            return [
+                {
+                    lineNumber: item.source.lineNumber,
+                    rawLine: item.rawLine,
+                    normalizedLine: inspection.normalizedLine,
+                },
+            ];
+        });
+    }
+
+    private syncFormatButton(button: HTMLButtonElement): void {
+        const count = this.formatChanges().length;
+        button.disabled = count === 0;
+        button.setText(count > 0 ? `Format ${count}` : "Format");
+    }
+
+    private openFormatPreview(): void {
+        const changes = this.formatChanges();
+        if (changes.length === 0) return;
+        this.close();
+        new TaskFormatPreviewModal(this.app, this.filePath, changes, this.onFormatComplete).open();
     }
 
     private renderResults(container: HTMLElement): void {
