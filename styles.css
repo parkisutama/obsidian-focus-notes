@@ -2285,6 +2285,43 @@ body.fn-mobile-event-screen-open .suggestion-container {
     padding: 24px;
 }
 
+.fn-scheduled-item-desktop-form {
+    display: grid;
+    gap: var(--size-4-3);
+    width: min(44rem, 100%);
+}
+
+.fn-scheduled-item-form-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--size-4-4);
+}
+
+.fn-scheduled-item-form-header h2 {
+    margin: 0;
+}
+
+.fn-scheduled-item-form-context {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    text-align: end;
+}
+
+.fn-scheduled-item-desktop-form > .setting-item {
+    padding-block: var(--size-4-2);
+}
+
+.fn-scheduled-item-desktop-form .fn-gcal-desc-input {
+    min-height: 6rem;
+    width: min(28rem, 100%);
+}
+
+.fn-scheduled-item-form-error {
+    color: var(--text-error);
+    font-size: var(--font-ui-small);
+}
+
 .fn-task-edit-title,
 .fn-task-edit-source,
 .fn-event-edit-title,
