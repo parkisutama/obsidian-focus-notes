@@ -137,7 +137,13 @@ export default class FocusNotesPlugin extends Plugin {
                     initialKind: kind,
                     targetFile: file.path,
                 }),
-            (item) => void openScheduledItemEditor(this.app, item, () => new Notice("Task or Event updated.")),
+            (item) =>
+                void openScheduledItemEditor(
+                    this.app,
+                    item,
+                    () => this.settings,
+                    () => new Notice("Task or Event updated."),
+                ),
             () => void this.openActiveNoteManager(file),
         ).open();
     }

@@ -1956,6 +1956,7 @@ body.fn-mobile-event-screen-open .suggestion-container {
 .fn-timeline-item-modal,
 .fn-task-edit-modal,
 .fn-event-edit-modal,
+.fn-scheduled-item-edit-modal,
 .fn-active-note-manager-modal,
 .fn-task-format-preview-modal {
     width: min(520px, calc(100vw - 32px));
@@ -2281,7 +2282,8 @@ body.fn-mobile-event-screen-open .suggestion-container {
 }
 
 .fn-task-edit-modal .modal-content,
-.fn-event-edit-modal .modal-content {
+.fn-event-edit-modal .modal-content,
+.fn-scheduled-item-edit-modal .modal-content {
     padding: 24px;
 }
 

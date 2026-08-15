@@ -1,13 +1,17 @@
-import { type App, Notice } from "obsidian";
+import { type App, Notice, Platform } from "obsidian";
 import { openEventEditForm } from "./EventEditModal";
 import { captureEventLedgerEdit } from "./EventLedgerEditor";
 import type { ScheduledItem } from "./ScheduledItemTypes";
 import { openTaskEditForm } from "./TaskEditModal";
 import { captureTaskLedgerEdit } from "./TaskLedgerEditor";
+import { ScheduledItemDesktopEditModal } from "./ScheduledItemDesktopEditModal.ts";
+import { shouldUseMobileForm } from "./MobileFormPolicy";
+import type { FocusNotesSettings } from "./types";
 
 export async function openScheduledItemEditor(
     app: App,
     item: ScheduledItem,
+    getSettings: () => FocusNotesSettings,
     onComplete: () => void = () => {},
 ): Promise<void> {
     const source = {
@@ -25,6 +29,10 @@ export async function openScheduledItemEditor(
             );
             return;
         }
+        if (!shouldUseMobileForm(Platform.isMobile, window.innerWidth)) {
+            openDesktopEditor(app, getSettings, captured.snapshot, "event", item.title, onComplete);
+            return;
+        }
         openEventEditForm(app, item.title, captured.snapshot, captured.edit, onComplete);
         return;
     }
@@ -38,5 +46,24 @@ export async function openScheduledItemEditor(
         );
         return;
     }
+    if (!shouldUseMobileForm(Platform.isMobile, window.innerWidth)) {
+        openDesktopEditor(app, getSettings, captured.snapshot, "task", item.title, onComplete);
+        return;
+    }
     openTaskEditForm(app, item.title, captured.snapshot, captured.edit, onComplete);
+}
+
+function openDesktopEditor(
+    app: App,
+    getSettings: () => FocusNotesSettings,
+    snapshot: import("./LedgerRecordSource").LedgerRecordSnapshot,
+    kind: "task" | "event",
+    title: string,
+    onComplete: () => void,
+): void {
+    try {
+        new ScheduledItemDesktopEditModal(app, getSettings, snapshot, kind, title, onComplete).open();
+    } catch {
+        new Notice("This Scheduled Item block is ambiguous or invalid and cannot be edited safely.");
+    }
 }

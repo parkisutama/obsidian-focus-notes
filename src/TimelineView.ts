@@ -409,7 +409,7 @@ export class TimelineView extends ItemView {
     }
 
     private async openItemEditor(item: ScheduledItem): Promise<void> {
-        await openScheduledItemEditor(this.app, item, () => void this.refreshIndex());
+        await openScheduledItemEditor(this.app, item, this.getSettings, () => void this.refreshIndex());
     }
 
     private openPendingItems(items: ScheduledItem[]): void {
