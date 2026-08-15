@@ -1,15 +1,33 @@
-import { type App, type Component, FuzzySuggestModal, Modal, Notice, Platform, type TFile, setIcon } from "obsidian";
-import type { FocusNotesSettings, FocusTarget } from "./types";
-import { type EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
-import { EventTaskFormState, type EventTaskKind, type HubMode, formatLocalDate } from "./EventTaskFormState";
-import { submitEventTask, submitInbox } from "./EventTaskSubmission";
+import { type App, type Component, Modal, Notice, Platform, setIcon } from "obsidian";
+import { preferActiveNoteTarget } from "./CaptureTarget";
+import { EventTaskFormState, type EventTaskKind, formatLocalDate } from "./EventTaskFormState";
 import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
+import {
+    type EventTaskSubmissionResult,
+    type PartialSubmissionResult,
+    retryRelatedSubmission,
+    submitEventTask,
+    submitInbox,
+} from "./EventTaskSubmission";
+import { type EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
+import { InboxDesktopForm } from "./InboxDesktopForm";
+import { ContextNotesController } from "./InboxNotesController";
+import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
+import { shouldUseMobileForm } from "./MobileFormPolicy";
+import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
+import { SubmissionPolicy } from "./SubmissionPolicy";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
+import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
+import type { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
-import { shouldUseMobileForm } from "./MobileFormPolicy";
-import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
-import { InboxDesktopForm } from "./InboxDesktopForm";
+import { ScheduledItemDesktopCreateModal } from "./ScheduledItemDesktopCreateModal.ts";
+import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
+
+export interface OpenEventTaskFormOptions {
+    initialKind?: EventTaskKind;
+    targetFile?: string;
+}
 
 export function openEventTaskForm(
     app: App,
@@ -17,24 +35,75 @@ export function openEventTaskForm(
     anchorDate: Date = new Date(),
     onComplete: () => void = () => {},
     owner?: Component,
+    options: OpenEventTaskFormOptions = {},
 ): void {
     if (shouldUseMobileForm(Platform.isMobile, window.innerWidth)) {
-        new EventTaskMobileScreen(app, getSettings, anchorDate, onComplete).open(owner);
+        if (options.initialKind === "task" || options.initialKind === "event") {
+            openMobileScheduledItemCreate(
+                app,
+                getSettings,
+                anchorDate,
+                onComplete,
+                options.initialKind,
+                options.targetFile,
+            );
+            return;
+        }
+        new EventTaskMobileScreen(app, getSettings, anchorDate, onComplete, options).open(owner);
         return;
     }
 
-    new EventTaskModal(app, getSettings, anchorDate, onComplete).open();
+    if (options.initialKind === "task" || options.initialKind === "event") {
+        openDesktopScheduledItemCreate(
+            app,
+            getSettings,
+            anchorDate,
+            onComplete,
+            options.initialKind,
+            options.targetFile,
+        );
+        return;
+    }
+
+    new EventTaskModal(app, getSettings, anchorDate, onComplete, options).open();
+}
+
+function openDesktopScheduledItemCreate(
+    app: App,
+    getSettings: () => FocusNotesSettings,
+    anchorDate: Date,
+    onComplete: () => void,
+    kind: "task" | "event",
+    targetFile?: string,
+): void {
+    const settings = getSettings();
+    const resolver = new TargetResolver(app, settings);
+    const configured = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+    const activeFile = app.workspace.getActiveFile();
+    const preferred = preferActiveNoteTarget(
+        configured,
+        targetFile ?? (activeFile?.extension === "md" ? activeFile.path : null),
+    );
+    new ScheduledItemDesktopCreateModal(
+        app,
+        getSettings,
+        anchorDate,
+        kind,
+        {
+            ...preferred,
+            heading: settings.eventTask.defaultSaveHeading || preferred.heading,
+        },
+        onComplete,
+    ).open();
 }
 
 export class EventTaskModal extends Modal {
     protected form: EventTaskFormState;
 
     protected resolved = false;
+    private readonly submissionPolicy = new SubmissionPolicy();
 
     // ---- DOM refs -----------------------------------------------------------
-    private hubInputEl!: HTMLInputElement;
-    private hubAlsoRowEl!: HTMLElement;
-    private writeToHubCb!: HTMLInputElement;
     protected eventSectionEl!: HTMLElement;
     protected taskSectionEl!: HTMLElement;
     private eventTimeRowEl!: HTMLElement;
@@ -43,6 +112,7 @@ export class EventTaskModal extends Modal {
     private taskTimeboxDateEl!: HTMLInputElement;
     private taskTimeboxStartEl!: HTMLInputElement;
     private taskTimeboxEndEl!: HTMLInputElement;
+    private saveButtonEl!: HTMLButtonElement;
     private remindersListEl!: HTMLElement;
     private detailNoteRowEl!: HTMLElement;
     private detailNoteInputEl!: HTMLInputElement;
@@ -50,17 +120,27 @@ export class EventTaskModal extends Modal {
     private eventTaskFieldsEl!: HTMLElement;
     private inboxSectionEl!: HTMLElement;
     private inboxForm: InboxDesktopForm | null = null;
+    private contextNotesController: ContextNotesController | null = null;
+    private pendingRecovery: PartialSubmissionResult | null = null;
+    private recoveryInFlight = false;
+    private completionNotified = false;
     constructor(
         app: App,
         private getSettings: () => FocusNotesSettings,
         private anchorDate: Date = new Date(),
         private onComplete: () => void = () => {},
+        options: OpenEventTaskFormOptions = {},
     ) {
         super(app);
 
         const settings = getSettings();
         const resolver = new TargetResolver(app, settings);
-        const resolved = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+        const configured = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+        const activeFile = app.workspace.getActiveFile();
+        const resolved = preferActiveNoteTarget(
+            configured,
+            options.targetFile ?? (activeFile?.extension === "md" ? activeFile.path : null),
+        );
         const inboxTarget = selectInboxTarget({
             mode: settings.inbox.defaultTargetMode,
             dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),
@@ -77,6 +157,7 @@ export class EventTaskModal extends Modal {
             inbox: settings.inbox,
             inboxTargetFile: inboxTarget?.file ?? "",
         });
+        this.form.kind = options.initialKind ?? "inbox";
     }
 
     onOpen(): void {
@@ -90,6 +171,8 @@ export class EventTaskModal extends Modal {
     onClose(): void {
         document.body.removeClass("fn-event-task-modal-open");
         this.inboxForm?.destroy();
+        this.contextNotesController?.destroy();
+        this.contextNotesController = null;
         this.inboxForm = null;
         this.contentEl.empty();
         if (!this.resolved) this.resolved = true;
@@ -102,18 +185,22 @@ export class EventTaskModal extends Modal {
         this.renderTabs(contentEl);
 
         const body = contentEl.createDiv({ cls: "fn-gcal-body" });
-        this.eventTaskFieldsEl = body.createDiv({ cls: "fn-gcal-event-task-fields fn-gcal-hidden" });
+        this.eventTaskFieldsEl = body.createDiv({
+            cls: `fn-gcal-event-task-fields${this.form.kind === "inbox" ? " fn-gcal-hidden" : ""}`,
+        });
         this.eventSectionEl = this.eventTaskFieldsEl.createDiv({ cls: "fn-gcal-tab-section" });
-        this.taskSectionEl = this.eventTaskFieldsEl.createDiv({ cls: "fn-gcal-tab-section fn-gcal-hidden" });
+        this.eventSectionEl.toggleClass("fn-gcal-hidden", this.form.kind !== "event");
+        this.taskSectionEl = this.eventTaskFieldsEl.createDiv({ cls: "fn-gcal-tab-section" });
+        this.taskSectionEl.toggleClass("fn-gcal-hidden", this.form.kind !== "task");
 
         this.renderEventSection(this.eventSectionEl);
         this.renderTaskSection(this.taskSectionEl);
         this.renderDescription(this.eventTaskFieldsEl);
-        this.renderHubNote(this.eventTaskFieldsEl);
         this.renderDetailNote(this.eventTaskFieldsEl);
         this.renderSaveTo(this.eventTaskFieldsEl);
 
         this.inboxSectionEl = body.createDiv({ cls: "fn-gcal-tab-section" });
+        this.inboxSectionEl.toggleClass("fn-gcal-hidden", this.form.kind !== "inbox");
         this.inboxForm = new InboxDesktopForm({
             app: this.app,
             form: this.form,
@@ -149,32 +236,24 @@ export class EventTaskModal extends Modal {
 
     protected setTitleValue(value: string): void {
         this.form.setTitleForKind(this.form.kind, value);
-        if (this.form.kind === "inbox") return;
-        // Sync hub note name only while still at default
-        if (this.form.hubMode === "create" && this.hubInputEl) {
-            if (!this.hubInputEl.value || this.hubInputEl.value === this.form.hubCreateName) {
-                this.hubInputEl.value = this.form.title;
-                this.form.hubCreateName = this.form.title;
-            }
-        }
     }
 
     protected renderTabs(container: HTMLElement): void {
         const tabs = container.createDiv({ cls: "fn-gcal-tabs" });
         const inboxBtn = tabs.createEl("button", {
-            cls: "fn-gcal-tab fn-gcal-tab--active",
+            cls: `fn-gcal-tab${this.form.kind === "inbox" ? " fn-gcal-tab--active" : ""}`,
             text: "Inbox",
-            attr: { type: "button", "aria-pressed": "true" },
+            attr: { type: "button", "aria-pressed": String(this.form.kind === "inbox") },
         });
         const eventBtn = tabs.createEl("button", {
-            cls: "fn-gcal-tab",
+            cls: `fn-gcal-tab${this.form.kind === "event" ? " fn-gcal-tab--active" : ""}`,
             text: "Event",
-            attr: { type: "button", "aria-pressed": "false" },
+            attr: { type: "button", "aria-pressed": String(this.form.kind === "event") },
         });
         const taskBtn = tabs.createEl("button", {
-            cls: "fn-gcal-tab",
+            cls: `fn-gcal-tab${this.form.kind === "task" ? " fn-gcal-tab--active" : ""}`,
             text: "Task",
-            attr: { type: "button", "aria-pressed": "false" },
+            attr: { type: "button", "aria-pressed": String(this.form.kind === "task") },
         });
 
         const buttons = new Map<EventTaskKind, HTMLButtonElement>([
@@ -183,6 +262,23 @@ export class EventTaskModal extends Modal {
             ["task", taskBtn],
         ]);
         const activate = (kind: EventTaskKind): void => {
+            if (kind === "task" || kind === "event") {
+                this.resolved = true;
+                this.close();
+                new ScheduledItemDesktopCreateModal(
+                    this.app,
+                    this.getSettings,
+                    this.anchorDate,
+                    kind,
+                    {
+                        file: this.form.targetFile,
+                        heading: this.form.targetHeading,
+                        position: this.form.targetPosition,
+                    },
+                    this.onComplete,
+                ).open();
+                return;
+            }
             this.form.kind = kind;
             this.titleInputEl.value = this.form.getTitleForKind(kind);
             for (const [value, button] of buttons) {
@@ -190,10 +286,10 @@ export class EventTaskModal extends Modal {
                 button.toggleClass("fn-gcal-tab--active", active);
                 button.setAttribute("aria-pressed", String(active));
             }
-            this.eventTaskFieldsEl.toggleClass("fn-gcal-hidden", kind === "inbox");
-            this.inboxSectionEl.toggleClass("fn-gcal-hidden", kind !== "inbox");
-            this.eventSectionEl.toggleClass("fn-gcal-hidden", kind !== "event");
-            this.taskSectionEl.toggleClass("fn-gcal-hidden", kind !== "task");
+            this.eventTaskFieldsEl.addClass("fn-gcal-hidden");
+            this.inboxSectionEl.removeClass("fn-gcal-hidden");
+            this.eventSectionEl.addClass("fn-gcal-hidden");
+            this.taskSectionEl.addClass("fn-gcal-hidden");
         };
         inboxBtn.addEventListener("click", () => activate("inbox"));
         eventBtn.addEventListener("click", () => activate("event"));
@@ -227,14 +323,83 @@ export class EventTaskModal extends Modal {
             this.form.eventAllDay = checked;
             this.eventTimeRowEl.toggleClass("fn-gcal-hidden", checked);
         });
+        this.renderEventLifecycleSection(container);
+    }
+
+    protected renderEventLifecycleSection(container: HTMLElement): void {
+        const statusContent = this.makeRow(container, "circle-dot");
+        statusContent.createDiv({ cls: "fn-gcal-field-label", text: "Event status" });
+        const status = statusContent.createEl("select", { attr: { "aria-label": "Event status" } });
+        for (const [value, label] of [
+            ["planned", "Planned"],
+            ["completed", "Completed"],
+            ["cancelled", "Cancelled"],
+        ] as const) {
+            status.createEl("option", { value, text: label });
+        }
+        status.value = this.form.eventStatus;
+
+        const actualContent = this.makeRow(container, "clock-check");
+        const actualWrap = actualContent.createDiv();
+        let actualFields: HTMLElement;
+        const actualToggle = this.makeCheckboxRow(
+            actualWrap,
+            "Record different actual time",
+            "fn-gcal-event-actual-time",
+            (checked) => {
+                this.form.eventActualTimeEnabled = checked;
+                actualFields.toggleClass("fn-gcal-hidden", !checked);
+            },
+        );
+        actualFields = actualWrap.createDiv({ cls: "fn-gcal-datetime-row fn-gcal-hidden" });
+        const actualStartDate = this.makeDateInput(actualFields, this.form.eventActualStartDate, "Actual start date");
+        const actualStartTime = this.makeTimeInput(actualFields, this.form.eventActualStartTime, "Actual start time");
+        const actualEndDate = this.makeDateInput(actualFields, this.form.eventActualEndDate, "Actual end date");
+        const actualEndTime = this.makeTimeInput(actualFields, this.form.eventActualEndTime, "Actual end time");
+        actualStartDate.addEventListener("change", () => (this.form.eventActualStartDate = actualStartDate.value));
+        actualStartTime.addEventListener("change", () => (this.form.eventActualStartTime = actualStartTime.value));
+        actualEndDate.addEventListener("change", () => (this.form.eventActualEndDate = actualEndDate.value));
+        actualEndTime.addEventListener("change", () => (this.form.eventActualEndTime = actualEndTime.value));
+
+        const syncStatus = (): void => {
+            this.form.eventStatus = status.value as typeof this.form.eventStatus;
+            const canRecordActual = this.form.eventStatus === "completed";
+            actualContent.toggleClass("fn-gcal-hidden", !canRecordActual);
+            if (!canRecordActual) {
+                actualToggle.checked = false;
+                this.form.eventActualTimeEnabled = false;
+                actualFields.addClass("fn-gcal-hidden");
+            }
+        };
+        status.addEventListener("change", syncStatus);
+        syncStatus();
     }
 
     // ---- Task section -------------------------------------------------------
 
     protected renderTaskSection(container: HTMLElement): void {
+        this.renderTaskPrioritySection(container);
         this.renderTaskDueSection(container);
         this.renderTaskTimeboxSection(container);
         this.renderTaskRemindersSection(container);
+    }
+
+    protected renderTaskPrioritySection(container: HTMLElement): void {
+        const content = this.makeRow(container, "signal");
+        content.createDiv({ cls: "fn-gcal-field-label", text: "Priority" });
+        const select = content.createEl("select", { attr: { "aria-label": "Task priority" } });
+        for (const [value, label] of [
+            ["normal", "Normal"],
+            ["low", "Low"],
+            ["medium", "Medium"],
+            ["high", "High"],
+        ] as const) {
+            select.createEl("option", { value, text: label });
+        }
+        select.value = this.form.taskPriority;
+        select.addEventListener("change", () => {
+            this.form.taskPriority = select.value as typeof this.form.taskPriority;
+        });
     }
 
     protected renderTaskDueSection(container: HTMLElement): void {
@@ -335,109 +500,20 @@ export class EventTaskModal extends Modal {
 
     protected renderDescription(container: HTMLElement): void {
         const content = this.makeRow(container, "align-left");
-        const textarea = content.createEl("textarea", {
+        const editor = content.createDiv({
             cls: "fn-gcal-desc-input",
-            attr: { placeholder: "Add description or attachment...", "aria-label": "Description" },
-        });
-        textarea.rows = 3;
-        textarea.addEventListener("input", () => (this.form.description = textarea.value));
-    }
-
-    // ---- Hub note -----------------------------------------------------------
-
-    protected renderHubNote(container: HTMLElement): void {
-        const content = this.makeRow(container, "link");
-        const wrap = content.createDiv({ cls: "fn-gcal-hub-wrap" });
-        wrap.createDiv({ cls: "fn-gcal-field-label", text: "Related note" });
-
-        // Input row (created first so it's available in radio closures)
-        const hubInputRow = wrap.createDiv({ cls: "fn-gcal-hub-input-row fn-gcal-hidden" });
-        this.hubInputEl = hubInputRow.createEl("input", {
-            type: "text",
-            cls: "fn-gcal-hub-input",
-            attr: { placeholder: "Search notes...", "aria-label": "Related note" },
-        });
-        this.hubInputEl.addEventListener("input", () => {
-            if (this.form.hubMode === "link") this.form.hubLinkPath = this.hubInputEl.value;
-            else this.form.hubCreateName = this.hubInputEl.value;
-        });
-        new FileSuggest(this.app, this.hubInputEl);
-
-        const pickBtn = hubInputRow.createEl("button", {
-            cls: "fn-gcal-hub-pick-btn",
-            text: "Pick",
-            attr: { type: "button" },
-        });
-        pickBtn.addEventListener("click", (evt) => {
-            evt.preventDefault();
-            new FilePickerSuggester(this.app, (file) => {
-                this.hubInputEl.value = file.path;
-                this.form.hubLinkPath = file.path;
-            }).open();
-        });
-
-        const hubFolderRow = wrap.createDiv({
-            cls: "fn-gcal-hub-input-row fn-gcal-hidden",
-        });
-        const hubFolderEl = hubFolderRow.createEl("input", {
-            type: "text",
-            cls: "fn-gcal-hub-input",
             attr: {
-                placeholder: "Folder (e.g. Notes/Projects)",
-                "aria-label": "Folder for new related note",
+                "data-placeholder": "Add description. Use @ for contextual notes, # for tags.",
+                "aria-label": "Description",
             },
         });
-        hubFolderEl.value = this.form.hubCreateFolder;
-        hubFolderEl.addEventListener("input", () => {
-            this.form.hubCreateFolder = hubFolderEl.value;
+        this.contextNotesController = new ContextNotesController(this.app, editor, {
+            initialValue: this.form.description,
+            targetFile: this.form.targetFile,
+            getContextSources: () => this.getSettings().inbox.contextSources,
+            onChange: (value) => (this.form.description = value),
+            referenceFormat: "object-reference",
         });
-        new FolderSuggest(this.app, hubFolderEl);
-
-        // "Also write to hub note" row — visible only when mode != none
-        this.hubAlsoRowEl = wrap.createDiv({ cls: "fn-gcal-allday-row fn-gcal-hub-also fn-gcal-hidden" });
-        this.writeToHubCb = this.hubAlsoRowEl.createEl("input", {
-            type: "checkbox",
-            cls: "fn-gcal-checkbox",
-            attr: { id: "fn-gcal-also-hub" },
-        });
-        this.hubAlsoRowEl.createEl("label", {
-            text: "Also write to related note (same heading)",
-            attr: { for: "fn-gcal-also-hub" },
-        });
-        this.writeToHubCb.addEventListener("change", () => {
-            this.form.writeToHubNote = this.writeToHubCb.checked;
-        });
-
-        // Chip selector for hub mode (replaces radio group)
-        this.makeChipGroup<HubMode>(
-            wrap,
-            [
-                { value: "none", label: "None" },
-                { value: "link", label: "Link" },
-                { value: "create", label: "New note" },
-            ],
-            this.form.hubMode,
-            (value) => {
-                this.form.hubMode = value;
-                const showInput = value !== "none";
-                hubInputRow.toggleClass("fn-gcal-hidden", !showInput);
-                hubFolderRow.toggleClass("fn-gcal-hidden", value !== "create");
-                pickBtn.toggleClass("fn-gcal-hidden", value === "create");
-                this.hubAlsoRowEl.toggleClass("fn-gcal-hidden", !showInput);
-                this.hubInputEl.placeholder = value === "link" ? "Search notes..." : "New note name";
-                this.hubInputEl.setAttribute("aria-label", value === "link" ? "Related note" : "New related note name");
-                if (value === "create") {
-                    this.hubInputEl.value = this.form.title;
-                    this.form.hubCreateName = this.form.title;
-                } else {
-                    this.hubInputEl.value = "";
-                    this.form.hubLinkPath = "";
-                }
-            },
-        );
-        // Move chip group before hubInputRow (chip group was appended last)
-        const chipGroup = wrap.lastElementChild;
-        if (chipGroup) wrap.insertBefore(chipGroup, hubInputRow);
     }
 
     // ---- Detail note --------------------------------------------------------
@@ -496,7 +572,30 @@ export class EventTaskModal extends Modal {
             attr: { placeholder: "Journal/2026-05-27.md", "aria-label": "Save to file" },
         });
         fileEl.value = this.form.targetFile;
-        fileEl.addEventListener("input", () => (this.form.targetFile = fileEl.value));
+        const alignment = wrap.createDiv({ cls: "fn-capture-timeline-alignment" });
+        const updateAlignment = (): void => {
+            const settings = this.getSettings();
+            const resolver = new TargetResolver(this.app, settings);
+            const dailyFolder = settings.useDailyNotesAsDefault ? resolver.getDailyNoteFolder() : null;
+            const groups = buildTimelineSourceGroups(
+                settings.timeline.sourceFolders,
+                dailyFolder,
+                settings.inbox.contextSources,
+            );
+            const target = this.app.vault.getAbstractFileByPath(fileEl.value);
+            const properties = isTFile(target)
+                ? (this.app.metadataCache.getFileCache(target)?.frontmatter as Record<string, unknown> | undefined)
+                : undefined;
+            const status = assessTimelineTargetGroups(fileEl.value, properties, groups);
+            alignment.setText(status === "aligned" ? "Indexed by Focus Timeline" : "Outside Focus Timeline sources");
+            alignment.toggleClass("is-warning", status !== "aligned");
+        };
+        updateAlignment();
+        fileEl.addEventListener("input", () => {
+            this.form.targetFile = fileEl.value;
+            this.contextNotesController?.setTargetFile(fileEl.value);
+            updateAlignment();
+        });
         new FileSuggest(this.app, fileEl);
 
         const headingEl = fields.createEl("input", {
@@ -541,6 +640,7 @@ export class EventTaskModal extends Modal {
             text: "Save",
             attr: { type: "button" },
         });
+        this.saveButtonEl = save;
         save.addEventListener("click", () => void this.submit());
     }
 
@@ -550,15 +650,22 @@ export class EventTaskModal extends Modal {
 
     protected async submit(): Promise<void> {
         if (this.resolved) return;
+        if (this.pendingRecovery) {
+            await this.retryRelatedLogs();
+            return;
+        }
 
         const settings = this.getSettings();
         const writer = new EventTaskWriter(this.app, settings.eventTask);
         if (this.form.kind === "inbox") {
-            const result = await submitInbox(this.form, {
-                writer,
-                resolveTarget: () => this.resolveInboxTarget(),
-            });
-            this.finishSubmission(result);
+            await this.executeSubmission(() =>
+                submitInbox(this.form, {
+                    writer,
+                    resolveTarget: () => this.resolveInboxTarget(),
+                    contextNotes: readContextSuggestionNotes(this.app),
+                    contextSources: settings.inbox.contextSources,
+                }),
+            );
             return;
         }
 
@@ -571,32 +678,74 @@ export class EventTaskModal extends Modal {
             return;
         }
 
-        const result = await submitEventTask(this.form, {
-            writer,
-            defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
-            defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
-            resolveTargetFile: (record) => this.resolveTargetFile(record),
-            findMarkdownFile: (path) => {
-                const file = this.app.vault.getAbstractFileByPath(path);
-                return isTFile(file) ? file : null;
-            },
-            openFile: (file) => {
-                const vaultFile = this.app.vault.getAbstractFileByPath(file.path);
-                if (isTFile(vaultFile)) {
-                    void this.app.workspace.getLeaf(false).openFile(vaultFile, { active: false });
-                }
-            },
-        });
-
-        this.finishSubmission(result);
+        await this.executeSubmission(() =>
+            submitEventTask(this.form, {
+                writer,
+                defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
+                defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
+                resolveTargetFile: (record) => this.resolveTargetFile(record),
+                findMarkdownFile: (path) => {
+                    const file = this.app.vault.getAbstractFileByPath(path);
+                    return isTFile(file) ? file : null;
+                },
+                openFile: (file) => {
+                    const vaultFile = this.app.vault.getAbstractFileByPath(file.path);
+                    if (isTFile(vaultFile)) {
+                        void this.app.workspace.getLeaf(false).openFile(vaultFile, { active: false });
+                    }
+                },
+                contextNotes: readContextSuggestionNotes(this.app),
+                contextSources: settings.inbox.contextSources,
+            }),
+        );
     }
 
-    private finishSubmission(result: { ok: boolean; message: string }): void {
+    private async executeSubmission(operation: () => Promise<EventTaskSubmissionResult>): Promise<void> {
+        const attempt = this.submissionPolicy.run(operation);
+        if (!attempt) return;
+
+        this.setSubmissionBusy(true);
+        try {
+            this.finishSubmission(await attempt);
+        } finally {
+            this.setSubmissionBusy(false);
+        }
+    }
+
+    private setSubmissionBusy(busy: boolean): void {
+        this.saveButtonEl.disabled = busy;
+        this.saveButtonEl.setAttribute("aria-busy", String(busy));
+        this.saveButtonEl.setText(busy ? "Saving…" : this.pendingRecovery ? "Retry related logs" : "Save");
+    }
+
+    private finishSubmission(result: EventTaskSubmissionResult): void {
         new Notice(result.message);
-        if (result.ok) {
-            this.resolved = true;
+        if (result.status === "failure") return;
+        if (!this.completionNotified) {
+            this.completionNotified = true;
             this.onComplete();
-            this.close();
+        }
+        if (result.status === "partial") {
+            this.pendingRecovery = result;
+            return;
+        }
+        this.pendingRecovery = null;
+        this.resolved = true;
+        this.close();
+    }
+
+    private async retryRelatedLogs(): Promise<void> {
+        const recovery = this.pendingRecovery;
+        if (!recovery || this.recoveryInFlight) return;
+        this.recoveryInFlight = true;
+        this.setSubmissionBusy(true);
+        try {
+            this.finishSubmission(await retryRelatedSubmission(recovery, new EventTaskWriter(this.app)));
+        } catch (error) {
+            new Notice(`Failed to retry related logs: ${error instanceof Error ? error.message : String(error)}`);
+        } finally {
+            this.recoveryInFlight = false;
+            this.setSubmissionBusy(false);
         }
     }
 
@@ -679,26 +828,5 @@ export class EventTaskModal extends Modal {
         row.createEl("label", { text: label, attr: { for: id } });
         cb.addEventListener("change", () => onChange(cb.checked));
         return cb;
-    }
-}
-
-// ---------------------------------------------------------------------------
-
-class FilePickerSuggester extends FuzzySuggestModal<TFile> {
-    constructor(
-        app: App,
-        private onPick: (file: TFile) => void,
-    ) {
-        super(app);
-        this.setPlaceholder("Pick a note...");
-    }
-    getItems(): TFile[] {
-        return this.app.vault.getMarkdownFiles().filter(isTFile);
-    }
-    getItemText(f: TFile): string {
-        return f.path;
-    }
-    onChooseItem(f: TFile): void {
-        this.onPick(f);
     }
 }

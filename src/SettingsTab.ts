@@ -1,10 +1,22 @@
-import { type App, PluginSettingTab, Setting } from "obsidian";
-import type FocusNotesPlugin from "./main";
-import type { InboxTargetMode, InsertPosition, TimelineMode } from "./types";
-import { FileSuggest, FolderSuggest } from "./Suggesters";
+import { type App, PluginSettingTab, Setting, setIcon } from "obsidian";
+import { createContextSource, findSharedFolderConflicts } from "./ContextSourceSettings";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
+import type FocusNotesPlugin from "./main";
+import { type FocusNotesSettingsPage, settingsTabForSection } from "./SettingsLayout";
+import { FileSuggest, FolderSuggest } from "./Suggesters";
+import { TargetResolver } from "./TargetResolver";
+import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
+import type {
+    ContextSourceSettings,
+    InboxTargetMode,
+    InsertPosition,
+    ObjectNotePlacement,
+    TimelineMode,
+} from "./types";
+import { isTFile } from "./utils";
 
 export class FocusNotesSettingsTab extends PluginSettingTab {
+    private activePage: FocusNotesSettingsPage = "focus";
     constructor(
         app: App,
         private plugin: FocusNotesPlugin,
@@ -334,8 +346,10 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Source folders")
-            .setDesc("One folder per line. Timeline indexing is disabled until at least one folder is configured.")
+            .setName("Additional source folders")
+            .setDesc(
+                "Optional folders for non-object hub notes. Daily Notes and opted-in Object Sources are included automatically.",
+            )
             .addTextArea((area) => {
                 area.setValue(this.plugin.settings.timeline.sourceFolders.join("\n")).onChange(async (v) => {
                     this.plugin.settings.timeline.sourceFolders = v
@@ -347,6 +361,25 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 area.inputEl.rows = 5;
                 area.inputEl.style.width = "100%";
             });
+
+        new Setting(containerEl)
+            .setName("Timeline headings")
+            .setDesc(
+                "Only scheduled Event and Task records below these headings are indexed. The current capture heading is always included.",
+            )
+            .addTextArea((area) => {
+                area.setValue(this.plugin.settings.timeline.sourceHeadings.join("\n")).onChange(async (value) => {
+                    this.plugin.settings.timeline.sourceHeadings = value
+                        .split(/\r?\n/)
+                        .map((line) => line.trim())
+                        .filter(Boolean);
+                    await this.plugin.saveSettings();
+                });
+                area.inputEl.rows = 3;
+                area.inputEl.style.width = "100%";
+            });
+
+        this.renderTimelineAlignmentStatus(containerEl);
 
         new Setting(containerEl).setName("Show completed tasks").addToggle((toggle) =>
             toggle.setValue(this.plugin.settings.timeline.showCompletedTasks).onChange(async (v) => {
@@ -378,17 +411,17 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         containerEl.createEl("p", {
             cls: "setting-item-description",
             text:
-                "Choose where quick captures go and which folders provide " +
-                "People and Place suggestions. These defaults can be overridden in Advanced.",
+                "Choose where quick captures go and configure Object Sources for contextual @ suggestions, " +
+                "historical logs, and future template-based object creation.",
         });
 
         new Setting(containerEl)
             .setName("Default destination")
-            .setDesc("Use today's Daily Note or the active Event/Task target file.")
+            .setDesc("Prefer the active Markdown note for flexible capture, or always use today's Daily Note.")
             .addDropdown((dropdown) =>
                 dropdown
                     .addOption("daily-note", "Daily Note")
-                    .addOption("event-task-target", "Event/Task target")
+                    .addOption("event-task-target", "Active note / capture target")
                     .setValue(this.plugin.settings.inbox.defaultTargetMode)
                     .onChange(async (value) => {
                         this.plugin.settings.inbox.defaultTargetMode = value as InboxTargetMode;
@@ -423,27 +456,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     }),
             );
 
-        this.renderInboxFolderList(
-            containerEl,
-            "People source folders",
-            "Markdown notes in these folders and subfolders appear in @ suggestions as People.",
-            this.plugin.settings.inbox.peopleFolders,
-            async (folders) => {
-                this.plugin.settings.inbox.peopleFolders = folders;
-                await this.plugin.saveSettings();
-            },
-        );
-
-        this.renderInboxFolderList(
-            containerEl,
-            "Place source folders",
-            "Markdown notes in these folders and subfolders appear in @ suggestions as Places.",
-            this.plugin.settings.inbox.placeFolders,
-            async (folders) => {
-                this.plugin.settings.inbox.placeFolders = folders;
-                await this.plugin.saveSettings();
-            },
-        );
+        this.renderContextSources(containerEl);
 
         // ---- Event & Task Creation -----------------------------------------
         containerEl.createEl("h3", { text: "Event & Task Creation" });
@@ -555,7 +568,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Include 'status' field")
-            .setDesc("Adds status: scheduled (event) / open (task) to the detail note frontmatter.")
+            .setDesc("Adds the selected Event lifecycle status or Task open status to detail note frontmatter.")
             .addToggle((toggle) =>
                 toggle.setValue(this.plugin.settings.eventTask.includeStatus).onChange(async (v) => {
                     this.plugin.settings.eventTask.includeStatus = v;
@@ -565,7 +578,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Include 'priority' field (task)")
-            .setDesc("Adds priority: medium to the task detail note frontmatter.")
+            .setDesc("Adds the selected Task priority to the detail note frontmatter.")
             .addToggle((toggle) =>
                 toggle.setValue(this.plugin.settings.eventTask.includePriority).onChange(async (v) => {
                     this.plugin.settings.eventTask.includePriority = v;
@@ -582,66 +595,336 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }),
             );
+
+        this.organizeSettingsTabs(containerEl);
     }
 
-    private renderInboxFolderList(
+    private renderTimelineAlignmentStatus(container: HTMLElement): void {
+        const settings = this.plugin.settings;
+        const resolver = new TargetResolver(this.app, settings);
+        const dailyFolder = settings.useDailyNotesAsDefault ? resolver.getDailyNoteFolder() : null;
+        const groups = buildTimelineSourceGroups(
+            settings.timeline.sourceFolders,
+            dailyFolder,
+            settings.inbox.contextSources,
+        );
+        const target = resolver.resolve(resolver.getActiveTarget()).file;
+        const targetFile = this.app.vault.getAbstractFileByPath(target);
+        const properties = isTFile(targetFile)
+            ? (this.app.metadataCache.getFileCache(targetFile)?.frontmatter as Record<string, unknown> | undefined)
+            : undefined;
+        const alignment = assessTimelineTargetGroups(target, properties, groups);
+        const status = container.createDiv({ cls: "fn-timeline-alignment" });
+
+        if (dailyFolder) {
+            status.createDiv({ text: `Automatically indexed Daily Notes folder: ${dailyFolder}` });
+        } else if (settings.useDailyNotesAsDefault) {
+            status.createDiv({
+                text: "Daily Notes uses the vault root or could not be resolved; it is not auto-added.",
+            });
+        }
+
+        if (alignment === "aligned") {
+            status.addClass("is-success");
+            status.createDiv({ text: `Default capture target is indexed: ${target}` });
+        } else if (alignment === "mismatch") {
+            status.addClass("is-warning");
+            status.createDiv({ text: `Capture target is outside Timeline sources: ${target}` });
+        } else if (alignment === "unconfigured") {
+            status.addClass("is-warning");
+            status.createDiv({ text: "Timeline has no folder-scoped source." });
+        } else {
+            status.addClass("is-warning");
+            status.createDiv({ text: "The default capture target could not be resolved." });
+        }
+    }
+
+    private renderContextSources(container: HTMLElement): void {
+        const section = container.createDiv({ cls: "fn-settings-object-section" });
+        section.createEl("h3", { text: "Object Sources" });
+        section.createEl("p", {
+            cls: "setting-item-description",
+            text:
+                "Each source labels one object type. Folder scope is required; an optional property filter narrows matches. " +
+                "Multiple object types may share a folder when they use the same Property with distinct Values. " +
+                "Templates are optional; enabled sources with a folder can create objects from the @ suggester.",
+        });
+        const list = section.createDiv({ cls: "fn-context-source-list" });
+        const sources = this.plugin.settings.inbox.contextSources;
+        const sharedFolderConflicts = findSharedFolderConflicts(sources);
+
+        sources.forEach((source, index) => {
+            this.renderContextSource(list, source, index, sharedFolderConflicts);
+        });
+        new Setting(list).addButton((button) =>
+            button
+                .setButtonText("Add object source")
+                .setCta()
+                .onClick(async () => {
+                    sources.push(createContextSource(sources));
+                    await this.saveContextSources();
+                    this.display();
+                }),
+        );
+    }
+
+    private renderContextSource(
         container: HTMLElement,
-        title: string,
-        description: string,
-        folders: string[],
-        save: (folders: string[]) => Promise<void>,
+        source: ContextSourceSettings,
+        index: number,
+        sharedFolderConflicts: ReadonlyMap<string, string[]>,
     ): void {
-        container.createEl("h4", { text: title });
-        container.createEl("p", { text: description, cls: "setting-item-description" });
-        const rows = container.createDiv({ cls: "fn-inbox-folder-settings" });
-        const values = [...folders];
+        const card = container.createDiv({ cls: "fn-context-source-card" });
+        const header = card.createDiv({ cls: "fn-context-source-header" });
+        const identity = header.createDiv();
+        identity.createEl("strong", { text: source.name });
+        identity.createEl("small", { text: `ID: ${source.id}` });
+        const actions = header.createDiv({ cls: "fn-context-source-actions" });
+        const enabled = actions.createEl("input", {
+            type: "checkbox",
+            attr: { "aria-label": `Enable ${source.name}` },
+        });
+        enabled.checked = source.enabled;
+        enabled.addEventListener("change", async () => {
+            source.enabled = enabled.checked;
+            await this.saveContextSources();
+            this.display();
+        });
+        const remove = actions.createEl("button", {
+            cls: "clickable-icon",
+            attr: { "aria-label": `Remove ${source.name}` },
+        });
+        setIcon(remove, "trash-2");
+        remove.addEventListener("click", async () => {
+            this.plugin.settings.inbox.contextSources.splice(index, 1);
+            await this.saveContextSources();
+            this.display();
+        });
+
+        let filterProperty = source.filter?.property ?? "";
+        let filterValue = source.filter?.value ?? "";
+        const saveFilter = async (): Promise<void> => {
+            source.filter =
+                filterProperty.trim() && filterValue.trim()
+                    ? { property: filterProperty.trim(), value: filterValue.trim() }
+                    : null;
+            await this.saveContextSources();
+        };
+        const fields = card.createDiv({ cls: "fn-context-source-grid" });
+        this.contextTextField(fields, "Object label", "Books", source.name, async (value) => {
+            source.name = value.trim() || source.id;
+            identity.querySelector("strong")?.setText(source.name);
+            await this.saveContextSources();
+        });
+        this.contextTextField(fields, "Icon", "book-open", source.icon, async (value) => {
+            source.icon = value.trim() || "link";
+            await this.saveContextSources();
+        });
+        this.contextTextField(fields, "Property", "type", filterProperty, async (value) => {
+            filterProperty = value;
+            await saveFilter();
+        });
+        this.contextTextField(fields, "Value", "book", filterValue, async (value) => {
+            filterValue = value;
+            await saveFilter();
+        });
+        this.contextTextField(fields, "Log heading", "Reading log", source.relatedHeading, async (value) => {
+            source.relatedHeading = value.replace(/^#+\s*/, "").trim() || "Related log";
+            await this.saveContextSources();
+        });
+        this.contextSelectField(
+            fields,
+            "Default placement",
+            [
+                { value: "flat", label: "Flat note" },
+                { value: "folder-note", label: "Folder note" },
+            ],
+            source.placement,
+            async (value) => {
+                source.placement = value as ObjectNotePlacement;
+                await this.saveContextSources();
+            },
+        );
+        const timelineField = fields.createEl("label", { cls: "fn-context-source-field" });
+        timelineField.createEl("span", { text: "Include in Focus Timeline" });
+        const timelineToggle = timelineField.createEl("input", {
+            type: "checkbox",
+            attr: { "aria-label": `Include ${source.name} in Focus Timeline` },
+        });
+        timelineToggle.checked = source.includeInTimeline;
+        timelineToggle.addEventListener("change", async () => {
+            source.includeInTimeline = timelineToggle.checked;
+            await this.saveContextSources();
+        });
+        const template = this.contextTextField(
+            fields,
+            "Template note",
+            "Templates/Book.md",
+            source.templatePath,
+            async (value) => {
+                source.templatePath = value.trim().replace(/^\/+/, "");
+                await this.saveContextSources();
+            },
+        );
+        new FileSuggest(this.app, template);
+
+        const conflictingFolders = Array.from(sharedFolderConflicts.entries())
+            .filter(([, sourceIds]) => sourceIds.includes(source.id))
+            .map(([folder]) => folder);
+        if (conflictingFolders.length > 0) {
+            card.createDiv({
+                cls: "fn-context-source-warning",
+                text:
+                    `Shared folder needs one common Property with a distinct Value for each object type: ` +
+                    conflictingFolders.join(", "),
+            });
+        }
+
+        this.renderContextSourceFolders(card, source);
+    }
+
+    private renderContextSourceFolders(container: HTMLElement, source: ContextSourceSettings): void {
+        const rows = container.createDiv({ cls: "fn-context-source-folders" });
+        rows.createEl("span", { cls: "fn-context-source-folders-label", text: "Source folders" });
+        const list = rows.createDiv({ cls: "fn-context-source-folder-list" });
+        const values = [...source.folders];
         let suggesters: FolderSuggest[] = [];
 
         const renderRows = (): void => {
             for (const suggester of suggesters) suggester.close();
             suggesters = [];
-            rows.empty();
+            list.empty();
 
             values.forEach((folder, index) => {
-                new Setting(rows)
-                    .setName(`${title.replace(/s$/, "")} ${index + 1}`)
-                    .addText((text) => {
-                        text.setPlaceholder(
-                            index === 0 ? (title.startsWith("People") ? "People" : "Place") : "Folder/path",
-                        )
-                            .setValue(folder)
-                            .onChange(async (value) => {
-                                values[index] = value;
-                                await save(normalizeInboxFolders(values));
-                            });
-                        text.inputEl.setAttribute("aria-label", `${title} ${index + 1}`);
-                        suggesters.push(new FolderSuggest(this.app, text.inputEl));
-                    })
-                    .addExtraButton((button) =>
-                        button
-                            .setIcon("trash-2")
-                            .setTooltip(`Remove ${title.toLowerCase()} ${index + 1}`)
-                            .onClick(async () => {
-                                values.splice(index, 1);
-                                await save(normalizeInboxFolders(values));
-                                renderRows();
-                            }),
-                    );
+                const row = list.createDiv({ cls: "fn-context-source-folder-row" });
+                const input = row.createEl("input", {
+                    type: "text",
+                    attr: {
+                        placeholder: index === 0 ? "Objects" : "Folder/path",
+                        "aria-label": `${source.name} source folder ${index + 1}`,
+                    },
+                });
+                input.value = folder;
+                input.addEventListener("input", () => {
+                    values[index] = input.value;
+                    source.folders = normalizeInboxFolders(values);
+                });
+                input.addEventListener("change", async () => {
+                    await this.saveContextSources();
+                });
+                suggesters.push(new FolderSuggest(this.app, input));
+                const remove = row.createEl("button", {
+                    cls: "clickable-icon",
+                    attr: { "aria-label": `Remove ${source.name} folder ${index + 1}` },
+                });
+                setIcon(remove, "x");
+                remove.addEventListener("click", async () => {
+                    values.splice(index, 1);
+                    source.folders = normalizeInboxFolders(values);
+                    await this.saveContextSources();
+                    renderRows();
+                });
             });
 
-            new Setting(rows).addButton((button) =>
-                button
-                    .setButtonText("Add folder")
-                    .setTooltip(`Add ${title.toLowerCase()}`)
-                    .onClick(() => {
-                        values.push("");
-                        renderRows();
-                        const inputs = rows.querySelectorAll<HTMLInputElement>("input");
-                        inputs.item(inputs.length - 1)?.focus();
-                    }),
-            );
+            const add = list.createEl("button", { text: "+ Add folder", cls: "fn-context-source-add-folder" });
+            add.addEventListener("click", () => {
+                values.push("");
+                renderRows();
+                const inputs = list.querySelectorAll<HTMLInputElement>("input");
+                inputs.item(inputs.length - 1)?.focus();
+            });
         };
 
         renderRows();
+    }
+
+    private contextTextField(
+        container: HTMLElement,
+        label: string,
+        placeholder: string,
+        value: string,
+        onChange: (value: string) => Promise<void>,
+    ): HTMLInputElement {
+        const field = container.createEl("label", { cls: "fn-context-source-field" });
+        field.createEl("span", { text: label });
+        const input = field.createEl("input", { type: "text", attr: { placeholder, "aria-label": label } });
+        input.value = value;
+        input.addEventListener("change", () => void onChange(input.value));
+        return input;
+    }
+
+    private contextSelectField(
+        container: HTMLElement,
+        label: string,
+        options: Array<{ value: string; label: string }>,
+        value: string,
+        onChange: (value: string) => Promise<void>,
+    ): HTMLSelectElement {
+        const field = container.createEl("label", { cls: "fn-context-source-field" });
+        field.createEl("span", { text: label });
+        const select = field.createEl("select", { attr: { "aria-label": label } });
+        for (const option of options) select.createEl("option", { value: option.value, text: option.label });
+        select.value = value;
+        select.addEventListener("change", () => void onChange(select.value));
+        return select;
+    }
+
+    private organizeSettingsTabs(container: HTMLElement): void {
+        const pages: Array<{ id: FocusNotesSettingsPage; label: string }> = [
+            { id: "focus", label: "Focus" },
+            { id: "timeline", label: "Timeline" },
+            { id: "capture", label: "Capture" },
+            { id: "objects", label: "Objects" },
+        ];
+        const nav = container.createDiv({ cls: "fn-settings-tabs", attr: { role: "tablist" } });
+        const panels = new Map<FocusNotesSettingsPage, HTMLElement>();
+        for (const page of pages) {
+            panels.set(
+                page.id,
+                container.createDiv({
+                    cls: "fn-settings-panel",
+                    attr: { id: `fn-settings-${page.id}`, role: "tabpanel" },
+                }),
+            );
+        }
+
+        let current: FocusNotesSettingsPage = "focus";
+        const movable = Array.from(container.children).filter(
+            (child) => child !== nav && !child.classList.contains("fn-settings-panel") && child.tagName !== "H2",
+        );
+        movable.shift();
+        for (const child of movable) {
+            if (child.classList.contains("fn-settings-object-section")) current = "objects";
+            else if (child.tagName === "H3") current = settingsTabForSection(child.textContent ?? "");
+            panels.get(current)?.appendChild(child);
+        }
+
+        const activate = (page: FocusNotesSettingsPage): void => {
+            this.activePage = page;
+            for (const [id, panel] of panels) panel.toggleClass("fn-settings-panel-active", id === page);
+            for (const button of Array.from(nav.querySelectorAll<HTMLButtonElement>("button[role=tab]"))) {
+                const selected = button.dataset.page === page;
+                button.toggleClass("is-active", selected);
+                button.setAttribute("aria-selected", String(selected));
+                button.tabIndex = selected ? 0 : -1;
+            }
+        };
+        for (const page of pages) {
+            const button = nav.createEl("button", {
+                text: page.label,
+                attr: {
+                    role: "tab",
+                    "aria-controls": `fn-settings-${page.id}`,
+                    "data-page": page.id,
+                },
+            });
+            button.addEventListener("click", () => activate(page.id));
+        }
+        container.querySelector("h2")?.insertAdjacentElement("afterend", nav);
+        activate(this.activePage);
+    }
+
+    private async saveContextSources(): Promise<void> {
+        await this.plugin.saveSettings();
     }
 }

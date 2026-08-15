@@ -209,13 +209,16 @@ Tests live in `test/` and use Node's built-in test runner. Reusable test-only fa
 
 ### State persistence
 
-Settings live at `<vault>/.obsidian/focus-notes-state.json` rather than the plugin-local `data.json`. This means:
+Settings use Obsidian's standard plugin-data API and live at
+`<vault>/.obsidian/plugins/focus-notes/data.json`. To share them between
+devices with Obsidian Sync, enable vault configuration sync for community
+plugins and their settings on each device, then reload Obsidian after the
+configuration finishes syncing.
 
-- **Uninstall-survival.** Removing the plugin doesn't wipe your target, group-by-date preference, templates, or duration defaults.
-- **Sync.** Obsidian Sync (or any tool that syncs `.obsidian/`) propagates your settings across devices.
-- **Backup-friendly.** Your existing `.obsidian/` backups already cover plugin state.
-
-The first time the v3 plugin runs, it migrates from the old `data.json` location once. After that, only the external file is read or written.
+Releases that used `<vault>/.obsidian/focus-notes-state.json` migrate that file
+into standard plugin data when `data.json` is still missing. The old file is
+left untouched as a recovery copy but is no longer read after migration or
+written by the plugin.
 
 ---
 
@@ -240,7 +243,7 @@ ReflectionFocusModal     — wellbeing reminder + big textarea + collapsible CBT
                            reference panels
 LogModal                 — what-are-you-doing + wellbeing + reflection + links
 TimerView                — composes the above; owns per-session target override
-StateStore               — external state file at .obsidian/focus-notes-state.json
+StateStore               — ordered data.json writes and legacy-state migration
 SettingsTab              — defaults
 main.ts                  — plugin lifecycle and DI
 ```

@@ -1,27 +1,32 @@
-import { Plugin, type WorkspaceLeaf } from "obsidian";
-import type { FocusNotesSettings } from "./types";
-import { TimerView, VIEW_TYPE_FOCUS_NOTES } from "./TimerView";
-import { TimelineView, VIEW_TYPE_FOCUS_TIMELINE } from "./TimelineView";
-import { NoteWriter } from "./NoteWriter";
-import { TargetResolver } from "./TargetResolver";
-import { RecentEntriesReader } from "./RecentEntriesReader";
-import { FocusNotesSettingsTab } from "./SettingsTab";
-import { loadState, saveState } from "./StateStore";
+import { Notice, Plugin, TFile, type WorkspaceLeaf } from "obsidian";
+import { scanActiveNoteChecklistScopes, scanActiveNoteLedger } from "./ActiveNoteLedger";
+import { ActiveNoteManagerModal } from "./ActiveNoteManagerModal";
 import { openEventTaskForm } from "./EventTaskModal";
+import { NoteWriter } from "./NoteWriter";
+import { RecentEntriesReader } from "./RecentEntriesReader";
+import { openScheduledItemEditor } from "./ScheduledItemEditor";
+import { ScheduledItemParser } from "./ScheduledItemParser";
+import { FocusNotesSettingsTab } from "./SettingsTab";
+import { StateStore } from "./StateStore";
+import { TargetResolver } from "./TargetResolver";
+import { timelineSourceHeadings } from "./TimelineSourceGroups";
+import { TimelineView, VIEW_TYPE_FOCUS_TIMELINE } from "./TimelineView";
+import { TimerView, VIEW_TYPE_FOCUS_NOTES } from "./TimerView";
+import { type FocusNotesSettings, mergeSettingsWithDefaults } from "./types";
 
 /**
  * Plugin shell.
  *
- * State persistence: settings live at `.obsidian/focus-notes-state.json`
- * rather than the plugin-local data.json, so they survive uninstall/reinstall
- * and ride along with Obsidian Sync. See StateStore for the rationale and
- * the one-time data.json migration.
+ * State persistence uses Obsidian's Plugin.loadData()/saveData() contract so
+ * plugin configuration sync treats it consistently across platforms.
+ * StateStore retains ordered writes and migrates the former config-root file.
  *
  * Builders (rather than direct refs) are passed into TimerView so the view
  * always sees the latest settings without us needing a subscription model.
  */
 export default class FocusNotesPlugin extends Plugin {
     public settings!: FocusNotesSettings;
+    private stateStore!: StateStore;
 
     async onload(): Promise<void> {
         await this.loadSettings();
@@ -71,6 +76,17 @@ export default class FocusNotesPlugin extends Plugin {
         });
 
         this.addCommand({
+            id: "manage-active-note-events-tasks",
+            name: "Manage events and tasks in active note",
+            checkCallback: (checking) => {
+                const file = this.app.workspace.getActiveFile();
+                const available = file instanceof TFile && file.extension === "md";
+                if (available && !checking) void this.openActiveNoteManager(file);
+                return available;
+            },
+        });
+
+        this.addCommand({
             id: "open-focus-timeline",
             name: "Open Focus Timeline",
             callback: () => {
@@ -90,13 +106,46 @@ export default class FocusNotesPlugin extends Plugin {
     }
 
     async loadSettings(): Promise<void> {
-        // Pass loadData as a thunk so StateStore can perform the one-time
-        // migration from the legacy data.json without coupling the two layers.
-        this.settings = await loadState(this.app, () => this.loadData());
+        this.stateStore = new StateStore(this.app, mergeSettingsWithDefaults);
+        const result = await this.stateStore.load(
+            () => this.loadData(),
+            (settings) => this.saveData(settings),
+        );
+        this.settings = result.settings;
     }
 
     async saveSettings(): Promise<void> {
-        await saveState(this.app, this.settings);
+        await this.stateStore.save(this.settings);
+    }
+
+    private async openActiveNoteManager(file: TFile): Promise<void> {
+        const content = await this.app.vault.cachedRead(file);
+        const headings = timelineSourceHeadings(
+            this.settings.timeline.sourceHeadings,
+            this.settings.eventTask.defaultSaveHeading,
+        );
+        const items = scanActiveNoteLedger(file.path, file.name, content, headings, new ScheduledItemParser());
+        const checklistScopes = scanActiveNoteChecklistScopes(file.path, file.name, content, new ScheduledItemParser());
+        new ActiveNoteManagerModal(
+            this.app,
+            file.name,
+            file.path,
+            items,
+            checklistScopes,
+            (kind) =>
+                openEventTaskForm(this.app, () => this.settings, new Date(), undefined, this, {
+                    initialKind: kind,
+                    targetFile: file.path,
+                }),
+            (item) =>
+                void openScheduledItemEditor(
+                    this.app,
+                    item,
+                    () => this.settings,
+                    () => new Notice("Task or Event updated."),
+                ),
+            () => void this.openActiveNoteManager(file),
+        ).open();
     }
 
     private async activateView(): Promise<void> {

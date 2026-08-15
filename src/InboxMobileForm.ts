@@ -1,6 +1,5 @@
 import { type App, setIcon } from "obsidian";
 import type { EventTaskFormState } from "./EventTaskFormState";
-import { normalizeInboxFolders } from "./InboxFolderSettings";
 import { InboxNotesController } from "./InboxNotesController";
 import { FileSuggest } from "./Suggesters";
 import type { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
@@ -26,14 +25,13 @@ export class InboxMobileForm {
             cls: "fn-mobile-inbox-notes",
             attr: {
                 "aria-label": "Inbox notes",
-                "data-placeholder": "Add context. Use @ for People or Places, # for tags.",
+                "data-placeholder": "Add context. Use @ for contextual notes, # for tags.",
             },
         });
         this.notesController = new InboxNotesController(this.options.app, notesEl, {
             initialValue: this.options.form.inboxBody,
             targetFile: this.options.resolveTarget()?.file ?? "",
-            getPeopleFolders: () => this.peopleFolders,
-            getPlaceFolders: () => this.placeFolders,
+            getContextSources: () => this.options.getSettings().inbox.contextSources,
             onChange: (value) => (this.options.form.inboxBody = value),
         });
         this.options.registerCleanup(() => this.destroy());
@@ -43,7 +41,7 @@ export class InboxMobileForm {
         const icon = summary.createSpan({ cls: "fn-mobile-event-summary-icon" });
         setIcon(icon, "sliders-horizontal");
         const text = summary.createSpan({ cls: "fn-mobile-event-summary-text" });
-        text.createSpan({ text: "Advanced" });
+        text.createSpan({ text: "More options" });
         text.createEl("small", { text: "Save location and suggestion sources" });
         const chevron = summary.createSpan({ cls: "fn-mobile-event-summary-chevron" });
         setIcon(chevron, "chevron-down");
@@ -89,14 +87,6 @@ export class InboxMobileForm {
         position.addEventListener("change", () => {
             this.options.form.inboxPosition = position.value as InsertPosition;
         });
-
-        const settings = this.options.getSettings().inbox;
-        this.folderField(container, "People folders", settings.peopleFolders, (value) => {
-            this.options.form.inboxPeopleFoldersOverride = value;
-        });
-        this.folderField(container, "Place folders", settings.placeFolders, (value) => {
-            this.options.form.inboxPlaceFoldersOverride = value;
-        });
     }
 
     private fieldRow(container: HTMLElement, icon: string, label: string): HTMLElement {
@@ -134,39 +124,11 @@ export class InboxMobileForm {
         return select;
     }
 
-    private folderField(
-        container: HTMLElement,
-        label: string,
-        defaults: string[],
-        onChange: (folders: string[]) => void,
-    ): void {
-        const content = this.fieldRow(container, "folder", label);
-        const input = content.createEl("textarea", {
-            cls: "fn-mobile-event-description",
-            attr: {
-                "aria-label": `${label} override`,
-                placeholder: `Using Settings: ${defaults.join(", ")}`,
-            },
-        });
-        input.rows = 2;
-        input.addEventListener("input", () => onChange(normalizeInboxFolders(input.value.split(/\r?\n/))));
-    }
-
     private refreshTarget(updateNotes = true): void {
         const target = this.options.resolveTarget();
         this.targetSummaryEl?.setText(
             target ? `${target.file} · ${target.heading || "No heading"}` : "Selected destination is unavailable",
         );
         if (updateNotes && target) this.notesController?.setTargetFile(target.file);
-    }
-
-    private get peopleFolders(): string[] {
-        const override = this.options.form.inboxPeopleFoldersOverride;
-        return override.length > 0 ? override : this.options.getSettings().inbox.peopleFolders;
-    }
-
-    private get placeFolders(): string[] {
-        const override = this.options.form.inboxPlaceFoldersOverride;
-        return override.length > 0 ? override : this.options.getSettings().inbox.placeFolders;
     }
 }

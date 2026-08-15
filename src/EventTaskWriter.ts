@@ -3,6 +3,8 @@ import type { EventTaskSettings, InsertPosition } from "./types";
 import type { InboxRecord } from "./EventTaskFormState";
 import { formatInboxEntry } from "./InboxMarkdown";
 import { ensureFolderPath, isTFile } from "./utils";
+import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTaskMarkdown";
+import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItemTypes";
 
 /** Reference to a hub note, used to build a markdown link. */
 export interface HubNoteRef {
@@ -18,6 +20,9 @@ export interface EventRecord {
     start: Date;
     end: Date;
     allDay: boolean;
+    status: EventOccurrenceStatus;
+    actualStart: Date | null;
+    actualEnd: Date | null;
     description: string;
     hubNoteRef: HubNoteRef | null;
 }
@@ -25,6 +30,7 @@ export interface EventRecord {
 export interface TaskRecord {
     kind: "task";
     title: string;
+    priority: TaskPriority;
     due: Date | null;
     dueHasTime: boolean;
     /** Optional timeblock/timebox: a start–end window for focused work. */
@@ -51,16 +57,7 @@ export class EventTaskWriter {
         detailNoteRef?: HubNoteRef | null,
     ): Promise<void> {
         const file = await this.resolveOrCreateFile(targetFilePath);
-        const line = record.kind === "event" ? this.formatEventLine(record) : this.formatTaskLine(record);
-
-        const parts: string[] = [line];
-        const desc = record.description.trim();
-        if (desc) parts.push(`    - ${desc}`);
-        if (detailNoteRef) {
-            parts.push(`    - detail: [${detailNoteRef.title}](${this.encodePath(detailNoteRef.path)})`);
-        }
-
-        await this.insertIntoFile(file, targetHeading, parts.join("\n"), position);
+        await this.insertIntoFile(file, targetHeading, formatEventTaskEntry(record, detailNoteRef), position);
     }
 
     async writeInbox(
@@ -71,6 +68,16 @@ export class EventTaskWriter {
     ): Promise<void> {
         const file = await this.resolveOrCreateFile(targetFilePath);
         await this.insertIntoFile(file, targetHeading, formatInboxEntry(record), position);
+    }
+
+    async writeRelated(
+        markdown: string,
+        targetFilePath: string,
+        targetHeading: string,
+        position: InsertPosition,
+    ): Promise<void> {
+        const file = await this.resolveOrCreateFile(targetFilePath);
+        await this.insertIntoFile(file, targetHeading, markdown, position);
     }
 
     async createHubNote(title: string, record: EventTaskRecord, folder: string): Promise<TFile> {
@@ -155,14 +162,19 @@ export class EventTaskWriter {
                 lines.push(`start: "${this.fmtTime(record.start)}"`);
                 lines.push(`end: "${this.fmtTime(record.end)}"`);
             }
-            if (s?.includeStatus ?? true) lines.push("status: scheduled");
+            if (s?.includeStatus ?? true) lines.push(`status: ${record.status}`);
+            if (record.actualStart && record.actualEnd) {
+                lines.push(`actual-start: "${this.fmtDate(record.actualStart)} ${this.fmtTime(record.actualStart)}"`);
+                lines.push(`actual-end: "${this.fmtDate(record.actualEnd)} ${this.fmtTime(record.actualEnd)}"`);
+            }
             if (s?.includeTags ?? true) lines.push("tags: [event]");
         } else {
             lines.push("type: task");
             lines.push(`title: "${this.escapeYaml(record.title)}"`);
             if (record.due) lines.push(`due: ${this.fmtDate(record.due)}`);
             if (s?.includeStatus ?? true) lines.push("status: open");
-            if (s?.includePriority ?? true) lines.push("priority: medium");
+            const priority = formatTaskPriorityFrontmatter(record.priority, s?.includePriority ?? true);
+            if (priority) lines.push(priority);
             if (s?.includeTags ?? true) lines.push("tags: [task]");
         }
 
@@ -237,53 +249,8 @@ export class EventTaskWriter {
     }
 
     // -------------------------------------------------------------------------
-    // Line formatters
-    // -------------------------------------------------------------------------
-
-    private formatEventLine(record: EventRecord): string {
-        // Title is always the event's own title; hub note becomes a relative
-        // markdown link so the text stays visible in any MD reader/writer.
-        const titlePart = record.hubNoteRef
-            ? `[${record.title}](${this.encodePath(record.hubNoteRef.path)})`
-            : record.title;
-
-        if (record.allDay) {
-            return `- ${this.fmtDate(record.start)} ${titlePart}`;
-        }
-        return `- ${this.fmtDateTime(record.start)} - ${this.fmtTime(record.end)} ${titlePart}`;
-    }
-
-    private formatTaskLine(record: TaskRecord): string {
-        const titlePart = record.hubNoteRef
-            ? `[${record.title}](${this.encodePath(record.hubNoteRef.path)})`
-            : record.title;
-
-        let line = `- [ ] ${titlePart}`;
-
-        if (record.due) {
-            const dueStr = record.dueHasTime ? this.fmtDateTime(record.due) : this.fmtDate(record.due);
-            line += ` | due:${dueStr}`;
-        }
-
-        if (record.timebox) {
-            line += ` | start:${this.fmtDateTime(record.timebox.start)}`;
-            line += ` | end:${this.fmtDateTime(record.timebox.end)}`;
-        }
-
-        for (const remind of record.reminders) {
-            line += ` | remind:${this.fmtDateTime(remind)}`;
-        }
-
-        return line;
-    }
-
-    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
-
-    private encodePath(path: string): string {
-        return path.replace(/ /g, "%20");
-    }
 
     private fmtDate(d: Date): string {
         const y = d.getFullYear();

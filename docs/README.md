@@ -15,9 +15,19 @@ Jalankan `pnpm run docs:dev` untuk menulis secara lokal dan `pnpm run docs:build
 
 - [Development status](development-status.md) — snapshot kesiapan engineering, fitur, dokumentasi, dan gate sebelum merge.
 - [ADR-001: Use VitePress for project documentation](decisions/001-use-vitepress-for-documentation.md) — keputusan tooling dan struktur publikasi dokumentasi.
+- [Persona-rooted contextual activity system](ideas/persona-rooted-contextual-activity-system.md) — arah produk untuk capture Daily Notes, object context yang extensible, Focus Timeline, promosi, dan historical related logs.
+- [Persona-rooted implementation plan](../tasks/persona-contextual-activity-plan.md) — dependency graph, prioritas P0–P3, acceptance criteria, checkpoint, risiko, dan batas implementasi.
 - [Code quality remediation](spec-code-quality-remediation.md) — rencana perbaikan kualitas setelah fondasi Developer Experience.
 - [Inbox quick capture](spec-inbox-quick-capture.md) — kontrak fitur Inbox.
 - [Mobile event/task modal](spec-mobile-event-task-modal.md) — kontrak modal mobile.
+- [Task and Event single-line semantics](spec-task-event-line-semantics.md) — kontrak kanonis grammar, atribut,
+  lifecycle, batas implementasi saat ini, dan proposal ekstensi Task/Event.
+- [Unified Scheduled Item form](spec-unified-scheduled-item-form.md) — kontrak Create/Edit bersama, Object Reference
+  berbasis vault path, Detail Note promotion, dan pemisahan renderer desktop/mobile.
+- [Unified Scheduled Item runtime acceptance](unified-scheduled-item-runtime-acceptance.md) — ledger terpisah untuk hasil
+  automated gate, desktop Obsidian, Android, dan iOS.
+- [Event occurrence lifecycle](spec-event-occurrence-lifecycle.md) — proposal lifecycle Event yang belum
+  diimplementasikan dan masih menunggu persetujuan semantic.
 
 ## Supporting notes
 

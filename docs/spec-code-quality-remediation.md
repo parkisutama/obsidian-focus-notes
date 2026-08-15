@@ -117,12 +117,14 @@ export type SubmissionResult =
 
 - `adapter.exists`, `adapter.read`, and `JSON.parse` failures must be classified separately.
 - An I/O read failure must not be described as corrupted JSON.
-- After an external settings read failure, automatic or user-triggered saves must not overwrite the unread file until a successful reload or explicit recovery decision.
+- After a legacy external-settings read failure, automatic or user-triggered saves must not overwrite the unread recovery file until a successful reload or explicit recovery decision.
 - Invalid JSON must remain untouched and must produce a recoverable error state with a clear message.
 - Settings saves issued close together must execute in call order; an older write may never finish after and replace a newer snapshot.
 - Each save must serialize an immutable snapshot captured at call time.
 - Where the Obsidian adapter permits it safely, preserve a last-known-good backup before replacing the state file. Do not assume filesystem rename semantics without feature testing.
-- First-install creation and legacy `data.json` migration must retain their existing behavior.
+- First install must create standard plugin data. Existing
+  `.obsidian/focus-notes-state.json` settings must migrate once into standard
+  `data.json` without modifying the recovery source.
 - No settings file may be deleted automatically.
 
 Persistence policy should be implemented behind one plugin-owned state writer rather than duplicated across settings consumers.

@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isInboxLineBreakInput, parseInboxRichText, serializeInboxRichText } from "../src/InboxRichText.ts";
+import {
+    formatObjectReferencePart,
+    isInboxLineBreakInput,
+    parseInboxRichText,
+    parseObjectReferenceRichText,
+    serializeInboxRichText,
+} from "../src/InboxRichText.ts";
 import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
 
 test("parses a Markdown mention into a live-link model and preserves surrounding text", () => {
@@ -41,4 +47,17 @@ test("normalizes browser paragraph and line-break input into plain newlines", ()
     assert.equal(isInboxLineBreakInput("insertLineBreak"), true);
     assert.equal(isInboxLineBreakInput("insertText"), false);
     assert.equal(isInboxLineBreakInput("insertCompositionText"), false);
+});
+
+test("parses and serializes resolved Object References without Markdown links", () => {
+    const parts = parseObjectReferenceRichText("Meet @{People/Rina.md} and @Unresolved");
+    assert.deepEqual(parts, [
+        { kind: "text", value: "Meet " },
+        { kind: "link", label: "Rina", filePath: "People/Rina.md" },
+        { kind: "text", value: " and @Unresolved" },
+    ]);
+    assert.equal(
+        serializeInboxRichText(parts, "Daily/2026-08-02.md", formatObjectReferencePart),
+        "Meet @{People/Rina.md} and @Unresolved",
+    );
 });

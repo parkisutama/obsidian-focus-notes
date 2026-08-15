@@ -2,9 +2,11 @@
 
 ## Snapshot
 
-- Date: 2026-08-02
-- Branch baseline: `main` after merge of `chore/developer-experience-foundation`
-- Documentation work: `docs/vitepress-documentation`
+- Date: 2026-08-15
+- Branch: `feature/persona-reliability-foundation`
+- Remote state: local semantic documentation, Task-priority, and Event-lifecycle work are ahead of
+  `origin/feature/persona-reliability-foundation`;
+  not merged to `main`
 - Release status: **not ready for public release**
 - Scope: engineering quality, feature maturity, documentation readiness, and Obsidian submission compliance
 
@@ -12,7 +14,12 @@ This document is the current development checkpoint. It records verified evidenc
 
 ## Executive status
 
-The Developer Experience foundation is implemented, locally green, and merged to `main`. Runtime correctness remediation, core regression coverage, policy compliance, complete documentation, and repeatable Obsidian acceptance remain incomplete. A passing documentation build must not be interpreted as public-release readiness.
+The reliability foundation, contextual capture loop, Timeline source alignment/grouping, object-backed Timeline sources,
+stable Timeline item modal, shared Task/Event Create/Edit forms, Task priority, and Event occurrence lifecycle semantics are
+implemented on the feature branch. The local automated gate is green. Representative performance evidence, complete
+documentation, policy closure, and repeatable real Obsidian
+desktop/mobile acceptance remain incomplete. A passing automated gate must not be interpreted as public-release
+readiness.
 
 ## Engineering quality baseline
 
@@ -25,18 +32,23 @@ The Developer Experience foundation is implemented, locally green, and merged to
 - Node.js 24 and the built-in `node:test` runner are the test contract.
 - `pnpm run test:coverage` reports coverage for source modules loaded by tests.
 - GitHub Actions runs the local quality contract on pull requests and pushes to `main`.
-- The latest local verification passed formatting, lint, version metadata, typecheck, all 14 test files, production build, artifact validation, and dependency audit. A detailed reporter run exposes 47 individual test cases; the file count is the stable discovery contract.
-- The recorded loaded-module coverage baseline is 94.25% lines, 85.48% branches, and 85.07% functions. This is not repository-wide runtime coverage.
+- On 2026-08-15, `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` passed formatting, lint, version metadata,
+  typecheck, all 56 discovered test files, production build, artifact validation, and the documentation build.
+- The older recorded loaded-module coverage baseline was 94.25% lines, 85.48% branches, and 85.07% functions. It is
+  not repository-wide runtime coverage and was not refreshed by the 2026-08-08 gate.
 
-### Still open from the code-quality audit
+### Current code-quality status
 
-1. Prevent concurrent desktop submission and apply one shared submission rule to Inbox, Event, and Task.
-2. Represent primary-success/secondary-failure as a typed partial outcome so retry cannot duplicate the primary entry.
-3. Reject invalid or non-positive event/task time ranges instead of silently substituting values.
-4. Separate missing, unreadable, and malformed state files; do not overwrite state after a failed read.
-5. Serialize settings writes so an older delayed write cannot replace a newer snapshot.
-6. Add direct regression coverage for `TimerEngine`, Markdown writers, scheduled-item parser/query/indexer, recent entries, persistence failure modes, and renderer orchestration.
-7. Repeat the full quality gate from a clean checkout in CI; local success does not prove the remote workflow has run.
+The submission concurrency policy, typed primary/secondary outcomes, failed-destination-only retry, temporal validation,
+recoverable state reads, ordered settings writes, writer/parser compatibility fixtures, and Timeline integration coverage
+have been implemented and are green in the local gate.
+
+Still open:
+
+1. Add or confirm direct regression coverage for remaining core areas such as `TimerEngine` and recent-entry behavior.
+2. Complete representative suggestion and Timeline indexing benchmarks and runtime profiling.
+3. Repeat the full quality gate from a clean checkout in remote CI; local success does not prove the remote workflow ran.
+4. Record repeatable desktop and real-mobile acceptance separately from automated verification.
 
 The detailed acceptance criteria and order remain in [Code quality remediation](spec-code-quality-remediation.md).
 
@@ -45,11 +57,11 @@ The detailed acceptance criteria and order remain in [Code quality remediation](
 | Area | Implemented evidence | Remaining engineering or acceptance work | Status |
 |---|---|---|---|
 | Timer and session logging | Pomodoro, timer, stopwatch, logging target, wellbeing, reflection, and recent entries exist | Direct timer/writer/reader regression coverage is incomplete | Needs hardening |
-| Focus Timeline | Day and multi-day views, source filtering, parsing, layout, and note navigation exist | Parser/query/indexer coverage and bounded performance fixtures are incomplete | Needs hardening |
-| Event and Task capture | Desktop and dedicated mobile renderers exist; shared form/submission seams have tests | Concurrency, typed partial outcomes, shared validation, and repeatable desktop/mobile acceptance remain open | Needs hardening |
-| Inbox quick capture | Inbox-first chip, editable destination, mention/tag suggestions, relative Markdown links, and desktop/mobile UI exist | Acceptance evidence is conversational rather than a repeatable checklist; submission and persistence risks still apply | Feature complete, not release-ready |
+| Focus Timeline | Day and multi-day views, aligned/grouped sources, object-backed source filters, stable detail modal, conflict-safe existing-record editing, Event lifecycle presentation, parsing, layout, and source navigation exist | Bounded representative performance evidence and real desktop/mobile acceptance remain open | Feature complete, not release-ready |
+| Event and Task capture | Shared Create/Edit data contract, separate shared desktop/mobile renderers, typed partial outcomes, Task priority, Event lifecycle fields, Object References, Detail Note promotion, and related-log recovery have automated coverage | Repeatable desktop/mobile acceptance remains open | Feature complete, not release-ready |
+| Inbox quick capture | Inbox-first chip, editable destination, mention/tag suggestions, relative Markdown links, shared submission safety, and desktop/mobile UI exist | Acceptance evidence remains conversational rather than a repeatable record | Feature complete, not release-ready |
 | Mobile modal UX | Dedicated mobile layout, viewport/keyboard policy, and suggestion layering exist | Test again on representative Android and iOS devices after runtime remediation | Provisional |
-| Settings persistence | Migration and external config-dir state file exist | Failure classification, ordered writes, recovery UX, and adapter-focused tests remain open | High risk |
+| Settings persistence | Recoverable load classification, migration through plugin data, ordered snapshot writes, and regression tests exist | Representative migrated-state acceptance and recovery UX confirmation remain open | Needs acceptance |
 
 “Implemented” means code exists. It does not mean the feature has passed release acceptance.
 
@@ -62,16 +74,16 @@ Audit sources:
 
 ### Confirmed blockers
 
-1. The repository has no root `LICENSE` file. `package.json` declaring MIT does not satisfy the policy requirement.
-2. Command ID `open-focus-notes` contains the plugin ID `focus-notes`; Obsidian automatically prefixes command IDs.
+1. Command ID `open-focus-notes` contains the plugin ID `focus-notes`; the existing audit records this as incompatible
+   with Obsidian's automatic command-ID prefixing. The external policy has not been re-audited in this snapshot.
 
 ### Unverified requirements and review risks
 
 1. `minAppVersion` is `1.4.0`, while the development API is `1.12.3`; compatibility with 1.4.0 has not been demonstrated. Test the declared minimum or raise it to the verified baseline.
 2. The manifest description is within the 250-character limit and ends with a period, but it is dense and does not clearly summarize the current Inbox/Event/Task/Timeline scope.
-3. Fork/original-author status cannot be verified from this checkout because no `origin` remote is configured.
-4. No local `1.2.0` tag or GitHub release could be verified. The release workflow exists, but remote artifacts are not evidence until it runs.
-5. The default branch still lacks the six commits in this branch; Obsidian evaluates the manifest at the default branch HEAD during submission.
+3. An `origin` remote is configured, but fork/original-author submission status has not been re-verified.
+4. No verified `1.2.0` release/tag evidence has been recorded in this document.
+5. The feature branch is not merged to `main`; release readiness must be evaluated from the final default-branch state.
 
 ### Confirmed policy-compatible evidence
 
@@ -79,8 +91,10 @@ Audit sources:
 - No Node.js or Electron API import was found in runtime `src/`; `isDesktopOnly: false` is consistent with this scan.
 - Build-only use of `fs`, `path`, and `process` is not bundled as plugin runtime behavior.
 - No obvious sample-plugin placeholders or dynamic code execution were found.
-- Direct development dependencies use permissive licenses, but this does not replace the missing project `LICENSE` or a full transitive attribution review.
-- State is stored inside `vault.configDir` and the behavior is disclosed in the root README; it does not access files outside the vault.
+- A root MIT `LICENSE` now exists. Required attribution and a full transitive license review remain separate checks.
+- Settings use Obsidian's `Plugin.loadData()` and `Plugin.saveData()` APIs. The
+  adapter is used read-only only for migration from the former
+  `vault.configDir/focus-notes-state.json` location.
 
 ## Documentation status
 
@@ -94,11 +108,11 @@ Before public release, split the documentation into:
 
 ## Required order before merge
 
-1. Preserve the current green Developer Experience baseline.
-2. Complete submission-safety fixes: concurrency and partial outcomes.
-3. Complete validation and settings persistence safety.
-4. Add missing core regression coverage.
-5. Resolve Obsidian blockers: `LICENSE`, command ID, and verified `minAppVersion`.
+1. Preserve the current green Developer Experience and reliability baseline.
+2. Preserve the completed submission-safety contract: concurrency guard, typed partial outcomes, and retry isolation.
+3. Preserve the completed temporal validation and ordered/recoverable settings persistence behavior.
+4. Add remaining core regression coverage and representative performance evidence.
+5. Resolve remaining Obsidian blockers: command ID and verified `minAppVersion`; retain the new root `LICENSE`.
 6. Keep the VitePress information architecture and build gate green while content is migrated incrementally.
 7. Run automated gates from a clean checkout and capture real Obsidian desktop/mobile acceptance.
 8. Review the complete branch diff against `main`, including the one-time Biome formatting baseline.
@@ -110,11 +124,11 @@ Before public release, split the documentation into:
 - [x] Reproducible dependency installation and pinned critical tooling
 - [x] Real formatter, linter, typecheck, tests, coverage command, build, and artifact checks
 - [x] Local dependency audit has no known moderate-or-higher vulnerability
-- [ ] Submission concurrency and partial-write semantics are safe
-- [ ] Invalid date/time input cannot reach a writer
-- [ ] Settings read failure cannot cause destructive overwrite; writes are ordered
+- [x] Submission concurrency and partial-write semantics are protected by the shared submission contract
+- [x] Invalid date/time input is rejected before submission reaches a writer
+- [x] Settings read failures are classified and writes are ordered snapshots
 - [ ] Core timer/writer/reader/parser/indexer behavior has direct regression coverage
-- [ ] Root `LICENSE` exists and required attribution has been reviewed
+- [ ] Root `LICENSE` exists; required attribution review remains open
 - [ ] Command IDs comply with Obsidian submission requirements
 - [ ] `minAppVersion` is evidence-backed
 - [x] Documentation tooling decision and post-merge sequence are recorded

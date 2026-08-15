@@ -1,33 +1,57 @@
-import { type App, Component, FuzzySuggestModal, Notice, type TFile, setIcon } from "obsidian";
-import { EventTaskFormState, type EventTaskKind, type HubMode, formatLocalDate } from "./EventTaskFormState";
-import { submitEventTask, submitInbox } from "./EventTaskSubmission";
+import { type App, Component, Notice, setIcon } from "obsidian";
+import { preferActiveNoteTarget } from "./CaptureTarget";
+import { EventTaskFormState, type EventTaskKind, formatLocalDate } from "./EventTaskFormState";
+import type { OpenEventTaskFormOptions } from "./EventTaskModal";
+import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
+import {
+    type EventTaskSubmissionResult,
+    type PartialSubmissionResult,
+    retryRelatedSubmission,
+    submitEventTask,
+    submitInbox,
+} from "./EventTaskSubmission";
 import { type EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
+import { InboxMobileForm } from "./InboxMobileForm";
+import { ContextNotesController } from "./InboxNotesController";
+import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { getMobileViewportMetrics } from "./MobileViewport";
+import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
+import { SubmissionPolicy } from "./SubmissionPolicy";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
+import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
 import type { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
-import { InboxMobileForm } from "./InboxMobileForm";
-import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 
 export class EventTaskMobileScreen extends Component {
     private rootEl: HTMLElement | null = null;
     private bodyEl: HTMLElement | null = null;
+    private saveButtonEl: HTMLButtonElement | null = null;
     private resolved = false;
-    private submitting = false;
+    private readonly submissionPolicy = new SubmissionPolicy();
     private owner: Component | null = null;
     private readonly form: EventTaskFormState;
+    private contextNotesController: ContextNotesController | null = null;
+    private pendingRecovery: PartialSubmissionResult | null = null;
+    private recoveryInFlight = false;
+    private completionNotified = false;
 
     constructor(
         private readonly app: App,
         private readonly getSettings: () => FocusNotesSettings,
         private readonly anchorDate: Date = new Date(),
         private readonly onComplete: () => void = () => {},
+        options: OpenEventTaskFormOptions = {},
     ) {
         super();
         const settings = getSettings();
         const resolver = new TargetResolver(app, settings);
-        const target = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+        const configured = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+        const activeFile = app.workspace.getActiveFile();
+        const target = preferActiveNoteTarget(
+            configured,
+            options.targetFile ?? (activeFile?.extension === "md" ? activeFile.path : null),
+        );
         const inboxTarget = selectInboxTarget({
             mode: settings.inbox.defaultTargetMode,
             dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),
@@ -44,6 +68,7 @@ export class EventTaskMobileScreen extends Component {
             inbox: settings.inbox,
             inboxTargetFile: inboxTarget?.file ?? "",
         });
+        this.form.kind = options.initialKind ?? "inbox";
     }
 
     open(owner?: Component): void {
@@ -99,6 +124,7 @@ export class EventTaskMobileScreen extends Component {
             text: "Save",
             attr: { type: "button" },
         });
+        this.saveButtonEl = save;
 
         this.bodyEl = root.createEl("main", { cls: "fn-mobile-event-body" });
         const title = this.bodyEl.createEl("input", {
@@ -135,7 +161,9 @@ export class EventTaskMobileScreen extends Component {
             eventTaskFields,
         );
         this.renderEventFields(eventSection);
+        this.renderEventLifecycleFields(eventSection);
         this.renderTaskDueFields(taskSection);
+        this.renderTaskPriorityFields(taskSection);
         this.renderDescription(eventTaskFields);
 
         const options = this.disclosure(
@@ -149,7 +177,6 @@ export class EventTaskMobileScreen extends Component {
         const reminders = this.disclosure(taskOptions, "Reminders", "bell");
         this.renderReminders(reminders);
         options.appendChild(taskOptions);
-        this.renderRelatedNote(this.disclosure(options, "Related note", "link"));
         this.renderDetailNote(this.disclosure(options, "Detail note", "file-text"));
         this.renderSaveTarget(this.disclosure(options, "Save to", "folder", this.form.targetFile));
 
@@ -165,6 +192,21 @@ export class EventTaskMobileScreen extends Component {
         this.registerDomEvent(save, "click", () => void this.submit());
         const focusTimer = window.setTimeout(() => title.focus(), 50);
         this.register(() => window.clearTimeout(focusTimer));
+    }
+
+    private renderTaskPriorityFields(container: HTMLElement): void {
+        const card = this.fieldGroup(container, "Priority", "signal");
+        this.segmented(
+            card,
+            [
+                { value: "normal", label: "Normal" },
+                { value: "low", label: "Low" },
+                { value: "medium", label: "Medium" },
+                { value: "high", label: "High" },
+            ],
+            this.form.taskPriority,
+            (priority) => (this.form.taskPriority = priority),
+        );
     }
 
     private renderKindSelector(
@@ -205,8 +247,15 @@ export class EventTaskMobileScreen extends Component {
             onChange(kind);
         };
         this.registerDomEvent(inboxButton, "click", () => activate("inbox"));
-        this.registerDomEvent(eventButton, "click", () => activate("event"));
-        this.registerDomEvent(taskButton, "click", () => activate("task"));
+        this.registerDomEvent(eventButton, "click", () => this.openScheduledItemCreate("event"));
+        this.registerDomEvent(taskButton, "click", () => this.openScheduledItemCreate("task"));
+        activate(this.form.kind);
+    }
+
+    private openScheduledItemCreate(kind: "task" | "event"): void {
+        const targetFile = this.form.targetFile;
+        this.close();
+        openMobileScheduledItemCreate(this.app, this.getSettings, this.anchorDate, this.onComplete, kind, targetFile);
     }
 
     private renderEventFields(container: HTMLElement): void {
@@ -225,6 +274,47 @@ export class EventTaskMobileScreen extends Component {
         allDay.checked = this.form.eventAllDay;
     }
 
+    private renderEventLifecycleFields(container: HTMLElement): void {
+        const statusCard = this.fieldGroup(container, "Status", "circle-dot");
+        const actualCard = this.fieldGroup(container, "Actual time", "clock-check");
+        let actualFields: HTMLElement;
+        const actualToggle = this.checkbox(actualCard, "Record different actual time", false, (checked) => {
+            this.form.eventActualTimeEnabled = checked;
+            actualFields.toggleClass("fn-gcal-hidden", !checked);
+        });
+        actualFields = actualCard.createDiv({ cls: "fn-mobile-event-conditional fn-gcal-hidden" });
+        const startRow = actualFields.createDiv({ cls: "fn-mobile-event-grid" });
+        const startDate = this.input(startRow, "date", "Actual start date", this.form.eventActualStartDate);
+        const startTime = this.input(startRow, "time", "Actual start time", this.form.eventActualStartTime);
+        const endRow = actualFields.createDiv({ cls: "fn-mobile-event-grid" });
+        const endDate = this.input(endRow, "date", "Actual end date", this.form.eventActualEndDate);
+        const endTime = this.input(endRow, "time", "Actual end time", this.form.eventActualEndTime);
+        this.segmented(
+            statusCard,
+            [
+                { value: "planned", label: "Planned" },
+                { value: "completed", label: "Completed" },
+                { value: "cancelled", label: "Cancelled" },
+            ],
+            this.form.eventStatus,
+            (status) => {
+                this.form.eventStatus = status;
+                const canRecordActual = status === "completed";
+                actualCard.toggleClass("fn-gcal-hidden", !canRecordActual);
+                if (!canRecordActual) {
+                    actualToggle.checked = false;
+                    this.form.eventActualTimeEnabled = false;
+                    actualFields.addClass("fn-gcal-hidden");
+                }
+            },
+        );
+        actualCard.addClass("fn-gcal-hidden");
+        this.registerDomEvent(startDate, "change", () => (this.form.eventActualStartDate = startDate.value));
+        this.registerDomEvent(startTime, "change", () => (this.form.eventActualStartTime = startTime.value));
+        this.registerDomEvent(endDate, "change", () => (this.form.eventActualEndDate = endDate.value));
+        this.registerDomEvent(endTime, "change", () => (this.form.eventActualEndTime = endTime.value));
+    }
+
     private renderTaskDueFields(container: HTMLElement): void {
         const card = this.fieldGroup(container, "Due date", "calendar");
         const row = card.createDiv({ cls: "fn-mobile-event-grid" });
@@ -241,12 +331,25 @@ export class EventTaskMobileScreen extends Component {
 
     private renderDescription(container: HTMLElement): void {
         const card = this.fieldGroup(container, "Description", "align-left");
-        const description = card.createEl("textarea", {
+        const editor = card.createDiv({
             cls: "fn-mobile-event-description",
-            attr: { placeholder: "Add description or attachment…", "aria-label": "Description" },
+            attr: {
+                "data-placeholder": "Add description. Use @ for contextual notes, # for tags.",
+                "aria-label": "Description",
+            },
         });
-        description.rows = 2;
-        this.registerDomEvent(description, "input", () => (this.form.description = description.value));
+        const controller = new ContextNotesController(this.app, editor, {
+            initialValue: this.form.description,
+            targetFile: this.form.targetFile,
+            getContextSources: () => this.getSettings().inbox.contextSources,
+            onChange: (value) => (this.form.description = value),
+            referenceFormat: "object-reference",
+        });
+        this.contextNotesController = controller;
+        this.register(() => {
+            controller.destroy();
+            if (this.contextNotesController === controller) this.contextNotesController = null;
+        });
     }
 
     private renderTaskTimebox(container: HTMLElement): void {
@@ -297,67 +400,6 @@ export class EventTaskMobileScreen extends Component {
         });
     }
 
-    private renderRelatedNote(container: HTMLElement): void {
-        const modeHost = container.createDiv();
-        const inputRow = container.createDiv({ cls: "fn-mobile-event-related-input fn-gcal-hidden" });
-        const noteField = this.iconInput(inputRow, "search", "Related note", "", "Search notes…");
-        const note = noteField.input;
-        const pick = inputRow.createEl("button", {
-            cls: "fn-mobile-event-pick",
-            text: "Pick",
-            attr: { type: "button" },
-        });
-        this.registerSuggester(new FileSuggest(this.app, note));
-        const folderField = this.iconInput(
-            container,
-            "folder",
-            "Related note folder",
-            this.form.hubCreateFolder,
-            "Folder for new note",
-        );
-        const folder = folderField.input;
-        folderField.wrapper.addClass("fn-gcal-hidden");
-        this.registerSuggester(new FolderSuggest(this.app, folder));
-        const alsoWrap = container.createDiv({ cls: "fn-gcal-hidden" });
-        this.checkbox(alsoWrap, "Also write to related note", false, (checked) => (this.form.writeToHubNote = checked));
-
-        this.segmented<HubMode>(
-            modeHost,
-            [
-                { value: "none", label: "None" },
-                { value: "link", label: "Link" },
-                { value: "create", label: "New note" },
-            ],
-            "none",
-            (mode) => {
-                this.form.hubMode = mode;
-                inputRow.toggleClass("fn-gcal-hidden", mode === "none");
-                folderField.wrapper.toggleClass("fn-gcal-hidden", mode !== "create");
-                pick.toggleClass("fn-gcal-hidden", mode !== "link");
-                alsoWrap.toggleClass("fn-gcal-hidden", mode === "none");
-                note.placeholder = mode === "create" ? "New note name" : "Search notes…";
-                noteField.icon.empty();
-                setIcon(noteField.icon, mode === "create" ? "file-text" : "search");
-                note.value = mode === "create" ? this.form.title : "";
-                if (mode === "create") this.form.hubCreateName = note.value;
-                if (mode === "link") this.form.hubLinkPath = "";
-            },
-        );
-        this.registerDomEvent(note, "input", () => {
-            if (this.form.hubMode === "link") this.form.hubLinkPath = note.value;
-            if (this.form.hubMode === "create") this.form.hubCreateName = note.value;
-        });
-        this.registerDomEvent(folder, "input", () => (this.form.hubCreateFolder = folder.value));
-        this.registerDomEvent(pick, "click", () => {
-            const picker = new MobileFilePicker(this.app, (file) => {
-                note.value = file.path;
-                this.form.hubLinkPath = file.path;
-            });
-            this.register(() => picker.close());
-            picker.open();
-        });
-    }
-
     private renderDetailNote(container: HTMLElement): void {
         const toggleHost = container.createDiv();
         const fields = container.createDiv({ cls: "fn-mobile-event-conditional fn-gcal-hidden" });
@@ -384,6 +426,25 @@ export class EventTaskMobileScreen extends Component {
 
     private renderSaveTarget(container: HTMLElement): void {
         const file = this.iconInput(container, "file-text", "Save to file", this.form.targetFile, "Note path").input;
+        const alignment = container.createDiv({ cls: "fn-capture-timeline-alignment" });
+        const updateAlignment = (): void => {
+            const settings = this.getSettings();
+            const resolver = new TargetResolver(this.app, settings);
+            const dailyFolder = settings.useDailyNotesAsDefault ? resolver.getDailyNoteFolder() : null;
+            const groups = buildTimelineSourceGroups(
+                settings.timeline.sourceFolders,
+                dailyFolder,
+                settings.inbox.contextSources,
+            );
+            const target = this.app.vault.getAbstractFileByPath(file.value);
+            const properties = isTFile(target)
+                ? (this.app.metadataCache.getFileCache(target)?.frontmatter as Record<string, unknown> | undefined)
+                : undefined;
+            const status = assessTimelineTargetGroups(file.value, properties, groups);
+            alignment.setText(status === "aligned" ? "Indexed by Focus Timeline" : "Outside Focus Timeline sources");
+            alignment.toggleClass("is-warning", status !== "aligned");
+        };
+        updateAlignment();
         const heading = this.iconInput(
             container,
             "hash",
@@ -395,7 +456,11 @@ export class EventTaskMobileScreen extends Component {
         this.checkbox(container, "Insert at top", this.form.targetPosition === "start", (checked) => {
             this.form.targetPosition = checked ? "start" : "end";
         });
-        this.registerDomEvent(file, "input", () => (this.form.targetFile = file.value));
+        this.registerDomEvent(file, "input", () => {
+            this.form.targetFile = file.value;
+            this.contextNotesController?.setTargetFile(file.value);
+            updateAlignment();
+        });
         this.registerDomEvent(heading, "input", () => (this.form.targetHeading = heading.value));
     }
 
@@ -404,13 +469,7 @@ export class EventTaskMobileScreen extends Component {
             this.form.inboxTitle = value;
             return;
         }
-        const previous = this.form.title;
         this.form.title = value;
-        if (this.form.hubMode === "create" && (!this.form.hubCreateName || this.form.hubCreateName === previous)) {
-            this.form.hubCreateName = value;
-            const relatedName = this.rootEl?.querySelector<HTMLInputElement>(".fn-mobile-event-related-input input");
-            if (relatedName && (!relatedName.value || relatedName.value === previous)) relatedName.value = value;
-        }
     }
 
     private fieldGroup(container: HTMLElement, label: string, icon: string): HTMLElement {
@@ -548,17 +607,22 @@ export class EventTaskMobileScreen extends Component {
     }
 
     private async submit(): Promise<void> {
-        if (this.resolved || this.submitting) return;
+        if (this.resolved) return;
+        if (this.pendingRecovery) {
+            await this.retryRelatedLogs();
+            return;
+        }
         const settings = this.getSettings();
         const writer = new EventTaskWriter(this.app, settings.eventTask);
         if (this.form.kind === "inbox") {
-            this.submitting = true;
-            const result = await submitInbox(this.form, {
-                writer,
-                resolveTarget: () => this.resolveInboxTarget(),
-            });
-            this.submitting = false;
-            this.finishSubmission(result);
+            await this.executeSubmission(() =>
+                submitInbox(this.form, {
+                    writer,
+                    resolveTarget: () => this.resolveInboxTarget(),
+                    contextNotes: readContextSuggestionNotes(this.app),
+                    contextSources: settings.inbox.contextSources,
+                }),
+            );
             return;
         }
         if (!this.form.title.trim()) {
@@ -570,31 +634,74 @@ export class EventTaskMobileScreen extends Component {
             return;
         }
 
-        this.submitting = true;
-        const result = await submitEventTask(this.form, {
-            writer,
-            defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
-            defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
-            resolveTargetFile: (record) => this.resolveTargetFile(record),
-            findMarkdownFile: (path) => {
-                const file = this.app.vault.getAbstractFileByPath(path);
-                return isTFile(file) ? file : null;
-            },
-            openFile: (file) => {
-                const vaultFile = this.app.vault.getAbstractFileByPath(file.path);
-                if (isTFile(vaultFile)) void this.app.workspace.getLeaf(false).openFile(vaultFile, { active: false });
-            },
-        });
-        this.submitting = false;
-        this.finishSubmission(result);
+        await this.executeSubmission(() =>
+            submitEventTask(this.form, {
+                writer,
+                defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
+                defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
+                resolveTargetFile: (record) => this.resolveTargetFile(record),
+                findMarkdownFile: (path) => {
+                    const file = this.app.vault.getAbstractFileByPath(path);
+                    return isTFile(file) ? file : null;
+                },
+                openFile: (file) => {
+                    const vaultFile = this.app.vault.getAbstractFileByPath(file.path);
+                    if (isTFile(vaultFile))
+                        void this.app.workspace.getLeaf(false).openFile(vaultFile, { active: false });
+                },
+                contextNotes: readContextSuggestionNotes(this.app),
+                contextSources: settings.inbox.contextSources,
+            }),
+        );
     }
 
-    private finishSubmission(result: { ok: boolean; message: string }): void {
+    private async executeSubmission(operation: () => Promise<EventTaskSubmissionResult>): Promise<void> {
+        const attempt = this.submissionPolicy.run(operation);
+        if (!attempt) return;
+
+        this.setSubmissionBusy(true);
+        try {
+            this.finishSubmission(await attempt);
+        } finally {
+            this.setSubmissionBusy(false);
+        }
+    }
+
+    private setSubmissionBusy(busy: boolean): void {
+        if (!this.saveButtonEl) return;
+        this.saveButtonEl.disabled = busy;
+        this.saveButtonEl.setAttribute("aria-busy", String(busy));
+        this.saveButtonEl.setText(busy ? "Saving…" : this.pendingRecovery ? "Retry related logs" : "Save");
+    }
+
+    private finishSubmission(result: EventTaskSubmissionResult): void {
         new Notice(result.message);
-        if (result.ok) {
-            this.resolved = true;
+        if (result.status === "failure") return;
+        if (!this.completionNotified) {
+            this.completionNotified = true;
             this.onComplete();
-            this.close();
+        }
+        if (result.status === "partial") {
+            this.pendingRecovery = result;
+            return;
+        }
+        this.pendingRecovery = null;
+        this.resolved = true;
+        this.close();
+    }
+
+    private async retryRelatedLogs(): Promise<void> {
+        const recovery = this.pendingRecovery;
+        if (!recovery || this.recoveryInFlight) return;
+        this.recoveryInFlight = true;
+        this.setSubmissionBusy(true);
+        try {
+            this.finishSubmission(await retryRelatedSubmission(recovery, new EventTaskWriter(this.app)));
+        } catch (error) {
+            new Notice(`Failed to retry related logs: ${error instanceof Error ? error.message : String(error)}`);
+        } finally {
+            this.recoveryInFlight = false;
+            this.setSubmissionBusy(false);
         }
     }
 
@@ -610,27 +717,5 @@ export class EventTaskMobileScreen extends Component {
             position: this.form.targetPosition,
         };
         return new TargetResolver(this.app, this.getSettings()).resolve(target, when).file;
-    }
-}
-
-class MobileFilePicker extends FuzzySuggestModal<TFile> {
-    constructor(
-        app: App,
-        private readonly onPick: (file: TFile) => void,
-    ) {
-        super(app);
-        this.setPlaceholder("Pick a note…");
-    }
-
-    getItems(): TFile[] {
-        return this.app.vault.getMarkdownFiles();
-    }
-
-    getItemText(file: TFile): string {
-        return file.path;
-    }
-
-    onChooseItem(file: TFile): void {
-        this.onPick(file);
     }
 }

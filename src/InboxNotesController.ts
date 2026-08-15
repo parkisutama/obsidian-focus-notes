@@ -1,27 +1,35 @@
 import { AbstractInputSuggest, type App, type HoverPopover, Keymap } from "obsidian";
-import { findInboxTrigger, type InboxTrigger } from "./InboxNotesText";
+import { findInboxTrigger, type InboxTrigger, suggestionSeparator } from "./InboxNotesText";
 import {
     type InboxRichTextPart,
     isInboxLineBreakInput,
     parseInboxRichText,
+    parseObjectReferenceRichText,
     serializeInboxRichText,
+    formatObjectReferencePart,
 } from "./InboxRichText";
-import type { MentionSuggestion } from "./InboxSuggestions";
+import type { ContextSuggestion } from "./InboxSuggestions";
 import { ObsidianInboxSuggestionSource } from "./ObsidianInboxSuggestionSource";
+import { getCreatableObjectSources } from "./ObjectNote";
+import { ObjectNoteModal } from "./ObjectNoteModal";
 import { formatRelativeMarkdownLink } from "./InboxMarkdown";
+import type { ContextSourceSettings } from "./types";
 
-type InboxNotesSuggestion = { kind: "mention"; value: MentionSuggestion } | { kind: "tag"; value: string };
+type ContextNotesSuggestion =
+    | { kind: "mention"; value: ContextSuggestion }
+    | { kind: "tag"; value: string }
+    | { kind: "create-object"; value: string };
 
-export interface InboxNotesControllerOptions {
+export interface ContextNotesControllerOptions {
     initialValue: string;
     targetFile: string;
-    getPeopleFolders(): string[];
-    getPlaceFolders(): string[];
+    getContextSources(): ContextSourceSettings[];
     onChange(value: string): void;
+    referenceFormat?: "markdown-link" | "object-reference";
 }
 
 /** Rich contenteditable controller that persists portable Markdown, never editor HTML. */
-export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggestion> {
+export class ContextNotesController extends AbstractInputSuggest<ContextNotesSuggestion> {
     hoverPopover: HoverPopover | null = null;
     private activeTrigger: InboxTrigger | null = null;
     private targetFile: string;
@@ -45,7 +53,7 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
     constructor(
         app: App,
         private readonly inputEl: HTMLDivElement,
-        private readonly options: InboxNotesControllerOptions,
+        private readonly options: ContextNotesControllerOptions,
     ) {
         super(app, inputEl);
         this.source = new ObsidianInboxSuggestionSource(app);
@@ -63,53 +71,78 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
         inputEl.addEventListener("keydown", this.onKeyDown);
     }
 
-    getSuggestions(): InboxNotesSuggestion[] {
+    getSuggestions(): ContextNotesSuggestion[] {
         const text = this.readVisibleText();
         const cursor = getCaretOffset(this.inputEl);
         this.activeTrigger = findInboxTrigger(text, cursor);
         if (!this.activeTrigger) return [];
 
         if (this.activeTrigger.kind === "mention") {
-            return this.source
-                .getMentionSuggestions(
-                    this.activeTrigger.query,
-                    this.options.getPeopleFolders(),
-                    this.options.getPlaceFolders(),
-                    this.limit,
-                )
+            const sources = this.options.getContextSources();
+            const matches = this.source
+                .getContextSuggestions(this.activeTrigger.query, sources, this.limit)
                 .map((value) => ({ kind: "mention" as const, value }));
+            const query = this.activeTrigger.query.trim();
+            if (!query || getCreatableObjectSources(sources).length === 0) return matches;
+            return [...matches.slice(0, Math.max(0, this.limit - 1)), { kind: "create-object", value: query }];
         }
         return this.source
             .getTagSuggestions(this.activeTrigger.query, this.limit)
             .map((value) => ({ kind: "tag" as const, value }));
     }
 
-    renderSuggestion(suggestion: InboxNotesSuggestion, el: HTMLElement): void {
+    renderSuggestion(suggestion: ContextNotesSuggestion, el: HTMLElement): void {
         if (suggestion.kind === "tag") {
             el.setText(suggestion.value);
+            return;
+        }
+        if (suggestion.kind === "create-object") {
+            el.createDiv({ text: `Create “${suggestion.value}”…`, cls: "fn-inbox-suggestion-label" });
+            el.createDiv({ text: "New Object Note from a configured template", cls: "fn-inbox-suggestion-context" });
             return;
         }
         const { value } = suggestion;
         el.createDiv({ text: value.label, cls: "fn-inbox-suggestion-label" });
         el.createDiv({
-            text: `${value.kind === "person" ? "People" : "Place"} · ${value.filePath}`,
+            text: `${value.sourceName} · ${value.filePath}`,
             cls: "fn-inbox-suggestion-context",
         });
     }
 
-    selectSuggestion(suggestion: InboxNotesSuggestion): void {
+    selectSuggestion(suggestion: ContextNotesSuggestion): void {
         const trigger = this.activeTrigger;
         if (!trigger) return;
+        if (suggestion.kind === "create-object") {
+            this.close();
+            new ObjectNoteModal(this.app, this.options.getContextSources(), suggestion.value, (file, label) =>
+                this.replaceTriggerWithLink(trigger, file.path, label),
+            ).open();
+            return;
+        }
+        const separator = suggestionSeparator(this.readVisibleText(), trigger.end);
         const replacement =
             suggestion.kind === "tag"
                 ? this.inputEl.ownerDocument.createTextNode(suggestion.value)
                 : this.createLink(suggestion.value.filePath, suggestion.value.label);
 
         replaceVisibleRange(this.inputEl, trigger.start, trigger.end, replacement);
-        placeCaretAfter(replacement);
+        const cursorNode = this.inputEl.ownerDocument.createTextNode(separator);
+        replacement.parentNode?.insertBefore(cursorNode, replacement.nextSibling);
+        placeCaretAtEnd(cursorNode);
         this.emitMarkdown();
         this.activeTrigger = null;
         this.close();
+    }
+
+    private replaceTriggerWithLink(trigger: InboxTrigger, filePath: string, label: string): void {
+        const separator = suggestionSeparator(this.readVisibleText(), trigger.end);
+        const replacement = this.createLink(filePath, label);
+        replaceVisibleRange(this.inputEl, trigger.start, trigger.end, replacement);
+        const cursorNode = this.inputEl.ownerDocument.createTextNode(separator);
+        replacement.parentNode?.insertBefore(cursorNode, replacement.nextSibling);
+        placeCaretAtEnd(cursorNode);
+        this.emitMarkdown();
+        this.activeTrigger = null;
     }
 
     setTargetFile(nextTargetFile: string): void {
@@ -126,14 +159,18 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
         this.inputEl.removeEventListener("click", this.onClick);
         this.inputEl.removeEventListener("mouseover", this.onMouseOver);
         this.inputEl.removeEventListener("keydown", this.onKeyDown);
+        this.source.destroy();
         this.close();
     }
 
     private renderInitialValue(markdown: string): void {
-        const parts = parseInboxRichText(markdown, (destination) => {
-            const decoded = safeDecodeURIComponent(destination);
-            return this.app.metadataCache.getFirstLinkpathDest(decoded, this.targetFile)?.path ?? null;
-        });
+        const parts =
+            this.options.referenceFormat === "object-reference"
+                ? parseObjectReferenceRichText(markdown)
+                : parseInboxRichText(markdown, (destination) => {
+                      const decoded = safeDecodeURIComponent(destination);
+                      return this.app.metadataCache.getFirstLinkpathDest(decoded, this.targetFile)?.path ?? null;
+                  });
         this.inputEl.empty();
         for (const part of parts) {
             this.inputEl.appendChild(
@@ -158,9 +195,11 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
     }
 
     private emitMarkdown(): void {
-        this.options.onChange(
-            serializeInboxRichText(readDomParts(this.inputEl), this.targetFile, formatRelativeMarkdownLink),
-        );
+        const formatter =
+            this.options.referenceFormat === "object-reference"
+                ? formatObjectReferencePart
+                : formatRelativeMarkdownLink;
+        this.options.onChange(serializeInboxRichText(readDomParts(this.inputEl), this.targetFile, formatter));
     }
 
     private readVisibleText(): string {
@@ -200,6 +239,8 @@ export class InboxNotesController extends AbstractInputSuggest<InboxNotesSuggest
         });
     }
 }
+
+export { ContextNotesController as InboxNotesController };
 
 function readDomParts(root: HTMLElement): InboxRichTextPart[] {
     const parts: InboxRichTextPart[] = [];
@@ -263,6 +304,18 @@ function pointAtOffset(root: HTMLElement, offset: number): { node: Node; offset:
         node = walker.nextNode();
     }
     return { node: root, offset: root.childNodes.length };
+}
+
+function placeCaretAtEnd(node: Node): void {
+    const document = node.ownerDocument;
+    if (!document) return;
+    const range = document.createRange();
+    range.setStart(node, node.textContent?.length ?? 0);
+    range.collapse(true);
+    const selection = document.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    (node.parentElement as HTMLElement | null)?.focus();
 }
 
 function placeCaretAfter(node: Node): void {

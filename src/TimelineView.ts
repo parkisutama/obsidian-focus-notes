@@ -1,14 +1,19 @@
-import { ItemView, Notice, TFile, type ViewStateResult, type WorkspaceLeaf, setIcon } from "obsidian";
+import { ItemView, Notice, setIcon, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
+import { openEventTaskForm } from "./EventTaskModal";
+import { openScheduledItemEditor } from "./ScheduledItemEditor";
 import { ScheduledItemIndexer } from "./ScheduledItemIndexer";
 import { ScheduledItemParser } from "./ScheduledItemParser";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
 import type { ScheduledItem, TimelineMode, TimelineRange } from "./ScheduledItemTypes";
+import { TargetResolver } from "./TargetResolver";
 import { TimelineGrid } from "./TimelineGrid";
+import { PendingTasksModal, TimelineItemModal } from "./TimelineItemModal";
 import { TimelineLayout } from "./TimelineLayout";
-import { TimelineSourceSidebar, type TimelineSourceSummary } from "./TimelineSourceSidebar";
+import { isFileInTimelineSource } from "./TimelineSourceAlignment";
+import { buildTimelineSourceGroups, timelineSourceFolders, timelineSourceHeadings } from "./TimelineSourceGroups";
+import { buildTimelineSourceSummaries, TimelineSourceSidebar } from "./TimelineSourceSidebar";
 import type { FocusNotesSettings } from "./types";
 import { addDays, formatDayKey, getIsoWeek, startOfDay, startOfWeek } from "./utils";
-import { openEventTaskForm } from "./EventTaskModal";
 
 export const VIEW_TYPE_FOCUS_TIMELINE = "focus-timeline-view";
 
@@ -29,7 +34,7 @@ export class TimelineView extends ItemView {
     private weeklyOpenButton!: HTMLButtonElement;
     private weekLabel!: HTMLElement;
     private sourceToggleButton!: HTMLButtonElement;
-    private openPendingAfterRender = false;
+    private indexRefreshTimer: number | null = null;
 
     constructor(
         leaf: WorkspaceLeaf,
@@ -57,20 +62,18 @@ export class TimelineView extends ItemView {
             ...super.getState(),
             mode: this.mode,
             anchorDate: formatDayKey(this.anchorDate),
-            openPendingSummary: this.openPendingAfterRender,
         };
     }
 
     async setState(state: unknown, result: ViewStateResult): Promise<void> {
         await super.setState(state, result);
         if (state && typeof state === "object") {
-            const next = state as { mode?: unknown; anchorDate?: unknown; openPendingSummary?: unknown };
+            const next = state as { mode?: unknown; anchorDate?: unknown };
             if (next.mode === "day" || next.mode === "multi-day") this.mode = next.mode;
             if (typeof next.anchorDate === "string") {
                 const parsed = new Date(`${next.anchorDate}T00:00:00`);
                 if (!Number.isNaN(parsed.getTime())) this.anchorDate = parsed;
             }
-            this.openPendingAfterRender = next.openPendingSummary === true;
         }
         if (this.modeSelect) this.modeSelect.value = this.mode;
         if (this.gridEl) this.renderContent();
@@ -85,10 +88,48 @@ export class TimelineView extends ItemView {
         this.renderShell(root);
         this.registerEvent(
             this.app.vault.on("modify", (file) => {
-                if (file instanceof TFile && this.isInSourceScope(file.path)) void this.refreshIndex();
+                if (file instanceof TFile && this.isInSourceScope(file.path)) this.scheduleIndexRefresh();
             }),
         );
+        this.registerEvent(
+            this.app.vault.on("create", (file) => {
+                if (file instanceof TFile && this.isInSourceScope(file.path)) this.scheduleIndexRefresh();
+            }),
+        );
+        this.registerEvent(
+            this.app.vault.on("delete", (file) => {
+                if (file instanceof TFile && this.isInSourceScope(file.path)) this.scheduleIndexRefresh();
+            }),
+        );
+        this.registerEvent(
+            this.app.vault.on("rename", (file, oldPath) => {
+                if (file instanceof TFile && (this.isInSourceScope(file.path) || this.isInSourceScope(oldPath))) {
+                    this.scheduleIndexRefresh();
+                }
+            }),
+        );
+        this.registerEvent(
+            this.app.metadataCache.on("changed", (file) => {
+                if (this.isInSourceScope(file.path)) this.scheduleIndexRefresh();
+            }),
+        );
+        this.registerEvent(
+            this.app.metadataCache.on("resolved", () => {
+                this.scheduleIndexRefresh();
+            }),
+        );
+        this.register(() => {
+            if (this.indexRefreshTimer !== null) window.clearTimeout(this.indexRefreshTimer);
+        });
         await this.refreshIndex();
+    }
+
+    private scheduleIndexRefresh(): void {
+        if (this.indexRefreshTimer !== null) window.clearTimeout(this.indexRefreshTimer);
+        this.indexRefreshTimer = window.setTimeout(() => {
+            this.indexRefreshTimer = null;
+            void this.refreshIndex();
+        }, 150);
     }
 
     private renderShell(root: HTMLElement): void {
@@ -135,7 +176,7 @@ export class TimelineView extends ItemView {
         });
         setIcon(this.weeklyOpenButton, "calendar-range");
         this.weeklyOpenButton.addEventListener("click", () => {
-            void this.openWeeklyPlanner(false);
+            void this.openWeeklyPlanner();
         });
 
         this.modeSelect = controls.createEl("select", { cls: "focus-timeline-mode-select" });
@@ -146,7 +187,7 @@ export class TimelineView extends ItemView {
             const nextMode = this.modeSelect.value as TimelineMode;
             if (nextMode === "multi-day" && this.mode === "day") {
                 this.modeSelect.value = "day";
-                void this.openWeeklyPlanner(false);
+                void this.openWeeklyPlanner();
                 return;
             }
 
@@ -169,7 +210,7 @@ export class TimelineView extends ItemView {
         return button;
     }
 
-    private async openWeeklyPlanner(openPendingSummary: boolean): Promise<void> {
+    private async openWeeklyPlanner(): Promise<void> {
         const leaf = this.app.workspace.getLeaf("tab");
         await leaf.setViewState({
             type: VIEW_TYPE_FOCUS_TIMELINE,
@@ -177,7 +218,6 @@ export class TimelineView extends ItemView {
             state: {
                 mode: "multi-day",
                 anchorDate: formatDayKey(this.anchorDate),
-                openPendingSummary,
             },
         });
         this.app.workspace.revealLeaf(leaf);
@@ -191,7 +231,8 @@ export class TimelineView extends ItemView {
             return;
         }
 
-        if (settings.timeline.sourceFolders.length === 0) {
+        const sourceGroups = this.getEffectiveSourceGroups();
+        if (sourceGroups.length === 0) {
             this.items = [];
             this.renderContent();
             return;
@@ -199,7 +240,7 @@ export class TimelineView extends ItemView {
 
         try {
             const indexer = new ScheduledItemIndexer(this.app, this.parser);
-            this.items = await indexer.buildIndex(settings.timeline.sourceFolders);
+            this.items = await indexer.buildIndex(sourceGroups, this.getEffectiveSourceHeadings());
             this.ensureSourceSettings();
             await this.saveSettings();
             this.renderContent();
@@ -241,21 +282,24 @@ export class TimelineView extends ItemView {
                 settings.timeline.sourceSidebarCollapsed ? "Show sources" : "Hide sources",
             );
         }
-        const sources = this.buildSourceSummaries();
-        const visibleSources = new Set(sources.filter((source) => source.visible).map((source) => source.filePath));
         const range = this.currentRange();
-        const rangeItems = this.query.getItemsForRange(this.items, range, {
-            visibleSources,
+        const allSourceIds = new Set(this.getEffectiveSourceGroups().map((source) => source.id));
+        const allRangeItems = this.query.getItemsForRange(this.items, range, {
+            visibleSources: allSourceIds,
             includeCompleted: settings.timeline.showCompletedTasks,
         });
-        const pendingItems = this.query.getPendingTasks(this.items, this.anchorDate, visibleSources);
+        const allPendingItems = this.query.getPendingTasks(this.items, this.anchorDate, allSourceIds);
+        const sources = this.buildSourceSummaries([...allRangeItems, ...allPendingItems]);
+        const visibleSources = new Set(sources.filter((source) => source.visible).map((source) => source.id));
+        const rangeItems = allRangeItems.filter((item) => visibleSources.has(item.source.groupId));
+        const pendingItems = allPendingItems.filter((item) => visibleSources.has(item.source.groupId));
         const layout = this.layout.build(rangeItems, range);
 
         new TimelineSourceSidebar(this.sidebarEl, {
             sources,
             collapsed: settings.timeline.sourceSidebarCollapsed,
-            onToggleSource: (filePath, visible) => {
-                settings.timeline.sourceVisibility[filePath] = visible;
+            onToggleSource: (sourceId, visible) => {
+                settings.timeline.sourceVisibility[sourceId] = visible;
                 void this.saveSettings();
                 this.renderContent();
             },
@@ -268,7 +312,7 @@ export class TimelineView extends ItemView {
 
         this.gridEl.toggleClass("focus-timeline-main-expanded", settings.timeline.sourceSidebarCollapsed);
 
-        if (settings.timeline.sourceFolders.length === 0) {
+        if (this.getEffectiveSourceFolders().length === 0) {
             this.gridEl.empty();
             this.gridEl.createDiv({
                 cls: "focus-timeline-empty",
@@ -277,8 +321,6 @@ export class TimelineView extends ItemView {
             return;
         }
 
-        const openPendingSummary = this.openPendingAfterRender;
-        this.openPendingAfterRender = false;
         new TimelineGrid(this.gridEl, {
             mode: this.mode,
             range,
@@ -287,9 +329,8 @@ export class TimelineView extends ItemView {
             layout,
             sourceColors: settings.timeline.sourceColors,
             showPendingSummary: settings.timeline.showPendingSummary,
-            openPendingSummary,
-            onOpenPendingSummary: () => void this.openWeeklyPlanner(true),
-            onOpenItem: (item) => void this.openItem(item),
+            onOpenPendingItems: (items) => this.openPendingItems(items),
+            onOpenItem: (item) => this.openItemDetails(item),
         }).render();
     }
 
@@ -308,37 +349,25 @@ export class TimelineView extends ItemView {
         this.renderContent();
     }
 
-    private buildSourceSummaries(): TimelineSourceSummary[] {
+    private buildSourceSummaries(activeItems: ScheduledItem[]) {
         const settings = this.getSettings();
-        const counts = new Map<string, { fileName: string; count: number }>();
-        for (const item of this.items) {
-            const existing = counts.get(item.source.filePath) ?? {
-                fileName: item.source.fileName,
-                count: 0,
-            };
-            existing.count += 1;
-            counts.set(item.source.filePath, existing);
-        }
-
-        return Array.from(counts.entries())
-            .sort((a, b) => a[0].localeCompare(b[0]))
-            .map(([filePath, value]) => ({
-                filePath,
-                fileName: value.fileName,
-                count: value.count,
-                color: settings.timeline.sourceColors[filePath] ?? this.colorFor(filePath),
-                visible: settings.timeline.sourceVisibility[filePath] ?? true,
-            }));
+        return buildTimelineSourceSummaries(
+            this.getEffectiveSourceGroups(),
+            activeItems,
+            settings.timeline.sourceVisibility,
+            settings.timeline.sourceColors,
+            (sourceId) => this.colorFor(sourceId),
+        );
     }
 
     private ensureSourceSettings(): void {
         const settings = this.getSettings();
-        for (const item of this.items) {
-            if (settings.timeline.sourceVisibility[item.source.filePath] === undefined) {
-                settings.timeline.sourceVisibility[item.source.filePath] = true;
+        for (const source of this.getEffectiveSourceGroups()) {
+            if (settings.timeline.sourceVisibility[source.id] === undefined) {
+                settings.timeline.sourceVisibility[source.id] = true;
             }
-            if (!settings.timeline.sourceColors[item.source.filePath]) {
-                settings.timeline.sourceColors[item.source.filePath] = this.colorFor(item.source.filePath);
+            if (!settings.timeline.sourceColors[source.id]) {
+                settings.timeline.sourceColors[source.id] = this.colorFor(source.id);
             }
         }
     }
@@ -350,13 +379,44 @@ export class TimelineView extends ItemView {
     }
 
     private isInSourceScope(path: string): boolean {
-        const folders = this.getSettings()
-            .timeline.sourceFolders.map((folder) => folder.trim())
-            .filter(Boolean);
-        return folders.some((folder) => path === folder || path.startsWith(`${folder}/`));
+        return isFileInTimelineSource(path, this.getEffectiveSourceFolders());
     }
 
-    private async openItem(item: ScheduledItem): Promise<void> {
+    private getEffectiveSourceFolders(): string[] {
+        return timelineSourceFolders(this.getEffectiveSourceGroups());
+    }
+
+    private getEffectiveSourceGroups() {
+        const settings = this.getSettings();
+        const dailyFolder = settings.useDailyNotesAsDefault
+            ? new TargetResolver(this.app, settings).getDailyNoteFolder()
+            : null;
+        return buildTimelineSourceGroups(settings.timeline.sourceFolders, dailyFolder, settings.inbox.contextSources);
+    }
+
+    private getEffectiveSourceHeadings(): string[] {
+        const settings = this.getSettings();
+        return timelineSourceHeadings(settings.timeline.sourceHeadings, settings.eventTask.defaultSaveHeading);
+    }
+
+    private openItemDetails(item: ScheduledItem): void {
+        new TimelineItemModal(
+            this.app,
+            item,
+            (selected) => void this.openSourceItem(selected),
+            (selected) => void this.openItemEditor(selected),
+        ).open();
+    }
+
+    private async openItemEditor(item: ScheduledItem): Promise<void> {
+        await openScheduledItemEditor(this.app, item, this.getSettings, () => void this.refreshIndex());
+    }
+
+    private openPendingItems(items: ScheduledItem[]): void {
+        new PendingTasksModal(this.app, items, (item) => this.openItemDetails(item)).open();
+    }
+
+    private async openSourceItem(item: ScheduledItem): Promise<void> {
         const file = this.app.vault.getAbstractFileByPath(item.source.filePath);
         if (!(file instanceof TFile)) {
             new Notice(`Source note not found: ${item.source.filePath}`);

@@ -1,69 +1,136 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-    buildMentionSuggestions,
-    buildTagSuggestions,
-    filterMentionSuggestions,
-    InboxSuggestionSnapshot,
-} from "../src/InboxSuggestions.ts";
+import { buildTagSuggestions, ContextSuggestionIndex, InboxSuggestionSnapshot } from "../src/InboxSuggestions.ts";
+import type { ContextSourceSettings } from "../src/types.ts";
 
-const notes = [
-    { path: "People/Muhammad Andi.md", basename: "Muhammad Andi", aliases: ["Andi", "Pak Andi"] },
-    { path: "People/Clients/Sinta.md", basename: "Sinta", aliases: [] },
-    { path: "Archive/People/Budi.md", basename: "Budi", aliases: [] },
-    { path: "Place/Kantor.md", basename: "Kantor", aliases: ["HQ", "Andi"] },
-    { path: "Travel/Jakarta.md", basename: "Jakarta", aliases: [] },
+const notes = [{ path: "Objects/Example.md", basename: "Example", aliases: [] }];
+
+const contextNotes = [
+    { path: "People/Ana.md", basename: "Ana", aliases: ["An"], properties: { type: "person" } },
+    {
+        path: "Persona/Work/Project/Activities/Reporting.md",
+        basename: "Reporting",
+        aliases: ["Monthly report"],
+        properties: { type: "activity" },
+    },
+    {
+        path: "Persona/Work/Project/Activities/Reference.md",
+        basename: "Reference",
+        aliases: [],
+        properties: { type: "book" },
+    },
 ];
 
-test("indexes recursive multi-root People and Place suggestions", () => {
-    const suggestions = buildMentionSuggestions(notes, ["People"], ["Place", "Travel"]);
+test("indexes generic folder-scoped sources with optional property filters", () => {
+    const sources: ContextSourceSettings[] = [
+        {
+            id: "people",
+            name: "People",
+            icon: "user",
+            folders: ["People"],
+            filter: null,
+            relatedHeading: "Interactions",
+            enabled: true,
+        },
+        {
+            id: "activities",
+            name: "Activities",
+            icon: "activity",
+            folders: ["Persona"],
+            filter: { property: "type", value: "activity" },
+            relatedHeading: "Activity log",
+            enabled: true,
+        },
+    ];
+    const index = new ContextSuggestionIndex(contextNotes);
 
     assert.deepEqual(
-        suggestions.map((item) => [item.kind, item.label, item.filePath, item.matchedBy]),
+        index.query(sources, () => 0, 20).map((item) => [item.kind, item.sourceId, item.label, item.filePath]),
         [
-            ["person", "Muhammad Andi", "People/Muhammad Andi.md", "filename"],
-            ["person", "Andi", "People/Muhammad Andi.md", "alias"],
-            ["person", "Pak Andi", "People/Muhammad Andi.md", "alias"],
-            ["person", "Sinta", "People/Clients/Sinta.md", "filename"],
-            ["place", "Kantor", "Place/Kantor.md", "filename"],
-            ["place", "HQ", "Place/Kantor.md", "alias"],
-            ["place", "Andi", "Place/Kantor.md", "alias"],
-            ["place", "Jakarta", "Travel/Jakarta.md", "filename"],
+            ["object", "people", "Ana", "People/Ana.md"],
+            ["object", "people", "An", "People/Ana.md"],
+            ["object", "activities", "Reporting", "Persona/Work/Project/Activities/Reporting.md"],
+            ["object", "activities", "Monthly report", "Persona/Work/Project/Activities/Reporting.md"],
         ],
     );
 });
 
-test("keeps duplicate labels distinguishable by kind and path", () => {
-    const suggestions = buildMentionSuggestions(notes, ["People"], ["Place"]).filter((item) => item.label === "Andi");
+test("keeps shared-folder suggestions assigned to their property-defined object type", () => {
+    const sharedSources: ContextSourceSettings[] = [
+        {
+            id: "activities",
+            name: "Activities",
+            icon: "activity",
+            folders: ["Persona/Work/Project/Activities"],
+            filter: { property: "type", value: "activity" },
+            relatedHeading: "Activity log",
+            enabled: true,
+        },
+        {
+            id: "books",
+            name: "Books",
+            icon: "book-open",
+            folders: ["Persona/Work/Project/Activities"],
+            filter: { property: "type", value: "book" },
+            relatedHeading: "Reading log",
+            enabled: true,
+        },
+    ];
 
     assert.deepEqual(
-        suggestions.map((item) => [item.kind, item.filePath]),
+        new ContextSuggestionIndex(contextNotes)
+            .query(sharedSources, () => 0)
+            .filter(({ matchedBy }) => matchedBy === "filename")
+            .map(({ sourceId, filePath }) => ({ sourceId, filePath })),
         [
-            ["person", "People/Muhammad Andi.md"],
-            ["place", "Place/Kantor.md"],
+            { sourceId: "activities", filePath: "Persona/Work/Project/Activities/Reporting.md" },
+            { sourceId: "books", filePath: "Persona/Work/Project/Activities/Reference.md" },
         ],
     );
 });
 
-test("returns no mention results for missing or empty source folders", () => {
-    assert.deepEqual(buildMentionSuggestions(notes, ["Missing"], []), []);
-});
-
-test("filters and bounds mention results with the supplied fuzzy matcher", () => {
-    const candidates = buildMentionSuggestions(notes, ["People"], ["Place", "Travel"]);
-    const results = filterMentionSuggestions(
-        candidates,
-        (text) => (text.toLowerCase().includes("ndi") ? text.length : null),
-        2,
-    );
+test("includes a sibling folder note with the same path as its configured folder", () => {
+    const source: ContextSourceSettings = {
+        id: "blocks",
+        name: "Blocks",
+        icon: "map",
+        folders: ["Projects/BLOK 05"],
+        filter: null,
+        relatedHeading: "Related log",
+        templatePath: "Templates/Block.md",
+        enabled: true,
+    };
+    const index = new ContextSuggestionIndex([
+        { path: "Projects/BLOK 05.md", basename: "BLOK 05", aliases: [] },
+        { path: "Projects/BLOK 05/Inspection.md", basename: "Inspection", aliases: [] },
+        { path: "Projects/BLOK 06.md", basename: "BLOK 06", aliases: [] },
+    ]);
 
     assert.deepEqual(
-        results.map((item) => [item.label, item.kind]),
-        [
-            ["Andi", "person"],
-            ["Andi", "place"],
-        ],
+        index.query([source], () => 0).map((item) => item.filePath),
+        ["Projects/BLOK 05.md", "Projects/BLOK 05/Inspection.md"],
     );
+});
+
+test("caps and ranks generic results without rebuilding unchanged candidates", () => {
+    const source: ContextSourceSettings = {
+        id: "activities",
+        name: "Activities",
+        icon: "activity",
+        folders: ["Persona"],
+        filter: { property: "type", value: "activity" },
+        relatedHeading: "Activity log",
+        enabled: true,
+    };
+    const index = new ContextSuggestionIndex(contextNotes);
+
+    const result = index.query([source], (text) => (text.includes("report") ? text.length : null), 1);
+
+    assert.equal(result.length, 1);
+    assert.equal(result[0]?.label, "Monthly report");
+    assert.equal(index.candidateBuildCount, 1);
+    index.query([source], () => 0, 20);
+    assert.equal(index.candidateBuildCount, 1);
 });
 
 test("normalizes and de-duplicates existing vault tags", () => {
@@ -102,4 +169,22 @@ test("loads vault suggestion metadata only once per form", () => {
     assert.deepEqual(snapshot.getTags(), ["#focus"]);
     assert.equal(noteLoads, 1);
     assert.equal(tagLoads, 1);
+});
+
+test("reloads cached metadata only after explicit invalidation", () => {
+    let loads = 0;
+    const snapshot = new InboxSuggestionSnapshot(
+        () => {
+            loads += 1;
+            return notes;
+        },
+        () => [],
+    );
+
+    snapshot.getNotes();
+    snapshot.getNotes();
+    snapshot.invalidate();
+    snapshot.getNotes();
+
+    assert.equal(loads, 2);
 });
