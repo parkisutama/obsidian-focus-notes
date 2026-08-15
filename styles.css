@@ -2060,6 +2060,45 @@ body.fn-mobile-event-screen-open .suggestion-container {
     min-width: 0;
 }
 
+.fn-task-edit-modal-mobile {
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+}
+
+.fn-task-edit-modal-mobile .modal-content {
+    height: 100%;
+    padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+}
+
+.fn-task-edit-modal-mobile .setting-item {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fn-task-edit-modal-mobile .setting-item-control {
+    justify-content: flex-start;
+    width: 100%;
+}
+
+.fn-task-edit-modal-mobile .setting-item-control input[type="date"],
+.fn-task-edit-modal-mobile .setting-item-control input[type="time"],
+.fn-task-edit-modal-mobile .setting-item-control select,
+.fn-task-edit-modal-mobile .setting-item-control button {
+    min-height: 44px;
+}
+
+.fn-task-edit-modal-mobile .fn-timeline-modal-actions {
+    position: sticky;
+    bottom: 0;
+    padding-block: 12px max(4px, env(safe-area-inset-bottom));
+    background: var(--background-primary);
+}
+
 .fn-timeline-pending-subtitle {
     color: var(--text-muted);
     font-size: var(--font-ui-small);

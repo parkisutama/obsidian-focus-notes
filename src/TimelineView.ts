@@ -5,7 +5,7 @@ import { ScheduledItemParser } from "./ScheduledItemParser";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
 import type { ScheduledItem, TimelineMode, TimelineRange } from "./ScheduledItemTypes";
 import { TargetResolver } from "./TargetResolver";
-import { TaskEditModal } from "./TaskEditModal";
+import { openTaskEditForm } from "./TaskEditModal";
 import { captureTaskLedgerEdit } from "./TaskLedgerEditor";
 import { TimelineGrid } from "./TimelineGrid";
 import { PendingTasksModal, TimelineItemModal } from "./TimelineItemModal";
@@ -423,13 +423,7 @@ export class TimelineView extends ItemView {
             );
             return;
         }
-        new TaskEditModal(
-            this.app,
-            item.title,
-            captured.snapshot,
-            captured.edit,
-            () => void this.refreshIndex(),
-        ).open();
+        openTaskEditForm(this.app, item.title, captured.snapshot, captured.edit, () => void this.refreshIndex());
     }
 
     private openPendingItems(items: ScheduledItem[]): void {

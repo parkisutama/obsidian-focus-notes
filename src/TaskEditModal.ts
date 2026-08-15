@@ -1,7 +1,19 @@
-import { type App, Modal, Notice, Setting } from "obsidian";
+import { type App, Modal, Notice, Platform, Setting } from "obsidian";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource";
+import { shouldUseMobileForm } from "./MobileFormPolicy";
 import { saveTaskLedgerEdit, type SaveTaskLedgerEditResult } from "./TaskLedgerEditor";
 import type { TaskLineEdit } from "./TaskLineEditor";
+
+export function openTaskEditForm(
+    app: App,
+    title: string,
+    snapshot: LedgerRecordSnapshot,
+    initial: TaskLineEdit,
+    onComplete: () => void,
+): void {
+    const mobile = shouldUseMobileForm(Platform.isMobile, window.innerWidth);
+    new TaskEditModal(app, title, snapshot, initial, onComplete, mobile).open();
+}
 
 interface DateTimeInput {
     date: string;
@@ -29,6 +41,7 @@ export class TaskEditModal extends Modal {
         private snapshot: LedgerRecordSnapshot,
         initial: TaskLineEdit,
         private onComplete: () => void,
+        private mobile = false,
     ) {
         super(app);
         this.completed = initial.completed;
@@ -42,6 +55,7 @@ export class TaskEditModal extends Modal {
 
     onOpen(): void {
         this.modalEl.addClass("fn-task-edit-modal");
+        this.modalEl.toggleClass("fn-task-edit-modal-mobile", this.mobile);
         this.render();
     }
 
