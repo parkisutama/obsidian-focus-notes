@@ -1,4 +1,11 @@
+import type { ActiveNoteChecklistScopes } from "./ActiveNoteLedger";
 import type { ScheduledItem } from "./ScheduledItemTypes";
+
+export interface ActiveNoteManagerScopeOption {
+    id: string;
+    label: string;
+    items: ScheduledItem[];
+}
 
 export interface ActiveNoteManagerGroup {
     heading: string;
@@ -10,6 +17,17 @@ export interface ActiveNoteManagerModel {
     subtitle: string;
     emptyMessage: string;
     groups: ActiveNoteManagerGroup[];
+}
+
+export function buildActiveNoteManagerScopeOptions(
+    ledgerItems: ScheduledItem[],
+    checklistScopes: ActiveNoteChecklistScopes,
+): ActiveNoteManagerScopeOption[] {
+    return [
+        { id: "ledger", label: "Ledger headings", items: ledgerItems },
+        { id: "all-checklists", label: "All checklists", items: checklistScopes.allItems },
+        ...checklistScopes.headings.map((scope) => ({ id: scope.id, label: scope.label, items: scope.items })),
+    ];
 }
 
 export function buildActiveNoteManagerModel(fileName: string, items: ScheduledItem[]): ActiveNoteManagerModel {
@@ -24,7 +42,7 @@ export function buildActiveNoteManagerModel(fileName: string, items: ScheduledIt
     return {
         title: "Tasks & events",
         subtitle: fileName,
-        emptyMessage: "No Task or Event records found under the configured ledger headings.",
+        emptyMessage: "No Task or Event records found in this scope.",
         groups: Array.from(groups, ([heading, entries]) => ({ heading, items: entries })),
     };
 }

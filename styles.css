@@ -2007,6 +2007,27 @@ body.fn-mobile-event-screen-open .suggestion-container {
     height: 16px;
 }
 
+.fn-active-note-manager-scope {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.fn-active-note-manager-scope label {
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+    font-weight: 600;
+}
+
+.fn-active-note-manager-scope select {
+    min-width: 0;
+    width: 100%;
+}
+
 .fn-active-note-manager-empty {
     margin-top: 20px;
     padding: 16px 0 4px;
@@ -2016,8 +2037,7 @@ body.fn-mobile-event-screen-open .suggestion-container {
 .fn-active-note-manager-list {
     max-height: min(520px, 60vh);
     margin-top: 16px;
-    padding-top: 12px;
-    border-top: 1px solid var(--background-modifier-border);
+    padding-top: 4px;
     overflow-y: auto;
 }
 

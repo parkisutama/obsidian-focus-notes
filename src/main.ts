@@ -1,5 +1,5 @@
 import { Notice, Plugin, TFile, type WorkspaceLeaf } from "obsidian";
-import { scanActiveNoteLedger } from "./ActiveNoteLedger";
+import { scanActiveNoteChecklistScopes, scanActiveNoteLedger } from "./ActiveNoteLedger";
 import { ActiveNoteManagerModal } from "./ActiveNoteManagerModal";
 import { openEventTaskForm } from "./EventTaskModal";
 import { NoteWriter } from "./NoteWriter";
@@ -125,10 +125,12 @@ export default class FocusNotesPlugin extends Plugin {
             this.settings.eventTask.defaultSaveHeading,
         );
         const items = scanActiveNoteLedger(file.path, file.name, content, headings, new ScheduledItemParser());
+        const checklistScopes = scanActiveNoteChecklistScopes(file.path, file.name, content, new ScheduledItemParser());
         new ActiveNoteManagerModal(
             this.app,
             file.name,
             items,
+            checklistScopes,
             (kind) =>
                 openEventTaskForm(this.app, () => this.settings, new Date(), undefined, this, {
                     initialKind: kind,

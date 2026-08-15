@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { activeNoteItemMeta, buildActiveNoteManagerModel } from "../src/ActiveNoteManagerModel.ts";
+import type { ActiveNoteChecklistScopes } from "../src/ActiveNoteLedger.ts";
+import {
+    activeNoteItemMeta,
+    buildActiveNoteManagerModel,
+    buildActiveNoteManagerScopeOptions,
+} from "../src/ActiveNoteManagerModel.ts";
 import type { ScheduledItem } from "../src/ScheduledItemTypes.ts";
 
 function item(title: string, headingPath: string[], lineNumber: number, kind: "event" | "task"): ScheduledItem {
@@ -52,4 +57,31 @@ test("provides an explicit empty state", () => {
     const model = buildActiveNoteManagerModel("Empty.md", []);
     assert.deepEqual(model.groups, []);
     assert.match(model.emptyMessage, /No Task or Event records/);
+});
+
+test("orders safe ledger scope first, followed by all checklists and individual headings", () => {
+    const ledgerTask = item("Ledger", ["Note", "Activities & Tasks"], 3, "task");
+    const backlogTask = item("Backlog", ["Note", "Backlog"], 6, "task");
+    const scopes: ActiveNoteChecklistScopes = {
+        allItems: [ledgerTask, backlogTask],
+        headings: [
+            {
+                id: "heading:5",
+                label: "Note / Backlog",
+                headingPath: ["Note", "Backlog"],
+                items: [backlogTask],
+            },
+        ],
+    };
+
+    const options = buildActiveNoteManagerScopeOptions([ledgerTask], scopes);
+
+    assert.deepEqual(
+        options.map((option) => ({ id: option.id, label: option.label, count: option.items.length })),
+        [
+            { id: "ledger", label: "Ledger headings", count: 1 },
+            { id: "all-checklists", label: "All checklists", count: 2 },
+            { id: "heading:5", label: "Note / Backlog", count: 1 },
+        ],
+    );
 });
