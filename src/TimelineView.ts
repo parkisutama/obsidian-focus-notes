@@ -1,5 +1,7 @@
 import { ItemView, Notice, setIcon, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import { openEventTaskForm } from "./EventTaskModal";
+import { openEventEditForm } from "./EventEditModal";
+import { captureEventLedgerEdit } from "./EventLedgerEditor";
 import { ScheduledItemIndexer } from "./ScheduledItemIndexer";
 import { ScheduledItemParser } from "./ScheduledItemParser";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
@@ -405,16 +407,31 @@ export class TimelineView extends ItemView {
             this.app,
             item,
             (selected) => void this.openSourceItem(selected),
-            (selected) => void this.openTaskEditor(selected),
+            (selected) => void this.openItemEditor(selected),
         ).open();
     }
 
-    private async openTaskEditor(item: ScheduledItem): Promise<void> {
-        const captured = await captureTaskLedgerEdit(this.app, {
+    private async openItemEditor(item: ScheduledItem): Promise<void> {
+        const source = {
             filePath: item.source.filePath,
             lineNumber: item.source.lineNumber,
             rawLine: item.rawLine,
-        });
+        };
+        if (item.kind === "event") {
+            const captured = await captureEventLedgerEdit(this.app, source);
+            if (captured.status !== "captured") {
+                new Notice(
+                    captured.status === "conflict"
+                        ? "Event source changed or moved. Refresh the Timeline and try again."
+                        : "This Event contains ambiguous or invalid editable metadata.",
+                );
+                return;
+            }
+            openEventEditForm(this.app, item.title, captured.snapshot, captured.edit, () => void this.refreshIndex());
+            return;
+        }
+
+        const captured = await captureTaskLedgerEdit(this.app, source);
         if (captured.status !== "captured") {
             new Notice(
                 captured.status === "conflict"

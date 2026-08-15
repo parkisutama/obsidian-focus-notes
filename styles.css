@@ -1954,7 +1954,8 @@ body.fn-mobile-event-screen-open .suggestion-container {
 
 .fn-timeline-pending-modal,
 .fn-timeline-item-modal,
-.fn-task-edit-modal {
+.fn-task-edit-modal,
+.fn-event-edit-modal {
     width: min(520px, calc(100vw - 32px));
     max-height: min(720px, calc(100vh - 48px));
 }
@@ -2036,22 +2037,27 @@ body.fn-mobile-event-screen-open .suggestion-container {
     margin-top: 20px;
 }
 
-.fn-task-edit-modal .modal-content {
+.fn-task-edit-modal .modal-content,
+.fn-event-edit-modal .modal-content {
     padding: 24px;
 }
 
 .fn-task-edit-title,
-.fn-task-edit-source {
+.fn-task-edit-source,
+.fn-event-edit-title,
+.fn-event-edit-source {
     overflow-wrap: anywhere;
     color: var(--text-muted);
     font-size: var(--font-ui-small);
 }
 
-.fn-task-edit-title {
+.fn-task-edit-title,
+.fn-event-edit-title {
     margin: -4px 0 16px;
 }
 
-.fn-task-edit-source {
+.fn-task-edit-source,
+.fn-event-edit-source {
     margin-top: 16px;
 }
 
@@ -2060,7 +2066,13 @@ body.fn-mobile-event-screen-open .suggestion-container {
     min-width: 0;
 }
 
-.fn-task-edit-modal-mobile {
+.fn-event-edit-modal .setting-item-control input[type="date"],
+.fn-event-edit-modal .setting-item-control input[type="time"] {
+    min-width: 0;
+}
+
+.fn-task-edit-modal-mobile,
+.fn-event-edit-modal-mobile {
     width: 100vw;
     max-width: none;
     height: 100dvh;
@@ -2068,19 +2080,22 @@ body.fn-mobile-event-screen-open .suggestion-container {
     border-radius: 0;
 }
 
-.fn-task-edit-modal-mobile .modal-content {
+.fn-task-edit-modal-mobile .modal-content,
+.fn-event-edit-modal-mobile .modal-content {
     height: 100%;
     padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
     overflow-y: auto;
 }
 
-.fn-task-edit-modal-mobile .setting-item {
+.fn-task-edit-modal-mobile .setting-item,
+.fn-event-edit-modal-mobile .setting-item {
     align-items: stretch;
     flex-direction: column;
     gap: 8px;
 }
 
-.fn-task-edit-modal-mobile .setting-item-control {
+.fn-task-edit-modal-mobile .setting-item-control,
+.fn-event-edit-modal-mobile .setting-item-control {
     justify-content: flex-start;
     width: 100%;
 }
@@ -2092,7 +2107,15 @@ body.fn-mobile-event-screen-open .suggestion-container {
     min-height: 44px;
 }
 
-.fn-task-edit-modal-mobile .fn-timeline-modal-actions {
+.fn-event-edit-modal-mobile .setting-item-control input[type="date"],
+.fn-event-edit-modal-mobile .setting-item-control input[type="time"],
+.fn-event-edit-modal-mobile .setting-item-control select,
+.fn-event-edit-modal-mobile .setting-item-control button {
+    min-height: 44px;
+}
+
+.fn-task-edit-modal-mobile .fn-timeline-modal-actions,
+.fn-event-edit-modal-mobile .fn-timeline-modal-actions {
     position: sticky;
     bottom: 0;
     padding-block: 12px max(4px, env(safe-area-inset-bottom));
