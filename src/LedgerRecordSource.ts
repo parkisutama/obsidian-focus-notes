@@ -10,7 +10,7 @@ export interface LedgerRecordSnapshot extends LedgerRecordSource {
     endOffset: number;
 }
 
-type ConflictReason = "line-missing" | "line-changed" | "block-changed" | "ambiguous";
+export type LedgerRecordConflictReason = "line-missing" | "line-changed" | "block-changed" | "ambiguous";
 
 export type CaptureLedgerRecordResult =
     | { status: "captured"; snapshot: LedgerRecordSnapshot }
@@ -18,7 +18,7 @@ export type CaptureLedgerRecordResult =
 
 export type ReplaceLedgerRecordResult =
     | { status: "ready"; content: string }
-    | { status: "conflict"; reason: ConflictReason };
+    | { status: "conflict"; reason: LedgerRecordConflictReason };
 
 interface SourceLine {
     content: string;
