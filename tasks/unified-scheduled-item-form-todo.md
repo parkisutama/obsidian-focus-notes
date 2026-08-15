@@ -4,9 +4,9 @@
 
 **Acceptance criteria:**
 
-- [ ] Parse unresolved `@Name` and resolved `@{vault/path.md}` references without treating them as Markdown links.
-- [ ] Normalize resolved paths as vault-root `.md` paths and preserve ordinary text losslessly.
-- [ ] Serializer round-trips spaces, nested folders, multiple references, and invalid syntax safely.
+- [x] Parse unresolved `@Name` and resolved `@{vault/path.md}` references without treating them as Markdown links.
+- [x] Normalize resolved paths as vault-root `.md` paths and preserve ordinary text losslessly.
+- [x] Serializer round-trips spaces, nested folders, multiple references, and invalid syntax safely.
 
 **Verification:** `node --test test/object-reference.test.ts`; `pnpm run typecheck`.
 
