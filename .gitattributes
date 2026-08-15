@@ -1,0 +1,2 @@
+# Keep repository text canonical across operating systems.
+* text=auto eol=lf
