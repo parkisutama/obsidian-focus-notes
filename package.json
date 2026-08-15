@@ -10,6 +10,7 @@
     },
     "scripts": {
         "dev": "node esbuild.config.mjs",
+        "dev:vault": "node esbuild.config.mjs --deploy-vault",
         "docs:dev": "vitepress dev docs",
         "docs:build": "vitepress build docs",
         "docs:preview": "vitepress preview docs",
@@ -22,6 +23,7 @@
         "test": "node --test",
         "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='src/**/*.ts'",
         "build": "pnpm run typecheck && node esbuild.config.mjs production",
+        "deploy:vault": "pnpm run typecheck && node esbuild.config.mjs production --deploy-vault",
         "verify:artifacts": "node scripts/verify-build-artifacts.mjs",
         "package:plugin": "node scripts/package-plugin.mjs",
         "check": "pnpm run format:check && pnpm run lint && pnpm run verify:version && pnpm run typecheck && pnpm run test",

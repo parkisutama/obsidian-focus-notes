@@ -202,8 +202,10 @@ Use these commands before opening a pull request:
 
 - `pnpm run check` — formatting, lint, version metadata, typecheck, and unit tests.
 - `pnpm run test:coverage` — unit tests with the native Node.js coverage report. The report covers source modules loaded by the current tests; it is a visibility baseline, not a claim that every runtime path is covered.
-- `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` — the complete local CI gate, including the production bundle and artifact validation without copying files into a vault.
+- `pnpm run check:ci` — the complete local CI gate, including the production bundle and artifact validation. `build` (and therefore `check:ci`) never copies files into a vault.
 - `pnpm run format` — apply the repository's Biome formatting rules.
+
+`pnpm run dev` and `pnpm run build` never touch a vault, regardless of `.env`. To also copy `manifest.json`, `main.js`, and `styles.css` into `OBSIDIAN_VAULT_PLUGIN_PATH` after a successful build, use `pnpm run dev:vault` (watch mode) or `pnpm run deploy:vault` (one-shot production build) instead.
 
 Tests live in `test/` and use Node's built-in test runner. Reusable test-only fakes and async helpers belong in `test/support/`; keep one-off fixtures beside the test that owns them. Obsidian UI integration still requires manual desktop and mobile validation because the unit runner does not provide an Obsidian runtime.
 

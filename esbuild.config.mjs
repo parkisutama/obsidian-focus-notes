@@ -6,6 +6,7 @@ import esbuild from "esbuild";
 
 const banner = `/* Auto-generated bundle. Do not edit directly. */`;
 const prod = process.argv[2] === "production";
+const shouldDeployToVault = process.argv.includes("--deploy-vault");
 
 function loadEnvFile(filePath = ".env") {
     if (!fs.existsSync(filePath)) return;
@@ -101,7 +102,7 @@ const ctx = await esbuild.context({
     treeShaking: true,
     outfile: "main.js",
     minify: prod,
-    plugins: [copyToVaultPlugin],
+    plugins: [...(shouldDeployToVault ? [copyToVaultPlugin] : [])],
 });
 
 if (prod) {
