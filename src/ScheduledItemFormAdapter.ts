@@ -1,4 +1,5 @@
 import { editEventLineWithTitle, parseEventLineEdit } from "./EventLineEditor.ts";
+import type { EventTaskRecord } from "./EventTaskWriter";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
 import { normalizeObjectReferencePath, parseObjectReferences } from "./ObjectReference.ts";
 import {
@@ -35,6 +36,10 @@ export type HydrateScheduledItemFormResult =
 
 export type BuildScheduledItemFormBlockResult =
     | { status: "ready"; edit: ScheduledItemBlockEdit }
+    | { status: "invalid"; field: ScheduledItemFormField; message: string };
+
+export type BuildScheduledItemRecordResult =
+    | { status: "ready"; record: EventTaskRecord }
     | { status: "invalid"; field: ScheduledItemFormField; message: string };
 
 export function hydrateScheduledItemFormEdit(input: {
@@ -134,6 +139,56 @@ export function buildScheduledItemFormBlockEdit(
     };
 }
 
+export function buildScheduledItemRecord(data: ScheduledItemFormData): BuildScheduledItemRecordResult {
+    const validation = validateScheduledItemFormData(data);
+    if (!validation.valid) return buildInvalid(validation.field, validation.message);
+
+    if (data.kind === "event") {
+        const start = parseLocalDateTime(data.start, data.allDay);
+        if (!start) return buildInvalid("start", "Event start is invalid.");
+        const end = data.allDay
+            ? new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1)
+            : parseLocalDateTime(data.end ?? "", false);
+        if (!end) return buildInvalid("end", "Event end is invalid.");
+        return {
+            status: "ready",
+            record: {
+                kind: "event",
+                title: data.title.trim(),
+                start,
+                end,
+                allDay: data.allDay,
+                status: data.status,
+                actualStart: data.actual ? parseLocalDateTime(data.actual.start, false) : null,
+                actualEnd: data.actual ? parseLocalDateTime(data.actual.end, false) : null,
+                description: data.description,
+                hubNoteRef: null,
+            },
+        };
+    }
+
+    const due = data.due ? parseLocalDateTime(data.due, true) : null;
+    return {
+        status: "ready",
+        record: {
+            kind: "task",
+            title: data.title.trim(),
+            priority: data.priority,
+            due,
+            dueHasTime: data.due?.includes(" ") ?? false,
+            timebox: data.timebox
+                ? {
+                      start: parseLocalDateTime(data.timebox.start, false) as Date,
+                      end: parseLocalDateTime(data.timebox.end, false) as Date,
+                  }
+                : null,
+            reminders: data.reminders.map((value) => parseLocalDateTime(value, false) as Date),
+            description: data.description,
+            hubNoteRef: null,
+        },
+    };
+}
+
 function validateTask(data: Extract<ScheduledItemFormData, { kind: "task" }>): ScheduledItemFormValidation {
     if (data.due && !parseLocalDateTime(data.due, true)) return invalid("due", "Task due date is invalid.");
     if (data.timebox) {
@@ -211,6 +266,9 @@ function invalid(field: ScheduledItemFormField, message: string) {
     return { valid: false as const, field, message };
 }
 
-function buildInvalid(field: ScheduledItemFormField, message: string): BuildScheduledItemFormBlockResult {
+function buildInvalid(
+    field: ScheduledItemFormField,
+    message: string,
+): { status: "invalid"; field: ScheduledItemFormField; message: string } {
     return { status: "invalid", field, message };
 }

@@ -64,9 +64,9 @@
 
 **Acceptance criteria:**
 
-- [ ] Create/Edit support None, Link existing, and Create new.
-- [ ] Created notes use the same Task/Event frontmatter and template contract.
-- [ ] Partial creation/attach outcomes are idempotent and retryable without deletion or duplication.
+- [x] Create/Edit support None, Link existing, and Create new.
+- [x] Created notes use the same Task/Event frontmatter and template contract.
+- [x] Partial creation/attach outcomes are idempotent and retryable without deletion or duplication.
 
 **Verification:** focused promotion/recovery tests; full local gate.
 
