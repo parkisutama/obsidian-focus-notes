@@ -88,9 +88,9 @@
 
 **Acceptance criteria:**
 
-- [ ] One workspace-anchored mobile renderer serves Create/Edit Task/Event.
-- [ ] It uses shared data/controllers without importing desktop DOM.
-- [ ] Safe areas, keyboard viewport, scrolling, busy, and recovery states are retained.
+- [x] One workspace-anchored mobile renderer serves Create/Edit Task/Event.
+- [x] It uses shared data/controllers without importing desktop DOM.
+- [x] Safe areas, keyboard viewport, scrolling, busy, and recovery states are retained.
 
 **Verification:** mobile policy/composition tests; Android/iOS acceptance pending separately.
 

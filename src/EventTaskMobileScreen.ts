@@ -2,6 +2,7 @@ import { type App, Component, FuzzySuggestModal, Notice, setIcon, type TFile } f
 import { preferActiveNoteTarget } from "./CaptureTarget";
 import { EventTaskFormState, type EventTaskKind, formatLocalDate, type HubMode } from "./EventTaskFormState";
 import type { OpenEventTaskFormOptions } from "./EventTaskModal";
+import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
 import {
     type EventTaskSubmissionResult,
     type PartialSubmissionResult,
@@ -247,9 +248,15 @@ export class EventTaskMobileScreen extends Component {
             onChange(kind);
         };
         this.registerDomEvent(inboxButton, "click", () => activate("inbox"));
-        this.registerDomEvent(eventButton, "click", () => activate("event"));
-        this.registerDomEvent(taskButton, "click", () => activate("task"));
+        this.registerDomEvent(eventButton, "click", () => this.openScheduledItemCreate("event"));
+        this.registerDomEvent(taskButton, "click", () => this.openScheduledItemCreate("task"));
         activate(this.form.kind);
+    }
+
+    private openScheduledItemCreate(kind: "task" | "event"): void {
+        const targetFile = this.form.targetFile;
+        this.close();
+        openMobileScheduledItemCreate(this.app, this.getSettings, this.anchorDate, this.onComplete, kind, targetFile);
     }
 
     private renderEventFields(container: HTMLElement): void {

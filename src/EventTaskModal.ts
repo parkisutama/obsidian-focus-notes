@@ -22,6 +22,7 @@ import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./Timelin
 import type { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
 import { ScheduledItemDesktopCreateModal } from "./ScheduledItemDesktopCreateModal.ts";
+import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
 
 export interface OpenEventTaskFormOptions {
     initialKind?: EventTaskKind;
@@ -37,6 +38,17 @@ export function openEventTaskForm(
     options: OpenEventTaskFormOptions = {},
 ): void {
     if (shouldUseMobileForm(Platform.isMobile, window.innerWidth)) {
+        if (options.initialKind === "task" || options.initialKind === "event") {
+            openMobileScheduledItemCreate(
+                app,
+                getSettings,
+                anchorDate,
+                onComplete,
+                options.initialKind,
+                options.targetFile,
+            );
+            return;
+        }
         new EventTaskMobileScreen(app, getSettings, anchorDate, onComplete, options).open(owner);
         return;
     }
