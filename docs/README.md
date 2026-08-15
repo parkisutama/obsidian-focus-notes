@@ -22,6 +22,8 @@ Jalankan `pnpm run docs:dev` untuk menulis secara lokal dan `pnpm run docs:build
 - [Mobile event/task modal](spec-mobile-event-task-modal.md) — kontrak modal mobile.
 - [Task and Event single-line semantics](spec-task-event-line-semantics.md) — kontrak kanonis grammar, atribut,
   lifecycle, batas implementasi saat ini, dan proposal ekstensi Task/Event.
+- [Unified Scheduled Item form](spec-unified-scheduled-item-form.md) — kontrak Create/Edit bersama, Object Reference
+  berbasis vault path, Detail Note promotion, dan pemisahan renderer desktop/mobile.
 - [Event occurrence lifecycle](spec-event-occurrence-lifecycle.md) — proposal lifecycle Event yang belum
   diimplementasikan dan masih menunggu persetujuan semantic.
 
