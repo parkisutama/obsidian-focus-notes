@@ -21,6 +21,7 @@ import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
 import type { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
+import { ScheduledItemDesktopCreateModal } from "./ScheduledItemDesktopCreateModal.ts";
 
 export interface OpenEventTaskFormOptions {
     initialKind?: EventTaskKind;
@@ -40,7 +41,48 @@ export function openEventTaskForm(
         return;
     }
 
+    if (options.initialKind === "task" || options.initialKind === "event") {
+        openDesktopScheduledItemCreate(
+            app,
+            getSettings,
+            anchorDate,
+            onComplete,
+            options.initialKind,
+            options.targetFile,
+        );
+        return;
+    }
+
     new EventTaskModal(app, getSettings, anchorDate, onComplete, options).open();
+}
+
+function openDesktopScheduledItemCreate(
+    app: App,
+    getSettings: () => FocusNotesSettings,
+    anchorDate: Date,
+    onComplete: () => void,
+    kind: "task" | "event",
+    targetFile?: string,
+): void {
+    const settings = getSettings();
+    const resolver = new TargetResolver(app, settings);
+    const configured = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+    const activeFile = app.workspace.getActiveFile();
+    const preferred = preferActiveNoteTarget(
+        configured,
+        targetFile ?? (activeFile?.extension === "md" ? activeFile.path : null),
+    );
+    new ScheduledItemDesktopCreateModal(
+        app,
+        getSettings,
+        anchorDate,
+        kind,
+        {
+            ...preferred,
+            heading: settings.eventTask.defaultSaveHeading || preferred.heading,
+        },
+        onComplete,
+    ).open();
 }
 
 export class EventTaskModal extends Modal {
@@ -220,6 +262,23 @@ export class EventTaskModal extends Modal {
             ["task", taskBtn],
         ]);
         const activate = (kind: EventTaskKind): void => {
+            if (kind === "task" || kind === "event") {
+                this.resolved = true;
+                this.close();
+                new ScheduledItemDesktopCreateModal(
+                    this.app,
+                    this.getSettings,
+                    this.anchorDate,
+                    kind,
+                    {
+                        file: this.form.targetFile,
+                        heading: this.form.targetHeading,
+                        position: this.form.targetPosition,
+                    },
+                    this.onComplete,
+                ).open();
+                return;
+            }
             this.form.kind = kind;
             this.titleInputEl.value = this.form.getTitleForKind(kind);
             for (const [value, button] of buttons) {
@@ -227,10 +286,10 @@ export class EventTaskModal extends Modal {
                 button.toggleClass("fn-gcal-tab--active", active);
                 button.setAttribute("aria-pressed", String(active));
             }
-            this.eventTaskFieldsEl.toggleClass("fn-gcal-hidden", kind === "inbox");
-            this.inboxSectionEl.toggleClass("fn-gcal-hidden", kind !== "inbox");
-            this.eventSectionEl.toggleClass("fn-gcal-hidden", kind !== "event");
-            this.taskSectionEl.toggleClass("fn-gcal-hidden", kind !== "task");
+            this.eventTaskFieldsEl.addClass("fn-gcal-hidden");
+            this.inboxSectionEl.removeClass("fn-gcal-hidden");
+            this.eventSectionEl.addClass("fn-gcal-hidden");
+            this.taskSectionEl.addClass("fn-gcal-hidden");
         };
         inboxBtn.addEventListener("click", () => activate("inbox"));
         eventBtn.addEventListener("click", () => activate("event"));

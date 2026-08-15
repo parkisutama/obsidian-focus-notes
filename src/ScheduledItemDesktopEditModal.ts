@@ -66,6 +66,7 @@ export class ScheduledItemDesktopEditModal extends Modal {
             data: this.data,
             contextLabel: `${this.snapshot.filePath} · Line ${this.snapshot.lineNumber}`,
             targetFile: this.snapshot.filePath,
+            defaultDetailNotesFolder: this.getSettings().eventTask.detailNotesFolder,
             getContextSources: () => this.getSettings().inbox.contextSources,
             onChange: () => undefined,
             onSubmit: () => void this.submit(),

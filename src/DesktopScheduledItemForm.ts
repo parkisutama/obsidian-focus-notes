@@ -5,6 +5,13 @@ import { parseObjectReferences } from "./ObjectReference.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import type { ContextSourceSettings } from "./types";
+import type { InsertPosition } from "./types";
+
+export interface DesktopScheduledItemCreateContext {
+    targetFile: string;
+    targetHeading: string;
+    targetPosition: InsertPosition;
+}
 
 export interface DesktopScheduledItemFormOptions {
     app: App;
@@ -12,6 +19,8 @@ export interface DesktopScheduledItemFormOptions {
     data: ScheduledItemFormData;
     contextLabel: string;
     targetFile: string;
+    createContext?: DesktopScheduledItemCreateContext;
+    defaultDetailNotesFolder?: string;
     getContextSources(): ContextSourceSettings[];
     onChange(data: ScheduledItemFormData): void;
     onSubmit(): void;
@@ -48,6 +57,7 @@ export class DesktopScheduledItemForm {
         else this.renderEvent(container);
         this.renderDescription(container);
         this.renderDetail(container);
+        if (this.options.mode === "create" && this.options.createContext) this.renderCreateContext(container);
         container.createDiv({
             cls: `fn-scheduled-item-form-error${this.errorMessage ? "" : " fn-gcal-hidden"}`,
             text: this.errorMessage,
@@ -65,6 +75,7 @@ export class DesktopScheduledItemForm {
         });
         submit.disabled = model.submitDisabled;
         submit.addEventListener("click", this.options.onSubmit);
+        if (this.busy || this.recovery) this.lockFields(container, actions);
     }
 
     setSubmissionState(state: { busy: boolean; recovery: boolean; errorMessage?: string }): void {
@@ -227,7 +238,11 @@ export class DesktopScheduledItemForm {
                         mode === "link"
                             ? { mode: "link", path: "" }
                             : mode === "create"
-                              ? { mode: "create", name: data.title, folder: "" }
+                              ? {
+                                    mode: "create",
+                                    name: data.title,
+                                    folder: this.options.defaultDetailNotesFolder ?? "",
+                                }
                               : { mode: "none" };
                     this.changedAndRender();
                 }),
@@ -269,6 +284,32 @@ export class DesktopScheduledItemForm {
         }
     }
 
+    private renderCreateContext(container: HTMLElement): void {
+        const context = this.options.createContext;
+        if (!context) return;
+        const fileSetting = new Setting(container).setName("Save to file");
+        const file = fileSetting.controlEl.createEl("input", {
+            type: "text",
+            attr: { "aria-label": "Save to file", placeholder: "Daily/2026-08-28.md" },
+        });
+        file.value = context.targetFile;
+        file.addEventListener("input", () => {
+            context.targetFile = file.value;
+            this.descriptionController?.setTargetFile(file.value);
+        });
+        new FileSuggest(this.options.app, file);
+        new Setting(container).setName("Heading").addText((text) =>
+            text.setValue(context.targetHeading).onChange((value) => {
+                context.targetHeading = value;
+            }),
+        );
+        new Setting(container).setName("Insert at top").addToggle((toggle) =>
+            toggle.setValue(context.targetPosition === "start").onChange((enabled) => {
+                context.targetPosition = enabled ? "start" : "end";
+            }),
+        );
+    }
+
     private dateTimeSetting(
         container: HTMLElement,
         label: string,
@@ -305,6 +346,18 @@ export class DesktopScheduledItemForm {
     private destroyController(): void {
         this.descriptionController?.destroy();
         this.descriptionController = null;
+    }
+
+    private lockFields(container: HTMLElement, actions: HTMLElement): void {
+        container
+            .querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>("input, select, button")
+            .forEach((control) => {
+                if (!actions.contains(control)) control.disabled = true;
+            });
+        container.querySelectorAll<HTMLElement>("[contenteditable]").forEach((editor) => {
+            editor.contentEditable = "false";
+            editor.setAttribute("aria-disabled", "true");
+        });
     }
 }
 

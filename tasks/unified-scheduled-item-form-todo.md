@@ -52,7 +52,7 @@
 
 **Acceptance criteria:**
 
-- [ ] Create/Edit both use contextual `@` suggestions and the approved portable path syntax.
+- [x] Create/Edit both use contextual `@` suggestions and the approved portable path syntax.
 - [x] Edit writes related logs only for newly resolved Object paths.
 - [x] Related-log partial recovery cannot repeat the primary write.
 
@@ -76,9 +76,9 @@
 
 **Acceptance criteria:**
 
-- [ ] One desktop renderer serves Create/Edit Task/Event.
-- [ ] Mode changes actions and target/source presentation, not field implementations.
-- [ ] Keyboard, labels, validation, empty, busy, and recovery states remain accessible.
+- [x] One desktop renderer serves Create/Edit Task/Event.
+- [x] Mode changes actions and target/source presentation, not field implementations.
+- [x] Keyboard, labels, validation, empty, busy, and recovery states remain accessible.
 
 **Verification:** composition/model tests; desktop Obsidian acceptance pending separately.
 
