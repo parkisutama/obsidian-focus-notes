@@ -20,9 +20,10 @@ prove modal layout, keyboard behavior, suggestion positioning, file navigation, 
 - production build and artifact verification;
 - VitePress documentation build.
 
-`git diff --check` also passed. This run occurred in the active worktree. A user-owned untracked
-`AUDIT-focus-notes.md` file remains outside the implementation scope, so this is not recorded as a literal clean-worktree
-acceptance run.
+`git diff --check` also passed. A second CI-equivalent run passed from detached clean worktree commit `5f39f7f` after a
+fresh frozen-lockfile install: 213 test cases passed with no failures or skips, build artifacts and documentation built,
+and `git status --short` remained empty. The active worktree's user-owned untracked `AUDIT-focus-notes.md` stayed outside
+the checkout and was not modified.
 
 ## Desktop runtime
 
