@@ -1,6 +1,6 @@
-import { type App, Component, FuzzySuggestModal, Notice, setIcon, type TFile } from "obsidian";
+import { type App, Component, Notice, setIcon } from "obsidian";
 import { preferActiveNoteTarget } from "./CaptureTarget";
-import { EventTaskFormState, type EventTaskKind, formatLocalDate, type HubMode } from "./EventTaskFormState";
+import { EventTaskFormState, type EventTaskKind, formatLocalDate } from "./EventTaskFormState";
 import type { OpenEventTaskFormOptions } from "./EventTaskModal";
 import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
 import {
@@ -177,7 +177,6 @@ export class EventTaskMobileScreen extends Component {
         const reminders = this.disclosure(taskOptions, "Reminders", "bell");
         this.renderReminders(reminders);
         options.appendChild(taskOptions);
-        this.renderRelatedNote(this.disclosure(options, "Related note", "link"));
         this.renderDetailNote(this.disclosure(options, "Detail note", "file-text"));
         this.renderSaveTarget(this.disclosure(options, "Save to", "folder", this.form.targetFile));
 
@@ -401,67 +400,6 @@ export class EventTaskMobileScreen extends Component {
         });
     }
 
-    private renderRelatedNote(container: HTMLElement): void {
-        const modeHost = container.createDiv();
-        const inputRow = container.createDiv({ cls: "fn-mobile-event-related-input fn-gcal-hidden" });
-        const noteField = this.iconInput(inputRow, "search", "Related note", "", "Search notes…");
-        const note = noteField.input;
-        const pick = inputRow.createEl("button", {
-            cls: "fn-mobile-event-pick",
-            text: "Pick",
-            attr: { type: "button" },
-        });
-        this.registerSuggester(new FileSuggest(this.app, note));
-        const folderField = this.iconInput(
-            container,
-            "folder",
-            "Related note folder",
-            this.form.hubCreateFolder,
-            "Folder for new note",
-        );
-        const folder = folderField.input;
-        folderField.wrapper.addClass("fn-gcal-hidden");
-        this.registerSuggester(new FolderSuggest(this.app, folder));
-        const alsoWrap = container.createDiv({ cls: "fn-gcal-hidden" });
-        this.checkbox(alsoWrap, "Also write to related note", false, (checked) => (this.form.writeToHubNote = checked));
-
-        this.segmented<HubMode>(
-            modeHost,
-            [
-                { value: "none", label: "None" },
-                { value: "link", label: "Link" },
-                { value: "create", label: "New note" },
-            ],
-            "none",
-            (mode) => {
-                this.form.hubMode = mode;
-                inputRow.toggleClass("fn-gcal-hidden", mode === "none");
-                folderField.wrapper.toggleClass("fn-gcal-hidden", mode !== "create");
-                pick.toggleClass("fn-gcal-hidden", mode !== "link");
-                alsoWrap.toggleClass("fn-gcal-hidden", mode === "none");
-                note.placeholder = mode === "create" ? "New note name" : "Search notes…";
-                noteField.icon.empty();
-                setIcon(noteField.icon, mode === "create" ? "file-text" : "search");
-                note.value = mode === "create" ? this.form.title : "";
-                if (mode === "create") this.form.hubCreateName = note.value;
-                if (mode === "link") this.form.hubLinkPath = "";
-            },
-        );
-        this.registerDomEvent(note, "input", () => {
-            if (this.form.hubMode === "link") this.form.hubLinkPath = note.value;
-            if (this.form.hubMode === "create") this.form.hubCreateName = note.value;
-        });
-        this.registerDomEvent(folder, "input", () => (this.form.hubCreateFolder = folder.value));
-        this.registerDomEvent(pick, "click", () => {
-            const picker = new MobileFilePicker(this.app, (file) => {
-                note.value = file.path;
-                this.form.hubLinkPath = file.path;
-            });
-            this.register(() => picker.close());
-            picker.open();
-        });
-    }
-
     private renderDetailNote(container: HTMLElement): void {
         const toggleHost = container.createDiv();
         const fields = container.createDiv({ cls: "fn-mobile-event-conditional fn-gcal-hidden" });
@@ -531,13 +469,7 @@ export class EventTaskMobileScreen extends Component {
             this.form.inboxTitle = value;
             return;
         }
-        const previous = this.form.title;
         this.form.title = value;
-        if (this.form.hubMode === "create" && (!this.form.hubCreateName || this.form.hubCreateName === previous)) {
-            this.form.hubCreateName = value;
-            const relatedName = this.rootEl?.querySelector<HTMLInputElement>(".fn-mobile-event-related-input input");
-            if (relatedName && (!relatedName.value || relatedName.value === previous)) relatedName.value = value;
-        }
     }
 
     private fieldGroup(container: HTMLElement, label: string, icon: string): HTMLElement {
@@ -785,27 +717,5 @@ export class EventTaskMobileScreen extends Component {
             position: this.form.targetPosition,
         };
         return new TargetResolver(this.app, this.getSettings()).resolve(target, when).file;
-    }
-}
-
-class MobileFilePicker extends FuzzySuggestModal<TFile> {
-    constructor(
-        app: App,
-        private readonly onPick: (file: TFile) => void,
-    ) {
-        super(app);
-        this.setPlaceholder("Pick a note…");
-    }
-
-    getItems(): TFile[] {
-        return this.app.vault.getMarkdownFiles();
-    }
-
-    getItemText(file: TFile): string {
-        return file.path;
-    }
-
-    onChooseItem(file: TFile): void {
-        this.onPick(file);
     }
 }

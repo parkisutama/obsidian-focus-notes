@@ -100,9 +100,9 @@
 
 **Acceptance criteria:**
 
-- [ ] New Create/Edit UI exposes Object References and Detail Notes, not Related Note/hub controls.
-- [ ] Existing linked titles and hub-created Markdown remain readable and losslessly editable.
-- [ ] No migration rewrites existing notes automatically.
+- [x] New Create/Edit UI exposes Object References and Detail Notes, not Related Note/hub controls.
+- [x] Existing linked titles and hub-created Markdown remain readable and losslessly editable.
+- [x] No migration rewrites existing notes automatically.
 
 **Verification:** legacy compatibility fixtures; full local gate.
 

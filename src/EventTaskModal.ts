@@ -1,6 +1,6 @@
-import { type App, type Component, FuzzySuggestModal, Modal, Notice, Platform, setIcon, type TFile } from "obsidian";
+import { type App, type Component, Modal, Notice, Platform, setIcon } from "obsidian";
 import { preferActiveNoteTarget } from "./CaptureTarget";
-import { EventTaskFormState, type EventTaskKind, formatLocalDate, type HubMode } from "./EventTaskFormState";
+import { EventTaskFormState, type EventTaskKind, formatLocalDate } from "./EventTaskFormState";
 import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
 import {
     type EventTaskSubmissionResult,
@@ -104,9 +104,6 @@ export class EventTaskModal extends Modal {
     private readonly submissionPolicy = new SubmissionPolicy();
 
     // ---- DOM refs -----------------------------------------------------------
-    private hubInputEl!: HTMLInputElement;
-    private hubAlsoRowEl!: HTMLElement;
-    private writeToHubCb!: HTMLInputElement;
     protected eventSectionEl!: HTMLElement;
     protected taskSectionEl!: HTMLElement;
     private eventTimeRowEl!: HTMLElement;
@@ -199,7 +196,6 @@ export class EventTaskModal extends Modal {
         this.renderEventSection(this.eventSectionEl);
         this.renderTaskSection(this.taskSectionEl);
         this.renderDescription(this.eventTaskFieldsEl);
-        this.renderHubNote(this.eventTaskFieldsEl);
         this.renderDetailNote(this.eventTaskFieldsEl);
         this.renderSaveTo(this.eventTaskFieldsEl);
 
@@ -240,14 +236,6 @@ export class EventTaskModal extends Modal {
 
     protected setTitleValue(value: string): void {
         this.form.setTitleForKind(this.form.kind, value);
-        if (this.form.kind === "inbox") return;
-        // Sync hub note name only while still at default
-        if (this.form.hubMode === "create" && this.hubInputEl) {
-            if (!this.hubInputEl.value || this.hubInputEl.value === this.form.hubCreateName) {
-                this.hubInputEl.value = this.form.title;
-                this.form.hubCreateName = this.form.title;
-            }
-        }
     }
 
     protected renderTabs(container: HTMLElement): void {
@@ -526,103 +514,6 @@ export class EventTaskModal extends Modal {
             onChange: (value) => (this.form.description = value),
             referenceFormat: "object-reference",
         });
-    }
-
-    // ---- Hub note -----------------------------------------------------------
-
-    protected renderHubNote(container: HTMLElement): void {
-        const content = this.makeRow(container, "link");
-        const wrap = content.createDiv({ cls: "fn-gcal-hub-wrap" });
-        wrap.createDiv({ cls: "fn-gcal-field-label", text: "Related note" });
-
-        // Input row (created first so it's available in radio closures)
-        const hubInputRow = wrap.createDiv({ cls: "fn-gcal-hub-input-row fn-gcal-hidden" });
-        this.hubInputEl = hubInputRow.createEl("input", {
-            type: "text",
-            cls: "fn-gcal-hub-input",
-            attr: { placeholder: "Search notes...", "aria-label": "Related note" },
-        });
-        this.hubInputEl.addEventListener("input", () => {
-            if (this.form.hubMode === "link") this.form.hubLinkPath = this.hubInputEl.value;
-            else this.form.hubCreateName = this.hubInputEl.value;
-        });
-        new FileSuggest(this.app, this.hubInputEl);
-
-        const pickBtn = hubInputRow.createEl("button", {
-            cls: "fn-gcal-hub-pick-btn",
-            text: "Pick",
-            attr: { type: "button" },
-        });
-        pickBtn.addEventListener("click", (evt) => {
-            evt.preventDefault();
-            new FilePickerSuggester(this.app, (file) => {
-                this.hubInputEl.value = file.path;
-                this.form.hubLinkPath = file.path;
-            }).open();
-        });
-
-        const hubFolderRow = wrap.createDiv({
-            cls: "fn-gcal-hub-input-row fn-gcal-hidden",
-        });
-        const hubFolderEl = hubFolderRow.createEl("input", {
-            type: "text",
-            cls: "fn-gcal-hub-input",
-            attr: {
-                placeholder: "Folder (e.g. Notes/Projects)",
-                "aria-label": "Folder for new related note",
-            },
-        });
-        hubFolderEl.value = this.form.hubCreateFolder;
-        hubFolderEl.addEventListener("input", () => {
-            this.form.hubCreateFolder = hubFolderEl.value;
-        });
-        new FolderSuggest(this.app, hubFolderEl);
-
-        // "Also write to hub note" row — visible only when mode != none
-        this.hubAlsoRowEl = wrap.createDiv({ cls: "fn-gcal-allday-row fn-gcal-hub-also fn-gcal-hidden" });
-        this.writeToHubCb = this.hubAlsoRowEl.createEl("input", {
-            type: "checkbox",
-            cls: "fn-gcal-checkbox",
-            attr: { id: "fn-gcal-also-hub" },
-        });
-        this.hubAlsoRowEl.createEl("label", {
-            text: "Also write to related note (same heading)",
-            attr: { for: "fn-gcal-also-hub" },
-        });
-        this.writeToHubCb.addEventListener("change", () => {
-            this.form.writeToHubNote = this.writeToHubCb.checked;
-        });
-
-        // Chip selector for hub mode (replaces radio group)
-        this.makeChipGroup<HubMode>(
-            wrap,
-            [
-                { value: "none", label: "None" },
-                { value: "link", label: "Link" },
-                { value: "create", label: "New note" },
-            ],
-            this.form.hubMode,
-            (value) => {
-                this.form.hubMode = value;
-                const showInput = value !== "none";
-                hubInputRow.toggleClass("fn-gcal-hidden", !showInput);
-                hubFolderRow.toggleClass("fn-gcal-hidden", value !== "create");
-                pickBtn.toggleClass("fn-gcal-hidden", value === "create");
-                this.hubAlsoRowEl.toggleClass("fn-gcal-hidden", !showInput);
-                this.hubInputEl.placeholder = value === "link" ? "Search notes..." : "New note name";
-                this.hubInputEl.setAttribute("aria-label", value === "link" ? "Related note" : "New related note name");
-                if (value === "create") {
-                    this.hubInputEl.value = this.form.title;
-                    this.form.hubCreateName = this.form.title;
-                } else {
-                    this.hubInputEl.value = "";
-                    this.form.hubLinkPath = "";
-                }
-            },
-        );
-        // Move chip group before hubInputRow (chip group was appended last)
-        const chipGroup = wrap.lastElementChild;
-        if (chipGroup) wrap.insertBefore(chipGroup, hubInputRow);
     }
 
     // ---- Detail note --------------------------------------------------------
@@ -937,26 +828,5 @@ export class EventTaskModal extends Modal {
         row.createEl("label", { text: label, attr: { for: id } });
         cb.addEventListener("change", () => onChange(cb.checked));
         return cb;
-    }
-}
-
-// ---------------------------------------------------------------------------
-
-class FilePickerSuggester extends FuzzySuggestModal<TFile> {
-    constructor(
-        app: App,
-        private onPick: (file: TFile) => void,
-    ) {
-        super(app);
-        this.setPlaceholder("Pick a note...");
-    }
-    getItems(): TFile[] {
-        return this.app.vault.getMarkdownFiles().filter(isTFile);
-    }
-    getItemText(f: TFile): string {
-        return f.path;
-    }
-    onChooseItem(f: TFile): void {
-        this.onPick(f);
     }
 }
