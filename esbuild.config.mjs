@@ -1,8 +1,8 @@
-import esbuild from "esbuild";
-import process from "node:process";
-import builtins from "builtin-modules";
 import fs from "node:fs";
+import { builtinModules } from "node:module";
 import path from "node:path";
+import process from "node:process";
+import esbuild from "esbuild";
 
 const banner = `/* Auto-generated bundle. Do not edit directly. */`;
 const prod = process.argv[2] === "production";
@@ -92,7 +92,7 @@ const ctx = await esbuild.context({
         "@lezer/common",
         "@lezer/highlight",
         "@lezer/lr",
-        ...builtins,
+        ...builtinModules,
     ],
     format: "cjs",
     target: "es2018",

@@ -39,7 +39,6 @@
     "devDependencies": {
         "@biomejs/biome": "2.5.8",
         "@types/node": "^24.13.3",
-        "builtin-modules": "^3.3.0",
         "esbuild": "0.28.2",
         "obsidian": "1.12.3",
         "tslib": "^2.6.0",
