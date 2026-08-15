@@ -7,6 +7,7 @@ import {
     buildActiveNoteManagerScopeOptions,
 } from "./ActiveNoteManagerModel";
 import type { ScheduledItem, ScheduledItemKind } from "./ScheduledItemTypes";
+import { inspectTaskLine, taskLineLintLabel } from "./TaskLineLint";
 
 export class ActiveNoteManagerModal extends Modal {
     constructor(
@@ -74,7 +75,15 @@ export class ActiveNoteManagerModal extends Modal {
                 const icon = row.createSpan({ cls: "fn-active-note-manager-kind", attr: { "aria-hidden": "true" } });
                 setIcon(icon, item.kind === "event" ? "calendar" : item.isCompleted ? "circle-check" : "circle");
                 const body = row.createSpan({ cls: "fn-active-note-manager-body" });
-                body.createSpan({ cls: "fn-active-note-manager-name", text: item.title });
+                const titleRow = body.createSpan({ cls: "fn-active-note-manager-title-row" });
+                titleRow.createSpan({ cls: "fn-active-note-manager-name", text: item.title });
+                if (item.kind === "task") {
+                    const lint = inspectTaskLine(item.rawLine);
+                    titleRow.createSpan({
+                        cls: `fn-active-note-manager-lint fn-active-note-manager-lint-${lint.status}`,
+                        text: taskLineLintLabel(lint.status),
+                    });
+                }
                 body.createSpan({ cls: "fn-active-note-manager-meta", text: activeNoteItemMeta(item) });
                 row.addEventListener("click", () => {
                     this.close();

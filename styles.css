@@ -2096,9 +2096,32 @@ body.fn-mobile-event-screen-open .suggestion-container {
 }
 
 .fn-active-note-manager-name {
-    width: 100%;
     overflow-wrap: anywhere;
     font-weight: 600;
+}
+
+.fn-active-note-manager-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+}
+
+.fn-active-note-manager-lint {
+    flex: 0 0 auto;
+    padding: 1px 6px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    font-weight: 500;
+}
+
+.fn-active-note-manager-lint-needs-format,
+.fn-active-note-manager-lint-warning {
+    color: var(--text-warning);
+    border-color: var(--background-modifier-border-hover);
 }
 
 .fn-active-note-manager-meta {
