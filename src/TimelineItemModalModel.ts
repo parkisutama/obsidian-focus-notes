@@ -3,6 +3,7 @@ import type { ScheduledItem } from "./ScheduledItemTypes";
 export interface TimelineItemModalModel {
     title: string;
     kindLabel: "Event" | "Task";
+    canEdit: boolean;
     statusLabel: "Scheduled" | "Pending" | "Completed" | "Cancelled";
     priorityLabel: "High" | "Medium" | "Normal" | "Low" | null;
     scheduleLabel: string;
@@ -38,6 +39,7 @@ export function buildTimelineItemModalModel(item: ScheduledItem): TimelineItemMo
     return {
         title: item.title,
         kindLabel: item.kind === "event" ? "Event" : "Task",
+        canEdit: item.kind === "task",
         statusLabel: formatStatus(item),
         priorityLabel: item.kind === "task" ? formatPriority(item.priority ?? "normal") : null,
         scheduleLabel: formatSchedule(item),

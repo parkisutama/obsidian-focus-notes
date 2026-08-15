@@ -7,6 +7,7 @@ export class TimelineItemModal extends Modal {
         app: App,
         private item: ScheduledItem,
         private onOpenSource: (item: ScheduledItem) => void,
+        private onEditTask: (item: ScheduledItem) => void,
     ) {
         super(app);
     }
@@ -30,6 +31,13 @@ export class TimelineItemModal extends Modal {
         const actions = this.contentEl.createDiv({ cls: "fn-timeline-modal-actions" });
         const close = actions.createEl("button", { text: "Close" });
         close.addEventListener("click", () => this.close());
+        if (model.canEdit) {
+            const edit = actions.createEl("button", { text: "Edit task" });
+            edit.addEventListener("click", () => {
+                this.close();
+                this.onEditTask(this.item);
+            });
+        }
         const open = actions.createEl("button", { cls: "mod-cta", text: "Open source note" });
         open.addEventListener("click", () => {
             this.close();

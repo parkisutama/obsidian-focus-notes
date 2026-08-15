@@ -1953,7 +1953,8 @@ body.fn-mobile-event-screen-open .suggestion-container {
 }
 
 .fn-timeline-pending-modal,
-.fn-timeline-item-modal {
+.fn-timeline-item-modal,
+.fn-task-edit-modal {
     width: min(520px, calc(100vw - 32px));
     max-height: min(720px, calc(100vh - 48px));
 }
@@ -2033,6 +2034,30 @@ body.fn-mobile-event-screen-open .suggestion-container {
     justify-content: flex-end;
     gap: 8px;
     margin-top: 20px;
+}
+
+.fn-task-edit-modal .modal-content {
+    padding: 24px;
+}
+
+.fn-task-edit-title,
+.fn-task-edit-source {
+    overflow-wrap: anywhere;
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+}
+
+.fn-task-edit-title {
+    margin: -4px 0 16px;
+}
+
+.fn-task-edit-source {
+    margin-top: 16px;
+}
+
+.fn-task-edit-modal .setting-item-control input[type="date"],
+.fn-task-edit-modal .setting-item-control input[type="time"] {
+    min-width: 0;
 }
 
 .fn-timeline-pending-subtitle {

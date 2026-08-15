@@ -5,6 +5,8 @@ import { ScheduledItemParser } from "./ScheduledItemParser";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
 import type { ScheduledItem, TimelineMode, TimelineRange } from "./ScheduledItemTypes";
 import { TargetResolver } from "./TargetResolver";
+import { TaskEditModal } from "./TaskEditModal";
+import { captureTaskLedgerEdit } from "./TaskLedgerEditor";
 import { TimelineGrid } from "./TimelineGrid";
 import { PendingTasksModal, TimelineItemModal } from "./TimelineItemModal";
 import { TimelineLayout } from "./TimelineLayout";
@@ -399,7 +401,35 @@ export class TimelineView extends ItemView {
     }
 
     private openItemDetails(item: ScheduledItem): void {
-        new TimelineItemModal(this.app, item, (selected) => void this.openSourceItem(selected)).open();
+        new TimelineItemModal(
+            this.app,
+            item,
+            (selected) => void this.openSourceItem(selected),
+            (selected) => void this.openTaskEditor(selected),
+        ).open();
+    }
+
+    private async openTaskEditor(item: ScheduledItem): Promise<void> {
+        const captured = await captureTaskLedgerEdit(this.app, {
+            filePath: item.source.filePath,
+            lineNumber: item.source.lineNumber,
+            rawLine: item.rawLine,
+        });
+        if (captured.status !== "captured") {
+            new Notice(
+                captured.status === "conflict"
+                    ? "Task source changed or moved. Refresh the Timeline and try again."
+                    : "This Task contains ambiguous or invalid editable metadata.",
+            );
+            return;
+        }
+        new TaskEditModal(
+            this.app,
+            item.title,
+            captured.snapshot,
+            captured.edit,
+            () => void this.refreshIndex(),
+        ).open();
     }
 
     private openPendingItems(items: ScheduledItem[]): void {

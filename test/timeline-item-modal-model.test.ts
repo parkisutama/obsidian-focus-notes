@@ -33,6 +33,7 @@ test("Timeline item modal model presents an Event schedule and exact source", ()
     const model = buildTimelineItemModalModel(baseItem);
 
     assert.equal(model.kindLabel, "Event");
+    assert.equal(model.canEdit, false);
     assert.equal(model.statusLabel, "Scheduled");
     assert.equal(model.actualScheduleLabel, null);
     assert.equal(model.scheduleLabel, "Aug 3, 2026 · 09:00–10:30");
@@ -55,6 +56,7 @@ test("Timeline item modal model preserves completed and due-only Task semantics"
 
     const model = buildTimelineItemModalModel(task);
     assert.equal(model.kindLabel, "Task");
+    assert.equal(model.canEdit, true);
     assert.equal(model.statusLabel, "Completed");
     assert.equal(model.priorityLabel, "High");
     assert.equal(model.scheduleLabel, "Due Aug 2, 2026");
