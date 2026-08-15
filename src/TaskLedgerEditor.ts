@@ -6,7 +6,13 @@ import {
     type LedgerRecordSource,
     replaceLedgerRecord,
 } from "./LedgerRecordSource.ts";
-import { editTaskLine, parseTaskLineEdit, type ParseTaskLineEditResult, type TaskLineEdit } from "./TaskLineEditor.ts";
+import {
+    editTaskLine,
+    parseTaskLineEdit,
+    type ParseTaskLineEditResult,
+    type TaskLineEdit,
+    type TaskLineInvalidReason,
+} from "./TaskLineEditor.ts";
 import { isTFile } from "./utils.ts";
 
 type FileConflictReason = LedgerRecordConflictReason | "file-missing";
@@ -20,7 +26,7 @@ export type SaveTaskLedgerEditResult =
     | { status: "saved" }
     | { status: "unchanged" }
     | { status: "conflict"; reason: FileConflictReason }
-    | { status: "invalid"; reason: "not-task" };
+    | { status: "invalid"; reason: TaskLineInvalidReason };
 
 export async function captureTaskLedgerEdit(
     app: App,
@@ -42,6 +48,8 @@ export async function saveTaskLedgerEdit(
 ): Promise<SaveTaskLedgerEditResult> {
     const editedLine = editTaskLine(snapshot.rawLine, edit);
     if (editedLine.status === "invalid") return editedLine;
+    const validated = parseTaskLineEdit(editedLine.line);
+    if (validated.status === "invalid") return validated;
 
     const file = app.vault.getAbstractFileByPath(snapshot.filePath);
     if (!isTFile(file)) return { status: "conflict", reason: "file-missing" };

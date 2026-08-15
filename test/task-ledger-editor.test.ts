@@ -98,6 +98,22 @@ test("returns unchanged without rewriting a semantic no-op", async () => {
     assert.equal(files.get(source.filePath), original);
 });
 
+test("refuses invalid edited values before processing the Vault file", async () => {
+    const { app, files, processCalls } = fakeApp(original);
+    const captured = await captureTaskLedgerEdit(app, source);
+    assert.equal(captured.status, "captured");
+    if (captured.status !== "captured") return;
+
+    const result = await saveTaskLedgerEdit(app, captured.snapshot, {
+        ...captured.edit,
+        due: "2026-02-30",
+    });
+
+    assert.deepEqual(result, { status: "invalid", reason: "invalid-due" });
+    assert.deepEqual(processCalls, []);
+    assert.equal(files.get(source.filePath), original);
+});
+
 test("refuses concurrent source changes and a missing or renamed file", async () => {
     const { app, files } = fakeApp(original);
     const captured = await captureTaskLedgerEdit(app, source);

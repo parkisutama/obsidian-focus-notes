@@ -10,19 +10,18 @@ export interface TaskLineEdit {
 
 export type EditTaskLineResult = { status: "ready"; line: string } | { status: "invalid"; reason: "not-task" };
 
+export type TaskLineInvalidReason =
+    | "not-task"
+    | "duplicate-owned-field"
+    | "invalid-priority"
+    | "invalid-due"
+    | "incomplete-timebox"
+    | "invalid-timebox"
+    | "invalid-reminder";
+
 export type ParseTaskLineEditResult =
     | { status: "parsed"; edit: TaskLineEdit }
-    | {
-          status: "invalid";
-          reason:
-              | "not-task"
-              | "duplicate-owned-field"
-              | "invalid-priority"
-              | "invalid-due"
-              | "incomplete-timebox"
-              | "invalid-timebox"
-              | "invalid-reminder";
-      };
+    | { status: "invalid"; reason: TaskLineInvalidReason };
 
 type OwnedKey = "priority" | "due" | "start" | "end" | "remind";
 
