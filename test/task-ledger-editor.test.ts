@@ -41,6 +41,13 @@ test("captures then atomically saves only the owned Task fields", async () => {
     const captured = await captureTaskLedgerEdit(app, source);
     assert.equal(captured.status, "captured");
     if (captured.status !== "captured") return;
+    assert.deepEqual(captured.edit, {
+        completed: false,
+        priority: "normal",
+        due: "2026-08-16",
+        timebox: null,
+        reminders: [],
+    });
 
     const saved = await saveTaskLedgerEdit(app, captured.snapshot, {
         completed: true,
@@ -60,6 +67,17 @@ test("captures then atomically saves only the owned Task fields", async () => {
             "    - Preserve this detail",
         ].join("\n"),
     );
+});
+
+test("refuses malformed owned metadata before opening an edit session", async () => {
+    const malformed = original.replace("due:2026-08-16", "due:2026-08-16 | due:2026-08-17");
+    const { app } = fakeApp(malformed);
+    const result = await captureTaskLedgerEdit(app, {
+        ...source,
+        rawLine: source.rawLine.replace("due:2026-08-16", "due:2026-08-16 | due:2026-08-17"),
+    });
+
+    assert.deepEqual(result, { status: "invalid", reason: "duplicate-owned-field" });
 });
 
 test("returns unchanged without rewriting a semantic no-op", async () => {

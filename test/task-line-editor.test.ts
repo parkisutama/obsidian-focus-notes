@@ -1,6 +1,51 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { editTaskLine } from "../src/TaskLineEditor.ts";
+import { editTaskLine, parseTaskLineEdit } from "../src/TaskLineEditor.ts";
+
+test("parses every editable Task field including multiple reminders", () => {
+    const line =
+        "- [X] [[Proposal|Review proposal]] | owner:Ana | priority:medium | due:2026-08-17 17:00" +
+        " | start:2026-08-17 09:00 | end:2026-08-17 11:00" +
+        " | remind:2026-08-17 08:30 | remind:2026-08-17 16:30";
+
+    assert.deepEqual(parseTaskLineEdit(line), {
+        status: "parsed",
+        edit: {
+            completed: true,
+            priority: "medium",
+            due: "2026-08-17 17:00",
+            timebox: { start: "2026-08-17 09:00", end: "2026-08-17 11:00" },
+            reminders: ["2026-08-17 08:30", "2026-08-17 16:30"],
+        },
+    });
+    assert.deepEqual(parseTaskLineEdit("- [ ] Task | owner:Ana"), {
+        status: "parsed",
+        edit: { completed: false, priority: "normal", due: null, timebox: null, reminders: [] },
+    });
+});
+
+test("refuses ambiguous or malformed owned Task fields", () => {
+    assert.deepEqual(parseTaskLineEdit("- [ ] Task | priority:high | priority:low"), {
+        status: "invalid",
+        reason: "duplicate-owned-field",
+    });
+    assert.deepEqual(parseTaskLineEdit("- [ ] Task | due:2026-02-30"), {
+        status: "invalid",
+        reason: "invalid-due",
+    });
+    assert.deepEqual(parseTaskLineEdit("- [ ] Task | start:2026-08-17 09:00"), {
+        status: "invalid",
+        reason: "incomplete-timebox",
+    });
+    assert.deepEqual(parseTaskLineEdit("- [ ] Task | start:2026-08-17 11:00 | end:2026-08-17 09:00"), {
+        status: "invalid",
+        reason: "invalid-timebox",
+    });
+    assert.deepEqual(parseTaskLineEdit("- [ ] Task | remind:tomorrow"), {
+        status: "invalid",
+        reason: "invalid-reminder",
+    });
+});
 
 test("keeps a semantic no-op byte-identical, including title links and unknown metadata", () => {
     const line =
