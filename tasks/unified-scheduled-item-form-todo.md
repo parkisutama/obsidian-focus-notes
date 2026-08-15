@@ -16,9 +16,9 @@
 
 **Acceptance criteria:**
 
-- [ ] One typed contract represents Task/Event title, description, Object References, detail selection, and kind fields.
-- [ ] Create/Edit persistence context is separate from semantic form data.
-- [ ] Existing create state and line-edit state have lossless adapters with focused tests.
+- [x] One typed contract represents Task/Event title, description, Object References, detail selection, and kind fields.
+- [x] Create/Edit persistence context is separate from semantic form data.
+- [x] Existing create state and line-edit state have lossless adapters with focused tests.
 
 **Verification:** `node --test test/scheduled-item-form-data.test.ts`; `pnpm run typecheck`.
 
