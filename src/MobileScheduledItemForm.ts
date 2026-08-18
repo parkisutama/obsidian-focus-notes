@@ -378,9 +378,14 @@ export class MobileScheduledItemForm extends Component {
         if (viewport) {
             viewport.addEventListener("resize", update);
             viewport.addEventListener("scroll", update);
+            // focusin fires before the on-screen keyboard finishes opening, so the initial
+            // reveal() scrolls against pre-keyboard viewport bounds. Re-run it once the
+            // keyboard's actual size lands via visualViewport's own resize event.
+            viewport.addEventListener("resize", reveal);
             this.register(() => {
                 viewport.removeEventListener("resize", update);
                 viewport.removeEventListener("scroll", update);
+                viewport.removeEventListener("resize", reveal);
             });
         }
     }

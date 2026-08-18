@@ -176,6 +176,18 @@ body.fn-mobile-event-screen-open .suggestion-container {
     -webkit-overflow-scrolling: touch;
 }
 
+/* Two prior fixes tried to measure the keyboard's height via visualViewport
+ * and reserve exactly that much scroll room — both failed, which means the
+ * measurement itself isn't reliable on this WebView, not that the reserved
+ * amount was wrong. Stop trying to measure it: while any field in the sheet
+ * is focused (i.e. a keyboard is plausibly open), reserve generous, fixed
+ * scroll room unconditionally, so every field can always be scrolled clear
+ * of the keyboard regardless of how tall it actually is or whether the
+ * layout viewport reports that height accurately. */
+.fn-mobile-event-screen .fn-mobile-event-body:focus-within {
+    padding-bottom: calc(50vh + env(safe-area-inset-bottom));
+}
+
 .fn-mobile-event-screen .fn-mobile-event-title {
     width: 100%;
     min-height: 52px;
