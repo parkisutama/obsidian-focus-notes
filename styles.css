@@ -383,6 +383,12 @@ body.fn-mobile-event-screen-open .suggestion-container {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     overflow-y: auto;
+    /* Inside a Setting row this div inherits a right-leaning text alignment
+     * from the control column, so an empty editor shows its caret flush
+     * against the right edge instead of where typing should start. */
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: plaintext;
 }
 
 .fn-mobile-event-screen .fn-mobile-event-description:empty::before {
