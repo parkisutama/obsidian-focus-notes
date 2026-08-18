@@ -4,8 +4,7 @@ import { ContextNotesController } from "./InboxNotesController";
 import { parseObjectReferences } from "./ObjectReference.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
-import type { ContextSourceSettings } from "./types";
-import type { InsertPosition } from "./types";
+import type { ContextSourceSettings, InsertPosition } from "./types";
 
 export interface DesktopScheduledItemCreateContext {
     targetFile: string;
@@ -38,6 +37,10 @@ export class DesktopScheduledItemForm {
 
     render(container: HTMLElement): void {
         this.destroyController();
+        // contentEl doesn't scroll itself — the ancestor `.modal` element does — so the
+        // scroll position has to be read from and restored onto that ancestor instead.
+        const scrollHost = container.closest<HTMLElement>(".modal") ?? container;
+        const scrollTop = scrollHost.scrollTop;
         this.container = container;
         container.empty();
         container.addClass("fn-scheduled-item-desktop-form");
@@ -76,6 +79,7 @@ export class DesktopScheduledItemForm {
         submit.disabled = model.submitDisabled;
         submit.addEventListener("click", this.options.onSubmit);
         if (this.busy || this.recovery) this.lockFields(container, actions);
+        scrollHost.scrollTop = scrollTop;
     }
 
     setSubmissionState(state: { busy: boolean; recovery: boolean; errorMessage?: string }): void {
@@ -91,7 +95,10 @@ export class DesktopScheduledItemForm {
     }
 
     private renderIdentity(container: HTMLElement): void {
-        const title = new Setting(container).setName("Title").setDesc("The portable Task or Event title.");
+        const title = new Setting(container)
+            .setName("Title")
+            .setDesc("The portable Task or Event title.")
+            .setClass("fn-scheduled-item-form-wide-field");
         title.addText((text) =>
             text
                 .setPlaceholder("Add title")
@@ -207,7 +214,10 @@ export class DesktopScheduledItemForm {
     }
 
     private renderDescription(container: HTMLElement): void {
-        const setting = new Setting(container).setName("Description").setDesc("Use @ for portable Object References.");
+        const setting = new Setting(container)
+            .setName("Description")
+            .setDesc("Use @ to insert a relative Markdown link to an Object Note.")
+            .setClass("fn-scheduled-item-form-wide-field");
         const editor = setting.controlEl.createDiv({
             cls: "fn-gcal-desc-input",
             attr: { role: "textbox", "aria-label": "Description", "aria-multiline": "true" },
@@ -216,7 +226,7 @@ export class DesktopScheduledItemForm {
             initialValue: this.options.data.description,
             targetFile: this.options.targetFile,
             getContextSources: this.options.getContextSources,
-            referenceFormat: "object-reference",
+            referenceFormat: "markdown-link",
             onChange: (value) => {
                 this.options.data.description = value;
                 this.options.data.objectReferences = parseObjectReferences(value).map(
@@ -248,7 +258,9 @@ export class DesktopScheduledItemForm {
                 }),
         );
         if (data.detailNote.mode === "link") {
-            const setting = new Setting(container).setName("Existing note");
+            const setting = new Setting(container)
+                .setName("Existing note")
+                .setClass("fn-scheduled-item-form-wide-field");
             const input = setting.controlEl.createEl("input", {
                 type: "text",
                 attr: { "aria-label": "Existing Detail Note" },
@@ -262,14 +274,17 @@ export class DesktopScheduledItemForm {
             new FileSuggest(this.options.app, input);
         }
         if (data.detailNote.mode === "create") {
-            new Setting(container).setName("Note name").addText((text) =>
-                text.setValue(data.detailNote.mode === "create" ? data.detailNote.name : "").onChange((value) =>
-                    this.update(() => {
-                        if (data.detailNote.mode === "create") data.detailNote.name = value;
-                    }),
-                ),
-            );
-            const setting = new Setting(container).setName("Folder");
+            new Setting(container)
+                .setName("Note name")
+                .setClass("fn-scheduled-item-form-wide-field")
+                .addText((text) =>
+                    text.setValue(data.detailNote.mode === "create" ? data.detailNote.name : "").onChange((value) =>
+                        this.update(() => {
+                            if (data.detailNote.mode === "create") data.detailNote.name = value;
+                        }),
+                    ),
+                );
+            const setting = new Setting(container).setName("Folder").setClass("fn-scheduled-item-form-wide-field");
             const input = setting.controlEl.createEl("input", {
                 type: "text",
                 attr: { "aria-label": "Detail Note folder" },

@@ -17,6 +17,6 @@ test("shared mobile renderer exposes the complete portable form contract", async
 
     for (const label of ["Title", "Priority", "Due", "Timebox", "Reminders", "Status", "Description", "Detail Note"])
         assert.match(source, new RegExp(`\\b${label}\\b`));
-    assert.match(source, /referenceFormat:\s*"object-reference"/);
+    assert.match(source, /referenceFormat:\s*"markdown-link"/);
     assert.match(source, /showCreateTarget/);
 });

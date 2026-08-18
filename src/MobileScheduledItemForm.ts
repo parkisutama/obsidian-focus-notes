@@ -192,7 +192,9 @@ export class MobileScheduledItemForm extends Component {
     }
 
     private renderDescription(body: HTMLElement): void {
-        const setting = new Setting(body).setName("Description").setDesc("Use @ for portable Object References.");
+        const setting = new Setting(body)
+            .setName("Description")
+            .setDesc("Use @ to insert a relative Markdown link to an Object Note.");
         const editor = setting.controlEl.createDiv({
             cls: "fn-mobile-event-description",
             attr: { role: "textbox", "aria-label": "Description", "aria-multiline": "true" },
@@ -201,7 +203,7 @@ export class MobileScheduledItemForm extends Component {
             initialValue: this.options.data.description,
             targetFile: this.options.targetFile,
             getContextSources: this.options.getContextSources,
-            referenceFormat: "object-reference",
+            referenceFormat: "markdown-link",
             onChange: (value) => {
                 this.options.data.description = value;
                 this.options.data.objectReferences = parseObjectReferences(value).map((item) => item.reference);

@@ -2329,9 +2329,8 @@ body.fn-mobile-event-screen-open .suggestion-container {
 
 .fn-scheduled-item-form-header {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--size-4-4);
+    flex-direction: column;
+    gap: var(--size-4-1);
 }
 
 .fn-scheduled-item-form-header h2 {
@@ -2339,18 +2338,32 @@ body.fn-mobile-event-screen-open .suggestion-container {
 }
 
 .fn-scheduled-item-form-context {
+    overflow-wrap: anywhere;
     color: var(--text-muted);
     font-size: var(--font-ui-smaller);
-    text-align: end;
 }
 
 .fn-scheduled-item-desktop-form > .setting-item {
     padding-block: var(--size-4-2);
 }
 
+.fn-scheduled-item-desktop-form .fn-scheduled-item-form-wide-field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--size-4-2);
+}
+
+.fn-scheduled-item-desktop-form .fn-scheduled-item-form-wide-field .setting-item-control {
+    width: 100%;
+}
+
+.fn-scheduled-item-desktop-form .fn-scheduled-item-form-wide-field .setting-item-control input[type="text"] {
+    width: 100%;
+}
+
 .fn-scheduled-item-desktop-form .fn-gcal-desc-input {
-    min-height: 6rem;
-    width: min(28rem, 100%);
+    min-height: 9rem;
+    width: 100%;
 }
 
 .fn-scheduled-item-form-error {
@@ -3148,6 +3161,7 @@ body.fn-mobile-event-screen-open .suggestion-container {
     background: var(--background-primary);
     color: var(--text-normal);
     font-size: var(--font-ui-small);
+    text-align: left;
     resize: vertical;
     box-sizing: border-box;
     font-family: inherit;
