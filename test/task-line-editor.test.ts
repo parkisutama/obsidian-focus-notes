@@ -97,6 +97,21 @@ test("updates owned Task attributes without rewriting unknown metadata or its or
     );
 });
 
+test("normalizes out-of-order owned metadata into canonical order even without field changes", () => {
+    const line = "- [ ] Task | due:2026-08-16 | owner:Ana | priority:high";
+
+    assert.deepEqual(
+        editTaskLine(line, {
+            completed: false,
+            priority: "high",
+            due: "2026-08-16",
+            timebox: null,
+            reminders: [],
+        }),
+        { status: "ready", line: "- [ ] Task | priority:high | owner:Ana | due:2026-08-16" },
+    );
+});
+
 test("removes optional owned attributes and refuses non-Task lines", () => {
     const line =
         "- [X] Task | owner:Ana | priority:low | due:2026-08-16 | start:2026-08-16 09:00 | end:2026-08-16 10:00 | remind:2026-08-16 08:00";

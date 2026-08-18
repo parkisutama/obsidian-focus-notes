@@ -131,6 +131,8 @@ function editTaskLineWithOptionalTitle(line: string, titleEdit: string | null, e
     const desired = desiredMetadata(edit);
     const consumed: Record<OwnedKey, number> = { priority: 0, due: 0, start: 0, end: 0, remind: 0 };
     const metadata: string[] = [];
+    const ownedPositions: number[] = [];
+    const ownedRanks: number[] = [];
 
     for (const segment of segments) {
         const key = metadataKey(segment);
@@ -149,6 +151,8 @@ function editTaskLineWithOptionalTitle(line: string, titleEdit: string | null, e
                 edit.priority === "normal" &&
                 metadataValue(segment).toLowerCase() === "normal"
             ) {
+                ownedPositions.push(metadata.length);
+                ownedRanks.push(OWNED_KEYS.indexOf(ownedKey));
                 metadata.push(segment);
             }
             continue;
@@ -156,12 +160,25 @@ function editTaskLineWithOptionalTitle(line: string, titleEdit: string | null, e
 
         const currentValue = metadataValue(segment);
         const unchanged = ownedKey === "priority" ? currentValue.toLowerCase() === value : currentValue === value;
+        ownedPositions.push(metadata.length);
+        ownedRanks.push(OWNED_KEYS.indexOf(ownedKey));
         metadata.push(unchanged ? segment : `${ownedKey}:${value}`);
     }
 
     for (const key of OWNED_KEYS) {
         for (const value of desired[key].slice(consumed[key])) metadata.push(`${key}:${value}`);
     }
+
+    // Re-sort the owned segments that already had a position into the canonical
+    // priority/due/start/end/remind order, matching TaskLineLint's normalization,
+    // so saving a "needs format" line (even with no field changes) fixes its order.
+    const ownedTexts = ownedPositions.map((position) => metadata[position]);
+    const order = ownedPositions
+        .map((_, sequenceIndex) => sequenceIndex)
+        .sort((a, b) => ownedRanks[a] - ownedRanks[b] || a - b);
+    ownedPositions.forEach((position, sequenceIndex) => {
+        metadata[position] = ownedTexts[order[sequenceIndex]];
+    });
 
     const checkbox = edit.completed ? "x" : " ";
     const originalCheckboxMatches = (match[2].toLowerCase() === "x") === edit.completed;
