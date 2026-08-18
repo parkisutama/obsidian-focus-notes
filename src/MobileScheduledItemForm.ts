@@ -127,31 +127,43 @@ export class MobileScheduledItemForm extends Component {
                 .setValue(data.priority)
                 .onChange((value) => this.changed(() => (data.priority = value as typeof data.priority))),
         );
-        this.text(body, "Due", data.due ?? "", (value) => (data.due = value || null), "YYYY-MM-DD HH:mm");
-        this.toggle(body, "Timebox", data.timebox !== null, (enabled) => {
-            data.timebox = enabled ? { start: "", end: "" } : null;
-            this.rerender();
-        });
+        this.dateTime(body, "Due", data.due, false, (value) => (data.due = value));
+        new Setting(body).setName("Timebox").addToggle((toggle) =>
+            toggle.setValue(data.timebox !== null).onChange((enabled) => {
+                data.timebox = enabled
+                    ? { start: data.due?.includes(" ") ? data.due : "", end: data.due?.includes(" ") ? data.due : "" }
+                    : null;
+                this.rerender();
+            }),
+        );
         if (data.timebox) {
-            this.text(body, "Timebox start", data.timebox.start, (value) => {
-                if (data.timebox) data.timebox.start = value;
+            this.dateTime(body, "Timebox start", data.timebox.start, true, (value) => {
+                if (data.timebox) data.timebox.start = value ?? "";
             });
-            this.text(body, "Timebox end", data.timebox.end, (value) => {
-                if (data.timebox) data.timebox.end = value;
+            this.dateTime(body, "Timebox end", data.timebox.end, true, (value) => {
+                if (data.timebox) data.timebox.end = value ?? "";
             });
         }
-        this.text(
-            body,
-            "Reminders",
-            data.reminders.join(", "),
-            (value) => {
-                data.reminders = value
-                    .split(",")
-                    .map((item) => item.trim())
-                    .filter(Boolean);
-            },
-            "YYYY-MM-DD HH:mm, …",
+        new Setting(body).setName("Reminders").addButton((button) =>
+            button.setButtonText("Add reminder").onClick(() => {
+                data.reminders.push(data.due?.includes(" ") ? data.due : "");
+                this.rerender();
+            }),
         );
+        data.reminders.forEach((reminder, index) => {
+            const row = this.dateTime(body, `Reminder ${index + 1}`, reminder, true, (value) => {
+                data.reminders[index] = value ?? "";
+            });
+            row.addButton((button) =>
+                button
+                    .setIcon("trash")
+                    .setTooltip(`Remove reminder ${index + 1}`)
+                    .onClick(() => {
+                        data.reminders.splice(index, 1);
+                        this.rerender();
+                    }),
+            );
+        });
     }
 
     private renderEvent(body: HTMLElement): void {
@@ -163,8 +175,8 @@ export class MobileScheduledItemForm extends Component {
             data.end = value ? null : `${data.start.slice(0, 10)} 10:00`;
             this.rerender();
         });
-        this.text(body, "Planned start", data.start, (value) => (data.start = value));
-        if (!data.allDay) this.text(body, "Planned end", data.end ?? "", (value) => (data.end = value || null));
+        this.dateTime(body, "Planned start", data.start, !data.allDay, (value) => (data.start = value ?? ""));
+        if (!data.allDay) this.dateTime(body, "Planned end", data.end, true, (value) => (data.end = value));
         new Setting(body).setName("Status").addDropdown((dropdown) =>
             dropdown
                 .addOptions({ planned: "Planned", completed: "Completed", cancelled: "Cancelled" })
@@ -177,15 +189,17 @@ export class MobileScheduledItemForm extends Component {
         );
         if (data.status === "completed") {
             this.toggle(body, "Record actual time", data.actual !== null, (enabled) => {
-                data.actual = enabled ? { start: data.start, end: data.end ?? data.start } : null;
+                data.actual = enabled
+                    ? { start: timedValue(data.start), end: timedValue(data.end ?? data.start) }
+                    : null;
                 this.rerender();
             });
             if (data.actual) {
-                this.text(body, "Actual start", data.actual.start, (value) => {
-                    if (data.actual) data.actual.start = value;
+                this.dateTime(body, "Actual start", data.actual.start, true, (value) => {
+                    if (data.actual) data.actual.start = value ?? "";
                 });
-                this.text(body, "Actual end", data.actual.end, (value) => {
-                    if (data.actual) data.actual.end = value;
+                this.dateTime(body, "Actual end", data.actual.end, true, (value) => {
+                    if (data.actual) data.actual.end = value ?? "";
                 });
             }
         }
@@ -264,6 +278,29 @@ export class MobileScheduledItemForm extends Component {
             context.targetPosition === "start",
             (value) => (context.targetPosition = value ? "start" : "end"),
         );
+    }
+
+    private dateTime(
+        container: HTMLElement,
+        label: string,
+        value: string | null,
+        requireTime: boolean,
+        onChange: (value: string | null) => void,
+    ): Setting {
+        const [dateValue = "", timeValue = ""] = value?.split(" ") ?? [];
+        const setting = new Setting(container).setName(label);
+        const date = setting.controlEl.createEl("input", { type: "date", attr: { "aria-label": `${label} date` } });
+        date.value = dateValue;
+        let time: HTMLInputElement | null = null;
+        if (requireTime || timeValue) {
+            time = setting.controlEl.createEl("input", { type: "time", attr: { "aria-label": `${label} time` } });
+            time.value = timeValue;
+        }
+        const emit = (): void =>
+            this.changed(() => onChange(date.value ? `${date.value}${time?.value ? ` ${time.value}` : ""}` : null));
+        date.addEventListener("change", emit);
+        time?.addEventListener("change", emit);
+        return setting;
     }
 
     private text(
@@ -346,4 +383,8 @@ export class MobileScheduledItemForm extends Component {
             });
         }
     }
+}
+
+function timedValue(value: string): string {
+    return value.includes(" ") ? value : `${value} 09:00`;
 }
