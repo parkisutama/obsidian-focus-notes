@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { findInboxTrigger, suggestionSeparator } from "../src/InboxNotesText.ts";
+import { findInboxTrigger, leadingIndentLength, lineStartOffsets, suggestionSeparator } from "../src/InboxNotesText.ts";
 
 test("finds mention and tag triggers immediately before the cursor", () => {
     assert.deepEqual(findInboxTrigger("Diskusikan dengan @ndi", 22), {
@@ -48,4 +48,26 @@ test("a second mention remains detectable after the first selected mention", () 
         end: secondInput.length,
         query: "office",
     });
+});
+
+test("finds only the line a collapsed cursor sits on", () => {
+    const text = "ab\ncd\nef";
+    assert.deepEqual(lineStartOffsets(text, 1, 1), [0]);
+    assert.deepEqual(lineStartOffsets(text, 0, 0), [0]);
+    assert.deepEqual(lineStartOffsets(text, 4, 4), [3]);
+});
+
+test("finds every line a multi-line selection touches", () => {
+    const text = "ab\ncd\nef";
+    assert.deepEqual(lineStartOffsets(text, 1, 7), [0, 3, 6]);
+    assert.deepEqual(lineStartOffsets(text, 3, 5), [3]);
+});
+
+test("counts up to one indent level of leading spaces or tabs", () => {
+    const text = "- Dashboard :\n    - child\n\t- tabbed\n        - grandchild\n- none";
+    assert.equal(leadingIndentLength(text, 0), 0);
+    assert.equal(leadingIndentLength(text, 14), 4);
+    assert.equal(leadingIndentLength(text, 26), 1);
+    const grandchildStart = text.indexOf("        - grandchild");
+    assert.equal(leadingIndentLength(text, grandchildStart), 4);
 });

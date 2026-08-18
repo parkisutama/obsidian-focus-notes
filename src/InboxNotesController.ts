@@ -1,19 +1,27 @@
 import { AbstractInputSuggest, type App, type HoverPopover, Keymap } from "obsidian";
-import { findInboxTrigger, type InboxTrigger, suggestionSeparator } from "./InboxNotesText";
+import { formatRelativeMarkdownLink } from "./InboxMarkdown";
 import {
+    findInboxTrigger,
+    type InboxTrigger,
+    LIST_INDENT,
+    leadingIndentLength,
+    lineStartOffsets,
+    suggestionSeparator,
+} from "./InboxNotesText";
+import {
+    formatObjectReferencePart,
     type InboxRichTextPart,
     isInboxLineBreakInput,
     parseInboxRichText,
     parseObjectReferenceRichText,
     serializeInboxRichText,
-    formatObjectReferencePart,
 } from "./InboxRichText";
 import type { ContextSuggestion } from "./InboxSuggestions";
-import { ObsidianInboxSuggestionSource } from "./ObsidianInboxSuggestionSource";
 import { getCreatableObjectSources } from "./ObjectNote";
 import { ObjectNoteModal } from "./ObjectNoteModal";
-import { formatRelativeMarkdownLink } from "./InboxMarkdown";
+import { ObsidianInboxSuggestionSource } from "./ObsidianInboxSuggestionSource";
 import type { ContextSourceSettings } from "./types";
+import { isTFile } from "./utils";
 
 type ContextNotesSuggestion =
     | { kind: "mention"; value: ContextSuggestion }
@@ -47,6 +55,13 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     private readonly onKeyDown = (event: KeyboardEvent): void => {
         if (event.key === "Enter" && event.target instanceof HTMLAnchorElement) {
             this.openInternalLink(event);
+            return;
+        }
+        // Skip while a mention/tag suggestion is open so Tab keeps its normal meaning there.
+        if (event.key === "Tab" && !this.activeTrigger) {
+            event.preventDefault();
+            if (event.shiftKey) this.outdentSelection();
+            else this.indentSelection();
         }
     };
 
@@ -196,14 +211,70 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
 
     private emitMarkdown(): void {
         const formatter =
-            this.options.referenceFormat === "object-reference"
-                ? formatObjectReferencePart
-                : formatRelativeMarkdownLink;
+            this.options.referenceFormat === "object-reference" ? formatObjectReferencePart : this.formatObsidianLink;
         this.options.onChange(serializeInboxRichText(readDomParts(this.inputEl), this.targetFile, formatter));
     }
 
+    /**
+     * Formats a link the way Obsidian itself would (honoring the user's configured link
+     * format and Wikilinks setting) instead of always writing a relative Markdown link,
+     * falling back to one if the target can't be resolved to a file anymore.
+     */
+    private readonly formatObsidianLink = (targetFile: string, filePath: string, label: string): string => {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!isTFile(file)) return formatRelativeMarkdownLink(targetFile, filePath, label);
+        return this.app.fileManager.generateMarkdownLink(file, targetFile, undefined, label);
+    };
+
     private readVisibleText(): string {
         return this.inputEl.innerText.replace(/\u00a0/g, " ").replace(/\r\n/g, "\n");
+    }
+
+    /**
+     * Indents every line touched by the selection by one level (4 spaces), matching the
+     * indent the Task block editor writes to disk, so nested list lines typed here land
+     * at the same depth they'll have in the Markdown file.
+     */
+    private indentSelection(): void {
+        const { start, end } = getSelectionOffsets(this.inputEl);
+        const text = this.readVisibleText();
+        const starts = lineStartOffsets(text, start, end);
+        let inserted = 0;
+        for (const lineStart of starts) {
+            replaceVisibleRange(
+                this.inputEl,
+                lineStart + inserted,
+                lineStart + inserted,
+                this.inputEl.ownerDocument.createTextNode(LIST_INDENT),
+            );
+            inserted += LIST_INDENT.length;
+        }
+        setSelectionOffsets(this.inputEl, start + LIST_INDENT.length, end + inserted);
+        this.emitMarkdown();
+    }
+
+    private outdentSelection(): void {
+        const { start, end } = getSelectionOffsets(this.inputEl);
+        const text = this.readVisibleText();
+        const starts = lineStartOffsets(text, start, end);
+        let removedBeforeStart = 0;
+        let removedTotal = 0;
+        starts.forEach((lineStart, index) => {
+            const removable = leadingIndentLength(text, lineStart);
+            if (removable === 0) return;
+            const liveStart = lineStart - removedTotal;
+            const range = this.inputEl.ownerDocument.createRange();
+            const startPoint = pointAtOffset(this.inputEl, liveStart);
+            const endPoint = pointAtOffset(this.inputEl, liveStart + removable);
+            range.setStart(startPoint.node, startPoint.offset);
+            range.setEnd(endPoint.node, endPoint.offset);
+            range.deleteContents();
+            if (index === 0) removedBeforeStart = Math.min(removable, start - lineStart);
+            removedTotal += removable;
+        });
+        const newStart = Math.max(0, start - removedBeforeStart);
+        setSelectionOffsets(this.inputEl, newStart, Math.max(newStart, end - removedTotal));
+        this.emitMarkdown();
     }
 
     private pastePlainText(event: ClipboardEvent): void {
@@ -281,6 +352,41 @@ function getCaretOffset(root: HTMLElement): number {
     prefix.selectNodeContents(root);
     prefix.setEnd(range.endContainer, range.endOffset);
     return prefix.toString().length;
+}
+
+function getSelectionOffsets(root: HTMLElement): { start: number; end: number } {
+    const selection = root.ownerDocument.getSelection();
+    if (!selection?.rangeCount) {
+        const end = root.innerText.length;
+        return { start: end, end };
+    }
+    const range = selection.getRangeAt(0);
+    if (!root.contains(range.startContainer) || !root.contains(range.endContainer)) {
+        const end = root.innerText.length;
+        return { start: end, end };
+    }
+    const offsetOf = (container: Node, offset: number): number => {
+        const prefix = root.ownerDocument.createRange();
+        prefix.selectNodeContents(root);
+        prefix.setEnd(container, offset);
+        return prefix.toString().length;
+    };
+    return {
+        start: offsetOf(range.startContainer, range.startOffset),
+        end: offsetOf(range.endContainer, range.endOffset),
+    };
+}
+
+function setSelectionOffsets(root: HTMLElement, start: number, end: number): void {
+    const document = root.ownerDocument;
+    const startPoint = pointAtOffset(root, start);
+    const endPoint = pointAtOffset(root, end);
+    const range = document.createRange();
+    range.setStart(startPoint.node, startPoint.offset);
+    range.setEnd(endPoint.node, endPoint.offset);
+    const selection = document.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
 }
 
 function replaceVisibleRange(root: HTMLElement, start: number, end: number, replacement: Node): void {
