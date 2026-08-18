@@ -84,6 +84,7 @@ export class MobileScheduledItemForm extends Component {
             recovery: this.recovery,
         });
         root.setAttribute("aria-label", model.heading);
+        root.createDiv({ cls: "fn-mobile-event-handle", attr: { "aria-hidden": "true" } });
         const header = root.createEl("header", { cls: "fn-mobile-event-header" });
         const cancel = header.createEl("button", {
             cls: "fn-mobile-event-cancel",

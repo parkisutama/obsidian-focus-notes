@@ -76,15 +76,36 @@ body.fn-mobile-event-screen-open .suggestion-container {
     font-size: var(--font-ui-smaller);
 }
 
+/* Obsidian's Setting component lays name and control side by side and wraps
+ * each row in a rounded card — a desktop-settings-page look, and one that
+ * clashes with the plain divided rows the rest of this mobile sheet (the
+ * Inbox tab) uses. Stack each row and strip the card chrome so Task/Event
+ * screens read as the same list, not a different app. */
 .fn-mobile-event-screen.fn-mobile-scheduled-item-form .setting-item {
     flex-direction: column;
     align-items: stretch;
     gap: var(--size-4-2);
-    padding: var(--size-4-3) 0;
+    margin: 0;
+    padding: 10px 0;
+    border: none;
+    border-bottom: 1px solid var(--background-modifier-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.fn-mobile-event-screen.fn-mobile-scheduled-item-form .setting-item:last-child {
+    border-bottom: none;
 }
 
 .fn-mobile-event-screen.fn-mobile-scheduled-item-form .setting-item-info {
     margin-right: 0;
+}
+
+.fn-mobile-event-screen.fn-mobile-scheduled-item-form .setting-item-name {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    font-weight: 500;
 }
 
 .fn-mobile-event-screen.fn-mobile-scheduled-item-form .setting-item-control {
@@ -99,6 +120,14 @@ body.fn-mobile-event-screen-open .suggestion-container {
 .fn-mobile-event-screen.fn-mobile-scheduled-item-form .setting-item-control select {
     width: 100%;
     min-height: 44px;
+    padding: 3px 0;
+    border: 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
 }
 
 /* Paired date + time inputs sit side by side within the full-width row
