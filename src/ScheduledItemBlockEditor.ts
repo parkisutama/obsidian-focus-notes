@@ -1,7 +1,7 @@
 import {
-    replaceLedgerRecordBlock,
     type LedgerRecordSnapshot,
     type ReplaceLedgerRecordResult,
+    replaceLedgerRecordBlock,
 } from "./LedgerRecordSource.ts";
 
 export type ScheduledItemBlockDetail = { mode: "none" } | { mode: "link"; title: string; path: string };
@@ -77,6 +77,11 @@ export function replaceScheduledItemBlock(
     return replaceLedgerRecordBlock(content, snapshot, nextLines.join(parsed.block.lineEnding));
 }
 
+interface DescendantFrame {
+    indentLength: number;
+    excluded: boolean;
+}
+
 function inspectOwnedChildren(lines: string[]): OwnedChildren {
     const directIndent = findDirectIndent(lines.slice(1));
     const descriptionIndexes: number[] = [];
@@ -88,19 +93,55 @@ function inspectOwnedChildren(lines: string[]): OwnedChildren {
         return { descriptionIndexes, detailIndexes, description, detailNote, indent: "    " };
     }
 
+    // Nested subtasks (checkboxes) and blockquotes are separate entities, not description
+    // prose, so they (and anything nested under them) stay excluded from the description
+    // and untouched on disk. Plain "- " bullets at any depth are description content and
+    // stay connected to the outliner: deeper ones keep their residual indentation as part
+    // of their text so multi-level nesting round-trips through the flat description field.
+    const stack: DescendantFrame[] = [{ indentLength: -1, excluded: false }];
+
     for (let index = 1; index < lines.length; index += 1) {
         const line = lines[index];
-        if (!line.startsWith(`${directIndent}- `)) continue;
-        const payload = line.slice(directIndent.length + 2);
-        const detail = parseDetail(payload);
-        if (detail) {
-            detailIndexes.push(index);
-            detailNote = detail;
+        if (!line.trim()) continue;
+        const indentLength = line.match(/^[\t ]*/)?.[0].length ?? 0;
+        if (indentLength < directIndent.length) continue;
+
+        while (stack.length > 1 && stack[stack.length - 1].indentLength >= indentLength) stack.pop();
+        const parent = stack[stack.length - 1];
+
+        const bulletMatch = line.slice(indentLength).match(/^- (.*)$/);
+        if (!bulletMatch || parent.excluded) {
+            stack.push({ indentLength, excluded: true });
             continue;
         }
-        if (/^detail\s*:/i.test(payload) || /^\[(?: |x|X)\]\s/.test(payload)) continue;
+        const payload = bulletMatch[1];
+        const isDirectChild = indentLength === directIndent.length;
+
+        if (isDirectChild) {
+            const detail = parseDetail(payload);
+            if (detail) {
+                detailIndexes.push(index);
+                detailNote = detail;
+                stack.push({ indentLength, excluded: true });
+                continue;
+            }
+            if (/^detail\s*:/i.test(payload) || /^\[(?: |x|X)\]\s/.test(payload)) {
+                stack.push({ indentLength, excluded: true });
+                continue;
+            }
+            descriptionIndexes.push(index);
+            description.push(payload);
+            stack.push({ indentLength, excluded: false });
+            continue;
+        }
+
+        if (/^\[(?: |x|X)\]\s/.test(payload)) {
+            stack.push({ indentLength, excluded: true });
+            continue;
+        }
         descriptionIndexes.push(index);
-        description.push(payload);
+        description.push(line.slice(directIndent.length));
+        stack.push({ indentLength, excluded: false });
     }
 
     return { descriptionIndexes, detailIndexes, description, detailNote, indent: directIndent };
@@ -132,11 +173,14 @@ function decodePath(path: string): string {
 }
 
 function formatOwnedChildren(edit: ScheduledItemBlockEdit, indent: string): string[] {
+    // A line with leading whitespace was captured from a deeper nesting level (see
+    // inspectOwnedChildren); re-indent it under the base indent instead of flattening it
+    // to a top-level bullet, so multi-level outliner structure survives the round trip.
     const result = edit.description
         .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .map((line) => `${indent}- ${line}`);
+        .map((line) => line.replace(/[\t ]+$/, ""))
+        .filter((line) => line.trim().length > 0)
+        .map((line) => (/^[\t ]/.test(line) ? `${indent}${line}` : `${indent}- ${line}`));
     if (edit.detailNote.mode === "link") {
         result.push(`${indent}- detail: [${edit.detailNote.title}](${edit.detailNote.path.replace(/ /g, "%20")})`);
     }

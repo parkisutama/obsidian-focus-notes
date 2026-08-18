@@ -24,6 +24,37 @@ test("parses owned description and detail children while preserving unknown chil
     });
 });
 
+test("keeps multi-level plain-bullet nesting connected to its parent description line", () => {
+    const rawBlock = [
+        "- [ ] Prepare invoice | priority:high",
+        "    - Dashboard yang memonitor :",
+        "        - kontrol kualitas data",
+        "        - deteksi error di verifikasi",
+        "    - [ ] Preserve this nested subtask",
+        "        - nested note",
+    ].join("\n");
+
+    const parsed = parseScheduledItemBlock(rawBlock);
+    assert.equal(parsed.status, "parsed");
+    if (parsed.status !== "parsed") return;
+    assert.equal(
+        parsed.block.description,
+        ["Dashboard yang memonitor :", "    - kontrol kualitas data", "    - deteksi error di verifikasi"].join("\n"),
+    );
+
+    const sourceLine = "- [ ] Prepare invoice | priority:high";
+    const captured = captureLedgerRecord(rawBlock, { filePath: "Tasks.md", lineNumber: 1, rawLine: sourceLine });
+    assert.equal(captured.status, "captured");
+    if (captured.status !== "captured") return;
+
+    const result = replaceScheduledItemBlock(rawBlock, captured.snapshot, {
+        firstLine: sourceLine,
+        description: parsed.block.description,
+        detailNote: { mode: "none" },
+    });
+    assert.deepEqual(result, { status: "ready", content: rawBlock });
+});
+
 test("replaces owned children without changing preserved content or CRLF", () => {
     const sourceLine = "- [ ] Prepare invoice | priority:high";
     const content = [
