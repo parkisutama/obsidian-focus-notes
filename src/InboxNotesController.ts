@@ -40,6 +40,10 @@ export interface ContextNotesControllerOptions {
 export class ContextNotesController extends AbstractInputSuggest<ContextNotesSuggestion> {
     hoverPopover: HoverPopover | null = null;
     private activeTrigger: InboxTrigger | null = null;
+    // The start offset of a trigger the user explicitly backed out of with Backspace.
+    // getSuggestions() keeps refusing to reopen it until a genuinely new trigger
+    // (a different start position — a freshly typed "@"/"#") appears.
+    private suppressedTriggerStart: number | null = null;
     private targetFile: string;
     private readonly source: ObsidianInboxSuggestionSource;
     private readonly onInput = (): void => this.emitMarkdown();
@@ -56,6 +60,16 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
         if (event.key === "Enter" && event.target instanceof HTMLAnchorElement) {
             this.openInternalLink(event);
             return;
+        }
+        // Backspacing while a suggestion is open is a "never mind" signal: close it
+        // immediately rather than waiting for enough characters to be deleted to break
+        // the trigger pattern. This is driven directly by our own keydown handler
+        // rather than the suggester's own reactive re-querying, which isn't reliably
+        // triggered by every contenteditable text mutation.
+        if (event.key === "Backspace" && this.activeTrigger) {
+            this.suppressedTriggerStart = this.activeTrigger.start;
+            this.activeTrigger = null;
+            this.close();
         }
         // Skip while a mention/tag suggestion is open so Tab keeps its normal meaning there.
         if (event.key === "Tab" && !this.activeTrigger) {
@@ -89,8 +103,18 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     getSuggestions(): ContextNotesSuggestion[] {
         const text = this.readVisibleText();
         const cursor = getCaretOffset(this.inputEl);
-        this.activeTrigger = findInboxTrigger(text, cursor);
-        if (!this.activeTrigger) return [];
+        const trigger = findInboxTrigger(text, cursor);
+        const suppressed = trigger !== null && trigger.start === this.suppressedTriggerStart;
+        if (!suppressed) this.suppressedTriggerStart = null;
+
+        this.activeTrigger = suppressed ? null : trigger;
+        if (!this.activeTrigger) {
+            // Also close proactively here (not just from the Backspace handler) so any
+            // other way the trigger stops being valid — moving the cursor away, pasting
+            // over it — drops a stale suggestion just as reliably.
+            this.close();
+            return [];
+        }
 
         if (this.activeTrigger.kind === "mention") {
             const sources = this.options.getContextSources();
