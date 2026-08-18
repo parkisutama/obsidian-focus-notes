@@ -57,6 +57,7 @@ export class EventTaskMobileScreen extends Component {
             mode: settings.inbox.defaultTargetMode,
             dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),
             eventTaskTarget: target,
+            weeklyNoteTarget: resolver.getWeeklyNoteTarget(anchorDate),
             heading: settings.inbox.heading,
             position: settings.inbox.position,
         });
@@ -68,6 +69,7 @@ export class EventTaskMobileScreen extends Component {
             detailNotesFolder: settings.eventTask.detailNotesFolder,
             inbox: settings.inbox,
             inboxTargetFile: inboxTarget?.file ?? "",
+            inboxHeading: inboxTarget?.heading ?? settings.inbox.heading,
         });
         this.form.kind = options.initialKind ?? "inbox";
     }
@@ -77,7 +79,7 @@ export class EventTaskMobileScreen extends Component {
 
         this.rootEl = this.app.workspace.containerEl.createDiv({
             cls: "fn-mobile-event-screen",
-            attr: { role: "dialog", "aria-modal": "true", "aria-label": "Create inbox item, event, or task" },
+            attr: { role: "dialog", "aria-modal": "true", "aria-label": "Create moment, event, or task" },
         });
         document.body.addClass("fn-mobile-event-screen-open");
         this.render();
@@ -222,7 +224,7 @@ export class EventTaskMobileScreen extends Component {
         container.insertBefore(group, before);
         const inboxButton = group.createEl("button", {
             cls: "fn-mobile-event-kind-button is-active",
-            text: "Inbox",
+            text: "Moment",
             attr: { type: "button", "aria-pressed": "true" },
         });
         const eventButton = group.createEl("button", {
@@ -254,9 +256,11 @@ export class EventTaskMobileScreen extends Component {
     }
 
     private openScheduledItemCreate(kind: "task" | "event"): void {
-        const targetFile = this.form.targetFile;
         this.close();
-        openMobileScheduledItemCreate(this.app, this.getSettings, this.anchorDate, this.onComplete, kind, targetFile);
+        // Recompute fresh instead of forwarding this.form.targetFile: that shared
+        // field only ever holds Event's Daily-Notes-derived default (it's not
+        // kind-aware), which would otherwise leak into Task too.
+        openMobileScheduledItemCreate(this.app, this.getSettings, this.anchorDate, this.onComplete, kind);
     }
 
     private renderEventFields(container: HTMLElement): void {
@@ -623,6 +627,8 @@ export class EventTaskMobileScreen extends Component {
                     contextNotes: readContextSuggestionNotes(this.app),
                     contextSources: settings.inbox.contextSources,
                     resolveLinkDestination: createObsidianLinkResolver(this.app),
+                    resolveDailyBacklinkTarget: (record) => this.resolveDailyBacklinkTarget(record),
+                    weeklyNoteCapture: settings.inbox.defaultTargetMode === "weekly-note",
                 }),
             );
             return;
@@ -710,6 +716,18 @@ export class EventTaskMobileScreen extends Component {
 
     private resolveInboxTarget(): FocusTarget | null {
         return resolveInboxFormTarget(new TargetResolver(this.app, this.getSettings()), this.form);
+    }
+
+    private resolveDailyBacklinkTarget(record: { capturedAt: Date }): FocusTarget | null {
+        const settings = this.getSettings();
+        if (settings.inbox.defaultTargetMode !== "weekly-note") return null;
+        const dailyNoteTarget = new TargetResolver(this.app, settings).getDailyNoteTarget(record.capturedAt);
+        if (!dailyNoteTarget) return null;
+        return {
+            ...dailyNoteTarget,
+            heading: settings.inbox.dailyBacklinkHeading || "Moments",
+            position: settings.inbox.position,
+        };
     }
 
     private resolveTargetFile(record: EventTaskRecord): string {

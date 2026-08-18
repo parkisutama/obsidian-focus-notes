@@ -25,7 +25,7 @@ export class InboxDesktopForm {
         const notesEl = notesWrap.createDiv({
             cls: "fn-inbox-notes-input",
             attr: {
-                "aria-label": "Inbox notes",
+                "aria-label": "Moment notes",
                 "data-placeholder": "Capture context. Type @ for contextual notes, # for tags.",
             },
         });
@@ -58,7 +58,7 @@ export class InboxDesktopForm {
             type: "text",
             attr: {
                 placeholder: "Note path",
-                "aria-label": "Inbox target note",
+                "aria-label": "Moment target note",
             },
         });
         file.value = this.options.form.inboxTargetFile;
@@ -71,7 +71,7 @@ export class InboxDesktopForm {
         const headingLabel = fields.createEl("label", { text: "Heading" });
         const heading = headingLabel.createEl("input", {
             type: "text",
-            attr: { placeholder: "Inbox", "aria-label": "Inbox heading" },
+            attr: { placeholder: "Moment", "aria-label": "Moment heading" },
         });
         heading.value = this.options.form.inboxHeading;
         heading.addEventListener("input", () => {
@@ -81,7 +81,7 @@ export class InboxDesktopForm {
 
         const positionLabel = fields.createEl("label", { text: "Insert position" });
         const position = positionLabel.createEl("select", {
-            attr: { "aria-label": "Inbox insert position" },
+            attr: { "aria-label": "Moment insert position" },
         });
         position.createEl("option", { text: "End of section", value: "end" });
         position.createEl("option", { text: "Start of section", value: "start" });

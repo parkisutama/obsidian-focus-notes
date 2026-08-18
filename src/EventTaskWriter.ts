@@ -1,7 +1,7 @@
 import { type App, type TFile, normalizePath } from "obsidian";
 import type { EventTaskSettings, InsertPosition } from "./types";
 import type { InboxRecord } from "./EventTaskFormState";
-import { formatInboxEntry } from "./InboxMarkdown";
+import { type FormatInboxEntryOptions, formatInboxEntry } from "./InboxMarkdown";
 import { ensureFolderPath, isTFile } from "./utils";
 import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTaskMarkdown";
 import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItemTypes";
@@ -65,9 +65,10 @@ export class EventTaskWriter {
         targetFilePath: string,
         targetHeading: string,
         position: InsertPosition,
+        options?: FormatInboxEntryOptions,
     ): Promise<void> {
         const file = await this.resolveOrCreateFile(targetFilePath);
-        await this.insertIntoFile(file, targetHeading, formatInboxEntry(record), position);
+        await this.insertIntoFile(file, targetHeading, formatInboxEntry(record, options), position);
     }
 
     async writeRelated(

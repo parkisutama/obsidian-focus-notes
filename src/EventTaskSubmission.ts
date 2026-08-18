@@ -7,6 +7,7 @@ import {
 import type { EventTaskFormState, InboxRecord } from "./EventTaskFormState";
 import { formatEventTaskEntry } from "./EventTaskMarkdown.ts";
 import type { EventTaskRecord, HubNoteRef } from "./EventTaskWriter";
+import type { FormatInboxEntryOptions } from "./InboxMarkdown.ts";
 import { parseObjectReferences } from "./ObjectReference.ts";
 import { formatRelatedLog } from "./RelatedLog.ts";
 import {
@@ -63,6 +64,7 @@ interface InboxSubmissionWriter {
         targetFilePath: string,
         targetHeading: string,
         position: InsertPosition,
+        options?: FormatInboxEntryOptions,
     ): Promise<void>;
     writeRelated(
         markdown: string,
@@ -78,6 +80,18 @@ export interface InboxSubmissionDependencies {
     contextNotes?: readonly ContextLinkNote[];
     contextSources?: readonly ContextSourceSettings[];
     resolveLinkDestination: LinkDestinationResolver;
+    /**
+     * Optional same-day Daily Note target to backlink to, e.g. when the primary
+     * capture was written to an ISO weekly note. Return null to skip the backlink
+     * (unavailable Daily Notes integration, or the mode doesn't call for one).
+     */
+    resolveDailyBacklinkTarget?(record: InboxRecord): FocusTarget | null;
+    /**
+     * True when the active Inbox target mode is the ISO weekly note. The date is
+     * already carried by the weekly note's per-day heading, so the written entry
+     * only needs a time, not a full date-time.
+     */
+    weeklyNoteCapture?: boolean;
 }
 
 export interface SubmissionCreatedNotes {
@@ -165,6 +179,9 @@ export async function submitEventTask(
 
     const record = state.buildRecord(hubNoteRef);
     const resolvedTargetFile = dependencies.resolveTargetFile(record);
+    if (!resolvedTargetFile.trim()) {
+        return failure("validation", "Please select a target file.", undefined, createdHubNotePath, detailNoteFilePath);
+    }
     let detailNoteRef: HubNoteRef | null = null;
 
     if (state.detailNoteEnabled) {
@@ -239,12 +256,18 @@ export async function submitInbox(
     }
 
     try {
-        await dependencies.writer.writeInbox(record, target.file, target.heading, target.position);
+        await dependencies.writer.writeInbox(record, target.file, target.heading, target.position, {
+            timeOnly: dependencies.weeklyNoteCapture === true,
+        });
     } catch (error) {
         return failure("inbox", "Failed to save Inbox", error);
     }
 
     const relatedWrites = buildInboxContextWrites(record, target.file, dependencies);
+    const backlinkTarget = dependencies.resolveDailyBacklinkTarget?.(record) ?? null;
+    if (backlinkTarget?.file.trim() && backlinkTarget.file !== target.file) {
+        relatedWrites.push(buildDailyBacklinkWrite(record, target.file, backlinkTarget));
+    }
     const recovery = await writeRelatedDestinations(relatedWrites, (request) =>
         dependencies.writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
     );
@@ -306,6 +329,27 @@ function buildInboxContextWrites(
             destinationFilePath: destination.filePath,
         }),
     }));
+}
+
+function buildDailyBacklinkWrite(
+    record: InboxRecord,
+    primaryPath: string,
+    backlinkTarget: FocusTarget,
+): RelatedWriteRequest {
+    const customTitle = record.title.trim() && record.title.trim() !== record.defaultTitle.trim() ? record.title : "";
+    const title = customTitle || record.body.replace(/\s+/g, " ").trim() || "Inbox capture";
+    return {
+        destinationPath: backlinkTarget.file,
+        heading: backlinkTarget.heading,
+        position: backlinkTarget.position,
+        markdown: formatRelatedLog({
+            kind: "inbox",
+            title,
+            occurredAt: record.capturedAt,
+            primaryFilePath: primaryPath,
+            destinationFilePath: backlinkTarget.file,
+        }),
+    };
 }
 
 function resolveConfiguredContext(

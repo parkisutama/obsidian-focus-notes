@@ -2,7 +2,7 @@ import type { App } from "obsidian";
 import { preferActiveNoteTarget } from "./CaptureTarget.ts";
 import { ScheduledItemMobileCreateScreen } from "./ScheduledItemMobileCreateScreen.ts";
 import { TargetResolver } from "./TargetResolver.ts";
-import type { FocusNotesSettings } from "./types.ts";
+import type { FocusNotesSettings, FocusTarget } from "./types.ts";
 
 export function openMobileScheduledItemCreate(
     app: App,
@@ -14,7 +14,12 @@ export function openMobileScheduledItemCreate(
 ): void {
     const settings = getSettings();
     const resolver = new TargetResolver(app, settings);
-    const configured = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+    // Task never defaults to Daily Notes / the ambient active target — see the
+    // matching comment in EventTaskModal.ts's openDesktopScheduledItemCreate().
+    const configured: FocusTarget =
+        kind === "task"
+            ? { file: "", heading: settings.eventTask.defaultSaveHeading, position: settings.defaultTarget.position }
+            : resolver.resolve(resolver.getActiveTarget(), anchorDate);
     const activeFile = app.workspace.getActiveFile();
     const preferred = preferActiveNoteTarget(
         configured,

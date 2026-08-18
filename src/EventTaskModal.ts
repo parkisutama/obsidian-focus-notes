@@ -69,7 +69,7 @@ export function openEventTaskForm(
     new EventTaskModal(app, getSettings, anchorDate, onComplete, options).open();
 }
 
-function openDesktopScheduledItemCreate(
+export function openDesktopScheduledItemCreate(
     app: App,
     getSettings: () => FocusNotesSettings,
     anchorDate: Date,
@@ -79,7 +79,16 @@ function openDesktopScheduledItemCreate(
 ): void {
     const settings = getSettings();
     const resolver = new TargetResolver(app, settings);
-    const configured = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+    // Task never defaults to Daily Notes / the ambient active target — it should
+    // attach to a specific Project or task-list note, chosen explicitly. An
+    // active markdown note is still preferred below as a convenience default
+    // (typically the project/list note the user is already working in); with
+    // nothing active, the target stays empty and submit() blocks until the
+    // user picks one, avoiding accidental duplication into Daily Notes.
+    const configured: FocusTarget =
+        kind === "task"
+            ? { file: "", heading: settings.eventTask.defaultSaveHeading, position: settings.defaultTarget.position }
+            : resolver.resolve(resolver.getActiveTarget(), anchorDate);
     const activeFile = app.workspace.getActiveFile();
     const preferred = preferActiveNoteTarget(
         configured,
@@ -146,6 +155,7 @@ export class EventTaskModal extends Modal {
             mode: settings.inbox.defaultTargetMode,
             dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),
             eventTaskTarget: resolved,
+            weeklyNoteTarget: resolver.getWeeklyNoteTarget(anchorDate),
             heading: settings.inbox.heading,
             position: settings.inbox.position,
         });
@@ -157,6 +167,7 @@ export class EventTaskModal extends Modal {
             detailNotesFolder: settings.eventTask.detailNotesFolder,
             inbox: settings.inbox,
             inboxTargetFile: inboxTarget?.file ?? "",
+            inboxHeading: inboxTarget?.heading ?? settings.inbox.heading,
         });
         this.form.kind = options.initialKind ?? "inbox";
     }
@@ -243,7 +254,7 @@ export class EventTaskModal extends Modal {
         const tabs = container.createDiv({ cls: "fn-gcal-tabs" });
         const inboxBtn = tabs.createEl("button", {
             cls: `fn-gcal-tab${this.form.kind === "inbox" ? " fn-gcal-tab--active" : ""}`,
-            text: "Inbox",
+            text: "Moment",
             attr: { type: "button", "aria-pressed": String(this.form.kind === "inbox") },
         });
         const eventBtn = tabs.createEl("button", {
@@ -266,18 +277,10 @@ export class EventTaskModal extends Modal {
             if (kind === "task" || kind === "event") {
                 this.resolved = true;
                 this.close();
-                new ScheduledItemDesktopCreateModal(
-                    this.app,
-                    this.getSettings,
-                    this.anchorDate,
-                    kind,
-                    {
-                        file: this.form.targetFile,
-                        heading: this.form.targetHeading,
-                        position: this.form.targetPosition,
-                    },
-                    this.onComplete,
-                ).open();
+                // Recompute fresh instead of forwarding this.form.targetFile: that
+                // shared field only ever holds Event's Daily-Notes-derived default
+                // (it's not kind-aware), which would otherwise leak into Task too.
+                openDesktopScheduledItemCreate(this.app, this.getSettings, this.anchorDate, this.onComplete, kind);
                 return;
             }
             this.form.kind = kind;
@@ -301,6 +304,18 @@ export class EventTaskModal extends Modal {
 
     private resolveInboxTarget(): FocusTarget | null {
         return resolveInboxFormTarget(new TargetResolver(this.app, this.getSettings()), this.form);
+    }
+
+    private resolveDailyBacklinkTarget(record: { capturedAt: Date }): FocusTarget | null {
+        const settings = this.getSettings();
+        if (settings.inbox.defaultTargetMode !== "weekly-note") return null;
+        const dailyNoteTarget = new TargetResolver(this.app, settings).getDailyNoteTarget(record.capturedAt);
+        if (!dailyNoteTarget) return null;
+        return {
+            ...dailyNoteTarget,
+            heading: settings.inbox.dailyBacklinkHeading || "Moments",
+            position: settings.inbox.position,
+        };
     }
 
     // ---- Event section ------------------------------------------------------
@@ -666,6 +681,8 @@ export class EventTaskModal extends Modal {
                     contextNotes: readContextSuggestionNotes(this.app),
                     contextSources: settings.inbox.contextSources,
                     resolveLinkDestination: createObsidianLinkResolver(this.app),
+                    resolveDailyBacklinkTarget: (record) => this.resolveDailyBacklinkTarget(record),
+                    weeklyNoteCapture: settings.inbox.defaultTargetMode === "weekly-note",
                 }),
             );
             return;

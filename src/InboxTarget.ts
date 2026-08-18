@@ -15,12 +15,25 @@ export interface InboxTargetSelection {
     mode: InboxTargetMode;
     dailyNoteTarget: FocusTarget | null;
     eventTaskTarget: FocusTarget;
+    weeklyNoteTarget: FocusTarget;
     heading: string;
     position: InsertPosition;
 }
 
 /** Select the requested file without silently crossing destination modes. */
 export function selectInboxTarget(selection: InboxTargetSelection): FocusTarget | null {
+    if (selection.mode === "weekly-note") {
+        const source = selection.weeklyNoteTarget;
+        if (!source.file.trim()) return null;
+        return {
+            file: source.file,
+            // The weekly note's per-day heading must survive; unlike the other
+            // modes it is not a fixed "Inbox"/"Moment" heading.
+            heading: (source.heading || selection.heading).replace(/^#+\s*/, "").trim(),
+            position: selection.position,
+        };
+    }
+
     const source = selection.mode === "daily-note" ? selection.dailyNoteTarget : selection.eventTaskTarget;
     if (!source?.file.trim()) return null;
 

@@ -83,6 +83,30 @@ export class TargetResolver {
         );
     }
 
+    /**
+     * Resolve the ISO-weekly Moment target for an explicit capture date.
+     *
+     * Unlike getDailyNoteTarget(), this has no external plugin dependency to
+     * fail against — folder/format are plain settings the user configures to
+     * match whatever external weekly-note plugin (Journal, Notebook Navigator,
+     * ...) they may also be using, so it always returns a value.
+     */
+    public getWeeklyNoteTarget(when: Date = new Date()): FocusTarget {
+        const folder = this.settings.inbox.weeklyNoteFolder
+            ? `${this.settings.inbox.weeklyNoteFolder.replace(/\/+$/, "")}/`
+            : "";
+        const format = normalizeDailyNoteFormat(this.settings.inbox.weeklyNoteFormat, "GGGG-[W]WW");
+        const resolved = this.resolve(
+            { file: `${folder}{{date:${format}}}.md`, heading: "", position: this.settings.defaultTarget.position },
+            when,
+        );
+        const headingFormat = normalizeDailyNoteFormat(
+            this.settings.inbox.weeklyHeadingFormat,
+            this.settings.dailyNoteFormat || "YYYY-MM-DD",
+        );
+        return { ...resolved, heading: moment(when).format(headingFormat) };
+    }
+
     /** Configured Daily Notes base folder, or null when unavailable/root-scoped. */
     public getDailyNoteFolder(): string | null {
         const folder = this.readDailyNotesConfig()

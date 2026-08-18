@@ -405,21 +405,25 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             }),
         );
 
-        // ---- Inbox Quick Capture -------------------------------------------
-        containerEl.createEl("h3", { text: "Inbox quick capture" });
+        // ---- Moment quick capture -------------------------------------------
+        containerEl.createEl("h3", { text: "Moment quick capture" });
 
         containerEl.createEl("p", {
             cls: "setting-item-description",
             text:
-                "Choose where quick captures go and configure Object Sources for contextual @ suggestions, " +
+                "Choose where quick Moment captures go and configure Object Sources for contextual @ suggestions, " +
                 "historical logs, and future template-based object creation.",
         });
 
         new Setting(containerEl)
             .setName("Default destination")
-            .setDesc("Prefer the active Markdown note for flexible capture, or always use today's Daily Note.")
+            .setDesc(
+                "Weekly note groups a week's Moments together under a per-day heading. Active note / capture target " +
+                    "reuses the Event/Task destination. Daily Note always uses today's Daily Note.",
+            )
             .addDropdown((dropdown) =>
                 dropdown
+                    .addOption("weekly-note", "Weekly note")
                     .addOption("daily-note", "Daily Note")
                     .addOption("event-task-target", "Active note / capture target")
                     .setValue(this.plugin.settings.inbox.defaultTargetMode)
@@ -430,7 +434,76 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Inbox heading")
+            .setName("Weekly note folder")
+            .setDesc(
+                "Folder for the ISO weekly note. Set this to match wherever Journals already keeps weekly " +
+                    "notes. May itself contain a {{date:FORMAT}} token for a year-scoped subfolder " +
+                    "(e.g. timeline/{{date:GGGG}}), or repeat the weekly format for a Notebook Navigator " +
+                    "folder note (e.g. Weekly/{{date:GGGG-[W]WW}}).",
+            )
+            .addText((text) => {
+                text.setPlaceholder("Weekly")
+                    .setValue(this.plugin.settings.inbox.weeklyNoteFolder)
+                    .onChange(async (v) => {
+                        this.plugin.settings.inbox.weeklyNoteFolder = v.trim();
+                        await this.plugin.saveSettings();
+                    });
+                new FolderSuggest(this.app, text.inputEl);
+            });
+
+        new Setting(containerEl)
+            .setName("Weekly note date format")
+            .setDesc(
+                "Moment.js format for the weekly note's file name, matched to your weekly-note plugin " +
+                    "(Journals also uses Moment.js format tokens, so this can match its Note name template " +
+                    "directly). Example: GGGG-[W]WW (ISO week-year and week number). Use GGGG, not YYYY, for " +
+                    "the year token — YYYY is the plain calendar year and can name the wrong year on a week " +
+                    "that spans a year boundary.",
+            )
+            .addText((text) =>
+                text
+                    .setPlaceholder("GGGG-[W]WW")
+                    .setValue(this.plugin.settings.inbox.weeklyNoteFormat)
+                    .onChange(async (v) => {
+                        this.plugin.settings.inbox.weeklyNoteFormat = v.trim() || "GGGG-[W]WW";
+                        await this.plugin.saveSettings();
+                    }),
+            );
+
+        new Setting(containerEl)
+            .setName("Weekly note heading format")
+            .setDesc(
+                "Moment.js format for the per-day heading inside the weekly note, independent of the " +
+                    "Daily Note date format below. Example: YYYY-MM-DD.",
+            )
+            .addText((text) =>
+                text
+                    .setPlaceholder("YYYY-MM-DD")
+                    .setValue(this.plugin.settings.inbox.weeklyHeadingFormat)
+                    .onChange(async (v) => {
+                        this.plugin.settings.inbox.weeklyHeadingFormat = v.trim() || "YYYY-MM-DD";
+                        await this.plugin.saveSettings();
+                    }),
+            );
+
+        new Setting(containerEl)
+            .setName("Daily backlink heading")
+            .setDesc(
+                "When a Moment is saved to the weekly note, a backlink is also inserted under this heading " +
+                    "in that day's Daily Note.",
+            )
+            .addText((text) =>
+                text
+                    .setPlaceholder("Moments")
+                    .setValue(this.plugin.settings.inbox.dailyBacklinkHeading)
+                    .onChange(async (v) => {
+                        this.plugin.settings.inbox.dailyBacklinkHeading = v.trim() || "Moments";
+                        await this.plugin.saveSettings();
+                    }),
+            );
+
+        new Setting(containerEl)
+            .setName("Moment heading")
             .setDesc("Heading text without #. A missing heading is created at level ##.")
             .addText((text) =>
                 text
@@ -443,7 +516,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Inbox insert position")
+            .setName("Moment insert position")
             .setDesc("Choose whether new captures appear at the top or bottom of the heading.")
             .addDropdown((dropdown) =>
                 dropdown

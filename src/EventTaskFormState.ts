@@ -28,6 +28,14 @@ export interface EventTaskFormDefaults {
     detailNotesFolder: string;
     inbox?: InboxSettings;
     inboxTargetFile?: string;
+    /**
+     * Resolved initial heading for the active target mode (e.g. a weekly
+     * note's per-day heading). Falls back to inbox.heading when omitted —
+     * the daily-note/event-task-target modes always want that generic
+     * heading anyway, since selectInboxTarget() only diverges from it for
+     * weekly-note mode.
+     */
+    inboxHeading?: string;
 }
 
 export type TemporalValidationResult = { valid: true } | { valid: false; message: string };
@@ -89,17 +97,21 @@ export class EventTaskFormState {
     targetPosition: InsertPosition;
 
     constructor(anchorDate: Date, defaults: EventTaskFormDefaults) {
-        const inboxDefaults = defaults.inbox ?? {
+        const inboxDefaults: InboxSettings = defaults.inbox ?? {
             defaultTargetMode: "daily-note",
             heading: "Inbox",
             position: "end",
             contextSources: [],
+            weeklyNoteFolder: "Weekly",
+            weeklyNoteFormat: "GGGG-[W]WW",
+            weeklyHeadingFormat: "YYYY-MM-DD",
+            dailyBacklinkHeading: "Moments",
         };
         this.inboxCapturedAt = new Date(anchorDate.getTime());
         this.inboxDefaultTitle = formatLocalDateTime(this.inboxCapturedAt);
         this.inboxTitle = this.inboxDefaultTitle;
         this.inboxTargetFile = defaults.inboxTargetFile ?? "";
-        this.inboxHeading = inboxDefaults.heading;
+        this.inboxHeading = defaults.inboxHeading ?? inboxDefaults.heading;
         this.inboxPosition = inboxDefaults.position;
 
         const hour = anchorDate.getHours();

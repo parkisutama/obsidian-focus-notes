@@ -12,7 +12,37 @@ test("adds Inbox defaults when loading settings saved before Inbox existed", () 
     assert.equal(merged.pomodoroMinutes, 45);
     assert.equal(merged.eventTask.hubNotesFolder, "Hubs");
     assert.deepEqual(merged.inbox, DEFAULT_SETTINGS.inbox);
+    assert.equal(merged.inbox.defaultTargetMode, "weekly-note");
+    assert.equal(merged.inbox.weeklyNoteFolder, "Weekly");
+    assert.equal(merged.inbox.weeklyNoteFormat, "GGGG-[W]WW");
+    assert.equal(merged.inbox.weeklyHeadingFormat, "YYYY-MM-DD");
+    assert.equal(merged.inbox.dailyBacklinkHeading, "Moments");
+});
+
+test("preserves an existing install's chosen Moment target mode across settings merges", () => {
+    const merged = mergeSettingsWithDefaults({
+        inbox: { ...DEFAULT_SETTINGS.inbox, defaultTargetMode: "daily-note" },
+    });
+
+    assert.equal(merged.inbox.defaultTargetMode, "daily-note");
+});
+
+test("merges new weekly-note Inbox fields onto a partially saved inbox object", () => {
+    const merged = mergeSettingsWithDefaults({
+        inbox: {
+            defaultTargetMode: "event-task-target",
+            heading: "Captures",
+            position: "start",
+            contextSources: [],
+        } as never,
+    });
+
     assert.equal(merged.inbox.defaultTargetMode, "event-task-target");
+    assert.equal(merged.inbox.heading, "Captures");
+    assert.equal(merged.inbox.weeklyNoteFolder, DEFAULT_SETTINGS.inbox.weeklyNoteFolder);
+    assert.equal(merged.inbox.weeklyNoteFormat, DEFAULT_SETTINGS.inbox.weeklyNoteFormat);
+    assert.equal(merged.inbox.weeklyHeadingFormat, DEFAULT_SETTINGS.inbox.weeklyHeadingFormat);
+    assert.equal(merged.inbox.dailyBacklinkHeading, DEFAULT_SETTINGS.inbox.dailyBacklinkHeading);
 });
 
 test("clones Object Source state during settings merge", () => {

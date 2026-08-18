@@ -24,7 +24,7 @@ export class InboxMobileForm {
         const notesEl = notes.createDiv({
             cls: "fn-mobile-inbox-notes",
             attr: {
-                "aria-label": "Inbox notes",
+                "aria-label": "Moment notes",
                 "data-placeholder": "Add context. Use @ for contextual notes, # for tags.",
             },
         });
@@ -67,7 +67,7 @@ export class InboxMobileForm {
         const fileSuggest = new FileSuggest(this.options.app, file);
         this.options.registerCleanup(() => fileSuggest.close());
 
-        const heading = this.textField(container, "hash", "Heading", "Inbox");
+        const heading = this.textField(container, "hash", "Heading", "Moment");
         heading.value = this.options.form.inboxHeading;
         heading.addEventListener("input", () => {
             this.options.form.inboxHeading = heading.value;

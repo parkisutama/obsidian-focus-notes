@@ -145,7 +145,7 @@ export interface EventTaskSettings {
     includeTags: boolean;
 }
 
-export type InboxTargetMode = "daily-note" | "event-task-target";
+export type InboxTargetMode = "daily-note" | "event-task-target" | "weekly-note";
 
 export interface ContextSourceFilter {
     property: string;
@@ -179,6 +179,17 @@ export interface InboxSettings {
     position: InsertPosition;
     /** Canonical contextual object sources. */
     contextSources: ContextSourceSettings[];
+    /**
+     * Folder for the ISO weekly note used by the `weekly-note` target mode.
+     * May itself contain {{date:FORMAT}} tokens.
+     */
+    weeklyNoteFolder: string;
+    /** Moment.js format for the weekly note's file name, e.g. "GGGG-[W]WW" (ISO week-year/week-number). */
+    weeklyNoteFormat: string;
+    /** Moment.js format for the per-day heading inside the weekly note, independent of dailyNoteFormat. */
+    weeklyHeadingFormat: string;
+    /** Heading in that day's Daily Note where a backlink to the weekly note capture is inserted. */
+    dailyBacklinkHeading: string;
 }
 
 /** What gets passed to NoteWriter when a session ends. */
@@ -266,9 +277,13 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         includeTags: true,
     },
     inbox: {
-        defaultTargetMode: "event-task-target",
+        defaultTargetMode: "weekly-note",
         heading: "Inbox",
         position: "end",
+        weeklyNoteFolder: "Weekly",
+        weeklyNoteFormat: "GGGG-[W]WW",
+        weeklyHeadingFormat: "YYYY-MM-DD",
+        dailyBacklinkHeading: "Moments",
         contextSources: [
             {
                 id: "people",
@@ -356,6 +371,10 @@ export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): F
             defaultTargetMode: savedInbox?.defaultTargetMode ?? DEFAULT_SETTINGS.inbox.defaultTargetMode,
             heading: savedInbox?.heading ?? DEFAULT_SETTINGS.inbox.heading,
             position: savedInbox?.position ?? DEFAULT_SETTINGS.inbox.position,
+            weeklyNoteFolder: savedInbox?.weeklyNoteFolder ?? DEFAULT_SETTINGS.inbox.weeklyNoteFolder,
+            weeklyNoteFormat: savedInbox?.weeklyNoteFormat ?? DEFAULT_SETTINGS.inbox.weeklyNoteFormat,
+            weeklyHeadingFormat: savedInbox?.weeklyHeadingFormat ?? DEFAULT_SETTINGS.inbox.weeklyHeadingFormat,
+            dailyBacklinkHeading: savedInbox?.dailyBacklinkHeading ?? DEFAULT_SETTINGS.inbox.dailyBacklinkHeading,
             contextSources,
         },
     };

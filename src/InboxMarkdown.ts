@@ -1,8 +1,17 @@
 import type { InboxRecord } from "./EventTaskFormState";
 
+export interface FormatInboxEntryOptions {
+    /**
+     * Write only the time (HH:mm) instead of the full date-time. Intended for
+     * weekly-note captures, where the date is already carried by the per-day
+     * heading and repeating it on every bullet is redundant.
+     */
+    timeOnly?: boolean;
+}
+
 /** Format one Inbox capture as portable Markdown bullets. */
-export function formatInboxEntry(record: InboxRecord): string {
-    const timestamp = formatLocalMinute(record.capturedAt);
+export function formatInboxEntry(record: InboxRecord, options: FormatInboxEntryOptions = {}): string {
+    const timestamp = options.timeOnly ? formatLocalTime(record.capturedAt) : formatLocalMinute(record.capturedAt);
     const title = record.title.trim();
     const defaultTitle = record.defaultTitle.trim();
     const heading = !title || title === defaultTitle ? `- ${timestamp}` : `- ${timestamp} — ${title}`;
@@ -47,9 +56,13 @@ function formatLocalMinute(date: Date): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day} ${formatLocalTime(date)}`;
+}
+
+function formatLocalTime(date: Date): string {
     const hour = String(date.getHours()).padStart(2, "0");
     const minute = String(date.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day} ${hour}:${minute}`;
+    return `${hour}:${minute}`;
 }
 
 function pathSegments(path: string): string[] {

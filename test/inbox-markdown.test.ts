@@ -42,6 +42,37 @@ test("keeps a custom title and prunes only blank body lines", () => {
     );
 });
 
+test("writes a time-only timestamp for weekly-note captures without changing the title comparison", () => {
+    const capturedAt = new Date(2026, 7, 1, 15, 40);
+
+    assert.equal(
+        formatInboxEntry(
+            {
+                kind: "inbox",
+                capturedAt,
+                defaultTitle: "2026-08-01 15:40",
+                title: "2026-08-01 15:40",
+                body: "Catatan",
+            },
+            { timeOnly: true },
+        ),
+        "- 15:40\n    - Catatan",
+    );
+    assert.equal(
+        formatInboxEntry(
+            {
+                kind: "inbox",
+                capturedAt,
+                defaultTitle: "2026-08-01 15:40",
+                title: "Hubungi vendor",
+                body: "",
+            },
+            { timeOnly: true },
+        ),
+        "- 15:40 — Hubungi vendor",
+    );
+});
+
 test("builds relative Markdown paths from the destination note", () => {
     assert.equal(relativeMarkdownPath("Inbox.md", "People/Andi.md"), "People/Andi.md");
     assert.equal(relativeMarkdownPath("Journal/2026-08-01.md", "People/Andi.md"), "../People/Andi.md");
