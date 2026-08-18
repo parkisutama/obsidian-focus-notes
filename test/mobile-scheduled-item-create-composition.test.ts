@@ -22,3 +22,23 @@ test("Inbox mobile screen hands Task and Event choices to the shared create scre
     assert.match(source, /openScheduledItemCreate\("event"\)/);
     assert.match(source, /openScheduledItemCreate\("task"\)/);
 });
+
+test("Task/Event create screens let the user switch kind without closing and reopening manually", async () => {
+    const [desktopModal, mobileScreen, desktopForm, mobileForm] = await Promise.all([
+        readFile(new URL("../src/ScheduledItemDesktopCreateModal.ts", import.meta.url), "utf8"),
+        readFile(new URL("../src/ScheduledItemMobileCreateScreen.ts", import.meta.url), "utf8"),
+        readFile(new URL("../src/DesktopScheduledItemForm.ts", import.meta.url), "utf8"),
+        readFile(new URL("../src/MobileScheduledItemForm.ts", import.meta.url), "utf8"),
+    ]);
+
+    assert.match(desktopModal, /onSwitchKind:/);
+    assert.match(desktopModal, /new EventTaskModal\(/);
+    assert.match(desktopModal, /openDesktopScheduledItemCreate\(/);
+
+    assert.match(mobileScreen, /onSwitchKind:/);
+    assert.match(mobileScreen, /new EventTaskMobileScreen\(/);
+    assert.match(mobileScreen, /openMobileScheduledItemCreate\(/);
+
+    assert.match(desktopForm, /renderKindChips/);
+    assert.match(mobileForm, /renderKindChips/);
+});

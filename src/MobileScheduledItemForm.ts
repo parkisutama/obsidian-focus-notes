@@ -25,6 +25,8 @@ export interface MobileScheduledItemFormOptions {
     onChange(data: ScheduledItemFormData): void;
     onSubmit(): void;
     onCancel(): void;
+    /** Switch the capture kind without requiring the user to close and reopen the form. Create mode only. */
+    onSwitchKind?(kind: "inbox" | "event" | "task"): void;
 }
 
 export class MobileScheduledItemForm extends Component {
@@ -103,6 +105,7 @@ export class MobileScheduledItemForm extends Component {
 
         const body = root.createEl("main", { cls: "fn-mobile-event-body" });
         body.createDiv({ cls: "fn-mobile-scheduled-context", text: model.contextLabel });
+        this.renderKindChips(body);
         this.text(body, "Title", this.options.data.title, (value) => (this.options.data.title = value));
         if (this.options.data.kind === "task") this.renderTask(body);
         else this.renderEvent(body);
@@ -115,6 +118,30 @@ export class MobileScheduledItemForm extends Component {
             attr: { role: "alert", "aria-live": "polite" },
         });
         if (model.fieldsDisabled) this.lockFields(body);
+    }
+
+    private renderKindChips(body: HTMLElement): void {
+        const onSwitchKind = this.options.onSwitchKind;
+        if (this.options.mode !== "create" || !onSwitchKind) return;
+        const currentKind = this.options.data.kind;
+        const group = body.createDiv({
+            cls: "fn-mobile-event-kind",
+            attr: { role: "group", "aria-label": "Item type" },
+        });
+        const chips: Array<{ value: "inbox" | "event" | "task"; label: string }> = [
+            { value: "inbox", label: "Moment" },
+            { value: "event", label: "Event" },
+            { value: "task", label: "Task" },
+        ];
+        for (const chip of chips) {
+            const active = chip.value === currentKind;
+            const button = group.createEl("button", {
+                cls: `fn-mobile-event-kind-button${active ? " is-active" : ""}`,
+                text: chip.label,
+                attr: { type: "button", "aria-pressed": String(active) },
+            });
+            button.addEventListener("click", () => onSwitchKind(chip.value));
+        }
     }
 
     private renderTask(body: HTMLElement): void {

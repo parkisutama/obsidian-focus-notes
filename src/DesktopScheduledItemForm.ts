@@ -24,6 +24,8 @@ export interface DesktopScheduledItemFormOptions {
     onChange(data: ScheduledItemFormData): void;
     onSubmit(): void;
     onCancel(): void;
+    /** Switch the capture kind without requiring the user to close and reopen the form. Create mode only. */
+    onSwitchKind?(kind: "inbox" | "event" | "task"): void;
 }
 
 export class DesktopScheduledItemForm {
@@ -55,6 +57,7 @@ export class DesktopScheduledItemForm {
         const header = container.createDiv({ cls: "fn-scheduled-item-form-header" });
         header.createEl("h2", { text: model.heading });
         header.createDiv({ cls: "fn-scheduled-item-form-context", text: model.contextLabel });
+        this.renderKindChips(container);
         this.renderIdentity(container);
         if (this.options.data.kind === "task") this.renderTask(container);
         else this.renderEvent(container);
@@ -92,6 +95,27 @@ export class DesktopScheduledItemForm {
     destroy(): void {
         this.destroyController();
         this.container = null;
+    }
+
+    private renderKindChips(container: HTMLElement): void {
+        const onSwitchKind = this.options.onSwitchKind;
+        if (this.options.mode !== "create" || !onSwitchKind) return;
+        const currentKind = this.options.data.kind;
+        const tabs = container.createDiv({ cls: "fn-gcal-tabs" });
+        const chips: Array<{ value: "inbox" | "event" | "task"; label: string }> = [
+            { value: "inbox", label: "Moment" },
+            { value: "event", label: "Event" },
+            { value: "task", label: "Task" },
+        ];
+        for (const chip of chips) {
+            const active = chip.value === currentKind;
+            const button = tabs.createEl("button", {
+                cls: `fn-gcal-tab${active ? " fn-gcal-tab--active" : ""}`,
+                text: chip.label,
+                attr: { type: "button", "aria-pressed": String(active) },
+            });
+            button.addEventListener("click", () => onSwitchKind(chip.value));
+        }
     }
 
     private renderIdentity(container: HTMLElement): void {
