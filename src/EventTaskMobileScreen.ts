@@ -2,7 +2,6 @@ import { type App, Component, Notice, setIcon } from "obsidian";
 import { preferActiveNoteTarget } from "./CaptureTarget";
 import { EventTaskFormState, type EventTaskKind, formatLocalDate } from "./EventTaskFormState";
 import type { OpenEventTaskFormOptions } from "./EventTaskModal";
-import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
 import {
     type EventTaskSubmissionResult,
     type PartialSubmissionResult,
@@ -16,6 +15,8 @@ import { ContextNotesController } from "./InboxNotesController";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { getMobileViewportMetrics } from "./MobileViewport";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
+import { createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
+import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
 import { SubmissionPolicy } from "./SubmissionPolicy";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
@@ -621,6 +622,7 @@ export class EventTaskMobileScreen extends Component {
                     resolveTarget: () => this.resolveInboxTarget(),
                     contextNotes: readContextSuggestionNotes(this.app),
                     contextSources: settings.inbox.contextSources,
+                    resolveLinkDestination: createObsidianLinkResolver(this.app),
                 }),
             );
             return;
@@ -651,6 +653,7 @@ export class EventTaskMobileScreen extends Component {
                 },
                 contextNotes: readContextSuggestionNotes(this.app),
                 contextSources: settings.inbox.contextSources,
+                resolveLinkDestination: createObsidianLinkResolver(this.app),
             }),
         );
     }

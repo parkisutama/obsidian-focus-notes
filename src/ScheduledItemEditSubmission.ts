@@ -1,4 +1,9 @@
-import { resolveContextPaths, type ContextLinkNote } from "./ContextLinkResolver.ts";
+import {
+    addedResolvedMarkdownLinkPaths,
+    type ContextLinkNote,
+    type LinkDestinationResolver,
+    resolveContextPaths,
+} from "./ContextLinkResolver.ts";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
 import { addedResolvedObjectReferencePaths } from "./ObjectReference.ts";
 import { formatRelatedLog } from "./RelatedLog.ts";
@@ -19,6 +24,7 @@ export interface ScheduledItemEditSubmissionDependencies {
     now?: Date;
     writePrimary(edit: ScheduledItemBlockEdit): Promise<void>;
     writeRelated: RelatedWriteOperation;
+    resolveLinkDestination: LinkDestinationResolver;
 }
 
 export type ScheduledItemEditSubmissionResult =
@@ -48,7 +54,15 @@ export async function submitScheduledItemEdit(
         return { status: "failure", phase: "primary", message: `Failed to save: ${errorMessage(error)}` };
     }
 
-    const addedPaths = addedResolvedObjectReferencePaths(original.description, next.description);
+    const addedPaths = [
+        ...addedResolvedObjectReferencePaths(original.description, next.description),
+        ...addedResolvedMarkdownLinkPaths(
+            original.description,
+            next.description,
+            snapshot.filePath,
+            dependencies.resolveLinkDestination,
+        ),
+    ];
     const destinations = resolveContextPaths(
         addedPaths,
         [...dependencies.contextNotes],

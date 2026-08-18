@@ -1,18 +1,19 @@
 import { type App, Component, Notice } from "obsidian";
 import {
+    type DetailNotePromotionResult,
     promoteScheduledItemDetail,
     retryDetailNoteAttachment,
-    type DetailNotePromotionResult,
 } from "./DetailNotePromotion.ts";
 import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter.ts";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
 import { MobileScheduledItemForm } from "./MobileScheduledItemForm.ts";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource.ts";
+import { createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
 import { saveScheduledItemBlock } from "./ScheduledItemBlockPersistence.ts";
 import {
     retryScheduledItemEditRelated,
-    submitScheduledItemEdit,
     type ScheduledItemEditSubmissionResult,
+    submitScheduledItemEdit,
 } from "./ScheduledItemEditSubmission.ts";
 import { hydrateScheduledItemFormEdit } from "./ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
@@ -122,6 +123,7 @@ export class ScheduledItemMobileEditScreen extends Component {
             },
             writeRelated: (request) =>
                 writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
+            resolveLinkDestination: createObsidianLinkResolver(this.app),
         });
         this.latestEditResult = result;
         if (result.status === "failure") throw new Error(result.message);

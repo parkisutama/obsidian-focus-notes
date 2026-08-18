@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { resolveRelativeLinkDestination } from "../src/ContextLinkResolver.ts";
 import { EventTaskFormState } from "../src/EventTaskFormState.ts";
 import { retryRelatedSubmission, submitEventTask, submitInbox } from "../src/EventTaskSubmission.ts";
 
@@ -24,6 +25,7 @@ test("writes the primary record and created notes through a renderer-independent
     const result = await submitEventTask(state, {
         defaultHubNotesFolder: "Default hub",
         defaultDetailNotesFolder: "Default details",
+        resolveLinkDestination: resolveRelativeLinkDestination,
         resolveTargetFile: () => "Daily/2026-08-01.md",
         findMarkdownFile: () => null,
         openFile: (file) => opened.push(file.path),
@@ -68,6 +70,7 @@ test("returns a phase-specific failure without reporting success", async () => {
     const result = await submitEventTask(state, {
         defaultHubNotesFolder: "Hub",
         defaultDetailNotesFolder: "Details",
+        resolveLinkDestination: resolveRelativeLinkDestination,
         resolveTargetFile: () => "Daily.md",
         findMarkdownFile: () => null,
         openFile: () => undefined,
@@ -104,6 +107,7 @@ test("reports notes created before a primary-write failure", async () => {
     const result = await submitEventTask(state, {
         defaultHubNotesFolder: "Hub",
         defaultDetailNotesFolder: "Details",
+        resolveLinkDestination: resolveRelativeLinkDestination,
         resolveTargetFile: () => "Daily.md",
         findMarkdownFile: () => null,
         openFile: () => undefined,
@@ -143,6 +147,7 @@ test("rejects invalid temporal state before invoking any writer operation", asyn
     const result = await submitEventTask(state, {
         defaultHubNotesFolder: "Hub",
         defaultDetailNotesFolder: "Details",
+        resolveLinkDestination: resolveRelativeLinkDestination,
         resolveTargetFile: () => "Daily.md",
         findMarkdownFile: () => null,
         openFile: () => undefined,
@@ -188,6 +193,7 @@ test("returns partial with a failed-write receipt when the primary write committ
     const result = await submitEventTask(state, {
         defaultHubNotesFolder: "Hub",
         defaultDetailNotesFolder: "Details",
+        resolveLinkDestination: resolveRelativeLinkDestination,
         resolveTargetFile: () => "Daily/2026-08-01.md",
         findMarkdownFile: (path) => ({ path }),
         openFile: () => undefined,
@@ -236,6 +242,7 @@ test("writes Inbox once without invoking Event or Task note workflows", async ()
 
     const result = await submitInbox(state, {
         resolveTarget: () => ({ file: "Daily/2026-08-02.md", heading: "Inbox", position: "start" }),
+        resolveLinkDestination: resolveRelativeLinkDestination,
         writer: {
             writeInbox: async (record, file, heading, position) => {
                 writes.push({ record, file, heading, position });
@@ -269,6 +276,7 @@ test("does not write Inbox when the selected destination is unavailable", async 
 
     const result = await submitInbox(state, {
         resolveTarget: () => null,
+        resolveLinkDestination: resolveRelativeLinkDestination,
         writer: {
             writeInbox: async () => {
                 wrote = true;
@@ -296,6 +304,7 @@ test("reports an Inbox writer failure without reporting success", async () => {
 
     const result = await submitInbox(state, {
         resolveTarget: () => ({ file: "Daily.md", heading: "Inbox", position: "end" }),
+        resolveLinkDestination: resolveRelativeLinkDestination,
         writer: {
             writeInbox: async () => {
                 throw new Error("vault is read-only");
@@ -331,6 +340,7 @@ test("writes contextual Event logs after the primary and receipts only failed de
     const result = await submitEventTask(state, {
         defaultHubNotesFolder: "Hub",
         defaultDetailNotesFolder: "Details",
+        resolveLinkDestination: resolveRelativeLinkDestination,
         resolveTargetFile: () => "Daily/2026-08-02.md",
         findMarkdownFile: () => null,
         openFile: () => undefined,
@@ -414,6 +424,7 @@ test("writes contextual logs for portable Object References while retaining lega
     const result = await submitEventTask(state, {
         defaultHubNotesFolder: "Hub",
         defaultDetailNotesFolder: "Details",
+        resolveLinkDestination: resolveRelativeLinkDestination,
         resolveTargetFile: () => "Daily/2026-08-02.md",
         findMarkdownFile: () => null,
         openFile: () => undefined,
@@ -528,6 +539,7 @@ test("writes contextual Inbox and Task logs using their own temporal records", a
     ];
     const inboxResult = await submitInbox(inboxState, {
         resolveTarget: () => ({ file: "Daily/2026-08-02.md", heading: "Inbox", position: "end" }),
+        resolveLinkDestination: resolveRelativeLinkDestination,
         contextNotes: [{ path: "People/Andi.md" }],
         contextSources,
         writer: {
@@ -552,6 +564,7 @@ test("writes contextual Inbox and Task logs using their own temporal records", a
     const taskResult = await submitEventTask(taskState, {
         defaultHubNotesFolder: "Hub",
         defaultDetailNotesFolder: "Details",
+        resolveLinkDestination: resolveRelativeLinkDestination,
         resolveTargetFile: () => "Daily/2026-08-02.md",
         findMarkdownFile: () => null,
         openFile: () => undefined,

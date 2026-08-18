@@ -15,14 +15,15 @@ import { ContextNotesController } from "./InboxNotesController";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { shouldUseMobileForm } from "./MobileFormPolicy";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
+import { createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
+import { ScheduledItemDesktopCreateModal } from "./ScheduledItemDesktopCreateModal.ts";
+import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
 import { SubmissionPolicy } from "./SubmissionPolicy";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
 import type { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
-import { ScheduledItemDesktopCreateModal } from "./ScheduledItemDesktopCreateModal.ts";
-import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
 
 export interface OpenEventTaskFormOptions {
     initialKind?: EventTaskKind;
@@ -664,6 +665,7 @@ export class EventTaskModal extends Modal {
                     resolveTarget: () => this.resolveInboxTarget(),
                     contextNotes: readContextSuggestionNotes(this.app),
                     contextSources: settings.inbox.contextSources,
+                    resolveLinkDestination: createObsidianLinkResolver(this.app),
                 }),
             );
             return;
@@ -696,6 +698,7 @@ export class EventTaskModal extends Modal {
                 },
                 contextNotes: readContextSuggestionNotes(this.app),
                 contextSources: settings.inbox.contextSources,
+                resolveLinkDestination: createObsidianLinkResolver(this.app),
             }),
         );
     }

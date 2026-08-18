@@ -1,4 +1,9 @@
-import { resolveContextPaths, type ContextLinkNote } from "./ContextLinkResolver.ts";
+import {
+    type ContextLinkNote,
+    type LinkDestinationResolver,
+    resolveContextPaths,
+    resolvedMarkdownLinkPaths,
+} from "./ContextLinkResolver.ts";
 import { resolvedObjectReferencePaths } from "./ObjectReference.ts";
 import { formatRelatedLog } from "./RelatedLog.ts";
 import {
@@ -15,6 +20,7 @@ export interface ScheduledItemCreateRelatedDependencies {
     contextSources: readonly ContextSourceSettings[];
     now?: Date;
     writeRelated: RelatedWriteOperation;
+    resolveLinkDestination: LinkDestinationResolver;
 }
 
 export type ScheduledItemCreateRelatedResult =
@@ -27,7 +33,10 @@ export async function writeScheduledItemCreateRelated(
     dependencies: ScheduledItemCreateRelatedDependencies,
 ): Promise<ScheduledItemCreateRelatedResult> {
     const destinations = resolveContextPaths(
-        resolvedObjectReferencePaths(data.description),
+        [
+            ...resolvedObjectReferencePaths(data.description),
+            ...resolvedMarkdownLinkPaths(data.description, primaryPath, dependencies.resolveLinkDestination),
+        ],
         [...dependencies.contextNotes],
         [...dependencies.contextSources],
     );

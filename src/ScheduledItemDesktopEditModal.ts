@@ -1,21 +1,23 @@
 import { type App, Modal, Notice } from "obsidian";
 import { DesktopScheduledItemForm } from "./DesktopScheduledItemForm.ts";
 import {
+    type DetailNotePromotionResult,
     promoteScheduledItemDetail,
     retryDetailNoteAttachment,
-    type DetailNotePromotionResult,
 } from "./DetailNotePromotion.ts";
 import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
+import { createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
 import { saveScheduledItemBlock } from "./ScheduledItemBlockPersistence.ts";
 import {
     retryScheduledItemEditRelated,
-    submitScheduledItemEdit,
     type ScheduledItemEditSubmissionResult,
+    submitScheduledItemEdit,
 } from "./ScheduledItemEditSubmission.ts";
 import { hydrateScheduledItemFormEdit } from "./ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
+import { TargetResolver } from "./TargetResolver.ts";
 import type { FocusNotesSettings } from "./types";
 import { isTFile } from "./utils.ts";
 
@@ -66,7 +68,9 @@ export class ScheduledItemDesktopEditModal extends Modal {
             data: this.data,
             contextLabel: `${this.snapshot.filePath} · Line ${this.snapshot.lineNumber}`,
             targetFile: this.snapshot.filePath,
-            defaultDetailNotesFolder: this.getSettings().eventTask.detailNotesFolder,
+            defaultDetailNotesFolder: new TargetResolver(this.app, this.getSettings()).getDetailNotesFolder(
+                this.snapshot.filePath,
+            ),
             getContextSources: () => this.getSettings().inbox.contextSources,
             onChange: () => undefined,
             onSubmit: () => void this.submit(),
@@ -131,6 +135,7 @@ export class ScheduledItemDesktopEditModal extends Modal {
             },
             writeRelated: (request) =>
                 writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
+            resolveLinkDestination: createObsidianLinkResolver(this.app),
         });
         this.latestEditResult = result;
         if (result.status === "failure") throw new Error(result.message);

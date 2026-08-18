@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveContextLinks } from "../src/ContextLinkResolver.ts";
+import {
+    addedResolvedMarkdownLinkPaths,
+    type LinkDestinationResolver,
+    resolveContextLinks,
+    resolvedMarkdownLinkPaths,
+    resolveRelativeLinkDestination,
+} from "../src/ContextLinkResolver.ts";
 import type { ContextSourceSettings } from "../src/types.ts";
 
 const sources: ContextSourceSettings[] = [
@@ -48,26 +54,29 @@ test("resolves aliases and encoded relative paths across varying folder depth", 
         "for [review](../../Persona/Work/Projects/Audit/Activities/Field%20Review.md)",
     ].join(" ");
 
-    assert.deepEqual(resolveContextLinks(markdown, "Daily/2026/2026-08-02.md", notes, sources), [
-        {
-            filePath: "People/Salma Saudah.md",
-            sourceId: "people",
-            sourceName: "People",
-            relatedHeading: "Interactions",
-        },
-        {
-            filePath: "Places/Head Office.md",
-            sourceId: "places",
-            sourceName: "Places",
-            relatedHeading: "Mentions",
-        },
-        {
-            filePath: "Persona/Work/Projects/Audit/Activities/Field Review.md",
-            sourceId: "activities",
-            sourceName: "Activities",
-            relatedHeading: "Logs",
-        },
-    ]);
+    assert.deepEqual(
+        resolveContextLinks(markdown, "Daily/2026/2026-08-02.md", notes, sources, resolveRelativeLinkDestination),
+        [
+            {
+                filePath: "People/Salma Saudah.md",
+                sourceId: "people",
+                sourceName: "People",
+                relatedHeading: "Interactions",
+            },
+            {
+                filePath: "Places/Head Office.md",
+                sourceId: "places",
+                sourceName: "Places",
+                relatedHeading: "Mentions",
+            },
+            {
+                filePath: "Persona/Work/Projects/Audit/Activities/Field Review.md",
+                sourceId: "activities",
+                sourceName: "Activities",
+                relatedHeading: "Logs",
+            },
+        ],
+    );
 });
 
 test("deduplicates repeated destinations and ignores unrelated, filtered, and disabled links", () => {
@@ -81,14 +90,17 @@ test("deduplicates repeated destinations and ignores unrelated, filtered, and di
     ].join(" ");
     const configured = sources.map((source) => (source.id === "places" ? { ...source, enabled: false } : source));
 
-    assert.deepEqual(resolveContextLinks(markdown, "Daily/2026-08-02.md", notes, configured), [
-        {
-            filePath: "People/Salma Saudah.md",
-            sourceId: "people",
-            sourceName: "People",
-            relatedHeading: "Interactions",
-        },
-    ]);
+    assert.deepEqual(
+        resolveContextLinks(markdown, "Daily/2026-08-02.md", notes, configured, resolveRelativeLinkDestination),
+        [
+            {
+                filePath: "People/Salma Saudah.md",
+                sourceId: "people",
+                sourceName: "People",
+                relatedHeading: "Interactions",
+            },
+        ],
+    );
 });
 
 test("uses the most specific configured folder when sources overlap", () => {
@@ -96,10 +108,13 @@ test("uses the most specific configured folder when sources overlap", () => {
     const specific = { ...sources[2], id: "audit", name: "Audit", folders: ["Persona/Work/Projects/Audit"] };
 
     assert.equal(
-        resolveContextLinks("[review](Persona/Work/Projects/Audit/Activities/Field%20Review.md)", "Daily.md", notes, [
-            broad,
-            specific,
-        ])[0]?.sourceId,
+        resolveContextLinks(
+            "[review](Persona/Work/Projects/Audit/Activities/Field%20Review.md)",
+            "Daily.md",
+            notes,
+            [broad, specific],
+            resolveRelativeLinkDestination,
+        )[0]?.sourceId,
         "audit",
     );
 });
@@ -145,6 +160,7 @@ test("uses property filters to distinguish object types sharing one folder", () 
             "Daily.md",
             sharedNotes,
             sharedSources,
+            resolveRelativeLinkDestination,
         ).map(({ filePath, sourceId }) => ({ filePath, sourceId })),
         [
             { filePath: "Objects/G2.md", sourceId: "projects" },
@@ -170,10 +186,61 @@ test("resolves a sibling folder note as a contextual destination", () => {
                 enabled: true,
             },
         ],
+        resolveRelativeLinkDestination,
     );
 
     assert.deepEqual(
         destinations.map((item) => item.filePath),
         ["Projects/BLOK 05.md"],
     );
+});
+
+test("resolves relative Markdown link destinations without filtering by note or source", () => {
+    const markdown =
+        "Reported by [Rachel](../../../people/Rachel%20Maelisa%20Damanik.md) about [BLOK F1](../../../persona/Karyawan%20IAT/BLOK%20F1/BLOK%20F1.md)";
+    assert.deepEqual(
+        resolvedMarkdownLinkPaths(markdown, "calendar/2026/2026-08/2026-08-06.md", resolveRelativeLinkDestination),
+        ["people/Rachel Maelisa Damanik.md", "persona/Karyawan IAT/BLOK F1/BLOK F1.md"],
+    );
+});
+
+test("deduplicates repeated relative Markdown link destinations", () => {
+    const markdown = "[BLOK F1](../BLOK%20F1.md) mentioned twice: [again](../BLOK%20F1.md)";
+    assert.deepEqual(resolvedMarkdownLinkPaths(markdown, "calendar/2026-08-06.md", resolveRelativeLinkDestination), [
+        "BLOK F1.md",
+    ]);
+});
+
+test("finds only newly added Markdown link destinations between two descriptions", () => {
+    const original = "Found in [BLOK F1](../BLOK%20F1.md)";
+    const next = "Found in [BLOK F1](../BLOK%20F1.md), reported by [Rachel](../people/Rachel.md)";
+    assert.deepEqual(
+        addedResolvedMarkdownLinkPaths(original, next, "calendar/2026-08-06.md", resolveRelativeLinkDestination),
+        ["people/Rachel.md"],
+    );
+});
+
+test("resolves Wikilinks through the injected resolver, honoring aliases and shortest-path targets", () => {
+    const vaultFiles = new Map([
+        ["BLOK F1", "persona/Karyawan IAT/BLOK F1/BLOK F1.md"],
+        ["Rachel Maelisa Damanik", "people/Rachel Maelisa Damanik.md"],
+    ]);
+    const shortestPathResolver: LinkDestinationResolver = (rawTarget) => vaultFiles.get(rawTarget) ?? null;
+
+    const markdown = "Reported by [[Rachel Maelisa Damanik|Rachel]] about [[BLOK F1]]";
+    assert.deepEqual(resolvedMarkdownLinkPaths(markdown, "calendar/2026-08-06.md", shortestPathResolver), [
+        "people/Rachel Maelisa Damanik.md",
+        "persona/Karyawan IAT/BLOK F1/BLOK F1.md",
+    ]);
+});
+
+test("ignores embeds and mixes Wikilinks with Markdown links in one description", () => {
+    const vaultFiles = new Map([
+        ["BLOK F1", "persona/BLOK F1.md"],
+        ["diagram.png", "attachments/diagram.png"],
+    ]);
+    const resolver: LinkDestinationResolver = (rawTarget) => vaultFiles.get(rawTarget) ?? null;
+
+    const markdown = "See [[BLOK F1]] and ![[diagram.png]] plus [BLOK F1 again](../persona/BLOK%20F1.md)";
+    assert.deepEqual(resolvedMarkdownLinkPaths(markdown, "calendar/2026-08-06.md", resolver), ["persona/BLOK F1.md"]);
 });

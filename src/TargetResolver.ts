@@ -1,6 +1,6 @@
 import { type App, moment } from "obsidian";
-import type { FocusNotesSettings, FocusTarget } from "./types";
 import { normalizeDailyNoteFormat } from "./DailyNotePath";
+import type { FocusNotesSettings, FocusTarget } from "./types";
 
 /**
  * Resolves abstract targets (which may contain template tokens or be empty)
@@ -90,6 +90,24 @@ export class TargetResolver {
             .replace(/\\/g, "/")
             .replace(/^\/+|\/+$/g, "");
         return folder || null;
+    }
+
+    /**
+     * Default folder to offer for a new Detail Note.
+     *
+     * Detail notes usually belong alongside the list note that owns the Task
+     * or Event, so default to that note's own folder. A Daily Note is just a
+     * place a Task is passing through before it gets filed elsewhere, so for
+     * targets inside the configured Daily Notes folder this falls back to the
+     * globally configured Detail Notes folder instead.
+     */
+    public getDetailNotesFolder(targetFile: string): string {
+        const parent = targetFile.includes("/") ? targetFile.slice(0, targetFile.lastIndexOf("/")) : "";
+        if (!parent) return this.settings.eventTask.detailNotesFolder;
+        const dailyFolder = this.settings.useDailyNotesAsDefault ? this.getDailyNoteFolder() : null;
+        const withinDailyNotes =
+            dailyFolder !== null && (parent === dailyFolder || parent.startsWith(`${dailyFolder}/`));
+        return withinDailyNotes ? this.settings.eventTask.detailNotesFolder : parent;
     }
 
     /** Expand {{date}} / {{date:FORMAT}} tokens in the file path against `when`. */

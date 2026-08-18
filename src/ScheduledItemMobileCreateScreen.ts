@@ -1,20 +1,21 @@
 import { type App, Component, Notice } from "obsidian";
 import {
+    type DetailNotePromotionResult,
     promoteScheduledItemDetail,
     retryDetailNoteAttachment,
-    type DetailNotePromotionResult,
 } from "./DetailNotePromotion.ts";
 import { EventTaskFormState } from "./EventTaskFormState.ts";
 import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter.ts";
-import { MobileScheduledItemForm, type MobileScheduledItemCreateContext } from "./MobileScheduledItemForm.ts";
+import { type MobileScheduledItemCreateContext, MobileScheduledItemForm } from "./MobileScheduledItemForm.ts";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource.ts";
+import { createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
 import {
     retryScheduledItemCreateRelated,
-    writeScheduledItemCreateRelated,
     type ScheduledItemCreateRelatedResult,
+    writeScheduledItemCreateRelated,
 } from "./ScheduledItemCreateRelated.ts";
 import { buildScheduledItemRecord } from "./ScheduledItemFormAdapter.ts";
-import { scheduledItemFormDataFromCreateState, type ScheduledItemFormData } from "./ScheduledItemFormData.ts";
+import { type ScheduledItemFormData, scheduledItemFormDataFromCreateState } from "./ScheduledItemFormData.ts";
 import { TargetResolver } from "./TargetResolver.ts";
 import type { FocusNotesSettings, FocusTarget } from "./types.ts";
 import { isTFile } from "./utils.ts";
@@ -178,6 +179,7 @@ export class ScheduledItemMobileCreateScreen extends Component {
             contextSources: this.getSettings().inbox.contextSources,
             writeRelated: (request) =>
                 writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
+            resolveLinkDestination: createObsidianLinkResolver(this.app),
         });
         if (result.status === "partial") {
             this.pendingRelated = result;

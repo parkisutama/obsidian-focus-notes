@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { resolveRelativeLinkDestination } from "../src/ContextLinkResolver.ts";
 import { captureLedgerRecord } from "../src/LedgerRecordSource.ts";
 import { retryScheduledItemEditRelated, submitScheduledItemEdit } from "../src/ScheduledItemEditSubmission.ts";
 import type { ScheduledItemFormData } from "../src/ScheduledItemFormData.ts";
@@ -67,6 +68,7 @@ test("writes the primary edit once and logs only newly resolved Object paths", a
             contextNotes: [{ path: "People/Ana.md" }, { path: "Places/Office.md" }],
             contextSources,
             now: new Date(2026, 7, 25, 8, 0),
+            resolveLinkDestination: resolveRelativeLinkDestination,
             writePrimary: async () => {
                 primaryWrites += 1;
             },
@@ -95,6 +97,7 @@ test("does not attempt related logs when the primary edit fails", async () => {
     const result = await submitScheduledItemEdit(task(""), task("Ask @{People/Ana.md}"), snapshot(), {
         contextNotes: [{ path: "People/Ana.md" }],
         contextSources,
+        resolveLinkDestination: resolveRelativeLinkDestination,
         writePrimary: async () => {
             throw new Error("stale snapshot");
         },

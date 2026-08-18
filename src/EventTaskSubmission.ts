@@ -1,7 +1,13 @@
+import {
+    type ContextLinkNote,
+    type LinkDestinationResolver,
+    resolveContextLinks,
+    resolveContextPaths,
+} from "./ContextLinkResolver.ts";
 import type { EventTaskFormState, InboxRecord } from "./EventTaskFormState";
-import type { EventTaskRecord, HubNoteRef } from "./EventTaskWriter";
-import { resolveContextLinks, resolveContextPaths, type ContextLinkNote } from "./ContextLinkResolver.ts";
 import { formatEventTaskEntry } from "./EventTaskMarkdown.ts";
+import type { EventTaskRecord, HubNoteRef } from "./EventTaskWriter";
+import { parseObjectReferences } from "./ObjectReference.ts";
 import { formatRelatedLog } from "./RelatedLog.ts";
 import {
     type RelatedWriteReceipt,
@@ -10,7 +16,6 @@ import {
     writeRelatedDestinations,
 } from "./RelatedWriteRecovery.ts";
 import type { ContextSourceSettings, FocusTarget, InsertPosition } from "./types";
-import { parseObjectReferences } from "./ObjectReference.ts";
 
 interface NoteFile {
     path: string;
@@ -49,6 +54,7 @@ export interface EventTaskSubmissionDependencies {
     openFile(file: NoteFile): void;
     contextNotes?: readonly ContextLinkNote[];
     contextSources?: readonly ContextSourceSettings[];
+    resolveLinkDestination: LinkDestinationResolver;
 }
 
 interface InboxSubmissionWriter {
@@ -71,6 +77,7 @@ export interface InboxSubmissionDependencies {
     resolveTarget(record: InboxRecord): FocusTarget | null;
     contextNotes?: readonly ContextLinkNote[];
     contextSources?: readonly ContextSourceSettings[];
+    resolveLinkDestination: LinkDestinationResolver;
 }
 
 export interface SubmissionCreatedNotes {
@@ -304,7 +311,7 @@ function buildInboxContextWrites(
 function resolveConfiguredContext(
     markdown: string,
     primaryPath: string,
-    dependencies: Pick<EventTaskSubmissionDependencies, "contextNotes" | "contextSources">,
+    dependencies: Pick<EventTaskSubmissionDependencies, "contextNotes" | "contextSources" | "resolveLinkDestination">,
 ) {
     if (!dependencies.contextNotes?.length || !dependencies.contextSources?.length) return [];
     const notes = [...dependencies.contextNotes];
@@ -314,7 +321,13 @@ function resolveConfiguredContext(
         .filter((path): path is string => path !== null);
     const destinations = resolveContextPaths(objectPaths, notes, sources);
     const seen = new Set(destinations.map((destination) => destination.filePath));
-    for (const destination of resolveContextLinks(markdown, primaryPath, notes, sources)) {
+    for (const destination of resolveContextLinks(
+        markdown,
+        primaryPath,
+        notes,
+        sources,
+        dependencies.resolveLinkDestination,
+    )) {
         if (!seen.has(destination.filePath)) destinations.push(destination);
     }
     return destinations;

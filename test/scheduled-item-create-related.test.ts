@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { resolveRelativeLinkDestination } from "../src/ContextLinkResolver.ts";
 import { retryScheduledItemCreateRelated, writeScheduledItemCreateRelated } from "../src/ScheduledItemCreateRelated.ts";
 import type { ScheduledItemFormData } from "../src/ScheduledItemFormData.ts";
 
@@ -47,6 +48,7 @@ test("writes create related logs only for resolved configured Object paths", asy
         contextNotes: [{ path: "People/Rachel.md" }, { path: "Places/Office.md" }],
         contextSources: sources,
         now: new Date(2026, 7, 28, 8, 0),
+        resolveLinkDestination: resolveRelativeLinkDestination,
         writeRelated: async (request) => {
             attempts.push(request.destinationPath);
             if (request.destinationPath === "Places/Office.md") throw new Error("locked");

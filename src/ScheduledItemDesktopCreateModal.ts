@@ -1,20 +1,21 @@
 import { type App, Modal, Notice } from "obsidian";
-import { DesktopScheduledItemForm, type DesktopScheduledItemCreateContext } from "./DesktopScheduledItemForm.ts";
+import { type DesktopScheduledItemCreateContext, DesktopScheduledItemForm } from "./DesktopScheduledItemForm.ts";
 import {
+    type DetailNotePromotionResult,
     promoteScheduledItemDetail,
     retryDetailNoteAttachment,
-    type DetailNotePromotionResult,
 } from "./DetailNotePromotion.ts";
 import { EventTaskFormState } from "./EventTaskFormState";
 import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
+import { createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
 import {
     retryScheduledItemCreateRelated,
-    writeScheduledItemCreateRelated,
     type ScheduledItemCreateRelatedResult,
+    writeScheduledItemCreateRelated,
 } from "./ScheduledItemCreateRelated.ts";
 import { buildScheduledItemRecord } from "./ScheduledItemFormAdapter.ts";
-import { scheduledItemFormDataFromCreateState, type ScheduledItemFormData } from "./ScheduledItemFormData.ts";
+import { type ScheduledItemFormData, scheduledItemFormDataFromCreateState } from "./ScheduledItemFormData.ts";
 import { TargetResolver } from "./TargetResolver";
 import type { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils.ts";
@@ -63,7 +64,9 @@ export class ScheduledItemDesktopCreateModal extends Modal {
             contextLabel: `${this.context.targetFile} · ${this.context.targetHeading || "No heading"}`,
             targetFile: this.context.targetFile,
             createContext: this.context,
-            defaultDetailNotesFolder: this.getSettings().eventTask.detailNotesFolder,
+            defaultDetailNotesFolder: new TargetResolver(this.app, this.getSettings()).getDetailNotesFolder(
+                this.context.targetFile,
+            ),
             getContextSources: () => this.getSettings().inbox.contextSources,
             onChange: () => undefined,
             onSubmit: () => void this.submit(),
@@ -186,6 +189,7 @@ export class ScheduledItemDesktopCreateModal extends Modal {
             contextSources: this.getSettings().inbox.contextSources,
             writeRelated: (request) =>
                 writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
+            resolveLinkDestination: createObsidianLinkResolver(this.app),
         });
         if (result.status === "partial") {
             this.pendingRelated = result;
