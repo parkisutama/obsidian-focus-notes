@@ -27,9 +27,27 @@ test("uses the cursor position instead of a later trigger", () => {
     });
 });
 
-test("does not trigger inside email addresses or after a completed token", () => {
+test("does not trigger inside email addresses", () => {
     assert.equal(findInboxTrigger("kirim ke andi@example.com", 25), null);
-    assert.equal(findInboxTrigger("Temui @Andi besok", 17), null);
+});
+
+test("keeps a mention query open across spaces so multi-word titles stay searchable", () => {
+    assert.deepEqual(findInboxTrigger("Temui @Andi besok", 17), {
+        kind: "mention",
+        start: 6,
+        end: 17,
+        query: "Andi besok",
+    });
+});
+
+test("a tag query still ends at the first space, since tags cannot contain spaces", () => {
+    const text = "Catatan #follow up";
+    assert.equal(findInboxTrigger(text, text.length), null);
+});
+
+test("a mention query ends at a line break", () => {
+    const text = "Temui @Andi\nbesok pagi";
+    assert.equal(findInboxTrigger(text, text.length), null);
 });
 
 test("creates an editable separator after a selected suggestion when needed", () => {

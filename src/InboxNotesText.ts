@@ -10,17 +10,21 @@ export interface InboxTrigger {
 export function findInboxTrigger(text: string, cursor: number): InboxTrigger | null {
     if (cursor < 0 || cursor > text.length) return null;
     const beforeCursor = text.slice(0, cursor);
-    const match = beforeCursor.match(/([@#])([^\s@#]*)$/);
+    // Object Note titles routinely contain spaces ("IAT ISSUE TRACKER"), so a
+    // mention query stays open across them and only ends at a line break, a
+    // new trigger character, or the user backspacing out of it. Tags can't
+    // contain spaces, so a tag query still ends at the first one.
+    const match = beforeCursor.match(/@([^\n@#]*)$/) ?? beforeCursor.match(/#([^\s@#]*)$/);
     if (!match || match.index === undefined) return null;
     const start = match.index;
     const boundary = start === 0 ? "" : beforeCursor[start - 1];
     if (boundary && !/[\s([{,;:!?]/.test(boundary)) return null;
 
     return {
-        kind: match[1] === "@" ? "mention" : "tag",
+        kind: beforeCursor[start] === "@" ? "mention" : "tag",
         start,
         end: cursor,
-        query: match[2],
+        query: match[1],
     };
 }
 
