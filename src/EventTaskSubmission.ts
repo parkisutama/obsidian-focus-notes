@@ -5,7 +5,7 @@ import {
     resolveContextPaths,
 } from "./ContextLinkResolver.ts";
 import type { EventTaskFormState, InboxRecord } from "./EventTaskFormState";
-import { formatEventTaskEntry, type ResolveDailyLinkPath } from "./EventTaskMarkdown.ts";
+import { formatEventTaskEntry } from "./EventTaskMarkdown.ts";
 import type { EventTaskRecord, HubNoteRef } from "./EventTaskWriter";
 import type { FormatInboxEntryOptions } from "./InboxMarkdown.ts";
 import { parseObjectReferences } from "./ObjectReference.ts";
@@ -56,7 +56,7 @@ export interface EventTaskSubmissionDependencies {
     contextNotes?: readonly ContextLinkNote[];
     contextSources?: readonly ContextSourceSettings[];
     resolveLinkDestination: LinkDestinationResolver;
-    resolveDailyLinkPath?: ResolveDailyLinkPath;
+    formatDailyLink?: (when: Date, targetFilePath: string, label: string) => string;
 }
 
 interface InboxSubmissionWriter {
@@ -231,8 +231,9 @@ export async function submitEventTask(
             markdown: formatEventTaskEntry(
                 relatedRecord,
                 detailNoteRef,
-                hubNoteFilePath,
-                dependencies.resolveDailyLinkPath,
+                dependencies.formatDailyLink
+                    ? (when, label) => dependencies.formatDailyLink?.(when, hubNoteFilePath, label) ?? label
+                    : undefined,
             ),
         });
     }

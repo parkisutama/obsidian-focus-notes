@@ -5,6 +5,7 @@ import { insertUnderHeading } from "./HeadingInsertion";
 import { type FormatInboxEntryOptions, formatInboxEntry } from "./InboxMarkdown";
 import { ensureFolderPath, isTFile } from "./utils";
 import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTaskMarkdown";
+import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
 import { TargetResolver } from "./TargetResolver";
 import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItemTypes";
 
@@ -60,15 +61,25 @@ export class EventTaskWriter {
         detailNoteRef?: HubNoteRef | null,
     ): Promise<void> {
         const file = await this.resolveOrCreateFile(targetFilePath);
-        const content = formatEventTaskEntry(record, detailNoteRef, targetFilePath, this.resolveDailyLinkPath());
+        const formatDateLink = this.getFocusSettings
+            ? (when: Date, label: string) => this.formatDailyLink(when, targetFilePath, label)
+            : undefined;
+        const content = formatEventTaskEntry(record, detailNoteRef, formatDateLink);
         await this.insertIntoFile(file, targetHeading, content, position);
     }
 
-    resolveDailyLinkPath(): ((when: Date) => string | null) | undefined {
+    /**
+     * Formats `label` as a link to the daily note covering `when`, honoring the user's
+     * configured Obsidian link format (falls back to a relative Markdown link if that daily
+     * note doesn't exist yet, e.g. a future date). Returns the plain label unresolved when no
+     * "daily" Periodical Notes profile is configured.
+     */
+    formatDailyLink(when: Date, targetFilePath: string, label: string): string {
         const getFocusSettings = this.getFocusSettings;
-        if (!getFocusSettings) return undefined;
-        return (when) =>
-            new TargetResolver(this.app, getFocusSettings()).getPeriodicalTarget("daily", when)?.file ?? null;
+        if (!getFocusSettings) return label;
+        const dailyPath = new TargetResolver(this.app, getFocusSettings()).getPeriodicalTarget("daily", when)?.file;
+        if (!dailyPath) return label;
+        return createObsidianLinkFormatter(this.app)(targetFilePath, dailyPath, label);
     }
 
     async writeInbox(

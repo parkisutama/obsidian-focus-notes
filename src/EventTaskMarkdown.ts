@@ -1,18 +1,15 @@
 import type { EventRecord, EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
-import { formatRelativeMarkdownLink } from "./InboxMarkdown.ts";
 import type { TaskPriority } from "./ScheduledItemTypes";
 
-/** Resolves the vault path of the daily note covering `when`, or null if none is configured. */
-export type ResolveDailyLinkPath = (when: Date) => string | null;
+/** Formats a date value as a link (or plain text, if unresolvable) for a Task date field. */
+export type FormatDateLink = (when: Date, label: string) => string;
 
 export function formatEventTaskEntry(
     record: EventTaskRecord,
     detailNoteRef?: HubNoteRef | null,
-    targetFilePath?: string,
-    resolveDailyPath?: ResolveDailyLinkPath,
+    formatDateLink?: FormatDateLink,
 ): string {
-    const line =
-        record.kind === "event" ? formatEventLine(record) : formatTaskLine(record, targetFilePath, resolveDailyPath);
+    const line = record.kind === "event" ? formatEventLine(record) : formatTaskLine(record, formatDateLink);
     const parts = [line];
     for (const descriptionLine of record.description.split(/\r?\n/)) {
         const description = descriptionLine.trim();
@@ -41,14 +38,11 @@ function formatEventLine(record: EventRecord): string {
     return line;
 }
 
-function formatTaskLine(record: TaskRecord, targetFilePath?: string, resolveDailyPath?: ResolveDailyLinkPath): string {
+function formatTaskLine(record: TaskRecord, formatDateLink?: FormatDateLink): string {
     const title = record.hubNoteRef ? `[${record.title}](${encodePath(record.hubNoteRef.path)})` : record.title;
     let line = `- [ ] ${title}`;
     if (record.priority !== "normal") line += ` | priority:${record.priority}`;
-    const dateLink = (when: Date, label: string): string => {
-        const dailyPath = resolveDailyPath?.(when);
-        return dailyPath && targetFilePath ? formatRelativeMarkdownLink(targetFilePath, dailyPath, label) : label;
-    };
+    const dateLink = (when: Date, label: string): string => (formatDateLink ? formatDateLink(when, label) : label);
     if (record.due) {
         const label = record.dueHasTime ? formatDateTime(record.due) : formatDate(record.due);
         line += ` | due:${dateLink(record.due, label)}`;

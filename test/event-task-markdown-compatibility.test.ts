@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "../src/EventTaskMarkdown.ts";
 import type { EventRecord, TaskRecord } from "../src/EventTaskWriter.ts";
+import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
 import { ScheduledItemParser } from "../src/ScheduledItemParser.ts";
 
 const source = {
@@ -100,7 +101,7 @@ test("writer due-only Task and completed Task fixture retain distinct semantics"
     assert.equal(completed?.due?.getTime(), dueOnly.due?.getTime());
 });
 
-test("Task date fields become relative Markdown links when a daily-note resolver is supplied", () => {
+test("Task date fields become links when a formatDateLink resolver is supplied", () => {
     const record: TaskRecord = {
         kind: "task",
         title: "Prepare report",
@@ -115,9 +116,10 @@ test("Task date fields become relative Markdown links when a daily-note resolver
         description: "",
         hubNoteRef: null,
     };
-    const resolveDailyPath = (when: Date) => `Journal/${when.getFullYear()}-08-01.md`;
+    const formatDateLink = (when: Date, label: string) =>
+        formatRelativeMarkdownLink("Persona/Report.md", `Journal/${when.getFullYear()}-08-01.md`, label);
 
-    const markdown = formatEventTaskEntry(record, null, "Persona/Report.md", resolveDailyPath);
+    const markdown = formatEventTaskEntry(record, null, formatDateLink);
 
     assert.equal(
         markdown,
@@ -135,7 +137,7 @@ test("Task date fields become relative Markdown links when a daily-note resolver
     assert.equal(item?.remind?.getTime(), record.reminders[0]?.getTime());
 });
 
-test("Task date fields fall back to plain text when no daily-note path resolves", () => {
+test("Task date fields stay plain text when no formatDateLink resolver is supplied", () => {
     const record: TaskRecord = {
         kind: "task",
         title: "Submit invoice",
@@ -148,7 +150,7 @@ test("Task date fields fall back to plain text when no daily-note path resolves"
         hubNoteRef: null,
     };
 
-    const markdown = formatEventTaskEntry(record, null, "Daily/2026-08-01.md", () => null);
+    const markdown = formatEventTaskEntry(record);
 
     assert.equal(markdown, "- [ ] Submit invoice | due:2026-08-02");
 });

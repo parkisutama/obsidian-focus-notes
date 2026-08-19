@@ -5,7 +5,6 @@ import {
     retryDetailNoteAttachment,
 } from "./DetailNotePromotion.ts";
 import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter.ts";
-import { formatRelativeMarkdownLink } from "./InboxMarkdown.ts";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
 import { MobileScheduledItemForm } from "./MobileScheduledItemForm.ts";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource.ts";
@@ -127,8 +126,7 @@ export class ScheduledItemMobileEditScreen extends Component {
             resolveLinkDestination: createObsidianLinkResolver(this.app),
             formatDateValue: (value) => {
                 const when = parseLocalDateTime(value, true);
-                const dailyPath = when ? writer.resolveDailyLinkPath()?.(when) : null;
-                return dailyPath ? formatRelativeMarkdownLink(this.snapshot.filePath, dailyPath, value) : value;
+                return when ? writer.formatDailyLink(when, this.snapshot.filePath, value) : value;
             },
         });
         this.latestEditResult = result;

@@ -663,7 +663,7 @@ export class EventTaskMobileScreen extends Component {
                 contextNotes: readContextSuggestionNotes(this.app),
                 contextSources: settings.inbox.contextSources,
                 resolveLinkDestination: createObsidianLinkResolver(this.app),
-                resolveDailyLinkPath: writer.resolveDailyLinkPath(),
+                formatDailyLink: (when, path, label) => writer.formatDailyLink(when, path, label),
             }),
         );
     }
