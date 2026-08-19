@@ -3764,8 +3764,8 @@ body.fn-mobile-event-screen-open .suggestion-container {
     gap: var(--size-2-1);
 }
 
-.fn-context-source-field:nth-child(5),
-.fn-context-source-field:nth-child(7) {
+.fn-context-source-field:nth-child(7),
+.fn-context-source-field:nth-child(10) {
     grid-column: span 2;
 }
 
@@ -3778,8 +3778,11 @@ body.fn-mobile-event-screen-open .suggestion-container {
 }
 
 .fn-context-source-field input[type="checkbox"] {
-    width: auto;
+    width: 20px;
+    height: 20px;
+    margin: 0;
     justify-self: start;
+    align-self: center;
 }
 
 .fn-task-source-list {
