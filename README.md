@@ -141,9 +141,9 @@ The reflection modal is *cancel-safe*: closing without "Save reflection" preserv
 Settings hold the *defaults* — the sidebar's per-session override always wins for that session.
 
 - **Pomodoro / Timer minutes** — default durations.
-- **Use Daily Notes plugin settings** — when on, the default file auto-derives from the core Daily Notes plugin's folder + format, and the manual file template is inactive. Off → use the manual template below.
-- **Default file / heading / insert position** — fallback target when Daily Notes integration is off. New installs use `Journal/{{date:YYYY-MM-DD}}.md` under `## Focus timeline` so completed timer sessions are also valid timeline events.
-- **Daily-note date format** — Moment.js format for the bare `{{date}}` token.
+- **Periodical Notes** — a tab of its own: define named profiles (Daily, Weekly, or anything else — Monthly, a project journal) with a folder, file-name format, and optional per-period heading format, all Moment.js tokens. A toggle lets the reserved `daily` profile sync its folder/format live from the core Daily Notes plugin when enabled, or fall back to its own manual fields — Daily Notes is an optional convenience, never a hard dependency.
+- **Focus session capture** — which Periodical Notes profile new sessions log to by default, plus heading and insert position. New installs point at the `daily` profile's `## Focus timeline` heading.
+- **Event capture / Task capture / Moment capture** — each capture kind gets its own profile (or, for Task, a filtered list of Object Sources instead of a periodical note), heading, and insert position, so your vault structure doesn't force all three into the same file. Moment can also reuse Event's active target instead of a profile, and optionally back-link into another profile (e.g. a same-day note) when it saves.
 - **Group entries under date sub-headings** — global default for the sidebar's group toggle.
 - **Date sub-heading level / template** — `## / ### / ####` and the text template (default `[[{{date}}]]`).
 - **Flat template** — used when grouping is off. The default format is timeline-compatible: `- {{date}} {{startTime}} - {{endTime}} {{task}}`.
@@ -228,7 +228,7 @@ written by the plugin.
 
 ```text
 TimerEngine              — pure state machine (countdown | stopwatch)
-TargetResolver           — expands {{date}} tokens, resolves Daily Notes default
+TargetResolver           — expands {{date}} tokens, resolves Periodical Notes profiles
 NoteWriter               — heading-aware insertion + date-sub-heading creation
                            + empty-sub-bullet pruning, file/folder auto-creation
 RecentEntriesReader      — multi-line entry bundling, walks date sub-headings

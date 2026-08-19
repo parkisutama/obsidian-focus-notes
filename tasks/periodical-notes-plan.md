@@ -42,6 +42,29 @@ Full design/rationale: `C:\Users\parki\.claude\plans\elegant-strolling-riddle.md
       own profile+heading). Full verification this round: `pnpm run check`-equivalent (format, typecheck,
       lint, test — 252/252) **and** `pnpm run build`/`verify:artifacts` all green, via `fnm use` to get a
       working `node`/`pnpm` in this session.
-- [ ] 5. Capture tab layout polish + doc pass.
+- [x] 5. Capture tab layout polish + doc pass. Verified the four Capture-tab H3 sections
+      ("Moment capture", "Event capture", "Task capture", "Shared note creation") match
+      `SettingsLayout.ts`'s `CAPTURE_SECTIONS` exactly, and that no `src/` file still references a
+      removed field/enum (`InboxTargetMode`, `defaultTargetMode`, `weeklyNoteFolder/Format`,
+      `dailyBacklinkHeading`, `useDailyNotesAsDefault`, `defaultTarget`, `getDailyNoteTarget`/
+      `getWeeklyNoteTarget`, `eventTask.hubNotesFolder`/`defaultSaveHeading`, `weeklyNoteCapture`) —
+      grep across `src/` and `test/` came back clean. `docs/spec-inbox-quick-capture.md` and
+      `tasks/moment-weekly-target-plan.md` still describe the pre-Periodical-Notes shape
+      (`InboxTargetMode`, `peopleFolders`/`placeFolders`); left as-is since both are frozen,
+      point-in-time approved specs/plans (same convention already applied to earlier superseded
+      content in those files), not living documentation. `README.md` *is* living documentation and
+      did have stale, actively-misleading content — the "Use Daily Notes plugin settings" /
+      "Default file / heading / insert position" Settings bullets (described a toggle and fields
+      that no longer exist) were replaced with a description of the new Periodical Notes tab and
+      the four per-kind capture sections; the Architecture table's `TargetResolver` one-liner
+      updated from "resolves Daily Notes default" to "resolves Periodical Notes profiles". Full
+      verification: `pnpm run check` (format, lint, typecheck, test — 252/252) and
+      `pnpm run build` + `pnpm run verify:artifacts` all green via `fnm use`.
 
 Each phase = one atomic commit, own test updates, in that order per the plan file.
+
+All 5 phases complete. Remaining: real Obsidian desktop/mobile acceptance testing (automated checks
+don't substitute for it) — define a custom periodical profile, confirm Focus session/Event/Moment/Task
+each resolve to their own independently configured destination, confirm Task's Save-to picker prioritizes
+allowed Object Sources while still accepting a typed path, confirm the Moment backlink and dated-heading
+behavior with `syncDailyFromCorePlugin` both on and off.
