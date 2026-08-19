@@ -19,8 +19,11 @@ Full design/rationale: `C:\Users\parki\.claude\plans\elegant-strolling-riddle.md
       `buildInboxContextWrites`, `ScheduledItemCreateRelated.ts`, `ScheduledItemEditSubmission.ts`) instead
       of the previous hardcoded `"end"`. Settings UI: "Log position" dropdown per Object Source. `pnpm run
       check` (format/lint/typecheck/test — 260/260) green via `fnm use`.
-- [ ] 3. Moment→profile backlink independent position — `MomentBacklinkSettings.position`, decoupled from
-      `captureMoment.position`.
+- [x] 3. Moment→profile backlink independent position — `MomentBacklinkSettings.position` (default
+      `"start"`), decoupled from `captureMoment.position` in `resolveMomentBacklinkTarget`
+      (`EventTaskModal.ts`/`EventTaskMobileScreen.ts`, previously accidentally reused the Moment's own
+      target position). Settings UI: "Backlink position" dropdown. `pnpm run check` (format/lint/typecheck/
+      test — 261/261) green via `fnm use`.
 - [ ] 4. Task date fields as relative Markdown links — creation path (`EventTaskMarkdown.ts`,
       `EventTaskWriter.ts`, all `new EventTaskWriter(...)` call sites, `ScheduledItemParser.ts` unwrap).
 - [ ] 5. Task date fields as relative Markdown links — edit path (`TaskLineEditor.ts`,

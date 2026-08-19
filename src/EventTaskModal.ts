@@ -326,7 +326,7 @@ export class EventTaskModal extends Modal {
         // fields otherwise (see TargetResolver.getPeriodicalTarget()).
         const target = resolver.getPeriodicalTarget(backlink.profileId, record.capturedAt);
         if (!target?.file.trim()) return null;
-        return { ...target, heading: backlink.heading || "Moments", position: settings.captureMoment.position };
+        return { ...target, heading: backlink.heading || "Moments", position: backlink.position };
     }
 
     /** True when the Moment date is already carried by a dated per-period heading, so bullets skip repeating it. */

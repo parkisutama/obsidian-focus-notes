@@ -484,6 +484,20 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                             await this.plugin.saveSettings();
                         }),
                 );
+
+            new Setting(containerEl)
+                .setName("Backlink position")
+                .setDesc("Choose whether new backlinks appear at the top or bottom of the heading.")
+                .addDropdown((dropdown) =>
+                    dropdown
+                        .addOption("start", "Start of section (newest at top)")
+                        .addOption("end", "End of section (newest at bottom)")
+                        .setValue(this.plugin.settings.captureMoment.backlink.position)
+                        .onChange(async (v) => {
+                            this.plugin.settings.captureMoment.backlink.position = v as InsertPosition;
+                            await this.plugin.saveSettings();
+                        }),
+                );
         }
 
         this.renderContextSources(containerEl);

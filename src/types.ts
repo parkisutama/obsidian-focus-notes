@@ -260,6 +260,7 @@ export interface MomentBacklinkSettings {
     enabled: boolean;
     profileId: string;
     heading: string;
+    position: InsertPosition;
 }
 
 /** What gets passed to NoteWriter when a session ends. */
@@ -367,7 +368,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         profileId: "weekly",
         heading: "Inbox",
         position: "end",
-        backlink: { enabled: true, profileId: "daily", heading: "Moments" },
+        backlink: { enabled: true, profileId: "daily", heading: "Moments", position: "start" },
     },
     inbox: {
         contextSources: [

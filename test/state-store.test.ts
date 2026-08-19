@@ -24,6 +24,20 @@ test("defaults Moment capture to the weekly periodical profile with a Daily back
     assert.equal(merged.captureMoment.backlink.enabled, true);
     assert.equal(merged.captureMoment.backlink.profileId, "daily");
     assert.equal(merged.captureMoment.backlink.heading, "Moments");
+    assert.equal(merged.captureMoment.backlink.position, "start");
+});
+
+test("keeps the Moment backlink position independent of the Moment's own target position", () => {
+    const merged = mergeSettingsWithDefaults({
+        captureMoment: {
+            ...DEFAULT_SETTINGS.captureMoment,
+            position: "end",
+            backlink: { ...DEFAULT_SETTINGS.captureMoment.backlink, position: "start" },
+        },
+    });
+
+    assert.equal(merged.captureMoment.position, "end");
+    assert.equal(merged.captureMoment.backlink.position, "start");
 });
 
 test("preserves an existing install's chosen Moment target mode across settings merges", () => {
@@ -49,6 +63,7 @@ test("merges a partially saved Moment backlink object onto its defaults", () => 
     assert.equal(merged.captureMoment.backlink.enabled, false);
     assert.equal(merged.captureMoment.backlink.profileId, DEFAULT_SETTINGS.captureMoment.backlink.profileId);
     assert.equal(merged.captureMoment.backlink.heading, DEFAULT_SETTINGS.captureMoment.backlink.heading);
+    assert.equal(merged.captureMoment.backlink.position, DEFAULT_SETTINGS.captureMoment.backlink.position);
 });
 
 test("seeds default Daily/Weekly periodical profiles and syncs Daily from core plugin by default", () => {
