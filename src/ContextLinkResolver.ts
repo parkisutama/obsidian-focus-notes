@@ -1,5 +1,5 @@
 import { isPathInContextSourceFolder, matchesContextFilter } from "./ContextSourceScope.ts";
-import type { ContextSourceSettings } from "./types";
+import type { ContextSourceSettings, InsertPosition } from "./types";
 
 export interface ContextLinkNote {
     path: string;
@@ -11,6 +11,7 @@ export interface ContextDestination {
     sourceId: string;
     sourceName: string;
     relatedHeading: string;
+    relatedPosition: InsertPosition;
 }
 
 interface SourceMatch {
@@ -110,6 +111,7 @@ export function resolveContextPaths(
             sourceId: source.id,
             sourceName: source.name,
             relatedHeading: source.relatedHeading,
+            relatedPosition: source.relatedPosition,
         });
     }
     return destinations;

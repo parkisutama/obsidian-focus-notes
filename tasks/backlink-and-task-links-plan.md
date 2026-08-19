@@ -13,8 +13,12 @@ Full design/rationale: `C:\Users\parki\.claude\plans\elegant-strolling-riddle.md
       `ContextSourceSettings` fixtures plus added toggle-matrix tests to `context-source-settings.test.ts`,
       `inbox-suggestions.test.ts`, `context-link-resolver.test.ts`. `pnpm run check` (format/lint/typecheck/
       test — 260/260) green via `fnm use`.
-- [ ] 2. Object Source backlink insert position — `relatedPosition` on `ContextSourceSettings`, wired through
-      `ContextLinkResolver.ts`/`EventTaskSubmission.ts`/`ScheduledItemCreateRelated.ts`/`ScheduledItemEditSubmission.ts`.
+- [x] 2. Object Source backlink insert position — `relatedPosition` on `ContextSourceSettings` (default
+      `"start"`), threaded through `ContextDestination` in `ContextLinkResolver.ts` and consumed at all 3
+      write-building call sites (`EventTaskSubmission.ts`'s `buildEventTaskContextWrites`/
+      `buildInboxContextWrites`, `ScheduledItemCreateRelated.ts`, `ScheduledItemEditSubmission.ts`) instead
+      of the previous hardcoded `"end"`. Settings UI: "Log position" dropdown per Object Source. `pnpm run
+      check` (format/lint/typecheck/test — 260/260) green via `fnm use`.
 - [ ] 3. Moment→profile backlink independent position — `MomentBacklinkSettings.position`, decoupled from
       `captureMoment.position`.
 - [ ] 4. Task date fields as relative Markdown links — creation path (`EventTaskMarkdown.ts`,

@@ -3889,7 +3889,7 @@ body.fn-mobile-event-screen-open .suggestion-container {
     }
 
     .fn-context-source-field:nth-child(7),
-    .fn-context-source-field:nth-child(9) {
+    .fn-context-source-field:nth-child(10) {
         grid-column: auto;
     }
 

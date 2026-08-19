@@ -19,6 +19,7 @@ const sources: ContextSourceSettings[] = [
         matchByFolder: true,
         matchByProperty: true,
         relatedHeading: "Interactions",
+        relatedPosition: "start",
         enabled: true,
     },
     {
@@ -30,6 +31,7 @@ const sources: ContextSourceSettings[] = [
         matchByFolder: true,
         matchByProperty: true,
         relatedHeading: "Mentions",
+        relatedPosition: "start",
         enabled: true,
     },
     {
@@ -41,6 +43,7 @@ const sources: ContextSourceSettings[] = [
         matchByFolder: true,
         matchByProperty: true,
         relatedHeading: "Logs",
+        relatedPosition: "start",
         enabled: true,
     },
 ];
@@ -68,18 +71,21 @@ test("resolves aliases and encoded relative paths across varying folder depth", 
                 sourceId: "people",
                 sourceName: "People",
                 relatedHeading: "Interactions",
+                relatedPosition: "start",
             },
             {
                 filePath: "Places/Head Office.md",
                 sourceId: "places",
                 sourceName: "Places",
                 relatedHeading: "Mentions",
+                relatedPosition: "start",
             },
             {
                 filePath: "Persona/Work/Projects/Audit/Activities/Field Review.md",
                 sourceId: "activities",
                 sourceName: "Activities",
                 relatedHeading: "Logs",
+                relatedPosition: "start",
             },
         ],
     );
@@ -104,6 +110,7 @@ test("deduplicates repeated destinations and ignores unrelated, filtered, and di
                 sourceId: "people",
                 sourceName: "People",
                 relatedHeading: "Interactions",
+                relatedPosition: "start",
             },
         ],
     );
@@ -136,6 +143,7 @@ test("uses property filters to distinguish object types sharing one folder", () 
             matchByFolder: true,
             matchByProperty: true,
             relatedHeading: "Mentions",
+            relatedPosition: "start",
             enabled: true,
         },
         {
@@ -147,6 +155,7 @@ test("uses property filters to distinguish object types sharing one folder", () 
             matchByFolder: true,
             matchByProperty: true,
             relatedHeading: "Project log",
+            relatedPosition: "start",
             enabled: true,
         },
         {
@@ -158,6 +167,7 @@ test("uses property filters to distinguish object types sharing one folder", () 
             matchByFolder: true,
             matchByProperty: true,
             relatedHeading: "Activity log",
+            relatedPosition: "start",
             enabled: true,
         },
     ];
@@ -271,6 +281,7 @@ test("resolves a sibling folder note as a contextual destination", () => {
                 matchByFolder: true,
                 matchByProperty: true,
                 relatedHeading: "Related log",
+                relatedPosition: "start",
                 templatePath: "Templates/Place.md",
                 enabled: true,
             },

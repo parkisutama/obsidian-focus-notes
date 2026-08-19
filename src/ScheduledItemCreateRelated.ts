@@ -44,7 +44,7 @@ export async function writeScheduledItemCreateRelated(
     const requests = destinations.map((destination) => ({
         destinationPath: destination.filePath,
         heading: destination.relatedHeading,
-        position: "end" as const,
+        position: destination.relatedPosition,
         markdown: formatRelatedLog({
             kind: data.kind,
             title: data.title,

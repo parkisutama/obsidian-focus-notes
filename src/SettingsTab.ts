@@ -1012,6 +1012,19 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         });
         this.contextSelectField(
             fields,
+            "Log position",
+            [
+                { value: "start", label: "Start of section (newest at top)" },
+                { value: "end", label: "End of section (newest at bottom)" },
+            ],
+            source.relatedPosition,
+            async (value) => {
+                source.relatedPosition = value as InsertPosition;
+                await this.saveContextSources();
+            },
+        );
+        this.contextSelectField(
+            fields,
             "Default placement",
             [
                 { value: "flat", label: "Flat note" },

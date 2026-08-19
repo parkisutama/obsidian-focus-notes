@@ -296,7 +296,7 @@ function buildEventTaskContextWrites(
     return destinations.map((destination) => ({
         destinationPath: destination.filePath,
         heading: destination.relatedHeading,
-        position: "end",
+        position: destination.relatedPosition,
         markdown: formatRelatedLog({
             kind: record.kind,
             title: record.title,
@@ -321,7 +321,7 @@ function buildInboxContextWrites(
     return destinations.map((destination) => ({
         destinationPath: destination.filePath,
         heading: destination.relatedHeading,
-        position: "end",
+        position: destination.relatedPosition,
         markdown: formatRelatedLog({
             kind: "inbox",
             title,

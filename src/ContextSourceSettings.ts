@@ -17,6 +17,7 @@ export function createContextSource(existing: readonly ContextSourceSettings[]):
         matchByFolder: true,
         matchByProperty: true,
         relatedHeading: "Related log",
+        relatedPosition: "start",
         templatePath: "",
         placement: "flat",
         enabled: false,

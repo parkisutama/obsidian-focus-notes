@@ -223,6 +223,8 @@ export interface ContextSourceSettings {
     /** Whether filter is required for a note to match this source. */
     matchByProperty: boolean;
     relatedHeading: string;
+    /** Where a new backlink bullet is inserted under relatedHeading. */
+    relatedPosition: InsertPosition;
     /** Optional vault-relative template note used when object creation is enabled. */
     templatePath: string;
     /** Default physical shape for new object notes. */
@@ -378,6 +380,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 matchByFolder: true,
                 matchByProperty: true,
                 relatedHeading: "Interactions",
+                relatedPosition: "start",
                 templatePath: "",
                 placement: "flat",
                 enabled: true,
@@ -392,6 +395,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 matchByFolder: true,
                 matchByProperty: true,
                 relatedHeading: "Related log",
+                relatedPosition: "start",
                 templatePath: "",
                 placement: "flat",
                 enabled: true,
@@ -406,6 +410,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 matchByFolder: true,
                 matchByProperty: true,
                 relatedHeading: "Activity log",
+                relatedPosition: "start",
                 templatePath: "",
                 placement: "flat",
                 enabled: true,
@@ -529,6 +534,7 @@ function normalizeContextSources(
             matchByFolder: raw.matchByFolder !== false,
             matchByProperty: raw.matchByProperty !== false,
             relatedHeading: stringValue(raw.relatedHeading).trim() || "Related log",
+            relatedPosition: raw.relatedPosition === "end" ? "end" : "start",
             templatePath: normalizeVaultFilePath(stringValue(raw.templatePath)),
             placement: raw.placement === "folder-note" ? "folder-note" : "flat",
             enabled: raw.enabled === true,

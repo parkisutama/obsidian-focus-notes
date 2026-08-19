@@ -72,7 +72,7 @@ export async function submitScheduledItemEdit(
     const requests = destinations.map((destination) => ({
         destinationPath: destination.filePath,
         heading: destination.relatedHeading,
-        position: "end" as const,
+        position: destination.relatedPosition,
         markdown: formatRelatedLog({
             kind: next.kind,
             title: next.title,
