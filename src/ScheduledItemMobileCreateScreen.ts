@@ -54,7 +54,8 @@ export class ScheduledItemMobileCreateScreen extends Component {
             file: target.file,
             heading: target.heading,
             position: target.position,
-            hubNotesFolder: kind === "event" ? settings.captureEvent.hubNotesFolder : settings.captureTask.hubNotesFolder,
+            hubNotesFolder:
+                kind === "event" ? settings.captureEvent.hubNotesFolder : settings.captureTask.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
         });
         state.kind = kind;

@@ -27,9 +27,21 @@ Full design/rationale: `C:\Users\parki\.claude\plans\elegant-strolling-riddle.md
       + hub folder) and a separate "Shared note creation" section for the detail-note settings that
       genuinely remain shared. `pnpm run check`-equivalent (typecheck/lint/test, via `fnm use` to get a
       working `node`/`pnpm` in this session) all green — 252/252 tests pass.
-- [ ] 4. Moment moves onto profiles — remove weekly-specific `InboxSettings` fields, restructure
-      `InboxTarget.ts`, simplify backlink, delete `getDailyNoteTarget`/`getWeeklyNoteTarget`. Moment
-      section in Capture tab.
+- [x] 4. Moment moves onto profiles — `InboxSettings` shrunk to just `contextSources`; new
+      `MomentCaptureSettings` (`useEventCaptureTarget`, `profileId`, `heading`, `position`,
+      `backlink: {enabled, profileId, heading}`); `InboxTargetMode` enum removed entirely.
+      `InboxTarget.ts`'s `selectInboxTarget` now 2-branch (event-capture-target vs periodical profile)
+      instead of 3 string-mode branches. `resolveDailyBacklinkTarget` renamed `resolveMomentBacklinkTarget`
+      and gated on `backlink.enabled` instead of a mode string; the old `weeklyNoteCapture` flag renamed
+      `usesDatedHeading`, computed from whether the resolved profile actually has a `headingFormat`
+      (generalizes beyond "weekly" to any dated-heading profile). Deleted `getDailyNoteTarget()`/
+      `getWeeklyNoteTarget()` — fully superseded by `getPeriodicalTarget()`. `EventTaskFormDefaults.inbox`
+      removed (was only ever used for the now-gone heading/position fallback); added an explicit
+      `inboxPosition` override alongside the existing `inboxHeading` one. Settings UI: "Moment capture"
+      section (reuse-Event-target toggle, profile picker, heading, position, backlink sub-section with its
+      own profile+heading). Full verification this round: `pnpm run check`-equivalent (format, typecheck,
+      lint, test — 252/252) **and** `pnpm run build`/`verify:artifacts` all green, via `fnm use` to get a
+      working `node`/`pnpm` in this session.
 - [ ] 5. Capture tab layout polish + doc pass.
 
 Each phase = one atomic commit, own test updates, in that order per the plan file.

@@ -112,6 +112,9 @@ export interface FocusNotesSettings {
 
     /** Where new Tasks default to — an Object Note (see TaskCaptureSettings), not a periodical note. */
     captureTask: TaskCaptureSettings;
+
+    /** Where new Moments default to — a Periodical Notes profile (or the active Event target) + backlink. */
+    captureMoment: MomentCaptureSettings;
 }
 
 /**
@@ -202,8 +205,6 @@ export interface EventTaskSettings {
     includeTags: boolean;
 }
 
-export type InboxTargetMode = "daily-note" | "event-task-target" | "weekly-note";
-
 export interface ContextSourceFilter {
     property: string;
     value: string;
@@ -228,25 +229,31 @@ export interface ContextSourceSettings {
 }
 
 export interface InboxSettings {
-    /** Default destination strategy for Inbox captures. */
-    defaultTargetMode: InboxTargetMode;
-    /** Heading text without leading # characters. */
-    heading: string;
-    /** Where a new capture is inserted inside the Inbox heading. */
-    position: InsertPosition;
-    /** Canonical contextual object sources. */
+    /** Canonical contextual object sources, shared by the @ mention suggester and Task's picker. */
     contextSources: ContextSourceSettings[];
-    /**
-     * Folder for the ISO weekly note used by the `weekly-note` target mode.
-     * May itself contain {{date:FORMAT}} tokens.
-     */
-    weeklyNoteFolder: string;
-    /** Moment.js format for the weekly note's file name, e.g. "GGGG-[W]WW" (ISO week-year/week-number). */
-    weeklyNoteFormat: string;
-    /** Moment.js format for the per-day heading inside the weekly note, independent of dailyNoteFormat. */
-    weeklyHeadingFormat: string;
-    /** Heading in that day's Daily Note where a backlink to the weekly note capture is inserted. */
-    dailyBacklinkHeading: string;
+}
+
+/**
+ * Where new Moments default to. Unlike Event, Moment can also just reuse
+ * whatever Event/Task's own active target resolves to (useEventCaptureTarget)
+ * instead of a Periodical Notes profile. The optional backlink writes a
+ * second short entry into another profile's file (e.g. a same-day line in
+ * the Daily profile when the Moment itself lands in the Weekly profile).
+ */
+export interface MomentCaptureSettings {
+    useEventCaptureTarget: boolean;
+    /** Used when useEventCaptureTarget is false. */
+    profileId: string;
+    /** Fixed heading; used when useEventCaptureTarget is true, or the resolved profile has no headingFormat. */
+    heading: string;
+    position: InsertPosition;
+    backlink: MomentBacklinkSettings;
+}
+
+export interface MomentBacklinkSettings {
+    enabled: boolean;
+    profileId: string;
+    heading: string;
 }
 
 /** What gets passed to NoteWriter when a session ends. */
@@ -349,14 +356,14 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
             { id: "weekly", name: "Weekly", folder: "Weekly", fileFormat: "GGGG-[W]WW", headingFormat: "YYYY-MM-DD" },
         ],
     },
-    inbox: {
-        defaultTargetMode: "weekly-note",
+    captureMoment: {
+        useEventCaptureTarget: false,
+        profileId: "weekly",
         heading: "Inbox",
         position: "end",
-        weeklyNoteFolder: "Weekly",
-        weeklyNoteFormat: "GGGG-[W]WW",
-        weeklyHeadingFormat: "YYYY-MM-DD",
-        dailyBacklinkHeading: "Moments",
+        backlink: { enabled: true, profileId: "daily", heading: "Moments" },
+    },
+    inbox: {
         contextSources: [
             {
                 id: "people",
@@ -428,7 +435,9 @@ export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): F
         captureTask: {
             ...DEFAULT_SETTINGS.captureTask,
             ...((saved.captureTask ?? {}) as Partial<typeof DEFAULT_SETTINGS.captureTask>),
-            allowedSourceIds: [...(saved.captureTask?.allowedSourceIds ?? DEFAULT_SETTINGS.captureTask.allowedSourceIds)],
+            allowedSourceIds: [
+                ...(saved.captureTask?.allowedSourceIds ?? DEFAULT_SETTINGS.captureTask.allowedSourceIds),
+            ],
         },
         liveTarget: {
             ...DEFAULT_SETTINGS.liveTarget,
@@ -454,19 +463,20 @@ export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): F
         },
         periodicalNotes: {
             syncDailyFromCorePlugin:
-                saved.periodicalNotes?.syncDailyFromCorePlugin ?? DEFAULT_SETTINGS.periodicalNotes.syncDailyFromCorePlugin,
+                saved.periodicalNotes?.syncDailyFromCorePlugin ??
+                DEFAULT_SETTINGS.periodicalNotes.syncDailyFromCorePlugin,
             profiles: periodicalProfiles,
         },
         inbox: {
-            ...DEFAULT_SETTINGS.inbox,
-            defaultTargetMode: savedInbox?.defaultTargetMode ?? DEFAULT_SETTINGS.inbox.defaultTargetMode,
-            heading: savedInbox?.heading ?? DEFAULT_SETTINGS.inbox.heading,
-            position: savedInbox?.position ?? DEFAULT_SETTINGS.inbox.position,
-            weeklyNoteFolder: savedInbox?.weeklyNoteFolder ?? DEFAULT_SETTINGS.inbox.weeklyNoteFolder,
-            weeklyNoteFormat: savedInbox?.weeklyNoteFormat ?? DEFAULT_SETTINGS.inbox.weeklyNoteFormat,
-            weeklyHeadingFormat: savedInbox?.weeklyHeadingFormat ?? DEFAULT_SETTINGS.inbox.weeklyHeadingFormat,
-            dailyBacklinkHeading: savedInbox?.dailyBacklinkHeading ?? DEFAULT_SETTINGS.inbox.dailyBacklinkHeading,
             contextSources,
+        },
+        captureMoment: {
+            ...DEFAULT_SETTINGS.captureMoment,
+            ...((saved.captureMoment ?? {}) as Partial<typeof DEFAULT_SETTINGS.captureMoment>),
+            backlink: {
+                ...DEFAULT_SETTINGS.captureMoment.backlink,
+                ...(saved.captureMoment?.backlink ?? {}),
+            },
         },
     };
 }

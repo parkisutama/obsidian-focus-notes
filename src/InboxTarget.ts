@@ -1,4 +1,4 @@
-import type { FocusTarget, InboxTargetMode, InsertPosition } from "./types";
+import type { FocusTarget, InsertPosition } from "./types";
 
 interface InboxTargetResolver {
     resolve(target: FocusTarget, when: Date): FocusTarget;
@@ -12,34 +12,35 @@ export interface InboxFormTargetState {
 }
 
 export interface InboxTargetSelection {
-    mode: InboxTargetMode;
-    dailyNoteTarget: FocusTarget | null;
+    /** Moment reuses whatever Event/Task's own active target resolves to, instead of a Periodical Notes profile. */
+    useEventCaptureTarget: boolean;
     eventTaskTarget: FocusTarget;
-    weeklyNoteTarget: FocusTarget;
+    /** TargetResolver.getPeriodicalTarget(captureMoment.profileId, when) — null when that profile doesn't exist. */
+    periodicalTarget: FocusTarget | null;
     heading: string;
     position: InsertPosition;
 }
 
 /** Select the requested file without silently crossing destination modes. */
 export function selectInboxTarget(selection: InboxTargetSelection): FocusTarget | null {
-    if (selection.mode === "weekly-note") {
-        const source = selection.weeklyNoteTarget;
+    if (selection.useEventCaptureTarget) {
+        const source = selection.eventTaskTarget;
         if (!source.file.trim()) return null;
         return {
             file: source.file,
-            // The weekly note's per-day heading must survive; unlike the other
-            // modes it is not a fixed "Inbox"/"Moment" heading.
-            heading: (source.heading || selection.heading).replace(/^#+\s*/, "").trim(),
+            heading: selection.heading.replace(/^#+\s*/, "").trim(),
             position: selection.position,
         };
     }
 
-    const source = selection.mode === "daily-note" ? selection.dailyNoteTarget : selection.eventTaskTarget;
+    const source = selection.periodicalTarget;
     if (!source?.file.trim()) return null;
-
     return {
         file: source.file,
-        heading: selection.heading.replace(/^#+\s*/, "").trim(),
+        // The chosen profile's own per-day heading (if any) must survive;
+        // only fall back to the fixed Moment heading when the profile has
+        // no dated heading of its own (e.g. a "Daily"-shaped profile).
+        heading: (source.heading || selection.heading).replace(/^#+\s*/, "").trim(),
         position: selection.position,
     };
 }

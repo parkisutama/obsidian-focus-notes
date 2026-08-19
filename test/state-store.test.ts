@@ -3,7 +3,7 @@ import test from "node:test";
 import { StateStore } from "../src/StateStore.ts";
 import { DEFAULT_SETTINGS, mergeSettingsWithDefaults } from "../src/types.ts";
 
-test("adds Inbox defaults when loading settings saved before Inbox existed", () => {
+test("adds Object Source defaults when loading settings saved before Inbox existed", () => {
     const merged = mergeSettingsWithDefaults({
         pomodoroMinutes: 45,
         eventTask: { ...DEFAULT_SETTINGS.eventTask, hubNotesFolder: "Hubs" },
@@ -12,37 +12,43 @@ test("adds Inbox defaults when loading settings saved before Inbox existed", () 
     assert.equal(merged.pomodoroMinutes, 45);
     assert.equal(merged.eventTask.hubNotesFolder, "Hubs");
     assert.deepEqual(merged.inbox, DEFAULT_SETTINGS.inbox);
-    assert.equal(merged.inbox.defaultTargetMode, "weekly-note");
-    assert.equal(merged.inbox.weeklyNoteFolder, "Weekly");
-    assert.equal(merged.inbox.weeklyNoteFormat, "GGGG-[W]WW");
-    assert.equal(merged.inbox.weeklyHeadingFormat, "YYYY-MM-DD");
-    assert.equal(merged.inbox.dailyBacklinkHeading, "Moments");
+});
+
+test("defaults Moment capture to the weekly periodical profile with a Daily backlink", () => {
+    const merged = mergeSettingsWithDefaults({});
+
+    assert.equal(merged.captureMoment.useEventCaptureTarget, false);
+    assert.equal(merged.captureMoment.profileId, "weekly");
+    assert.equal(merged.captureMoment.heading, "Inbox");
+    assert.equal(merged.captureMoment.position, "end");
+    assert.equal(merged.captureMoment.backlink.enabled, true);
+    assert.equal(merged.captureMoment.backlink.profileId, "daily");
+    assert.equal(merged.captureMoment.backlink.heading, "Moments");
 });
 
 test("preserves an existing install's chosen Moment target mode across settings merges", () => {
     const merged = mergeSettingsWithDefaults({
-        inbox: { ...DEFAULT_SETTINGS.inbox, defaultTargetMode: "daily-note" },
+        captureMoment: { ...DEFAULT_SETTINGS.captureMoment, useEventCaptureTarget: true },
     });
 
-    assert.equal(merged.inbox.defaultTargetMode, "daily-note");
+    assert.equal(merged.captureMoment.useEventCaptureTarget, true);
 });
 
-test("merges new weekly-note Inbox fields onto a partially saved inbox object", () => {
+test("merges a partially saved Moment backlink object onto its defaults", () => {
     const merged = mergeSettingsWithDefaults({
-        inbox: {
-            defaultTargetMode: "event-task-target",
+        captureMoment: {
+            useEventCaptureTarget: false,
+            profileId: "weekly",
             heading: "Captures",
             position: "start",
-            contextSources: [],
-        } as never,
+            backlink: { enabled: false } as never,
+        },
     });
 
-    assert.equal(merged.inbox.defaultTargetMode, "event-task-target");
-    assert.equal(merged.inbox.heading, "Captures");
-    assert.equal(merged.inbox.weeklyNoteFolder, DEFAULT_SETTINGS.inbox.weeklyNoteFolder);
-    assert.equal(merged.inbox.weeklyNoteFormat, DEFAULT_SETTINGS.inbox.weeklyNoteFormat);
-    assert.equal(merged.inbox.weeklyHeadingFormat, DEFAULT_SETTINGS.inbox.weeklyHeadingFormat);
-    assert.equal(merged.inbox.dailyBacklinkHeading, DEFAULT_SETTINGS.inbox.dailyBacklinkHeading);
+    assert.equal(merged.captureMoment.heading, "Captures");
+    assert.equal(merged.captureMoment.backlink.enabled, false);
+    assert.equal(merged.captureMoment.backlink.profileId, DEFAULT_SETTINGS.captureMoment.backlink.profileId);
+    assert.equal(merged.captureMoment.backlink.heading, DEFAULT_SETTINGS.captureMoment.backlink.heading);
 });
 
 test("seeds default Daily/Weekly periodical profiles and syncs Daily from core plugin by default", () => {
@@ -102,7 +108,12 @@ test("defaults Task capture to no allowed Object Sources (full-vault suggestions
 
 test("preserves a saved Task capture target and clones its allowed-source list", () => {
     const saved = {
-        captureTask: { allowedSourceIds: ["projects"], heading: "Backlog", position: "start" as const, hubNotesFolder: "Hubs" },
+        captureTask: {
+            allowedSourceIds: ["projects"],
+            heading: "Backlog",
+            position: "start" as const,
+            hubNotesFolder: "Hubs",
+        },
     };
     const first = mergeSettingsWithDefaults(saved);
     const second = mergeSettingsWithDefaults(saved);

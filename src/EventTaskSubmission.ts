@@ -87,11 +87,12 @@ export interface InboxSubmissionDependencies {
      */
     resolveDailyBacklinkTarget?(record: InboxRecord): FocusTarget | null;
     /**
-     * True when the active Inbox target mode is the ISO weekly note. The date is
-     * already carried by the weekly note's per-day heading, so the written entry
-     * only needs a time, not a full date-time.
+     * True when the resolved Moment target has a dated per-period heading
+     * (e.g. a Weekly profile's per-day heading). The date is already carried
+     * by that heading, so the written entry only needs a time, not a full
+     * date-time.
      */
-    weeklyNoteCapture?: boolean;
+    usesDatedHeading?: boolean;
 }
 
 export interface SubmissionCreatedNotes {
@@ -257,7 +258,7 @@ export async function submitInbox(
 
     try {
         await dependencies.writer.writeInbox(record, target.file, target.heading, target.position, {
-            timeOnly: dependencies.weeklyNoteCapture === true,
+            timeOnly: dependencies.usesDatedHeading === true,
         });
     } catch (error) {
         return failure("inbox", "Failed to save Inbox", error);

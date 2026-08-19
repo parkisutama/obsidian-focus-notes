@@ -58,8 +58,5 @@ test("inserts into an empty existing heading section for both positions", () => 
 });
 
 test("matches an existing heading case-insensitively regardless of its level", () => {
-    assert.equal(
-        insertUnderHeading("#### inbox\n\n- old\n", "Inbox", "- new", "end"),
-        "#### inbox\n\n- old\n- new\n",
-    );
+    assert.equal(insertUnderHeading("#### inbox\n\n- old\n", "Inbox", "- new", "end"), "#### inbox\n\n- old\n- new\n");
 });

@@ -19,11 +19,11 @@ export function openMobileScheduledItemCreate(
     const configured: FocusTarget =
         kind === "task"
             ? { file: "", heading: settings.captureTask.heading, position: settings.captureTask.position }
-            : resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate) ?? {
+            : (resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate) ?? {
                   file: "",
                   heading: settings.captureEvent.heading,
                   position: settings.captureEvent.position,
-              };
+              });
     const activeFile = app.workspace.getActiveFile();
     const preferred = preferActiveNoteTarget(
         configured,

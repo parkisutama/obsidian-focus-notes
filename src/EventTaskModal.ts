@@ -88,11 +88,11 @@ export function openDesktopScheduledItemCreate(
     const configured: FocusTarget =
         kind === "task"
             ? { file: "", heading: settings.captureTask.heading, position: settings.captureTask.position }
-            : resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate) ?? {
+            : (resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate) ?? {
                   file: "",
                   heading: settings.captureEvent.heading,
                   position: settings.captureEvent.position,
-              };
+              });
     const activeFile = app.workspace.getActiveFile();
     const preferred = preferActiveNoteTarget(
         configured,
@@ -163,12 +163,11 @@ export class EventTaskModal extends Modal {
             options.targetFile ?? (activeFile?.extension === "md" ? activeFile.path : null),
         );
         const inboxTarget = selectInboxTarget({
-            mode: settings.inbox.defaultTargetMode,
-            dailyNoteTarget: resolver.getDailyNoteTarget(anchorDate),
+            useEventCaptureTarget: settings.captureMoment.useEventCaptureTarget,
             eventTaskTarget: resolved,
-            weeklyNoteTarget: resolver.getWeeklyNoteTarget(anchorDate),
-            heading: settings.inbox.heading,
-            position: settings.inbox.position,
+            periodicalTarget: resolver.getPeriodicalTarget(settings.captureMoment.profileId, anchorDate),
+            heading: settings.captureMoment.heading,
+            position: settings.captureMoment.position,
         });
         this.form = new EventTaskFormState(anchorDate, {
             file: resolved.file,
@@ -176,9 +175,9 @@ export class EventTaskModal extends Modal {
             position: resolved.position,
             hubNotesFolder: settings.captureEvent.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
-            inbox: settings.inbox,
             inboxTargetFile: inboxTarget?.file ?? "",
-            inboxHeading: inboxTarget?.heading ?? settings.inbox.heading,
+            inboxHeading: inboxTarget?.heading ?? settings.captureMoment.heading,
+            inboxPosition: inboxTarget?.position ?? settings.captureMoment.position,
         });
         this.form.kind = options.initialKind ?? "inbox";
     }
@@ -317,22 +316,27 @@ export class EventTaskModal extends Modal {
         return resolveInboxFormTarget(new TargetResolver(this.app, this.getSettings()), this.form);
     }
 
-    private resolveDailyBacklinkTarget(record: { capturedAt: Date }): FocusTarget | null {
+    private resolveMomentBacklinkTarget(record: { capturedAt: Date }): FocusTarget | null {
         const settings = this.getSettings();
-        if (settings.inbox.defaultTargetMode !== "weekly-note") return null;
+        const backlink = settings.captureMoment.backlink;
+        if (!backlink.enabled) return null;
         const resolver = new TargetResolver(this.app, settings);
         // The "daily" Periodical Notes profile already syncs from the core
         // Daily Notes plugin when enabled and falls back to its own manual
-        // fields otherwise (see TargetResolver.getPeriodicalTarget()), so this
-        // single call covers both cases without depending on Focus session's
-        // own target (which may now point at a different profile entirely).
-        const dailyNoteTarget = resolver.getPeriodicalTarget("daily", record.capturedAt);
-        if (!dailyNoteTarget?.file.trim()) return null;
-        return {
-            ...dailyNoteTarget,
-            heading: settings.inbox.dailyBacklinkHeading || "Moments",
-            position: settings.inbox.position,
-        };
+        // fields otherwise (see TargetResolver.getPeriodicalTarget()).
+        const target = resolver.getPeriodicalTarget(backlink.profileId, record.capturedAt);
+        if (!target?.file.trim()) return null;
+        return { ...target, heading: backlink.heading || "Moments", position: settings.captureMoment.position };
+    }
+
+    /** True when the Moment date is already carried by a dated per-period heading, so bullets skip repeating it. */
+    private momentUsesDatedHeading(): boolean {
+        const settings = this.getSettings();
+        if (settings.captureMoment.useEventCaptureTarget) return false;
+        const profile = settings.periodicalNotes.profiles.find(
+            (candidate) => candidate.id === settings.captureMoment.profileId,
+        );
+        return Boolean(profile?.headingFormat);
     }
 
     // ---- Event section ------------------------------------------------------
@@ -698,8 +702,8 @@ export class EventTaskModal extends Modal {
                     contextNotes: readContextSuggestionNotes(this.app),
                     contextSources: settings.inbox.contextSources,
                     resolveLinkDestination: createObsidianLinkResolver(this.app),
-                    resolveDailyBacklinkTarget: (record) => this.resolveDailyBacklinkTarget(record),
-                    weeklyNoteCapture: settings.inbox.defaultTargetMode === "weekly-note",
+                    resolveDailyBacklinkTarget: (record) => this.resolveMomentBacklinkTarget(record),
+                    usesDatedHeading: this.momentUsesDatedHeading(),
                 }),
             );
             return;

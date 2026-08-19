@@ -1,5 +1,5 @@
 import type { EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
-import type { InboxSettings, InsertPosition } from "./types";
+import type { InsertPosition } from "./types";
 import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItemTypes";
 
 export type EventTaskKind = "inbox" | "event" | "task";
@@ -26,16 +26,11 @@ export interface EventTaskFormDefaults {
     position: InsertPosition;
     hubNotesFolder: string;
     detailNotesFolder: string;
-    inbox?: InboxSettings;
     inboxTargetFile?: string;
-    /**
-     * Resolved initial heading for the active target mode (e.g. a weekly
-     * note's per-day heading). Falls back to inbox.heading when omitted —
-     * the daily-note/event-task-target modes always want that generic
-     * heading anyway, since selectInboxTarget() only diverges from it for
-     * weekly-note mode.
-     */
+    /** Resolved initial heading for the active Moment target (e.g. a weekly note's per-day heading). */
     inboxHeading?: string;
+    /** Resolved initial insert position for the active Moment target. */
+    inboxPosition?: InsertPosition;
 }
 
 export type TemporalValidationResult = { valid: true } | { valid: false; message: string };
@@ -97,22 +92,12 @@ export class EventTaskFormState {
     targetPosition: InsertPosition;
 
     constructor(anchorDate: Date, defaults: EventTaskFormDefaults) {
-        const inboxDefaults: InboxSettings = defaults.inbox ?? {
-            defaultTargetMode: "daily-note",
-            heading: "Inbox",
-            position: "end",
-            contextSources: [],
-            weeklyNoteFolder: "Weekly",
-            weeklyNoteFormat: "GGGG-[W]WW",
-            weeklyHeadingFormat: "YYYY-MM-DD",
-            dailyBacklinkHeading: "Moments",
-        };
         this.inboxCapturedAt = new Date(anchorDate.getTime());
         this.inboxDefaultTitle = formatLocalDateTime(this.inboxCapturedAt);
         this.inboxTitle = this.inboxDefaultTitle;
         this.inboxTargetFile = defaults.inboxTargetFile ?? "";
-        this.inboxHeading = defaults.inboxHeading ?? inboxDefaults.heading;
-        this.inboxPosition = inboxDefaults.position;
+        this.inboxHeading = defaults.inboxHeading ?? "Inbox";
+        this.inboxPosition = defaults.inboxPosition ?? "end";
 
         const hour = anchorDate.getHours();
         this.eventDate = formatLocalDate(anchorDate);

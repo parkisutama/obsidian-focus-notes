@@ -10,12 +10,8 @@ test("initializes an immutable Inbox capture independently of Event and Task", (
         position: "end",
         hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
-        inbox: {
-            defaultTargetMode: "daily-note",
-            heading: "Inbox",
-            position: "start",
-            contextSources: [],
-        },
+        inboxHeading: "Inbox",
+        inboxPosition: "start",
         inboxTargetFile: "Daily/2026-08-01.md",
     });
 

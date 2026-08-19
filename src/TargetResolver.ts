@@ -60,41 +60,6 @@ export class TargetResolver {
     }
 
     /**
-     * Resolve the core Daily Notes target for an explicit capture date.
-     * Returns null when that integration is unavailable; callers must surface
-     * the failure instead of falling through to another configured target.
-     */
-    public getDailyNoteTarget(when: Date = new Date()): FocusTarget | null {
-        const dailyNotes = this.readDailyNotesConfig();
-        if (!dailyNotes) return null;
-        const folder = dailyNotes.folder ? `${dailyNotes.folder.replace(/\/+$/, "")}/` : "";
-        const format = normalizeDailyNoteFormat(dailyNotes.format, this.settings.dailyNoteFormat);
-        // position is always overridden by every current caller — see getPeriodicalTarget().
-        return this.resolve({ file: `${folder}{{date:${format}}}.md`, heading: "", position: "end" }, when);
-    }
-
-    /**
-     * Resolve the ISO-weekly Moment target for an explicit capture date.
-     *
-     * Unlike getDailyNoteTarget(), this has no external plugin dependency to
-     * fail against — folder/format are plain settings the user configures to
-     * match whatever external weekly-note plugin (Journal, Notebook Navigator,
-     * ...) they may also be using, so it always returns a value.
-     */
-    public getWeeklyNoteTarget(when: Date = new Date()): FocusTarget {
-        const folder = this.settings.inbox.weeklyNoteFolder
-            ? `${this.settings.inbox.weeklyNoteFolder.replace(/\/+$/, "")}/`
-            : "";
-        const format = normalizeDailyNoteFormat(this.settings.inbox.weeklyNoteFormat, "GGGG-[W]WW");
-        const resolved = this.resolve({ file: `${folder}{{date:${format}}}.md`, heading: "", position: "end" }, when);
-        const headingFormat = normalizeDailyNoteFormat(
-            this.settings.inbox.weeklyHeadingFormat,
-            this.settings.dailyNoteFormat || "YYYY-MM-DD",
-        );
-        return { ...resolved, heading: moment(when).format(headingFormat) };
-    }
-
-    /**
      * Resolve a user-defined Periodical Note profile for an explicit date.
      * Returns null when no profile with that id exists — callers must surface
      * that rather than silently falling back elsewhere.

@@ -33,13 +33,11 @@ export class ObjectNoteSuggest extends AbstractInputSuggest<ObjectNoteSuggestion
         const sources = this.getAllowedSources();
         if (sources.length > 0) {
             this.index ??= new ContextSuggestionIndex(readContextSuggestionNotes(this.app));
-            const matched = this.index
-                .query(sources, this.matcher(query), 20)
-                .map((suggestion) => ({
-                    path: suggestion.filePath,
-                    label: suggestion.label,
-                    sourceName: suggestion.sourceName,
-                }));
+            const matched = this.index.query(sources, this.matcher(query), 20).map((suggestion) => ({
+                path: suggestion.filePath,
+                label: suggestion.label,
+                sourceName: suggestion.sourceName,
+            }));
             if (matched.length > 0) return matched;
         }
         const lower = query.toLowerCase();

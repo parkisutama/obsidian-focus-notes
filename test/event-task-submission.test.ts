@@ -406,7 +406,7 @@ test("passes a time-only write option for weekly-note Moment captures", async ()
 
     await submitInbox(state, {
         resolveTarget: () => ({ file: "Weekly/2026-W31.md", heading: "2026-08-02", position: "end" }),
-        weeklyNoteCapture: true,
+        usesDatedHeading: true,
         resolveLinkDestination: resolveRelativeLinkDestination,
         writer: {
             writeInbox: async (_record, _file, _heading, _position, options) => {

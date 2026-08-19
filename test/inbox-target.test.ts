@@ -3,27 +3,12 @@ import test from "node:test";
 import { resolveInboxFormTarget, selectInboxTarget } from "../src/InboxTarget.ts";
 import { EventTaskFormState } from "../src/EventTaskFormState.ts";
 
-test("uses the captured-date Daily Note with Inbox overrides", () => {
+test("useEventCaptureTarget uses the active Event/Task file but replaces its heading and position", () => {
     assert.deepEqual(
         selectInboxTarget({
-            mode: "daily-note",
-            dailyNoteTarget: { file: "Daily/2026-08-02.md", heading: "", position: "end" },
+            useEventCaptureTarget: true,
             eventTaskTarget: { file: "Planning.md", heading: "Schedule", position: "end" },
-            weeklyNoteTarget: { file: "Weekly/2026-W31.md", heading: "2026-08-02", position: "end" },
-            heading: "Inbox",
-            position: "start",
-        }),
-        { file: "Daily/2026-08-02.md", heading: "Inbox", position: "start" },
-    );
-});
-
-test("uses the active Event/Task file but replaces its heading and position", () => {
-    assert.deepEqual(
-        selectInboxTarget({
-            mode: "event-task-target",
-            dailyNoteTarget: null,
-            eventTaskTarget: { file: "Planning.md", heading: "Schedule", position: "end" },
-            weeklyNoteTarget: { file: "Weekly/2026-W31.md", heading: "2026-08-02", position: "end" },
+            periodicalTarget: { file: "Weekly/2026-W31.md", heading: "2026-08-02", position: "end" },
             heading: "Quick Inbox",
             position: "start",
         }),
@@ -31,13 +16,25 @@ test("uses the active Event/Task file but replaces its heading and position", ()
     );
 });
 
-test("weekly-note mode uses the resolved weekly file and preserves its per-day heading", () => {
+test("useEventCaptureTarget does not silently fall back when the active target is empty", () => {
+    assert.equal(
+        selectInboxTarget({
+            useEventCaptureTarget: true,
+            eventTaskTarget: { file: "", heading: "", position: "end" },
+            periodicalTarget: { file: "Weekly/2026-W31.md", heading: "2026-08-02", position: "end" },
+            heading: "Inbox",
+            position: "end",
+        }),
+        null,
+    );
+});
+
+test("periodical profile mode uses the resolved file and preserves its per-day heading", () => {
     assert.deepEqual(
         selectInboxTarget({
-            mode: "weekly-note",
-            dailyNoteTarget: null,
+            useEventCaptureTarget: false,
             eventTaskTarget: { file: "Planning.md", heading: "Schedule", position: "end" },
-            weeklyNoteTarget: { file: "Weekly/2026-W31.md", heading: "2026-08-02", position: "end" },
+            periodicalTarget: { file: "Weekly/2026-W31.md", heading: "2026-08-02", position: "end" },
             heading: "Moment",
             position: "start",
         }),
@@ -45,53 +42,36 @@ test("weekly-note mode uses the resolved weekly file and preserves its per-day h
     );
 });
 
-test("weekly-note mode falls back to the configured heading when the weekly target has none", () => {
+test("periodical profile mode falls back to the configured heading when the profile has none", () => {
     assert.deepEqual(
         selectInboxTarget({
-            mode: "weekly-note",
-            dailyNoteTarget: null,
+            useEventCaptureTarget: false,
             eventTaskTarget: { file: "Planning.md", heading: "Schedule", position: "end" },
-            weeklyNoteTarget: { file: "Weekly/2026-W31.md", heading: "", position: "end" },
+            periodicalTarget: { file: "Daily/2026-08-02.md", heading: "", position: "end" },
             heading: "Moment",
             position: "start",
         }),
-        { file: "Weekly/2026-W31.md", heading: "Moment", position: "start" },
+        { file: "Daily/2026-08-02.md", heading: "Moment", position: "start" },
     );
 });
 
-test("weekly-note mode does not silently fall back when the weekly file cannot resolve", () => {
+test("periodical profile mode does not silently fall back when the profile cannot resolve", () => {
     assert.equal(
         selectInboxTarget({
-            mode: "weekly-note",
-            dailyNoteTarget: { file: "Daily.md", heading: "", position: "end" },
+            useEventCaptureTarget: false,
             eventTaskTarget: { file: "Planning.md", heading: "Schedule", position: "end" },
-            weeklyNoteTarget: { file: "", heading: "", position: "end" },
+            periodicalTarget: null,
             heading: "Moment",
             position: "end",
         }),
         null,
     );
-});
-
-test("does not silently fall back when the selected target cannot resolve", () => {
     assert.equal(
         selectInboxTarget({
-            mode: "daily-note",
-            dailyNoteTarget: null,
+            useEventCaptureTarget: false,
             eventTaskTarget: { file: "Planning.md", heading: "Schedule", position: "end" },
-            weeklyNoteTarget: { file: "Weekly/2026-W31.md", heading: "2026-08-02", position: "end" },
-            heading: "Inbox",
-            position: "end",
-        }),
-        null,
-    );
-    assert.equal(
-        selectInboxTarget({
-            mode: "event-task-target",
-            dailyNoteTarget: { file: "Daily.md", heading: "", position: "end" },
-            eventTaskTarget: { file: "", heading: "", position: "end" },
-            weeklyNoteTarget: { file: "Weekly/2026-W31.md", heading: "2026-08-02", position: "end" },
-            heading: "Inbox",
+            periodicalTarget: { file: "", heading: "", position: "end" },
+            heading: "Moment",
             position: "end",
         }),
         null,

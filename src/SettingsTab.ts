@@ -9,7 +9,6 @@ import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
 import type {
     ContextSourceSettings,
-    InboxTargetMode,
     InsertPosition,
     ObjectNotePlacement,
     PeriodicalNoteProfile,
@@ -376,8 +375,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             }),
         );
 
-        // ---- Moment quick capture -------------------------------------------
-        containerEl.createEl("h3", { text: "Moment quick capture" });
+        // ---- Moment capture --------------------------------------------------
+        containerEl.createEl("h3", { text: "Moment capture" });
 
         containerEl.createEl("p", {
             cls: "setting-item-description",
@@ -387,118 +386,105 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         });
 
         new Setting(containerEl)
-            .setName("Default destination")
+            .setName("Reuse Event's active target")
             .setDesc(
-                "Weekly note groups a week's Moments together under a per-day heading. Active note / capture target " +
-                    "reuses the Event/Task destination. Daily Note always uses today's Daily Note.",
+                "When on, Moment reuses whatever Event/Task's own active target resolves to (the note you " +
+                    "currently have open, or Event's configured default). When off, Moment uses the Periodical " +
+                    "Notes profile below instead.",
             )
-            .addDropdown((dropdown) =>
-                dropdown
-                    .addOption("weekly-note", "Weekly note")
-                    .addOption("daily-note", "Daily Note")
-                    .addOption("event-task-target", "Active note / capture target")
-                    .setValue(this.plugin.settings.inbox.defaultTargetMode)
-                    .onChange(async (value) => {
-                        this.plugin.settings.inbox.defaultTargetMode = value as InboxTargetMode;
-                        await this.plugin.saveSettings();
-                    }),
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.captureMoment.useEventCaptureTarget).onChange(async (v) => {
+                    this.plugin.settings.captureMoment.useEventCaptureTarget = v;
+                    await this.plugin.saveSettings();
+                    this.display();
+                }),
             );
 
-        new Setting(containerEl)
-            .setName("Weekly note folder")
-            .setDesc(
-                "Folder for the ISO weekly note. Set this to match wherever Journals already keeps weekly " +
-                    "notes. May itself contain a {{date:FORMAT}} token for a year-scoped subfolder " +
-                    "(e.g. timeline/{{date:GGGG}}), or repeat the weekly format for a Notebook Navigator " +
-                    "folder note (e.g. Weekly/{{date:GGGG-[W]WW}}).",
-            )
-            .addText((text) => {
-                text.setPlaceholder("Weekly")
-                    .setValue(this.plugin.settings.inbox.weeklyNoteFolder)
-                    .onChange(async (v) => {
-                        this.plugin.settings.inbox.weeklyNoteFolder = v.trim();
-                        await this.plugin.saveSettings();
-                    });
-                new FolderSuggest(this.app, text.inputEl);
-            });
-
-        new Setting(containerEl)
-            .setName("Weekly note date format")
-            .setDesc(
-                "Moment.js format for the weekly note's file name, matched to your weekly-note plugin " +
-                    "(Journals also uses Moment.js format tokens, so this can match its Note name template " +
-                    "directly). Example: GGGG-[W]WW (ISO week-year and week number). Use GGGG, not YYYY, for " +
-                    "the year token — YYYY is the plain calendar year and can name the wrong year on a week " +
-                    "that spans a year boundary.",
-            )
-            .addText((text) =>
-                text
-                    .setPlaceholder("GGGG-[W]WW")
-                    .setValue(this.plugin.settings.inbox.weeklyNoteFormat)
-                    .onChange(async (v) => {
-                        this.plugin.settings.inbox.weeklyNoteFormat = v.trim() || "GGGG-[W]WW";
-                        await this.plugin.saveSettings();
-                    }),
+        if (!this.plugin.settings.captureMoment.useEventCaptureTarget) {
+            this.renderProfilePicker(
+                containerEl,
+                "Periodical note",
+                "Which Periodical Notes profile Moment captures land in. A profile with a per-period heading " +
+                    "format (e.g. Weekly) groups captures under a per-day heading automatically.",
+                this.plugin.settings.captureMoment.profileId,
+                async (profileId) => {
+                    this.plugin.settings.captureMoment.profileId = profileId;
+                    await this.plugin.saveSettings();
+                },
             );
+        }
 
         new Setting(containerEl)
-            .setName("Weekly note heading format")
+            .setName("Heading")
             .setDesc(
-                "Moment.js format for the per-day heading inside the weekly note, independent of the " +
-                    "Daily Note date format below. Example: YYYY-MM-DD.",
+                "Heading text without #. Used when reusing Event's target, or when the chosen profile has no " +
+                    "per-period heading format. A missing heading is created at level ##.",
             )
-            .addText((text) =>
-                text
-                    .setPlaceholder("YYYY-MM-DD")
-                    .setValue(this.plugin.settings.inbox.weeklyHeadingFormat)
-                    .onChange(async (v) => {
-                        this.plugin.settings.inbox.weeklyHeadingFormat = v.trim() || "YYYY-MM-DD";
-                        await this.plugin.saveSettings();
-                    }),
-            );
-
-        new Setting(containerEl)
-            .setName("Daily backlink heading")
-            .setDesc(
-                "When a Moment is saved to the weekly note, a backlink is also inserted under this heading " +
-                    "in that day's Daily Note.",
-            )
-            .addText((text) =>
-                text
-                    .setPlaceholder("Moments")
-                    .setValue(this.plugin.settings.inbox.dailyBacklinkHeading)
-                    .onChange(async (v) => {
-                        this.plugin.settings.inbox.dailyBacklinkHeading = v.trim() || "Moments";
-                        await this.plugin.saveSettings();
-                    }),
-            );
-
-        new Setting(containerEl)
-            .setName("Moment heading")
-            .setDesc("Heading text without #. A missing heading is created at level ##.")
             .addText((text) =>
                 text
                     .setPlaceholder("Inbox")
-                    .setValue(this.plugin.settings.inbox.heading)
+                    .setValue(this.plugin.settings.captureMoment.heading)
                     .onChange(async (value) => {
-                        this.plugin.settings.inbox.heading = value.replace(/^#+\s*/, "").trim() || "Inbox";
+                        this.plugin.settings.captureMoment.heading = value.replace(/^#+\s*/, "").trim() || "Inbox";
                         await this.plugin.saveSettings();
                     }),
             );
 
         new Setting(containerEl)
-            .setName("Moment insert position")
+            .setName("Insert position")
             .setDesc("Choose whether new captures appear at the top or bottom of the heading.")
             .addDropdown((dropdown) =>
                 dropdown
                     .addOption("end", "End of section (newest at bottom)")
                     .addOption("start", "Start of section (newest at top)")
-                    .setValue(this.plugin.settings.inbox.position)
+                    .setValue(this.plugin.settings.captureMoment.position)
                     .onChange(async (value) => {
-                        this.plugin.settings.inbox.position = value as InsertPosition;
+                        this.plugin.settings.captureMoment.position = value as InsertPosition;
                         await this.plugin.saveSettings();
                     }),
             );
+
+        containerEl.createEl("h4", { text: "Same-day backlink" });
+        containerEl.createEl("p", {
+            cls: "setting-item-description",
+            text:
+                "Optionally leave a short backlink in another profile's file every time a Moment is captured " +
+                "(e.g. a line in that day's Daily note pointing back at a Weekly Moment).",
+        });
+
+        new Setting(containerEl).setName("Enable backlink").addToggle((toggle) =>
+            toggle.setValue(this.plugin.settings.captureMoment.backlink.enabled).onChange(async (v) => {
+                this.plugin.settings.captureMoment.backlink.enabled = v;
+                await this.plugin.saveSettings();
+                this.display();
+            }),
+        );
+
+        if (this.plugin.settings.captureMoment.backlink.enabled) {
+            this.renderProfilePicker(
+                containerEl,
+                "Backlink profile",
+                "Which Periodical Notes profile receives the backlink.",
+                this.plugin.settings.captureMoment.backlink.profileId,
+                async (profileId) => {
+                    this.plugin.settings.captureMoment.backlink.profileId = profileId;
+                    await this.plugin.saveSettings();
+                },
+            );
+
+            new Setting(containerEl)
+                .setName("Backlink heading")
+                .setDesc("Heading in the backlink profile's file where the backlink line is inserted.")
+                .addText((text) =>
+                    text
+                        .setPlaceholder("Moments")
+                        .setValue(this.plugin.settings.captureMoment.backlink.heading)
+                        .onChange(async (v) => {
+                            this.plugin.settings.captureMoment.backlink.heading = v.trim() || "Moments";
+                            await this.plugin.saveSettings();
+                        }),
+                );
+        }
 
         this.renderContextSources(containerEl);
 
@@ -563,7 +549,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             cls: "setting-item-description",
             text:
                 "Task never defaults to a periodical note — it belongs in a Project or task-list page. Its " +
-                "\"Save to\" picker draws from whichever Object Sources you allow below (combined); typing a " +
+                '"Save to" picker draws from whichever Object Sources you allow below (combined); typing a ' +
                 "path that doesn't match still works and shows the usual vault-wide suggestions.",
         });
 
@@ -742,7 +728,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         const desc =
             sources.length === 0
                 ? "No Object Sources configured yet — add one below (Objects tab), then come back to allow it here."
-                : "Which Object Sources a Task's \"Save to\" picker draws from (combined). None checked = search " +
+                : 'Which Object Sources a Task\'s "Save to" picker draws from (combined). None checked = search ' +
                   "the whole vault instead.";
         const setting = new Setting(container).setName("Allowed Object Sources").setDesc(desc);
         if (sources.length === 0) return;
@@ -777,7 +763,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         new Setting(containerEl)
             .setName("Sync Daily profile from core Daily Notes plugin")
             .setDesc(
-                "When the core Daily Notes plugin is enabled, the \"Daily\" profile's folder and file format " +
+                'When the core Daily Notes plugin is enabled, the "Daily" profile\'s folder and file format ' +
                     "are read from it live. Disabled, unavailable, or any other profile: its own fields below apply.",
             )
             .addToggle((toggle) =>
