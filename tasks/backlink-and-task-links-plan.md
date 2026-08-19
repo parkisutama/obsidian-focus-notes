@@ -24,8 +24,21 @@ Full design/rationale: `C:\Users\parki\.claude\plans\elegant-strolling-riddle.md
       (`EventTaskModal.ts`/`EventTaskMobileScreen.ts`, previously accidentally reused the Moment's own
       target position). Settings UI: "Backlink position" dropdown. `pnpm run check` (format/lint/typecheck/
       test — 261/261) green via `fnm use`.
-- [ ] 4. Task date fields as relative Markdown links — creation path (`EventTaskMarkdown.ts`,
-      `EventTaskWriter.ts`, all `new EventTaskWriter(...)` call sites, `ScheduledItemParser.ts` unwrap).
+- [x] 4. Task date fields as relative Markdown links — creation path. `EventTaskMarkdown.ts`'s
+      `formatTaskLine`/`formatEventTaskEntry` gained optional `targetFilePath`/`resolveDailyPath` params
+      (reusing `formatRelativeMarkdownLink` from `InboxMarkdown.ts`, not a new formatter); all existing
+      no-arg calls keep producing identical plain-text output. `EventTaskWriter`'s constructor gained an
+      optional `getFocusSettings` callback, exposed via a new `resolveDailyLinkPath()` method that builds a
+      `TargetResolver` per call; `write()` now threads it through. Updated all 16 `new EventTaskWriter(...)`
+      call sites across 6 files. `EventTaskSubmission.ts`'s hub-note-copy write (bypasses `writer.write()`)
+      gained its own `resolveDailyLinkPath` dependency, targeting the hub note's own path for the relative
+      link (not the primary target). Read side: new `unwrapMarkdownLinkLabel()` in `InboxMarkdown.ts`
+      (semantic inverse of `formatRelativeMarkdownLink`) applied in `ScheduledItemParser.ts`'s Task
+      field-parsing loop only (`due`/`remind`/`start`/`end` — Event's own date parsing untouched); plain
+      unlinked dates still parse. Caught and fixed a real regex bug in `unwrapMarkdownLinkLabel` before it
+      shipped: `[^\]]*` excluded every `]` including escaped ones, so a label containing `\[...\]` couldn't
+      round-trip — fixed via `(?:\\.|[^\]\\])*`. `pnpm run check` (format/lint/typecheck/test — 266/266) and
+      `pnpm run build`/`verify:artifacts` all green via `fnm use`.
 - [ ] 5. Task date fields as relative Markdown links — edit path (`TaskLineEditor.ts`,
       `ScheduledItemFormAdapter.ts`, `ScheduledItemEditSubmission.ts`, both Edit modals).
 

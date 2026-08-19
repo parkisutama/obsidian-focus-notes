@@ -1,3 +1,4 @@
+import { unwrapMarkdownLinkLabel } from "./InboxMarkdown.ts";
 import type { EventOccurrenceStatus, ScheduledItem, ScheduledItemSource, TaskPriority } from "./ScheduledItemTypes";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -157,13 +158,13 @@ export class ScheduledItemParser {
             const key = part.slice(0, separator).trim().toLowerCase();
             const value = part.slice(separator + 1).trim();
             if (key === "due") {
-                const due = this.parseDateOrDateTime(value);
+                const due = this.parseDateOrDateTime(unwrapMarkdownLinkLabel(value));
                 result.due = due.date;
                 result.dueHasTime = due.hasTime;
             }
-            if (key === "remind") result.remind = this.parseDateTime(value);
-            if (key === "start") result.start = this.parseDateTime(value);
-            if (key === "end") result.end = this.parseDateTime(value);
+            if (key === "remind") result.remind = this.parseDateTime(unwrapMarkdownLinkLabel(value));
+            if (key === "start") result.start = this.parseDateTime(unwrapMarkdownLinkLabel(value));
+            if (key === "end") result.end = this.parseDateTime(unwrapMarkdownLinkLabel(value));
             if (key === "priority") {
                 priorityCount += 1;
                 result.priority = this.parseTaskPriority(value);

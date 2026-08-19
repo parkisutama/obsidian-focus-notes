@@ -1,10 +1,11 @@
 import { type App, type TFile, normalizePath } from "obsidian";
-import type { EventTaskSettings, InsertPosition } from "./types";
+import type { EventTaskSettings, FocusNotesSettings, InsertPosition } from "./types";
 import type { InboxRecord } from "./EventTaskFormState";
 import { insertUnderHeading } from "./HeadingInsertion";
 import { type FormatInboxEntryOptions, formatInboxEntry } from "./InboxMarkdown";
 import { ensureFolderPath, isTFile } from "./utils";
 import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTaskMarkdown";
+import { TargetResolver } from "./TargetResolver";
 import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItemTypes";
 
 /** Reference to a hub note, used to build a markdown link. */
@@ -48,6 +49,7 @@ export class EventTaskWriter {
     constructor(
         private app: App,
         private settings?: EventTaskSettings,
+        private getFocusSettings?: () => FocusNotesSettings,
     ) {}
 
     async write(
@@ -58,7 +60,15 @@ export class EventTaskWriter {
         detailNoteRef?: HubNoteRef | null,
     ): Promise<void> {
         const file = await this.resolveOrCreateFile(targetFilePath);
-        await this.insertIntoFile(file, targetHeading, formatEventTaskEntry(record, detailNoteRef), position);
+        const content = formatEventTaskEntry(record, detailNoteRef, targetFilePath, this.resolveDailyLinkPath());
+        await this.insertIntoFile(file, targetHeading, content, position);
+    }
+
+    resolveDailyLinkPath(): ((when: Date) => string | null) | undefined {
+        const getFocusSettings = this.getFocusSettings;
+        if (!getFocusSettings) return undefined;
+        return (when) =>
+            new TargetResolver(this.app, getFocusSettings()).getPeriodicalTarget("daily", when)?.file ?? null;
     }
 
     async writeInbox(

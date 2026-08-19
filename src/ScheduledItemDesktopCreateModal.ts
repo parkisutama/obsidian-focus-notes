@@ -127,7 +127,7 @@ export class ScheduledItemDesktopCreateModal extends Modal {
     }
 
     private async promoteAndWrite(): Promise<void> {
-        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask);
+        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask, () => this.getSettings());
         const targetPath = this.resolvePrimaryTarget();
         if (!targetPath) {
             this.showResult("Scheduled Item fields are invalid.", false);
@@ -190,7 +190,7 @@ export class ScheduledItemDesktopCreateModal extends Modal {
     private async retryDetail(): Promise<void> {
         const pending = this.pendingDetail;
         if (!pending) return;
-        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask);
+        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask, () => this.getSettings());
         const result = await retryDetailNoteAttachment(pending, (attachment) => this.writePrimary(writer, attachment));
         if (result.status === "partial") {
             this.pendingDetail = result;
@@ -226,7 +226,7 @@ export class ScheduledItemDesktopCreateModal extends Modal {
     private async retryRelated(): Promise<void> {
         const pending = this.pendingRelated;
         if (!pending) return;
-        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask);
+        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask, () => this.getSettings());
         const result = await retryScheduledItemCreateRelated(pending, (request) =>
             writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
         );

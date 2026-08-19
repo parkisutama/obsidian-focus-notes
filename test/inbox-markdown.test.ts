@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatInboxEntry, formatRelativeMarkdownLink, relativeMarkdownPath } from "../src/InboxMarkdown.ts";
+import {
+    formatInboxEntry,
+    formatRelativeMarkdownLink,
+    relativeMarkdownPath,
+    unwrapMarkdownLinkLabel,
+} from "../src/InboxMarkdown.ts";
 
 test("formats an untouched or blank Inbox title with one timestamp", () => {
     const capturedAt = new Date(2026, 7, 1, 15, 40);
@@ -93,4 +98,19 @@ test("encodes link destinations and escapes alias labels safely", () => {
 
 test("encodes non-ASCII path segments without encoding parent traversal", () => {
     assert.equal(relativeMarkdownPath("Journal/Harian.md", "People/Sutami café.md"), "../People/Sutami%20caf%C3%A9.md");
+});
+
+test("recovers the plain label from a Markdown link, round-tripping formatRelativeMarkdownLink", () => {
+    const link = formatRelativeMarkdownLink("Persona/Report.md", "Journal/2026-08-01.md", "2026-08-01 17:00");
+    assert.equal(unwrapMarkdownLinkLabel(link), "2026-08-01 17:00");
+});
+
+test("leaves a plain, unlinked value unchanged", () => {
+    assert.equal(unwrapMarkdownLinkLabel("2026-08-01 17:00"), "2026-08-01 17:00");
+    assert.equal(unwrapMarkdownLinkLabel(""), "");
+});
+
+test("unescapes a label that itself contained brackets", () => {
+    const link = formatRelativeMarkdownLink("Persona/Report.md", "Journal/2026-08-01.md", "Andi [Tim]");
+    assert.equal(unwrapMarkdownLinkLabel(link), "Andi [Tim]");
 });

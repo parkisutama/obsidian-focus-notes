@@ -98,7 +98,7 @@ export class ScheduledItemDesktopEditModal extends Modal {
     }
 
     private async promoteAndAttach(): Promise<void> {
-        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask);
+        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask, () => this.getSettings());
         this.latestEditResult = null;
         const result = await promoteScheduledItemDetail(this.data, {
             targetPath: this.snapshot.filePath,
@@ -144,7 +144,7 @@ export class ScheduledItemDesktopEditModal extends Modal {
     private async retryDetail(): Promise<void> {
         const pending = this.pendingDetail;
         if (!pending) return;
-        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask);
+        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask, () => this.getSettings());
         this.latestEditResult = null;
         const result = await retryDetailNoteAttachment(pending, (attachment) =>
             this.attachAndWrite(writer, attachment),
@@ -161,7 +161,7 @@ export class ScheduledItemDesktopEditModal extends Modal {
     private async retryRelated(): Promise<void> {
         const pending = this.pendingRelated;
         if (!pending) return;
-        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask);
+        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask, () => this.getSettings());
         const result = await retryScheduledItemEditRelated(pending, (request) =>
             writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
         );

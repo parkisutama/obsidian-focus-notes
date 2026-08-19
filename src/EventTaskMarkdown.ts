@@ -1,8 +1,18 @@
 import type { EventRecord, EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
+import { formatRelativeMarkdownLink } from "./InboxMarkdown.ts";
 import type { TaskPriority } from "./ScheduledItemTypes";
 
-export function formatEventTaskEntry(record: EventTaskRecord, detailNoteRef?: HubNoteRef | null): string {
-    const line = record.kind === "event" ? formatEventLine(record) : formatTaskLine(record);
+/** Resolves the vault path of the daily note covering `when`, or null if none is configured. */
+export type ResolveDailyLinkPath = (when: Date) => string | null;
+
+export function formatEventTaskEntry(
+    record: EventTaskRecord,
+    detailNoteRef?: HubNoteRef | null,
+    targetFilePath?: string,
+    resolveDailyPath?: ResolveDailyLinkPath,
+): string {
+    const line =
+        record.kind === "event" ? formatEventLine(record) : formatTaskLine(record, targetFilePath, resolveDailyPath);
     const parts = [line];
     for (const descriptionLine of record.description.split(/\r?\n/)) {
         const description = descriptionLine.trim();
@@ -31,19 +41,24 @@ function formatEventLine(record: EventRecord): string {
     return line;
 }
 
-function formatTaskLine(record: TaskRecord): string {
+function formatTaskLine(record: TaskRecord, targetFilePath?: string, resolveDailyPath?: ResolveDailyLinkPath): string {
     const title = record.hubNoteRef ? `[${record.title}](${encodePath(record.hubNoteRef.path)})` : record.title;
     let line = `- [ ] ${title}`;
     if (record.priority !== "normal") line += ` | priority:${record.priority}`;
+    const dateLink = (when: Date, label: string): string => {
+        const dailyPath = resolveDailyPath?.(when);
+        return dailyPath && targetFilePath ? formatRelativeMarkdownLink(targetFilePath, dailyPath, label) : label;
+    };
     if (record.due) {
-        line += ` | due:${record.dueHasTime ? formatDateTime(record.due) : formatDate(record.due)}`;
+        const label = record.dueHasTime ? formatDateTime(record.due) : formatDate(record.due);
+        line += ` | due:${dateLink(record.due, label)}`;
     }
     if (record.timebox) {
-        line += ` | start:${formatDateTime(record.timebox.start)}`;
-        line += ` | end:${formatDateTime(record.timebox.end)}`;
+        line += ` | start:${dateLink(record.timebox.start, formatDateTime(record.timebox.start))}`;
+        line += ` | end:${dateLink(record.timebox.end, formatDateTime(record.timebox.end))}`;
     }
     for (const reminder of record.reminders) {
-        line += ` | remind:${formatDateTime(reminder)}`;
+        line += ` | remind:${dateLink(reminder, formatDateTime(reminder))}`;
     }
     return line;
 }

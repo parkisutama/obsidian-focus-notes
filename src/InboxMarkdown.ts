@@ -52,6 +52,17 @@ export function formatRelativeMarkdownLink(targetFilePath: string, linkedFilePat
     return `[${escapeMarkdownLabel(label)}](${relativeMarkdownPath(targetFilePath, linkedFilePath)})`;
 }
 
+/**
+ * The inverse of formatRelativeMarkdownLink: recovers the plain label text from
+ * a `[label](path)` Markdown link, or returns the value unchanged if it isn't one
+ * (so plain, unlinked values -- hand-edited or written before this existed -- keep
+ * parsing).
+ */
+export function unwrapMarkdownLinkLabel(value: string): string {
+    const match = value.match(/^\[((?:\\.|[^\]\\])*)\]\([^)]*\)$/);
+    return match ? match[1].replace(/\\([[\]\\])/g, "$1") : value;
+}
+
 function formatLocalMinute(date: Date): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");

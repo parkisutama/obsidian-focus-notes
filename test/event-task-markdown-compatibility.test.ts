@@ -100,6 +100,59 @@ test("writer due-only Task and completed Task fixture retain distinct semantics"
     assert.equal(completed?.due?.getTime(), dueOnly.due?.getTime());
 });
 
+test("Task date fields become relative Markdown links when a daily-note resolver is supplied", () => {
+    const record: TaskRecord = {
+        kind: "task",
+        title: "Prepare report",
+        priority: "normal",
+        due: new Date(2026, 7, 1, 17, 0),
+        dueHasTime: true,
+        timebox: {
+            start: new Date(2026, 7, 1, 13, 0),
+            end: new Date(2026, 7, 1, 15, 0),
+        },
+        reminders: [new Date(2026, 7, 1, 12, 45)],
+        description: "",
+        hubNoteRef: null,
+    };
+    const resolveDailyPath = (when: Date) => `Journal/${when.getFullYear()}-08-01.md`;
+
+    const markdown = formatEventTaskEntry(record, null, "Persona/Report.md", resolveDailyPath);
+
+    assert.equal(
+        markdown,
+        "- [ ] Prepare report" +
+            " | due:[2026-08-01 17:00](../Journal/2026-08-01.md)" +
+            " | start:[2026-08-01 13:00](../Journal/2026-08-01.md)" +
+            " | end:[2026-08-01 15:00](../Journal/2026-08-01.md)" +
+            " | remind:[2026-08-01 12:45](../Journal/2026-08-01.md)",
+    );
+
+    const item = new ScheduledItemParser().parseLine(markdown, source);
+    assert.equal(item?.due?.getTime(), record.due?.getTime());
+    assert.equal(item?.start?.getTime(), record.timebox?.start.getTime());
+    assert.equal(item?.end?.getTime(), record.timebox?.end.getTime());
+    assert.equal(item?.remind?.getTime(), record.reminders[0]?.getTime());
+});
+
+test("Task date fields fall back to plain text when no daily-note path resolves", () => {
+    const record: TaskRecord = {
+        kind: "task",
+        title: "Submit invoice",
+        priority: "normal",
+        due: new Date(2026, 7, 2, 0, 0),
+        dueHasTime: false,
+        timebox: null,
+        reminders: [],
+        description: "",
+        hubNoteRef: null,
+    };
+
+    const markdown = formatEventTaskEntry(record, null, "Daily/2026-08-01.md", () => null);
+
+    assert.equal(markdown, "- [ ] Submit invoice | due:2026-08-02");
+});
+
 test("Task priority parser accepts canonical values and safely defaults invalid values", () => {
     const parser = new ScheduledItemParser();
 

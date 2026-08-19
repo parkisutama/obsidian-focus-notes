@@ -5,7 +5,7 @@ import {
     resolveContextPaths,
 } from "./ContextLinkResolver.ts";
 import type { EventTaskFormState, InboxRecord } from "./EventTaskFormState";
-import { formatEventTaskEntry } from "./EventTaskMarkdown.ts";
+import { formatEventTaskEntry, type ResolveDailyLinkPath } from "./EventTaskMarkdown.ts";
 import type { EventTaskRecord, HubNoteRef } from "./EventTaskWriter";
 import type { FormatInboxEntryOptions } from "./InboxMarkdown.ts";
 import { parseObjectReferences } from "./ObjectReference.ts";
@@ -56,6 +56,7 @@ export interface EventTaskSubmissionDependencies {
     contextNotes?: readonly ContextLinkNote[];
     contextSources?: readonly ContextSourceSettings[];
     resolveLinkDestination: LinkDestinationResolver;
+    resolveDailyLinkPath?: ResolveDailyLinkPath;
 }
 
 interface InboxSubmissionWriter {
@@ -227,7 +228,12 @@ export async function submitEventTask(
             destinationPath: hubNoteFilePath,
             heading,
             position,
-            markdown: formatEventTaskEntry(relatedRecord, detailNoteRef),
+            markdown: formatEventTaskEntry(
+                relatedRecord,
+                detailNoteRef,
+                hubNoteFilePath,
+                dependencies.resolveDailyLinkPath,
+            ),
         });
     }
     relatedWrites.push(...buildEventTaskContextWrites(state, record, resolvedTargetFile, dependencies));

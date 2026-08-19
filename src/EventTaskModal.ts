@@ -693,7 +693,7 @@ export class EventTaskModal extends Modal {
         }
 
         const settings = this.getSettings();
-        const writer = new EventTaskWriter(this.app, settings.eventTask);
+        const writer = new EventTaskWriter(this.app, settings.eventTask, () => this.getSettings());
         if (this.form.kind === "inbox") {
             await this.executeSubmission(() =>
                 submitInbox(this.form, {
@@ -737,6 +737,7 @@ export class EventTaskModal extends Modal {
                 contextNotes: readContextSuggestionNotes(this.app),
                 contextSources: settings.inbox.contextSources,
                 resolveLinkDestination: createObsidianLinkResolver(this.app),
+                resolveDailyLinkPath: writer.resolveDailyLinkPath(),
             }),
         );
     }
