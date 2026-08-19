@@ -120,10 +120,10 @@ export default class FocusNotesPlugin extends Plugin {
 
     private async openActiveNoteManager(file: TFile): Promise<void> {
         const content = await this.app.vault.cachedRead(file);
-        const headings = timelineSourceHeadings(
-            this.settings.timeline.sourceHeadings,
-            this.settings.eventTask.defaultSaveHeading,
-        );
+        const headings = timelineSourceHeadings(this.settings.timeline.sourceHeadings, [
+            this.settings.captureEvent.heading,
+            this.settings.captureTask.heading,
+        ]);
         const items = scanActiveNoteLedger(file.path, file.name, content, headings, new ScheduledItemParser());
         const checklistScopes = scanActiveNoteChecklistScopes(file.path, file.name, content, new ScheduledItemParser());
         new ActiveNoteManagerModal(

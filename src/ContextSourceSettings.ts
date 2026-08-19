@@ -60,6 +60,15 @@ export function findSharedFolderConflicts(sources: readonly ContextSourceSetting
     return conflicts;
 }
 
+/** Resolve the Object Sources marked as valid Task destinations, enabled ones only. */
+export function resolveAllowedTaskSources(
+    contextSources: readonly ContextSourceSettings[],
+    allowedSourceIds: readonly string[],
+): ContextSourceSettings[] {
+    const allowed = new Set(allowedSourceIds);
+    return contextSources.filter((source) => source.enabled && allowed.has(source.id));
+}
+
 function normalizeFolder(folder: string): string {
     return folder
         .trim()

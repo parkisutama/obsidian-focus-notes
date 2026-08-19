@@ -394,7 +394,10 @@ export class TimelineView extends ItemView {
 
     private getEffectiveSourceHeadings(): string[] {
         const settings = this.getSettings();
-        return timelineSourceHeadings(settings.timeline.sourceHeadings, settings.eventTask.defaultSaveHeading);
+        return timelineSourceHeadings(settings.timeline.sourceHeadings, [
+            settings.captureEvent.heading,
+            settings.captureTask.heading,
+        ]);
     }
 
     private openItemDetails(item: ScheduledItem): void {

@@ -98,7 +98,7 @@ export interface FocusNotesSettings {
     /** Timeline/planner view settings. */
     timeline: FocusTimelineSettings;
 
-    /** Event & task creation settings. */
+    /** Detail-note creation settings shared by Event and Task. */
     eventTask: EventTaskSettings;
 
     /** Inbox quick-capture settings. */
@@ -109,6 +109,9 @@ export interface FocusNotesSettings {
 
     /** Where new Events default to — a Periodical Notes profile + heading + position + hub folder. */
     captureEvent: EventCaptureSettings;
+
+    /** Where new Tasks default to — an Object Note (see TaskCaptureSettings), not a periodical note. */
+    captureTask: TaskCaptureSettings;
 }
 
 /**
@@ -143,6 +146,21 @@ export interface EventCaptureSettings extends CaptureHeadingTarget {
     hubNotesFolder: string;
 }
 
+/**
+ * Task targets an Object Note rather than a Periodical Notes profile — a task
+ * belongs in a project/task-list page, not a dated note. allowedSourceIds
+ * scopes the "Save to" picker to notes from those Object Sources (combined,
+ * deduplicated, ranked the same way the @ mention suggester already ranks
+ * them); free-text path entry with full-vault suggestions remains available
+ * when nothing configured matches what's typed.
+ */
+export interface TaskCaptureSettings {
+    allowedSourceIds: string[];
+    heading: string;
+    position: InsertPosition;
+    hubNotesFolder: string;
+}
+
 export interface PeriodicalNotesSettings {
     profiles: PeriodicalNoteProfile[];
     /**
@@ -168,10 +186,6 @@ export interface FocusTimelineSettings {
 }
 
 export interface EventTaskSettings {
-    /** Folder where newly-created hub (catatan terkait) notes are placed. */
-    hubNotesFolder: string;
-    /** Default heading in the target file to insert event/task lines under. */
-    defaultSaveHeading: string;
     /** Folder where Event/Task Detail Notes are created. */
     detailNotesFolder: string;
     /** Body template for event detail notes. Tokens: {{title}}, {{date}}, {{start}}, {{end}}, {{description}}. */
@@ -308,8 +322,6 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         sourceColors: {},
     },
     eventTask: {
-        hubNotesFolder: "Notes",
-        defaultSaveHeading: "Activities & Tasks",
         detailNotesFolder: "Notes",
         eventNoteTemplate: "# {{title}}\n\n{{description}}",
         taskNoteTemplate: "# {{title}}\n\n{{description}}",
@@ -320,6 +332,12 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
     },
     captureEvent: {
         profileId: "daily",
+        heading: "Activities & Tasks",
+        position: "end",
+        hubNotesFolder: "Notes",
+    },
+    captureTask: {
+        allowedSourceIds: [],
         heading: "Activities & Tasks",
         position: "end",
         hubNotesFolder: "Notes",
@@ -406,6 +424,11 @@ export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): F
         captureEvent: {
             ...DEFAULT_SETTINGS.captureEvent,
             ...((saved.captureEvent ?? {}) as Partial<typeof DEFAULT_SETTINGS.captureEvent>),
+        },
+        captureTask: {
+            ...DEFAULT_SETTINGS.captureTask,
+            ...((saved.captureTask ?? {}) as Partial<typeof DEFAULT_SETTINGS.captureTask>),
+            allowedSourceIds: [...(saved.captureTask?.allowedSourceIds ?? DEFAULT_SETTINGS.captureTask.allowedSourceIds)],
         },
         liveTarget: {
             ...DEFAULT_SETTINGS.liveTarget,

@@ -91,6 +91,30 @@ test("defaults Focus session and Event capture to the daily periodical profile",
     assert.equal(merged.captureEvent.hubNotesFolder, "Notes");
 });
 
+test("defaults Task capture to no allowed Object Sources (full-vault suggestions)", () => {
+    const merged = mergeSettingsWithDefaults({});
+
+    assert.deepEqual(merged.captureTask.allowedSourceIds, []);
+    assert.equal(merged.captureTask.heading, "Activities & Tasks");
+    assert.equal(merged.captureTask.position, "end");
+    assert.equal(merged.captureTask.hubNotesFolder, "Notes");
+});
+
+test("preserves a saved Task capture target and clones its allowed-source list", () => {
+    const saved = {
+        captureTask: { allowedSourceIds: ["projects"], heading: "Backlog", position: "start" as const, hubNotesFolder: "Hubs" },
+    };
+    const first = mergeSettingsWithDefaults(saved);
+    const second = mergeSettingsWithDefaults(saved);
+
+    assert.deepEqual(first.captureTask.allowedSourceIds, ["projects"]);
+    assert.equal(first.captureTask.heading, "Backlog");
+    assert.equal(first.captureTask.hubNotesFolder, "Hubs");
+
+    first.captureTask.allowedSourceIds.push("other");
+    assert.deepEqual(second.captureTask.allowedSourceIds, ["projects"]);
+});
+
 test("preserves a saved Focus session / Event capture target across settings merges", () => {
     const merged = mergeSettingsWithDefaults({
         captureFocusSession: { profileId: "weekly", heading: "Sessions", position: "start" },
@@ -116,18 +140,18 @@ test("clones Object Source state during settings merge", () => {
     assert.equal(DEFAULT_SETTINGS.inbox.contextSources[2]?.filter?.value, "activity");
 });
 
-test("uses Activities & Tasks only when no Event/Task heading was previously saved", () => {
+test("uses Activities & Tasks only when no Event capture heading was previously saved", () => {
     const fresh = mergeSettingsWithDefaults({});
-    const legacyEmpty = mergeSettingsWithDefaults({
-        eventTask: { ...DEFAULT_SETTINGS.eventTask, defaultSaveHeading: "" },
+    const savedEmpty = mergeSettingsWithDefaults({
+        captureEvent: { ...DEFAULT_SETTINGS.captureEvent, heading: "" },
     });
     const customized = mergeSettingsWithDefaults({
-        eventTask: { ...DEFAULT_SETTINGS.eventTask, defaultSaveHeading: "Plan" },
+        captureEvent: { ...DEFAULT_SETTINGS.captureEvent, heading: "Plan" },
     });
 
-    assert.equal(fresh.eventTask.defaultSaveHeading, "Activities & Tasks");
-    assert.equal(legacyEmpty.eventTask.defaultSaveHeading, "");
-    assert.equal(customized.eventTask.defaultSaveHeading, "Plan");
+    assert.equal(fresh.captureEvent.heading, "Activities & Tasks");
+    assert.equal(savedEmpty.captureEvent.heading, "");
+    assert.equal(customized.captureEvent.heading, "Plan");
 });
 
 test("adds Timeline heading defaults while preserving custom source headings", () => {

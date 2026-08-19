@@ -69,7 +69,7 @@ export class EventTaskMobileScreen extends Component {
             file: target.file,
             heading: settings.captureEvent.heading || target.heading,
             position: target.position,
-            hubNotesFolder: settings.eventTask.hubNotesFolder,
+            hubNotesFolder: settings.captureEvent.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
             inbox: settings.inbox,
             inboxTargetFile: inboxTarget?.file ?? "",
@@ -649,7 +649,7 @@ export class EventTaskMobileScreen extends Component {
         await this.executeSubmission(() =>
             submitEventTask(this.form, {
                 writer,
-                defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
+                defaultHubNotesFolder: settings.captureEvent.hubNotesFolder,
                 defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
                 resolveTargetFile: (record) => this.resolveTargetFile(record),
                 findMarkdownFile: (path) => {

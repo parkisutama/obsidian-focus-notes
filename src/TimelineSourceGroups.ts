@@ -74,8 +74,8 @@ export function assessTimelineTargetGroups(
     return matchTimelineSourceGroup(filePath, properties, groups) ? "aligned" : "mismatch";
 }
 
-export function timelineSourceHeadings(configured: readonly string[], captureHeading: string): string[] {
-    return Array.from(new Set([...configured, captureHeading].map((heading) => heading.trim()).filter(Boolean)));
+export function timelineSourceHeadings(configured: readonly string[], captureHeadings: readonly string[]): string[] {
+    return Array.from(new Set([...configured, ...captureHeadings].map((heading) => heading.trim()).filter(Boolean)));
 }
 
 function normalizeFolder(folder: string): string {

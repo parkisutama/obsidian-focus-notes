@@ -18,7 +18,7 @@ export function openMobileScheduledItemCreate(
     // matching comment in EventTaskModal.ts's openDesktopScheduledItemCreate().
     const configured: FocusTarget =
         kind === "task"
-            ? { file: "", heading: settings.eventTask.defaultSaveHeading, position: "end" }
+            ? { file: "", heading: settings.captureTask.heading, position: settings.captureTask.position }
             : resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate) ?? {
                   file: "",
                   heading: settings.captureEvent.heading,
@@ -38,7 +38,7 @@ export function openMobileScheduledItemCreate(
             ...preferred,
             heading:
                 kind === "task"
-                    ? settings.eventTask.defaultSaveHeading || preferred.heading
+                    ? settings.captureTask.heading || preferred.heading
                     : settings.captureEvent.heading || preferred.heading,
         },
         onComplete,

@@ -87,7 +87,7 @@ export function openDesktopScheduledItemCreate(
     // user picks one, avoiding accidental duplication into Daily Notes.
     const configured: FocusTarget =
         kind === "task"
-            ? { file: "", heading: settings.eventTask.defaultSaveHeading, position: "end" }
+            ? { file: "", heading: settings.captureTask.heading, position: settings.captureTask.position }
             : resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate) ?? {
                   file: "",
                   heading: settings.captureEvent.heading,
@@ -107,7 +107,7 @@ export function openDesktopScheduledItemCreate(
             ...preferred,
             heading:
                 kind === "task"
-                    ? settings.eventTask.defaultSaveHeading || preferred.heading
+                    ? settings.captureTask.heading || preferred.heading
                     : settings.captureEvent.heading || preferred.heading,
         },
         onComplete,
@@ -174,7 +174,7 @@ export class EventTaskModal extends Modal {
             file: resolved.file,
             heading: settings.captureEvent.heading || resolved.heading,
             position: resolved.position,
-            hubNotesFolder: settings.eventTask.hubNotesFolder,
+            hubNotesFolder: settings.captureEvent.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
             inbox: settings.inbox,
             inboxTargetFile: inboxTarget?.file ?? "",
@@ -717,7 +717,7 @@ export class EventTaskModal extends Modal {
         await this.executeSubmission(() =>
             submitEventTask(this.form, {
                 writer,
-                defaultHubNotesFolder: settings.eventTask.hubNotesFolder,
+                defaultHubNotesFolder: settings.captureEvent.hubNotesFolder,
                 defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
                 resolveTargetFile: (record) => this.resolveTargetFile(record),
                 findMarkdownFile: (path) => {

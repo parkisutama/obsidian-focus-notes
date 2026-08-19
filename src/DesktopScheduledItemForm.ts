@@ -1,6 +1,7 @@
 import { type App, Setting } from "obsidian";
 import { buildDesktopScheduledItemFormModel } from "./DesktopScheduledItemFormModel.ts";
 import { ContextNotesController } from "./InboxNotesController";
+import { ObjectNoteSuggest } from "./ObjectNoteSuggest.ts";
 import { parseObjectReferences } from "./ObjectReference.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
@@ -21,6 +22,8 @@ export interface DesktopScheduledItemFormOptions {
     createContext?: DesktopScheduledItemCreateContext;
     defaultDetailNotesFolder?: string;
     getContextSources(): ContextSourceSettings[];
+    /** Object Sources allowed as Task "Save to" destinations. Only consulted when data.kind === "task". */
+    getAllowedTaskSources?(): ContextSourceSettings[];
     onChange(data: ScheduledItemFormData): void;
     onSubmit(): void;
     onCancel(): void;
@@ -336,7 +339,11 @@ export class DesktopScheduledItemForm {
             context.targetFile = file.value;
             this.descriptionController?.setTargetFile(file.value);
         });
-        new FileSuggest(this.options.app, file);
+        if (this.options.data.kind === "task") {
+            new ObjectNoteSuggest(this.options.app, file, () => this.options.getAllowedTaskSources?.() ?? []);
+        } else {
+            new FileSuggest(this.options.app, file);
+        }
         new Setting(container).setName("Heading").addText((text) =>
             text.setValue(context.targetHeading).onChange((value) => {
                 context.targetHeading = value;

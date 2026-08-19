@@ -1,4 +1,5 @@
 import { type App, Modal, Notice } from "obsidian";
+import { resolveAllowedTaskSources } from "./ContextSourceSettings.ts";
 import { type DesktopScheduledItemCreateContext, DesktopScheduledItemForm } from "./DesktopScheduledItemForm.ts";
 import {
     type DetailNotePromotionResult,
@@ -51,7 +52,7 @@ export class ScheduledItemDesktopCreateModal extends Modal {
             file: target.file,
             heading: target.heading,
             position: target.position,
-            hubNotesFolder: kind === "event" ? settings.captureEvent.hubNotesFolder : settings.eventTask.hubNotesFolder,
+            hubNotesFolder: kind === "event" ? settings.captureEvent.hubNotesFolder : settings.captureTask.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
         });
         state.kind = kind;
@@ -72,6 +73,10 @@ export class ScheduledItemDesktopCreateModal extends Modal {
                 this.context.targetFile,
             ),
             getContextSources: () => this.getSettings().inbox.contextSources,
+            getAllowedTaskSources: () => {
+                const s = this.getSettings();
+                return resolveAllowedTaskSources(s.inbox.contextSources, s.captureTask.allowedSourceIds);
+            },
             onChange: () => undefined,
             onSubmit: () => void this.submit(),
             onCancel: () => this.close(),

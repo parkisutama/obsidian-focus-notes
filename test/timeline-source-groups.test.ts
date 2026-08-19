@@ -105,12 +105,13 @@ test("target alignment requires the Object Source property while Daily Notes rem
     );
 });
 
-test("always includes the active capture heading without duplicating configured headings", () => {
-    assert.deepEqual(timelineSourceHeadings(["Activities & Tasks", "Work Log"], "Activities & Tasks"), [
+test("always includes the active capture headings without duplicating configured headings", () => {
+    assert.deepEqual(timelineSourceHeadings(["Activities & Tasks", "Work Log"], ["Activities & Tasks"]), [
         "Activities & Tasks",
         "Work Log",
     ]);
-    assert.deepEqual(timelineSourceHeadings([], "Custom Ledger"), ["Custom Ledger"]);
+    assert.deepEqual(timelineSourceHeadings([], ["Custom Ledger"]), ["Custom Ledger"]);
+    assert.deepEqual(timelineSourceHeadings(["Agenda"], ["Agenda", "Task List"]), ["Agenda", "Task List"]);
 });
 
 test("summarizes many Daily Note files as one range-aware source", () => {

@@ -2,6 +2,7 @@ import { type App, Component, Setting, setIcon } from "obsidian";
 import { ContextNotesController } from "./InboxNotesController.ts";
 import { buildMobileScheduledItemFormModel } from "./MobileScheduledItemFormModel.ts";
 import { getMobileViewportMetrics } from "./MobileViewport.ts";
+import { ObjectNoteSuggest } from "./ObjectNoteSuggest.ts";
 import { parseObjectReferences } from "./ObjectReference.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
 import { FileSuggest, FolderSuggest } from "./Suggesters.ts";
@@ -22,6 +23,8 @@ export interface MobileScheduledItemFormOptions {
     createContext?: MobileScheduledItemCreateContext;
     defaultDetailNotesFolder?: string;
     getContextSources(): ContextSourceSettings[];
+    /** Object Sources allowed as Task "Save to" destinations. Only consulted when data.kind === "task". */
+    getAllowedTaskSources?(): ContextSourceSettings[];
     onChange(data: ScheduledItemFormData): void;
     onSubmit(): void;
     onCancel(): void;
@@ -298,7 +301,13 @@ export class MobileScheduledItemForm extends Component {
             context.targetFile = value;
             this.controller?.setTargetFile(value);
         });
-        this.registerSuggester(new FileSuggest(this.options.app, file));
+        if (this.options.data.kind === "task") {
+            this.registerSuggester(
+                new ObjectNoteSuggest(this.options.app, file, () => this.options.getAllowedTaskSources?.() ?? []),
+            );
+        } else {
+            this.registerSuggester(new FileSuggest(this.options.app, file));
+        }
         this.text(body, "Save under heading", context.targetHeading, (value) => (context.targetHeading = value));
         this.toggle(
             body,

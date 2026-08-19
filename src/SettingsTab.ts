@@ -556,44 +556,63 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 new FolderSuggest(this.app, text.inputEl);
             });
 
-        // ---- Task & shared note creation ------------------------------------
-        containerEl.createEl("h3", { text: "Task & shared note creation" });
+        // ---- Task capture ---------------------------------------------------
+        containerEl.createEl("h3", { text: "Task capture" });
 
         containerEl.createEl("p", {
             cls: "setting-item-description",
             text:
-                "Task destination settings move to their own section soon. Hub folder/heading below are Task-only " +
-                "for now; detail-note settings remain shared by Event and Task.",
+                "Task never defaults to a periodical note — it belongs in a Project or task-list page. Its " +
+                "\"Save to\" picker draws from whichever Object Sources you allow below (combined); typing a " +
+                "path that doesn't match still works and shows the usual vault-wide suggestions.",
         });
 
+        this.renderTaskAllowedSources(containerEl);
+
         new Setting(containerEl)
-            .setName("Task hub notes folder")
-            .setDesc(
-                "Folder where new Task hub notes are created when choosing 'New note'. " +
-                    "Created automatically if it doesn't exist.",
-            )
+            .setName("Heading")
+            .setDesc("Heading in the chosen note where Task lines are inserted. Leave empty to append at end of file.")
+            .addText((text) =>
+                text
+                    .setPlaceholder("Activities & Tasks")
+                    .setValue(this.plugin.settings.captureTask.heading)
+                    .onChange(async (v) => {
+                        this.plugin.settings.captureTask.heading = v.trim();
+                        await this.plugin.saveSettings();
+                    }),
+            );
+
+        new Setting(containerEl).setName("Insert position").addDropdown((drop) =>
+            drop
+                .addOption("end", "End of section (newest at bottom)")
+                .addOption("start", "Start of section (newest at top)")
+                .setValue(this.plugin.settings.captureTask.position)
+                .onChange(async (v) => {
+                    this.plugin.settings.captureTask.position = v as InsertPosition;
+                    await this.plugin.saveSettings();
+                }),
+        );
+
+        new Setting(containerEl)
+            .setName("Hub notes folder")
+            .setDesc("Folder where new Task hub notes are created. Created automatically if it doesn't exist.")
             .addText((text) => {
                 text.setPlaceholder("Notes")
-                    .setValue(this.plugin.settings.eventTask.hubNotesFolder)
+                    .setValue(this.plugin.settings.captureTask.hubNotesFolder)
                     .onChange(async (v) => {
-                        this.plugin.settings.eventTask.hubNotesFolder = v.trim() || "Notes";
+                        this.plugin.settings.captureTask.hubNotesFolder = v.trim() || "Notes";
                         await this.plugin.saveSettings();
                     });
                 new FolderSuggest(this.app, text.inputEl);
             });
 
-        new Setting(containerEl)
-            .setName("Task default target heading")
-            .setDesc("Heading in the target file where Task lines are inserted. Leave empty to append at end of file.")
-            .addText((text) =>
-                text
-                    .setPlaceholder("Activities & Tasks")
-                    .setValue(this.plugin.settings.eventTask.defaultSaveHeading)
-                    .onChange(async (v) => {
-                        this.plugin.settings.eventTask.defaultSaveHeading = v.trim();
-                        await this.plugin.saveSettings();
-                    }),
-            );
+        // ---- Shared note creation --------------------------------------------
+        containerEl.createEl("h3", { text: "Shared note creation" });
+
+        containerEl.createEl("p", {
+            cls: "setting-item-description",
+            text: "Detail-note settings below apply to both Event and Task.",
+        });
 
         new Setting(containerEl)
             .setName("Detail notes folder")
@@ -715,6 +734,35 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 for (const profile of profiles) dropdown.addOption(profile.id, profile.name || profile.id);
                 dropdown.setValue(currentProfileId).onChange(onChange);
             });
+    }
+
+    /** Checklist of Object Sources allowed as Task "Save to" destinations. */
+    private renderTaskAllowedSources(container: HTMLElement): void {
+        const sources = this.plugin.settings.inbox.contextSources;
+        const desc =
+            sources.length === 0
+                ? "No Object Sources configured yet — add one below (Objects tab), then come back to allow it here."
+                : "Which Object Sources a Task's \"Save to\" picker draws from (combined). None checked = search " +
+                  "the whole vault instead.";
+        const setting = new Setting(container).setName("Allowed Object Sources").setDesc(desc);
+        if (sources.length === 0) return;
+        const list = setting.controlEl.createDiv({ cls: "fn-task-source-list" });
+        for (const source of sources) {
+            const label = list.createEl("label", { cls: "fn-task-source-option" });
+            const checkbox = label.createEl("input", {
+                type: "checkbox",
+                attr: { "aria-label": `Allow ${source.name} as a Task destination` },
+            });
+            checkbox.checked = this.plugin.settings.captureTask.allowedSourceIds.includes(source.id);
+            checkbox.addEventListener("change", async () => {
+                const ids = this.plugin.settings.captureTask.allowedSourceIds;
+                this.plugin.settings.captureTask.allowedSourceIds = checkbox.checked
+                    ? [...new Set([...ids, source.id])]
+                    : ids.filter((id) => id !== source.id);
+                await this.plugin.saveSettings();
+            });
+            label.appendText(` ${source.name}`);
+        }
     }
 
     private renderPeriodicalNotes(containerEl: HTMLElement): void {

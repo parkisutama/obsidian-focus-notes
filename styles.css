@@ -3782,6 +3782,22 @@ body.fn-mobile-event-screen-open .suggestion-container {
     justify-self: start;
 }
 
+.fn-task-source-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--size-4-3);
+}
+
+.fn-task-source-option {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--size-2-2);
+}
+
+.fn-task-source-option input[type="checkbox"] {
+    margin: 0;
+}
+
 .fn-periodical-profile-list {
     display: grid;
     gap: var(--size-4-3);
