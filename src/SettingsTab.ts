@@ -37,7 +37,23 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 "so use this page for your usual fallback (e.g. today's daily note).",
         });
 
-        // ---- Default durations ------------------------------------------
+        this.renderDefaultDurations(containerEl);
+        this.renderFocusSessionCapture(containerEl);
+        this.renderDateGrouping(containerEl);
+        this.renderLogEntryFormat(containerEl);
+        this.renderBehavior(containerEl);
+        this.renderFocusTimeline(containerEl);
+        this.renderMomentCapture(containerEl);
+        this.renderContextSources(containerEl);
+        this.renderEventCapture(containerEl);
+        this.renderTaskCapture(containerEl);
+        this.renderSharedNoteCreation(containerEl);
+        this.renderPeriodicalNotes(containerEl);
+
+        this.organizeSettingsTabs(containerEl);
+    }
+
+    private renderDefaultDurations(containerEl: HTMLElement): void {
         containerEl.createEl("h3", { text: "Default durations" });
 
         new Setting(containerEl)
@@ -65,8 +81,9 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     }
                 }),
             );
+    }
 
-        // ---- Focus session capture ---------------------------------------
+    private renderFocusSessionCapture(containerEl: HTMLElement): void {
         containerEl.createEl("h3", { text: "Focus session capture" });
 
         this.renderProfilePicker(
@@ -110,8 +127,9 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }),
         );
+    }
 
-        // ---- Date grouping ----------------------------------------------
+    private renderDateGrouping(containerEl: HTMLElement): void {
         containerEl.createEl("h3", { text: "Date grouping" });
 
         new Setting(containerEl)
@@ -157,8 +175,9 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }),
             );
+    }
 
-        // ---- Format ------------------------------------------------------
+    private renderLogEntryFormat(containerEl: HTMLElement): void {
         containerEl.createEl("h3", { text: "Log entry format" });
 
         new Setting(containerEl)
@@ -229,8 +248,9 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             li.createEl("code", { text: token });
             li.appendText(` — ${desc}`);
         }
+    }
 
-        // ---- Behavior ----------------------------------------------------
+    private renderBehavior(containerEl: HTMLElement): void {
         containerEl.createEl("h3", { text: "Behavior" });
 
         new Setting(containerEl).setName("Auto-open log modal on countdown completion").addToggle((toggle) =>
@@ -259,8 +279,9 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     }
                 }),
             );
+    }
 
-        // ---- Focus Timeline ---------------------------------------------
+    private renderFocusTimeline(containerEl: HTMLElement): void {
         containerEl.createEl("h3", { text: "Focus Timeline" });
 
         new Setting(containerEl)
@@ -374,8 +395,9 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 await this.plugin.saveSettings();
             }),
         );
+    }
 
-        // ---- Moment capture --------------------------------------------------
+    private renderMomentCapture(containerEl: HTMLElement): void {
         containerEl.createEl("h3", { text: "Moment capture" });
 
         containerEl.createEl("p", {
@@ -499,10 +521,9 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                         }),
                 );
         }
+    }
 
-        this.renderContextSources(containerEl);
-
-        // ---- Event capture ---------------------------------------------
+    private renderEventCapture(containerEl: HTMLElement): void {
         containerEl.createEl("h3", { text: "Event capture" });
 
         this.renderProfilePicker(
@@ -555,8 +576,9 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     });
                 new FolderSuggest(this.app, text.inputEl);
             });
+    }
 
-        // ---- Task capture ---------------------------------------------------
+    private renderTaskCapture(containerEl: HTMLElement): void {
         containerEl.createEl("h3", { text: "Task capture" });
 
         containerEl.createEl("p", {
@@ -605,8 +627,9 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     });
                 new FolderSuggest(this.app, text.inputEl);
             });
+    }
 
-        // ---- Shared note creation --------------------------------------------
+    private renderSharedNoteCreation(containerEl: HTMLElement): void {
         containerEl.createEl("h3", { text: "Shared note creation" });
 
         containerEl.createEl("p", {
@@ -711,10 +734,6 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }),
             );
-
-        this.renderPeriodicalNotes(containerEl);
-
-        this.organizeSettingsTabs(containerEl);
     }
 
     /** Dropdown of Periodical Notes profiles, shared by Focus/Event/Moment capture sections. */
