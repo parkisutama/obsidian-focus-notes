@@ -29,6 +29,8 @@ test("indexes generic folder-scoped sources with optional property filters", () 
             icon: "user",
             folders: ["People"],
             filter: null,
+            matchByFolder: true,
+            matchByProperty: true,
             relatedHeading: "Interactions",
             enabled: true,
         },
@@ -38,6 +40,8 @@ test("indexes generic folder-scoped sources with optional property filters", () 
             icon: "activity",
             folders: ["Persona"],
             filter: { property: "type", value: "activity" },
+            matchByFolder: true,
+            matchByProperty: true,
             relatedHeading: "Activity log",
             enabled: true,
         },
@@ -63,6 +67,8 @@ test("keeps shared-folder suggestions assigned to their property-defined object 
             icon: "activity",
             folders: ["Persona/Work/Project/Activities"],
             filter: { property: "type", value: "activity" },
+            matchByFolder: true,
+            matchByProperty: true,
             relatedHeading: "Activity log",
             enabled: true,
         },
@@ -72,6 +78,8 @@ test("keeps shared-folder suggestions assigned to their property-defined object 
             icon: "book-open",
             folders: ["Persona/Work/Project/Activities"],
             filter: { property: "type", value: "book" },
+            matchByFolder: true,
+            matchByProperty: true,
             relatedHeading: "Reading log",
             enabled: true,
         },
@@ -96,6 +104,8 @@ test("includes a sibling folder note with the same path as its configured folder
         icon: "map",
         folders: ["Projects/BLOK 05"],
         filter: null,
+        matchByFolder: true,
+        matchByProperty: true,
         relatedHeading: "Related log",
         templatePath: "Templates/Block.md",
         enabled: true,
@@ -119,6 +129,8 @@ test("caps and ranks generic results without rebuilding unchanged candidates", (
         icon: "activity",
         folders: ["Persona"],
         filter: { property: "type", value: "activity" },
+        matchByFolder: true,
+        matchByProperty: true,
         relatedHeading: "Activity log",
         enabled: true,
     };
@@ -131,6 +143,73 @@ test("caps and ranks generic results without rebuilding unchanged candidates", (
     assert.equal(index.candidateBuildCount, 1);
     index.query([source], () => 0, 20);
     assert.equal(index.candidateBuildCount, 1);
+});
+
+test("matches purely by property, vault-wide, when matchByFolder is off", () => {
+    const source: ContextSourceSettings = {
+        id: "activities",
+        name: "Activities",
+        icon: "activity",
+        folders: [],
+        filter: { property: "type", value: "activity" },
+        matchByFolder: false,
+        matchByProperty: true,
+        relatedHeading: "Activity log",
+        enabled: true,
+    };
+    const index = new ContextSuggestionIndex(contextNotes);
+
+    assert.deepEqual(
+        index
+            .query([source], () => 0, 20)
+            .filter(({ matchedBy }) => matchedBy === "filename")
+            .map((item) => item.filePath),
+        ["Persona/Work/Project/Activities/Reporting.md"],
+    );
+});
+
+test("matches purely by folder, ignoring property, when matchByProperty is off", () => {
+    const source: ContextSourceSettings = {
+        id: "persona",
+        name: "Persona",
+        icon: "folder",
+        folders: ["Persona"],
+        filter: { property: "type", value: "activity" },
+        matchByFolder: true,
+        matchByProperty: false,
+        relatedHeading: "Log",
+        enabled: true,
+    };
+    const index = new ContextSuggestionIndex(contextNotes);
+
+    assert.deepEqual(
+        index
+            .query([source], () => 0, 20)
+            .filter(({ matchedBy }) => matchedBy === "filename")
+            .map((item) => item.filePath)
+            .sort(),
+        ["Persona/Work/Project/Activities/Reference.md", "Persona/Work/Project/Activities/Reporting.md"],
+    );
+});
+
+test("matches nothing when both matchByFolder and matchByProperty are off", () => {
+    const source: ContextSourceSettings = {
+        id: "inert",
+        name: "Inert",
+        icon: "circle",
+        folders: ["Persona"],
+        filter: { property: "type", value: "activity" },
+        matchByFolder: false,
+        matchByProperty: false,
+        relatedHeading: "Log",
+        enabled: true,
+    };
+    const index = new ContextSuggestionIndex(contextNotes);
+
+    assert.deepEqual(
+        index.query([source], () => 0, 20),
+        [],
+    );
 });
 
 test("normalizes and de-duplicates existing vault tags", () => {

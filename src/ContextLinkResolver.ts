@@ -1,4 +1,4 @@
-import { isPathInContextSourceFolder } from "./ContextSourceScope.ts";
+import { isPathInContextSourceFolder, matchesContextFilter } from "./ContextSourceScope.ts";
 import type { ContextSourceSettings } from "./types";
 
 export interface ContextLinkNote {
@@ -158,16 +158,18 @@ function findSource(
 ): ContextSourceSettings | null {
     const matches: SourceMatch[] = [];
     sources.forEach((source, sourceIndex) => {
-        if (!source.enabled || !matchesProperty(note.properties, source.filter)) return;
+        if (!source.enabled) return;
+        if (!source.matchByFolder && !source.matchByProperty) return;
+        if (source.matchByProperty && !matchesContextFilter(note.properties, source.filter)) return;
+        const filterSpecificity = source.matchByProperty && source.filter ? 1 : 0;
+        if (!source.matchByFolder) {
+            matches.push({ source, folderLength: 0, filterSpecificity, sourceIndex });
+            return;
+        }
         for (const rawFolder of source.folders) {
             const folder = normalizeVaultPath(rawFolder);
             if (folder && isPathInContextSourceFolder(path, folder)) {
-                matches.push({
-                    source,
-                    folderLength: folder.length,
-                    filterSpecificity: source.filter ? 1 : 0,
-                    sourceIndex,
-                });
+                matches.push({ source, folderLength: folder.length, filterSpecificity, sourceIndex });
             }
         }
     });
@@ -178,17 +180,6 @@ function findSource(
             a.sourceIndex - b.sourceIndex,
     );
     return matches[0]?.source ?? null;
-}
-
-function matchesProperty(
-    properties: Record<string, unknown> | undefined,
-    filter: ContextSourceSettings["filter"],
-): boolean {
-    if (!filter) return true;
-    const actual = properties?.[filter.property];
-    const expected = filter.value.toLowerCase();
-    if (Array.isArray(actual)) return actual.some((value) => String(value).toLowerCase() === expected);
-    return actual !== undefined && String(actual).toLowerCase() === expected;
 }
 
 function normalizeVaultPath(path: string): string {

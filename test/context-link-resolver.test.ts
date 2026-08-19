@@ -16,6 +16,8 @@ const sources: ContextSourceSettings[] = [
         icon: "users",
         folders: ["People"],
         filter: null,
+        matchByFolder: true,
+        matchByProperty: true,
         relatedHeading: "Interactions",
         enabled: true,
     },
@@ -25,6 +27,8 @@ const sources: ContextSourceSettings[] = [
         icon: "map-pin",
         folders: ["Places"],
         filter: null,
+        matchByFolder: true,
+        matchByProperty: true,
         relatedHeading: "Mentions",
         enabled: true,
     },
@@ -34,6 +38,8 @@ const sources: ContextSourceSettings[] = [
         icon: "activity",
         folders: ["Persona/Work"],
         filter: { property: "type", value: "activity" },
+        matchByFolder: true,
+        matchByProperty: true,
         relatedHeading: "Logs",
         enabled: true,
     },
@@ -127,6 +133,8 @@ test("uses property filters to distinguish object types sharing one folder", () 
             icon: "folder",
             folders: ["Objects"],
             filter: null,
+            matchByFolder: true,
+            matchByProperty: true,
             relatedHeading: "Mentions",
             enabled: true,
         },
@@ -136,6 +144,8 @@ test("uses property filters to distinguish object types sharing one folder", () 
             icon: "briefcase",
             folders: ["Objects"],
             filter: { property: "type", value: "project" },
+            matchByFolder: true,
+            matchByProperty: true,
             relatedHeading: "Project log",
             enabled: true,
         },
@@ -145,6 +155,8 @@ test("uses property filters to distinguish object types sharing one folder", () 
             icon: "activity",
             folders: ["Objects"],
             filter: { property: "type", value: "activity" },
+            matchByFolder: true,
+            matchByProperty: true,
             relatedHeading: "Activity log",
             enabled: true,
         },
@@ -169,6 +181,81 @@ test("uses property filters to distinguish object types sharing one folder", () 
     );
 });
 
+test("resolves a property-only source vault-wide when matchByFolder is off", () => {
+    const propertyOnly: ContextSourceSettings = {
+        id: "activities",
+        name: "Activities",
+        icon: "activity",
+        folders: [],
+        filter: { property: "type", value: "activity" },
+        matchByFolder: false,
+        matchByProperty: true,
+        relatedHeading: "Logs",
+        enabled: true,
+    };
+
+    assert.deepEqual(
+        resolveContextLinks(
+            "[review](Persona/Work/Projects/Audit/Activities/Field%20Review.md)",
+            "Daily.md",
+            notes,
+            [propertyOnly],
+            resolveRelativeLinkDestination,
+        ).map((item) => item.sourceId),
+        ["activities"],
+    );
+});
+
+test("ignores the property filter when matchByProperty is off", () => {
+    const folderOnly: ContextSourceSettings = {
+        id: "persona",
+        name: "Persona",
+        icon: "folder",
+        folders: ["Persona/Work"],
+        filter: { property: "type", value: "activity" },
+        matchByFolder: true,
+        matchByProperty: false,
+        relatedHeading: "Logs",
+        enabled: true,
+    };
+
+    assert.deepEqual(
+        resolveContextLinks(
+            "[task](Persona/Work/Projects/Audit/Tasks/Submit.md)",
+            "Daily.md",
+            notes,
+            [folderOnly],
+            resolveRelativeLinkDestination,
+        ).map((item) => item.sourceId),
+        ["persona"],
+    );
+});
+
+test("matches nothing when both matchByFolder and matchByProperty are off", () => {
+    const inert: ContextSourceSettings = {
+        id: "inert",
+        name: "Inert",
+        icon: "circle",
+        folders: ["Persona/Work"],
+        filter: { property: "type", value: "activity" },
+        matchByFolder: false,
+        matchByProperty: false,
+        relatedHeading: "Logs",
+        enabled: true,
+    };
+
+    assert.deepEqual(
+        resolveContextLinks(
+            "[review](Persona/Work/Projects/Audit/Activities/Field%20Review.md)",
+            "Daily.md",
+            notes,
+            [inert],
+            resolveRelativeLinkDestination,
+        ),
+        [],
+    );
+});
+
 test("resolves a sibling folder note as a contextual destination", () => {
     const destinations = resolveContextLinks(
         "Visit [BLOK 05](../Projects/BLOK%2005.md)",
@@ -181,6 +268,8 @@ test("resolves a sibling folder note as a contextual destination", () => {
                 icon: "map-pin",
                 folders: ["Projects/BLOK 05"],
                 filter: { property: "type", value: "place" },
+                matchByFolder: true,
+                matchByProperty: true,
                 relatedHeading: "Related log",
                 templatePath: "Templates/Place.md",
                 enabled: true,

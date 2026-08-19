@@ -1,5 +1,5 @@
 import type { ContextSourceSettings } from "./types";
-import { isPathInContextSourceFolder } from "./ContextSourceScope.ts";
+import { contextSourceMatchesNote } from "./ContextSourceScope.ts";
 
 export type MentionMatchSource = "filename" | "alias";
 
@@ -66,13 +66,15 @@ export class ContextSuggestionIndex {
 
     private getCandidates(sources: ContextSourceSettings[]): ContextSuggestion[] {
         const key = JSON.stringify(
-            sources.map(({ id, name, icon, folders, filter, enabled }) => ({
+            sources.map(({ id, name, icon, folders, filter, enabled, matchByFolder, matchByProperty }) => ({
                 id,
                 name,
                 icon,
                 folders,
                 filter,
                 enabled,
+                matchByFolder,
+                matchByProperty,
             })),
         );
         const cached = this.candidateCache.get(key);
@@ -101,13 +103,11 @@ export function buildTagSuggestions(tags: string[], matcher: SuggestionMatcher, 
 }
 
 function buildContextGroup(notes: SuggestionNote[], source: ContextSourceSettings): ContextSuggestion[] {
-    const roots = source.folders.map(normalizeFolder).filter(Boolean);
-    if (!source.enabled || roots.length === 0) return [];
+    if (!source.enabled) return [];
     const results: ContextSuggestion[] = [];
     const seen = new Set<string>();
     for (const note of notes) {
-        if (!roots.some((root) => isPathInContextSourceFolder(note.path, root))) continue;
-        if (!matchesFilter(note.properties, source.filter)) continue;
+        if (!contextSourceMatchesNote(note, source)) continue;
         addContextSuggestion(results, seen, source, note.path, note.basename, "filename");
         for (const alias of note.aliases) {
             addContextSuggestion(results, seen, source, note.path, alias.trim(), "alias");
@@ -137,21 +137,6 @@ function addContextSuggestion(
         label,
         matchedBy,
     });
-}
-
-function matchesFilter(
-    properties: Record<string, unknown> | undefined,
-    filter: ContextSourceSettings["filter"],
-): boolean {
-    if (!filter) return true;
-    const actual = properties?.[filter.property];
-    const expected = filter.value.toLowerCase();
-    if (Array.isArray(actual)) return actual.some((value) => String(value).toLowerCase() === expected);
-    return actual !== undefined && String(actual).toLowerCase() === expected;
-}
-
-function normalizeFolder(folder: string): string {
-    return folder.trim().replace(/^\/+|\/+$/g, "");
 }
 
 function rankAndLimit<T>(values: T[], matcher: SuggestionMatcher, textOf: (value: T) => string, limit: number): T[] {

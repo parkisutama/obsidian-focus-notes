@@ -14,6 +14,8 @@ export function createContextSource(existing: readonly ContextSourceSettings[]):
         icon: "link",
         folders: [],
         filter: null,
+        matchByFolder: true,
+        matchByProperty: true,
         relatedHeading: "Related log",
         templatePath: "",
         placement: "flat",
@@ -29,7 +31,7 @@ export function createContextSource(existing: readonly ContextSourceSettings[]):
 export function findSharedFolderConflicts(sources: readonly ContextSourceSettings[]): Map<string, string[]> {
     const sourcesByFolder = new Map<string, { label: string; sources: ContextSourceSettings[] }>();
     for (const source of sources) {
-        if (!source.enabled) continue;
+        if (!source.enabled || !source.matchByFolder) continue;
         for (const rawFolder of source.folders) {
             const folder = normalizeFolder(rawFolder);
             if (!folder) continue;
@@ -43,7 +45,7 @@ export function findSharedFolderConflicts(sources: readonly ContextSourceSetting
     const conflicts = new Map<string, string[]>();
     for (const { label, sources: sharedSources } of sourcesByFolder.values()) {
         if (sharedSources.length < 2) continue;
-        const filters = sharedSources.map((source) => source.filter);
+        const filters = sharedSources.map((source) => (source.matchByProperty ? source.filter : null));
         const property = filters[0]?.property.trim().toLowerCase();
         const values = filters.map((filter) => filter?.value.trim().toLowerCase());
         const isDisjoint =

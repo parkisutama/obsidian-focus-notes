@@ -3888,8 +3888,8 @@ body.fn-mobile-event-screen-open .suggestion-container {
         grid-template-columns: 1fr;
     }
 
-    .fn-context-source-field:nth-child(5),
-    .fn-context-source-field:nth-child(7) {
+    .fn-context-source-field:nth-child(7),
+    .fn-context-source-field:nth-child(9) {
         grid-column: auto;
     }
 

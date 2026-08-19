@@ -218,6 +218,10 @@ export interface ContextSourceSettings {
     icon: string;
     folders: string[];
     filter: ContextSourceFilter | null;
+    /** Whether folders[] is required for a note to match this source. */
+    matchByFolder: boolean;
+    /** Whether filter is required for a note to match this source. */
+    matchByProperty: boolean;
     relatedHeading: string;
     /** Optional vault-relative template note used when object creation is enabled. */
     templatePath: string;
@@ -371,6 +375,8 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 icon: "user",
                 folders: ["People"],
                 filter: null,
+                matchByFolder: true,
+                matchByProperty: true,
                 relatedHeading: "Interactions",
                 templatePath: "",
                 placement: "flat",
@@ -383,6 +389,8 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 icon: "map-pin",
                 folders: ["Place"],
                 filter: null,
+                matchByFolder: true,
+                matchByProperty: true,
                 relatedHeading: "Related log",
                 templatePath: "",
                 placement: "flat",
@@ -395,6 +403,8 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 icon: "activity",
                 folders: ["Activities"],
                 filter: { property: "type", value: "activity" },
+                matchByFolder: true,
+                matchByProperty: true,
                 relatedHeading: "Activity log",
                 templatePath: "",
                 placement: "flat",
@@ -516,10 +526,12 @@ function normalizeContextSources(
             icon: stringValue(raw.icon).trim() || "link",
             folders,
             filter: property && value ? { property, value } : null,
+            matchByFolder: raw.matchByFolder !== false,
+            matchByProperty: raw.matchByProperty !== false,
             relatedHeading: stringValue(raw.relatedHeading).trim() || "Related log",
             templatePath: normalizeVaultFilePath(stringValue(raw.templatePath)),
             placement: raw.placement === "folder-note" ? "folder-note" : "flat",
-            enabled: raw.enabled === true && folders.length > 0,
+            enabled: raw.enabled === true,
             includeInTimeline:
                 raw.includeInTimeline === true ||
                 (raw.includeInTimeline === undefined && ["activity", "project"].includes(value.toLowerCase())),

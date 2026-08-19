@@ -896,7 +896,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         section.createEl("p", {
             cls: "setting-item-description",
             text:
-                "Each source labels one object type. Folder scope is required; an optional property filter narrows matches. " +
+                "Each source labels one object type. Match by folder and Match by property can each be turned on or " +
+                "off independently — on their own, in combination, or neither (a source that matches nothing). " +
                 "Multiple object types may share a folder when they use the same Property with distinct Values. " +
                 "Templates are optional; enabled sources with a folder can create objects from the @ suggester.",
         });
@@ -971,14 +972,40 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             source.icon = value.trim() || "link";
             await this.saveContextSources();
         });
-        this.contextTextField(fields, "Property", "type", filterProperty, async (value) => {
+        const matchByFolderField = fields.createEl("label", { cls: "fn-context-source-field" });
+        matchByFolderField.createEl("span", { text: "Match by folder" });
+        const matchByFolderToggle = matchByFolderField.createEl("input", {
+            type: "checkbox",
+            attr: { "aria-label": `Match ${source.name} by folder` },
+        });
+        matchByFolderToggle.checked = source.matchByFolder;
+        matchByFolderToggle.addEventListener("change", async () => {
+            source.matchByFolder = matchByFolderToggle.checked;
+            await this.saveContextSources();
+            this.display();
+        });
+        const matchByPropertyField = fields.createEl("label", { cls: "fn-context-source-field" });
+        matchByPropertyField.createEl("span", { text: "Match by property" });
+        const matchByPropertyToggle = matchByPropertyField.createEl("input", {
+            type: "checkbox",
+            attr: { "aria-label": `Match ${source.name} by property` },
+        });
+        matchByPropertyToggle.checked = source.matchByProperty;
+        matchByPropertyToggle.addEventListener("change", async () => {
+            source.matchByProperty = matchByPropertyToggle.checked;
+            await this.saveContextSources();
+            this.display();
+        });
+        const propertyField = this.contextTextField(fields, "Property", "type", filterProperty, async (value) => {
             filterProperty = value;
             await saveFilter();
         });
-        this.contextTextField(fields, "Value", "book", filterValue, async (value) => {
+        const valueField = this.contextTextField(fields, "Value", "book", filterValue, async (value) => {
             filterValue = value;
             await saveFilter();
         });
+        propertyField.disabled = !source.matchByProperty;
+        valueField.disabled = !source.matchByProperty;
         this.contextTextField(fields, "Log heading", "Reading log", source.relatedHeading, async (value) => {
             source.relatedHeading = value.replace(/^#+\s*/, "").trim() || "Related log";
             await this.saveContextSources();
@@ -1039,6 +1066,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         rows.createEl("span", { cls: "fn-context-source-folders-label", text: "Source folders" });
         const list = rows.createDiv({ cls: "fn-context-source-folder-list" });
         const values = [...source.folders];
+        const disabled = !source.matchByFolder;
         let suggesters: FolderSuggest[] = [];
 
         const renderRows = (): void => {
@@ -1056,6 +1084,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     },
                 });
                 input.value = folder;
+                input.disabled = disabled;
                 input.addEventListener("input", () => {
                     values[index] = input.value;
                     source.folders = normalizeInboxFolders(values);
@@ -1068,6 +1097,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                     cls: "clickable-icon",
                     attr: { "aria-label": `Remove ${source.name} folder ${index + 1}` },
                 });
+                remove.disabled = disabled;
                 setIcon(remove, "x");
                 remove.addEventListener("click", async () => {
                     values.splice(index, 1);
@@ -1078,6 +1108,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             });
 
             const add = list.createEl("button", { text: "+ Add folder", cls: "fn-context-source-add-folder" });
+            add.disabled = disabled;
             add.addEventListener("click", () => {
                 values.push("");
                 renderRows();
