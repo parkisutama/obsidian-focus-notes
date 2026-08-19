@@ -1,4 +1,4 @@
-import { type App, PluginSettingTab, Setting, setIcon } from "obsidian";
+import { type App, PluginSettingTab, Setting, setIcon, ToggleComponent } from "obsidian";
 import { createContextSource, findSharedFolderConflicts } from "./ContextSourceSettings";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
 import type FocusNotesPlugin from "./main";
@@ -284,7 +284,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 });
                 area.inputEl.rows = 4;
                 area.inputEl.style.width = "100%";
-            });
+            })
+            .settingEl.addClass("fn-settings-wide-field");
 
         new Setting(containerEl)
             .setName("Grouped template")
@@ -298,7 +299,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 });
                 area.inputEl.rows = 4;
                 area.inputEl.style.width = "100%";
-            });
+            })
+            .settingEl.addClass("fn-settings-wide-field");
 
         const help = containerEl.createDiv({
             cls: "setting-item-description focus-notes-help",
@@ -441,7 +443,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 });
                 area.inputEl.rows = 5;
                 area.inputEl.style.width = "100%";
-            });
+            })
+            .settingEl.addClass("fn-settings-wide-field");
 
         new Setting(containerEl)
             .setName("Timeline headings")
@@ -458,7 +461,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 });
                 area.inputEl.rows = 3;
                 area.inputEl.style.width = "100%";
-            });
+            })
+            .settingEl.addClass("fn-settings-wide-field");
 
         this.renderTimelineAlignmentStatus(containerEl);
 
@@ -763,7 +767,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 });
                 area.inputEl.rows = 5;
                 area.inputEl.style.width = "100%";
-            });
+            })
+            .settingEl.addClass("fn-settings-wide-field");
 
         new Setting(containerEl)
             .setName("Task detail note template")
@@ -775,7 +780,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 });
                 area.inputEl.rows = 5;
                 area.inputEl.style.width = "100%";
-            });
+            })
+            .settingEl.addClass("fn-settings-wide-field");
 
         new Setting(containerEl)
             .setName("Format of 'related' field")
@@ -946,6 +952,20 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             header.querySelector("strong")?.setText(profile.name);
             await this.plugin.saveSettings();
         });
+        const preview = card.createDiv({ cls: "fn-periodical-profile-preview" });
+        const updatePreview = (): void => {
+            const target = new TargetResolver(this.app, this.plugin.settings).getPeriodicalTarget(
+                profile.id,
+                new Date(),
+            );
+            preview.setText(
+                target?.file
+                    ? target.heading
+                        ? `Today: ${target.file} → ## ${target.heading}`
+                        : `Today: ${target.file}`
+                    : "Today: (unresolved — check the folder and file format below)",
+            );
+        };
         const folderInput = this.contextTextField(
             fields,
             "Folder",
@@ -954,12 +974,14 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             async (value) => {
                 profile.folder = value.trim();
                 await this.plugin.saveSettings();
+                updatePreview();
             },
         );
         new FolderSuggest(this.app, folderInput);
         this.contextTextField(fields, "File format", "YYYY-MM-DD", profile.fileFormat, async (value) => {
             profile.fileFormat = value.trim() || "YYYY-MM-DD";
             await this.plugin.saveSettings();
+            updatePreview();
         });
         this.contextTextField(
             fields,
@@ -969,8 +991,10 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             async (value) => {
                 profile.headingFormat = value.trim();
                 await this.plugin.saveSettings();
+                updatePreview();
             },
         );
+        updatePreview();
     }
 
     private renderTimelineAlignmentStatus(container: HTMLElement): void {
@@ -1047,17 +1071,15 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         body.createDiv({ cls: "fn-settings-row-title", text: source.name });
         body.createDiv({ cls: "fn-settings-row-desc", text: source.enabled ? "Enabled" : "Disabled" });
 
-        const enabled = row.createEl("input", {
-            type: "checkbox",
-            attr: { "aria-label": `Enable ${source.name}` },
-        });
-        enabled.checked = source.enabled;
-        enabled.addEventListener("click", (event) => event.stopPropagation());
-        enabled.addEventListener("change", async () => {
-            source.enabled = enabled.checked;
-            await this.saveContextSources();
-            this.display();
-        });
+        const enabled = new ToggleComponent(row)
+            .setValue(source.enabled)
+            .setTooltip(`Enable ${source.name}`)
+            .onChange(async (value) => {
+                source.enabled = value;
+                await this.saveContextSources();
+                this.display();
+            });
+        enabled.toggleEl.addEventListener("click", (event) => event.stopPropagation());
 
         const remove = row.createEl("button", {
             cls: "clickable-icon",
@@ -1101,16 +1123,14 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         identity.createEl("strong", { text: source.name });
         identity.createEl("small", { text: `ID: ${source.id}` });
         const actions = header.createDiv({ cls: "fn-context-source-actions" });
-        const enabled = actions.createEl("input", {
-            type: "checkbox",
-            attr: { "aria-label": `Enable ${source.name}` },
-        });
-        enabled.checked = source.enabled;
-        enabled.addEventListener("change", async () => {
-            source.enabled = enabled.checked;
-            await this.saveContextSources();
-            this.display();
-        });
+        new ToggleComponent(actions)
+            .setValue(source.enabled)
+            .setTooltip(`Enable ${source.name}`)
+            .onChange(async (value) => {
+                source.enabled = value;
+                await this.saveContextSources();
+                this.display();
+            });
         const remove = actions.createEl("button", {
             cls: "clickable-icon",
             attr: { "aria-label": `Remove ${source.name}` },
@@ -1141,30 +1161,26 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             source.icon = value.trim() || "link";
             await this.saveContextSources();
         });
-        const matchByFolderField = fields.createEl("label", { cls: "fn-context-source-field" });
+        const matchByFolderField = fields.createDiv({ cls: "fn-context-source-field" });
         matchByFolderField.createEl("span", { text: "Match by folder" });
-        const matchByFolderToggle = matchByFolderField.createEl("input", {
-            type: "checkbox",
-            attr: { "aria-label": `Match ${source.name} by folder` },
-        });
-        matchByFolderToggle.checked = source.matchByFolder;
-        matchByFolderToggle.addEventListener("change", async () => {
-            source.matchByFolder = matchByFolderToggle.checked;
-            await this.saveContextSources();
-            this.display();
-        });
-        const matchByPropertyField = fields.createEl("label", { cls: "fn-context-source-field" });
+        new ToggleComponent(matchByFolderField)
+            .setValue(source.matchByFolder)
+            .setTooltip(`Match ${source.name} by folder`)
+            .onChange(async (value) => {
+                source.matchByFolder = value;
+                await this.saveContextSources();
+                this.display();
+            });
+        const matchByPropertyField = fields.createDiv({ cls: "fn-context-source-field" });
         matchByPropertyField.createEl("span", { text: "Match by property" });
-        const matchByPropertyToggle = matchByPropertyField.createEl("input", {
-            type: "checkbox",
-            attr: { "aria-label": `Match ${source.name} by property` },
-        });
-        matchByPropertyToggle.checked = source.matchByProperty;
-        matchByPropertyToggle.addEventListener("change", async () => {
-            source.matchByProperty = matchByPropertyToggle.checked;
-            await this.saveContextSources();
-            this.display();
-        });
+        new ToggleComponent(matchByPropertyField)
+            .setValue(source.matchByProperty)
+            .setTooltip(`Match ${source.name} by property`)
+            .onChange(async (value) => {
+                source.matchByProperty = value;
+                await this.saveContextSources();
+                this.display();
+            });
         const propertyField = this.contextTextField(fields, "Property", "type", filterProperty, async (value) => {
             filterProperty = value;
             await saveFilter();
@@ -1205,17 +1221,15 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 await this.saveContextSources();
             },
         );
-        const timelineField = fields.createEl("label", { cls: "fn-context-source-field" });
+        const timelineField = fields.createDiv({ cls: "fn-context-source-field" });
         timelineField.createEl("span", { text: "Include in Focus Timeline" });
-        const timelineToggle = timelineField.createEl("input", {
-            type: "checkbox",
-            attr: { "aria-label": `Include ${source.name} in Focus Timeline` },
-        });
-        timelineToggle.checked = source.includeInTimeline;
-        timelineToggle.addEventListener("change", async () => {
-            source.includeInTimeline = timelineToggle.checked;
-            await this.saveContextSources();
-        });
+        new ToggleComponent(timelineField)
+            .setValue(source.includeInTimeline)
+            .setTooltip(`Include ${source.name} in Focus Timeline`)
+            .onChange(async (value) => {
+                source.includeInTimeline = value;
+                await this.saveContextSources();
+            });
         const template = this.contextTextField(
             fields,
             "Template note",

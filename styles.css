@@ -3709,11 +3709,24 @@ body.fn-mobile-event-screen-open .suggestion-container {
     display: flex;
 }
 
-.fn-settings-row input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin: 0;
+.fn-settings-row .checkbox-container {
     flex: 0 0 auto;
+}
+
+/* ---- Wide fields (textareas that need the full row width) --------------- */
+
+.fn-settings-wide-field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--size-4-2);
+}
+
+.fn-settings-wide-field .setting-item-control {
+    width: 100%;
+}
+
+.fn-settings-wide-field .setting-item-control textarea {
+    width: 100%;
 }
 
 .fn-timeline-alignment,
@@ -3803,10 +3816,7 @@ body.fn-mobile-event-screen-open .suggestion-container {
     box-sizing: border-box;
 }
 
-.fn-context-source-field input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin: 0;
+.fn-context-source-field .checkbox-container {
     justify-self: start;
     align-self: center;
 }
@@ -3864,6 +3874,16 @@ body.fn-mobile-event-screen-open .suggestion-container {
     .fn-periodical-profile-grid {
         grid-template-columns: 1fr;
     }
+}
+
+.fn-periodical-profile-preview {
+    margin-top: var(--size-4-3);
+    padding: var(--size-4-2) var(--size-4-3);
+    border-radius: var(--radius-s);
+    background: var(--background-primary);
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    font-family: var(--font-monospace);
 }
 
 .fn-context-source-warning {
