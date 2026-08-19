@@ -1,6 +1,7 @@
 import { type App, type TFile, normalizePath } from "obsidian";
 import type { EventTaskSettings, InsertPosition } from "./types";
 import type { InboxRecord } from "./EventTaskFormState";
+import { insertUnderHeading } from "./HeadingInsertion";
 import { type FormatInboxEntryOptions, formatInboxEntry } from "./InboxMarkdown";
 import { ensureFolderPath, isTFile } from "./utils";
 import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTaskMarkdown";
@@ -289,65 +290,6 @@ export class EventTaskWriter {
         position: InsertPosition,
     ): Promise<void> {
         const original = await this.app.vault.read(file);
-        const lines = original.split("\n");
-        const cleanHeading = heading.replace(/^#+\s*/, "").trim();
-
-        if (!cleanHeading) {
-            const sep = !original || original.endsWith("\n") ? "" : "\n";
-            await this.app.vault.modify(file, `${original}${sep}${content}\n`);
-            return;
-        }
-
-        const info = this.findHeading(lines, cleanHeading);
-        if (!info) {
-            const sep = !original ? "" : original.endsWith("\n") ? "" : "\n";
-            await this.app.vault.modify(file, `${original}${sep}\n## ${cleanHeading}\n\n${content}\n`);
-            return;
-        }
-
-        if (position === "start") {
-            const blankIdx = info.startIndex + 1;
-            if (lines[blankIdx] === undefined || lines[blankIdx].trim() !== "") {
-                lines.splice(blankIdx, 0, "");
-            }
-            lines.splice(blankIdx + 1, 0, content);
-        } else {
-            if (info.endIndex === info.startIndex + 1) {
-                lines.splice(info.endIndex, 0, "", content);
-            } else {
-                lines.splice(info.endIndex, 0, content);
-            }
-        }
-
-        await this.app.vault.modify(file, lines.join("\n"));
-    }
-
-    private findHeading(
-        lines: string[],
-        target: string,
-    ): { startIndex: number; endIndex: number; level: number } | null {
-        const re = /^(#{1,6})\s+(.+?)\s*$/;
-        const lower = target.toLowerCase();
-        let foundIdx = -1,
-            foundLevel = 0;
-        for (let i = 0; i < lines.length; i++) {
-            const m = lines[i].match(re);
-            if (m && m[2].trim().toLowerCase() === lower) {
-                foundIdx = i;
-                foundLevel = m[1].length;
-                break;
-            }
-        }
-        if (foundIdx === -1) return null;
-        let endIdx = lines.length;
-        for (let i = foundIdx + 1; i < lines.length; i++) {
-            const m = lines[i].match(re);
-            if (m && m[1].length <= foundLevel) {
-                endIdx = i;
-                break;
-            }
-        }
-        while (endIdx > foundIdx + 1 && lines[endIdx - 1].trim() === "") endIdx--;
-        return { startIndex: foundIdx, endIndex: endIdx, level: foundLevel };
+        await this.app.vault.modify(file, insertUnderHeading(original, heading, content, position));
     }
 }
