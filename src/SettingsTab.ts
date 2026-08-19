@@ -3,7 +3,14 @@ import { createContextSource, findSharedFolderConflicts } from "./ContextSourceS
 import { normalizeInboxFolders } from "./InboxFolderSettings";
 import type FocusNotesPlugin from "./main";
 import { createPeriodicalProfile } from "./PeriodicalNoteSettings";
-import { type FocusNotesSettingsPage, settingsTabForSection } from "./SettingsLayout";
+import {
+    CAPTURE_CATEGORIES,
+    type FocusNotesSettingsViewId,
+    type NavigableViewId,
+    parentView,
+    ROOT_CATEGORIES,
+    type SettingsCategory,
+} from "./SettingsLayout";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
@@ -16,8 +23,10 @@ import type {
 } from "./types";
 import { isTFile } from "./utils";
 
+type FocusNotesSettingsView = { id: NavigableViewId } | { id: "objects-source"; sourceId: string };
+
 export class FocusNotesSettingsTab extends PluginSettingTab {
-    private activePage: FocusNotesSettingsPage = "focus";
+    private view: FocusNotesSettingsView = { id: "root" };
     constructor(
         app: App,
         private plugin: FocusNotesPlugin,
@@ -25,32 +34,113 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         super(app, plugin);
     }
 
+    private navigateTo(id: NavigableViewId): void {
+        this.view = { id };
+        this.display();
+    }
+
+    private navigateToObjectSource(sourceId: string): void {
+        this.view = { id: "objects-source", sourceId };
+        this.display();
+    }
+
     display(): void {
         const { containerEl } = this;
+        const view = this.view;
         containerEl.empty();
         containerEl.createEl("h2", { text: "Focus Notes" });
 
-        containerEl.createEl("p", {
-            cls: "setting-item-description",
-            text:
-                "These are defaults. The sidebar lets you override the target per session, " +
-                "so use this page for your usual fallback (e.g. today's daily note).",
-        });
+        if (view.id === "root") {
+            containerEl.createEl("p", {
+                cls: "setting-item-description",
+                text:
+                    "These are defaults. The sidebar lets you override the Focus session target per session, " +
+                    "so use these pages for your usual fallback (e.g. today's daily note).",
+            });
+            this.renderRoot(containerEl);
+            return;
+        }
 
-        this.renderDefaultDurations(containerEl);
-        this.renderFocusSessionCapture(containerEl);
-        this.renderDateGrouping(containerEl);
-        this.renderLogEntryFormat(containerEl);
-        this.renderBehavior(containerEl);
-        this.renderFocusTimeline(containerEl);
-        this.renderMomentCapture(containerEl);
-        this.renderContextSources(containerEl);
-        this.renderEventCapture(containerEl);
-        this.renderTaskCapture(containerEl);
-        this.renderSharedNoteCreation(containerEl);
-        this.renderPeriodicalNotes(containerEl);
+        this.renderBackBar(containerEl, view);
 
-        this.organizeSettingsTabs(containerEl);
+        switch (view.id) {
+            case "periodical":
+                this.renderPeriodicalNotes(containerEl);
+                return;
+            case "objects":
+                this.renderObjectsList(containerEl);
+                return;
+            case "objects-source":
+                this.renderObjectSourceEdit(containerEl, view.sourceId);
+                return;
+            case "focus":
+                this.renderDefaultDurations(containerEl);
+                this.renderFocusSessionCapture(containerEl);
+                this.renderDateGrouping(containerEl);
+                this.renderLogEntryFormat(containerEl);
+                this.renderBehavior(containerEl);
+                return;
+            case "capture":
+                this.renderCaptureList(containerEl);
+                return;
+            case "capture-moment":
+                this.renderMomentCapture(containerEl);
+                return;
+            case "capture-event":
+                this.renderEventCapture(containerEl);
+                return;
+            case "capture-task":
+                this.renderTaskCapture(containerEl);
+                return;
+            case "capture-shared":
+                this.renderSharedNoteCreation(containerEl);
+                return;
+            case "timeline":
+                this.renderFocusTimeline(containerEl);
+                return;
+        }
+    }
+
+    private renderBackBar(containerEl: HTMLElement, view: Exclude<FocusNotesSettingsView, { id: "root" }>): void {
+        const parent = parentView(view.id);
+        if (!parent) return;
+        const parentLabel = parent === "root" ? "Focus Notes" : this.categoryLabel(parent);
+        const back = containerEl.createEl("button", { cls: "fn-settings-back", text: `← Back to ${parentLabel}` });
+        back.addEventListener("click", () => this.navigateTo(parent));
+        if (view.id === "objects-source") {
+            const source = this.plugin.settings.inbox.contextSources.find((s) => s.id === view.sourceId);
+            if (source) containerEl.createEl("p", { cls: "setting-item-description", text: `Editing: ${source.name}` });
+        }
+    }
+
+    private categoryLabel(id: FocusNotesSettingsViewId): string {
+        return (
+            ROOT_CATEGORIES.find((c) => c.id === id)?.label ?? CAPTURE_CATEGORIES.find((c) => c.id === id)?.label ?? id
+        );
+    }
+
+    private renderRoot(containerEl: HTMLElement): void {
+        const list = containerEl.createDiv({ cls: "fn-settings-row-list" });
+        for (const category of ROOT_CATEGORIES) {
+            this.renderCategoryRow(list, category, () => this.navigateTo(category.id));
+        }
+    }
+
+    private renderCaptureList(containerEl: HTMLElement): void {
+        const list = containerEl.createDiv({ cls: "fn-settings-row-list" });
+        for (const category of CAPTURE_CATEGORIES) {
+            this.renderCategoryRow(list, category, () => this.navigateTo(category.id));
+        }
+    }
+
+    private renderCategoryRow(container: HTMLElement, category: SettingsCategory, onClick: () => void): void {
+        const row = container.createDiv({ cls: "fn-settings-row" });
+        const body = row.createDiv({ cls: "fn-settings-row-body" });
+        body.createDiv({ cls: "fn-settings-row-title", text: category.label });
+        body.createDiv({ cls: "fn-settings-row-desc", text: category.description });
+        const arrow = row.createSpan({ cls: "fn-settings-row-arrow" });
+        setIcon(arrow, "chevron-right");
+        row.addEventListener("click", onClick);
     }
 
     private renderDefaultDurations(containerEl: HTMLElement): void {
@@ -923,10 +1013,8 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         }
     }
 
-    private renderContextSources(container: HTMLElement): void {
-        const section = container.createDiv({ cls: "fn-settings-object-section" });
-        section.createEl("h3", { text: "Object Sources" });
-        section.createEl("p", {
+    private renderObjectsList(containerEl: HTMLElement): void {
+        containerEl.createEl("p", {
             cls: "setting-item-description",
             text:
                 "Each source labels one object type. Match by folder and Match by property can each be turned on or " +
@@ -934,23 +1022,71 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 "Multiple object types may share a folder when they use the same Property with distinct Values. " +
                 "Templates are optional; enabled sources with a folder can create objects from the @ suggester.",
         });
-        const list = section.createDiv({ cls: "fn-context-source-list" });
         const sources = this.plugin.settings.inbox.contextSources;
-        const sharedFolderConflicts = findSharedFolderConflicts(sources);
-
+        const list = containerEl.createDiv({ cls: "fn-settings-row-list" });
         sources.forEach((source, index) => {
-            this.renderContextSource(list, source, index, sharedFolderConflicts);
+            this.renderObjectSourceRow(list, source, index);
         });
-        new Setting(list).addButton((button) =>
+
+        new Setting(containerEl).addButton((button) =>
             button
                 .setButtonText("Add object source")
                 .setCta()
                 .onClick(async () => {
-                    sources.push(createContextSource(sources));
+                    const created = createContextSource(sources);
+                    sources.push(created);
                     await this.saveContextSources();
-                    this.display();
+                    this.navigateToObjectSource(created.id);
                 }),
         );
+    }
+
+    private renderObjectSourceRow(container: HTMLElement, source: ContextSourceSettings, index: number): void {
+        const row = container.createDiv({ cls: "fn-settings-row" });
+        const body = row.createDiv({ cls: "fn-settings-row-body" });
+        body.createDiv({ cls: "fn-settings-row-title", text: source.name });
+        body.createDiv({ cls: "fn-settings-row-desc", text: source.enabled ? "Enabled" : "Disabled" });
+
+        const enabled = row.createEl("input", {
+            type: "checkbox",
+            attr: { "aria-label": `Enable ${source.name}` },
+        });
+        enabled.checked = source.enabled;
+        enabled.addEventListener("click", (event) => event.stopPropagation());
+        enabled.addEventListener("change", async () => {
+            source.enabled = enabled.checked;
+            await this.saveContextSources();
+            this.display();
+        });
+
+        const remove = row.createEl("button", {
+            cls: "clickable-icon",
+            attr: { "aria-label": `Remove ${source.name}` },
+        });
+        setIcon(remove, "trash-2");
+        remove.addEventListener("click", async (event) => {
+            event.stopPropagation();
+            this.plugin.settings.inbox.contextSources.splice(index, 1);
+            await this.saveContextSources();
+            this.display();
+        });
+
+        const arrow = row.createSpan({ cls: "fn-settings-row-arrow" });
+        setIcon(arrow, "chevron-right");
+        row.addEventListener("click", () => this.navigateToObjectSource(source.id));
+    }
+
+    private renderObjectSourceEdit(containerEl: HTMLElement, sourceId: string): void {
+        const sources = this.plugin.settings.inbox.contextSources;
+        const index = sources.findIndex((s) => s.id === sourceId);
+        const source = sources[index];
+        if (!source) {
+            this.navigateTo("objects");
+            return;
+        }
+        const sharedFolderConflicts = findSharedFolderConflicts(sources);
+        const list = containerEl.createDiv({ cls: "fn-context-source-list" });
+        this.renderContextSource(list, source, index, sharedFolderConflicts);
     }
 
     private renderContextSource(
@@ -1195,62 +1331,6 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         select.value = value;
         select.addEventListener("change", () => void onChange(select.value));
         return select;
-    }
-
-    private organizeSettingsTabs(container: HTMLElement): void {
-        const pages: Array<{ id: FocusNotesSettingsPage; label: string }> = [
-            { id: "focus", label: "Focus" },
-            { id: "timeline", label: "Timeline" },
-            { id: "capture", label: "Capture" },
-            { id: "periodical", label: "Periodical Notes" },
-            { id: "objects", label: "Objects" },
-        ];
-        const nav = container.createDiv({ cls: "fn-settings-tabs", attr: { role: "tablist" } });
-        const panels = new Map<FocusNotesSettingsPage, HTMLElement>();
-        for (const page of pages) {
-            panels.set(
-                page.id,
-                container.createDiv({
-                    cls: "fn-settings-panel",
-                    attr: { id: `fn-settings-${page.id}`, role: "tabpanel" },
-                }),
-            );
-        }
-
-        let current: FocusNotesSettingsPage = "focus";
-        const movable = Array.from(container.children).filter(
-            (child) => child !== nav && !child.classList.contains("fn-settings-panel") && child.tagName !== "H2",
-        );
-        movable.shift();
-        for (const child of movable) {
-            if (child.classList.contains("fn-settings-object-section")) current = "objects";
-            else if (child.tagName === "H3") current = settingsTabForSection(child.textContent ?? "");
-            panels.get(current)?.appendChild(child);
-        }
-
-        const activate = (page: FocusNotesSettingsPage): void => {
-            this.activePage = page;
-            for (const [id, panel] of panels) panel.toggleClass("fn-settings-panel-active", id === page);
-            for (const button of Array.from(nav.querySelectorAll<HTMLButtonElement>("button[role=tab]"))) {
-                const selected = button.dataset.page === page;
-                button.toggleClass("is-active", selected);
-                button.setAttribute("aria-selected", String(selected));
-                button.tabIndex = selected ? 0 : -1;
-            }
-        };
-        for (const page of pages) {
-            const button = nav.createEl("button", {
-                text: page.label,
-                attr: {
-                    role: "tab",
-                    "aria-controls": `fn-settings-${page.id}`,
-                    "data-page": page.id,
-                },
-            });
-            button.addEventListener("click", () => activate(page.id));
-        }
-        container.querySelector("h2")?.insertAdjacentElement("afterend", nav);
-        activate(this.activePage);
     }
 
     private async saveContextSources(): Promise<void> {
