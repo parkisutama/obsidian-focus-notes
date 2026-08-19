@@ -1,5 +1,4 @@
 import { AbstractInputSuggest, type App, type HoverPopover, Keymap } from "obsidian";
-import { formatRelativeMarkdownLink } from "./InboxMarkdown";
 import {
     findInboxTrigger,
     type InboxTrigger,
@@ -19,9 +18,9 @@ import {
 import type { ContextSuggestion } from "./InboxSuggestions";
 import { getCreatableObjectSources } from "./ObjectNote";
 import { ObjectNoteModal } from "./ObjectNoteModal";
+import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
 import { ObsidianInboxSuggestionSource } from "./ObsidianInboxSuggestionSource";
 import type { ContextSourceSettings } from "./types";
-import { isTFile } from "./utils";
 
 type ContextNotesSuggestion =
     | { kind: "mention"; value: ContextSuggestion }
@@ -244,11 +243,7 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
      * format and Wikilinks setting) instead of always writing a relative Markdown link,
      * falling back to one if the target can't be resolved to a file anymore.
      */
-    private readonly formatObsidianLink = (targetFile: string, filePath: string, label: string): string => {
-        const file = this.app.vault.getAbstractFileByPath(filePath);
-        if (!isTFile(file)) return formatRelativeMarkdownLink(targetFile, filePath, label);
-        return this.app.fileManager.generateMarkdownLink(file, targetFile, undefined, label);
-    };
+    private readonly formatObsidianLink = createObsidianLinkFormatter(this.app);
 
     private readVisibleText(): string {
         return this.inputEl.innerText.replace(/\u00a0/g, " ").replace(/\r\n/g, "\n");
