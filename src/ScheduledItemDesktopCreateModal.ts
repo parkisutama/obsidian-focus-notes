@@ -10,7 +10,7 @@ import { EventTaskFormState } from "./EventTaskFormState";
 import { EventTaskModal, openDesktopScheduledItemCreate } from "./EventTaskModal.ts";
 import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
-import { createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
+import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
 import {
     retryScheduledItemCreateRelated,
     type ScheduledItemCreateRelatedResult,
@@ -213,6 +213,7 @@ export class ScheduledItemDesktopCreateModal extends Modal {
             writeRelated: (request) =>
                 writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
             resolveLinkDestination: createObsidianLinkResolver(this.app),
+            formatSourceLink: createObsidianLinkFormatter(this.app),
         });
         if (result.status === "partial") {
             this.pendingRelated = result;

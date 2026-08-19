@@ -8,7 +8,7 @@ import {
 import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
-import { createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
+import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
 import { saveScheduledItemBlock } from "./ScheduledItemBlockPersistence.ts";
 import {
     retryScheduledItemEditRelated,
@@ -136,6 +136,7 @@ export class ScheduledItemDesktopEditModal extends Modal {
             writeRelated: (request) =>
                 writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
             resolveLinkDestination: createObsidianLinkResolver(this.app),
+            formatSourceLink: createObsidianLinkFormatter(this.app),
             formatDateValue: (value) => {
                 const when = parseLocalDateTime(value, true);
                 return when ? writer.formatDailyLink(when, this.snapshot.filePath, value) : value;

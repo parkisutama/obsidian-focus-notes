@@ -10,7 +10,7 @@ import { EventTaskMobileScreen } from "./EventTaskMobileScreen.ts";
 import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter.ts";
 import { type MobileScheduledItemCreateContext, MobileScheduledItemForm } from "./MobileScheduledItemForm.ts";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource.ts";
-import { createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
+import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
 import {
     retryScheduledItemCreateRelated,
     type ScheduledItemCreateRelatedResult,
@@ -204,6 +204,7 @@ export class ScheduledItemMobileCreateScreen extends Component {
             writeRelated: (request) =>
                 writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
             resolveLinkDestination: createObsidianLinkResolver(this.app),
+            formatSourceLink: createObsidianLinkFormatter(this.app),
         });
         if (result.status === "partial") {
             this.pendingRelated = result;

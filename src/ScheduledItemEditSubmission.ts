@@ -27,6 +27,7 @@ export interface ScheduledItemEditSubmissionDependencies {
     writeRelated: RelatedWriteOperation;
     resolveLinkDestination: LinkDestinationResolver;
     formatDateValue?: FormatDateValue;
+    formatSourceLink?: (targetFilePath: string, linkedFilePath: string, label: string) => string;
 }
 
 export type ScheduledItemEditSubmissionResult =
@@ -83,6 +84,7 @@ export async function submitScheduledItemEdit(
             allDay: temporal.allDay,
             primaryFilePath: snapshot.filePath,
             destinationFilePath: destination.filePath,
+            formatSourceLink: dependencies.formatSourceLink,
         }),
     }));
     const recovery = await writeRelatedDestinations(requests, dependencies.writeRelated);

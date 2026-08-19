@@ -9,13 +9,21 @@ export interface RelatedLogInput {
     primaryFilePath: string;
     destinationFilePath: string;
     primaryLabel?: string;
+    /**
+     * Formats the backlink to the primary note. Defaults to a plain relative Markdown
+     * link, which keeps this function pure and testable without an App; real callers
+     * should inject createObsidianLinkFormatter(app) so the backlink honors the user's
+     * configured link format instead.
+     */
+    formatSourceLink?: (targetFilePath: string, linkedFilePath: string, label: string) => string;
 }
 
 /** Format one immutable, self-contained contextual history entry. */
 export function formatRelatedLog(input: RelatedLogInput): string {
     const timestamp = formatTemporalLabel(input);
     const title = input.title.replace(/\s+/g, " ").trim() || defaultTitle(input.kind);
-    const sourceLink = formatRelativeMarkdownLink(
+    const formatLink = input.formatSourceLink ?? formatRelativeMarkdownLink;
+    const sourceLink = formatLink(
         input.destinationFilePath,
         input.primaryFilePath,
         input.primaryLabel?.trim() || fileBasename(input.primaryFilePath),

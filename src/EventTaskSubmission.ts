@@ -57,6 +57,7 @@ export interface EventTaskSubmissionDependencies {
     contextSources?: readonly ContextSourceSettings[];
     resolveLinkDestination: LinkDestinationResolver;
     formatDailyLink?: (when: Date, targetFilePath: string, label: string) => string;
+    formatSourceLink?: (targetFilePath: string, linkedFilePath: string, label: string) => string;
 }
 
 interface InboxSubmissionWriter {
@@ -81,6 +82,7 @@ export interface InboxSubmissionDependencies {
     contextNotes?: readonly ContextLinkNote[];
     contextSources?: readonly ContextSourceSettings[];
     resolveLinkDestination: LinkDestinationResolver;
+    formatSourceLink?: (targetFilePath: string, linkedFilePath: string, label: string) => string;
     /**
      * Optional same-day Daily Note target to backlink to, e.g. when the primary
      * capture was written to an ISO weekly note. Return null to skip the backlink
@@ -274,7 +276,7 @@ export async function submitInbox(
     const relatedWrites = buildInboxContextWrites(record, target.file, dependencies);
     const backlinkTarget = dependencies.resolveDailyBacklinkTarget?.(record) ?? null;
     if (backlinkTarget?.file.trim() && backlinkTarget.file !== target.file) {
-        relatedWrites.push(buildDailyBacklinkWrite(record, target.file, backlinkTarget));
+        relatedWrites.push(buildDailyBacklinkWrite(record, target.file, backlinkTarget, dependencies.formatSourceLink));
     }
     const recovery = await writeRelatedDestinations(relatedWrites, (request) =>
         dependencies.writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
@@ -313,6 +315,7 @@ function buildEventTaskContextWrites(
                 record.kind === "event" ? record.allDay : !record.timebox && record.due !== null && !record.dueHasTime,
             primaryFilePath: primaryPath,
             destinationFilePath: destination.filePath,
+            formatSourceLink: dependencies.formatSourceLink,
         }),
     }));
 }
@@ -335,6 +338,7 @@ function buildInboxContextWrites(
             occurredAt: record.capturedAt,
             primaryFilePath: primaryPath,
             destinationFilePath: destination.filePath,
+            formatSourceLink: dependencies.formatSourceLink,
         }),
     }));
 }
@@ -343,6 +347,7 @@ function buildDailyBacklinkWrite(
     record: InboxRecord,
     primaryPath: string,
     backlinkTarget: FocusTarget,
+    formatSourceLink: InboxSubmissionDependencies["formatSourceLink"],
 ): RelatedWriteRequest {
     const customTitle = record.title.trim() && record.title.trim() !== record.defaultTitle.trim() ? record.title : "";
     const title = customTitle || record.body.replace(/\s+/g, " ").trim() || "Inbox capture";
@@ -356,6 +361,7 @@ function buildDailyBacklinkWrite(
             occurredAt: record.capturedAt,
             primaryFilePath: primaryPath,
             destinationFilePath: backlinkTarget.file,
+            formatSourceLink,
         }),
     };
 }

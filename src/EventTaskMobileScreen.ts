@@ -15,7 +15,7 @@ import { ContextNotesController } from "./InboxNotesController";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { getMobileViewportMetrics } from "./MobileViewport";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
-import { createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
+import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
 import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
 import { SubmissionPolicy } from "./SubmissionPolicy";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
@@ -630,6 +630,7 @@ export class EventTaskMobileScreen extends Component {
                     contextNotes: readContextSuggestionNotes(this.app),
                     contextSources: settings.inbox.contextSources,
                     resolveLinkDestination: createObsidianLinkResolver(this.app),
+                    formatSourceLink: createObsidianLinkFormatter(this.app),
                     resolveDailyBacklinkTarget: (record) => this.resolveMomentBacklinkTarget(record),
                     usesDatedHeading: this.momentUsesDatedHeading(),
                 }),
@@ -663,6 +664,7 @@ export class EventTaskMobileScreen extends Component {
                 contextNotes: readContextSuggestionNotes(this.app),
                 contextSources: settings.inbox.contextSources,
                 resolveLinkDestination: createObsidianLinkResolver(this.app),
+                formatSourceLink: createObsidianLinkFormatter(this.app),
                 formatDailyLink: (when, path, label) => writer.formatDailyLink(when, path, label),
             }),
         );

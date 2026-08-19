@@ -50,6 +50,25 @@ test("labels a non-Daily primary link with its file name", () => {
     );
 });
 
+test("uses an injected formatSourceLink instead of the default relative-link formatter", () => {
+    const calls: Array<[string, string, string]> = [];
+    const result = formatRelatedLog({
+        kind: "event",
+        title: "Discuss audit methodology",
+        occurredAt: new Date(2026, 7, 2, 9, 0),
+        endedAt: new Date(2026, 7, 2, 10, 0),
+        primaryFilePath: "Daily/2026-08-02.md",
+        destinationFilePath: "People/Andi.md",
+        formatSourceLink: (targetFilePath, linkedFilePath, label) => {
+            calls.push([targetFilePath, linkedFilePath, label]);
+            return `[[${label}]]`;
+        },
+    });
+
+    assert.deepEqual(calls, [["People/Andi.md", "Daily/2026-08-02.md", "2026-08-02"]]);
+    assert.equal(result, "- 2026-08-02 09:00–10:00 — Discuss audit methodology — [[2026-08-02]]");
+});
+
 test("formats all-day Events without a misleading time range", () => {
     assert.equal(
         formatRelatedLog({

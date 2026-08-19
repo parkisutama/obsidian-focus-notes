@@ -21,6 +21,7 @@ export interface ScheduledItemCreateRelatedDependencies {
     now?: Date;
     writeRelated: RelatedWriteOperation;
     resolveLinkDestination: LinkDestinationResolver;
+    formatSourceLink?: (targetFilePath: string, linkedFilePath: string, label: string) => string;
 }
 
 export type ScheduledItemCreateRelatedResult =
@@ -53,6 +54,7 @@ export async function writeScheduledItemCreateRelated(
             allDay: temporal.allDay,
             primaryFilePath: primaryPath,
             destinationFilePath: destination.filePath,
+            formatSourceLink: dependencies.formatSourceLink,
         }),
     }));
     const recovery = await writeRelatedDestinations(requests, dependencies.writeRelated);
