@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
 import { captureLedgerRecord } from "../src/LedgerRecordSource.ts";
 import {
     buildScheduledItemFormBlockEdit,
@@ -111,6 +112,32 @@ test("builds canonical create output and lossless edit output from the same data
                 title: "Custom detail title",
                 path: "Details/Revised proposal.md",
             },
+        },
+    });
+});
+
+test("wraps the Task due date in a link when a formatDateValue resolver is supplied", () => {
+    const data: ScheduledItemFormData = {
+        kind: "task",
+        title: "Revised proposal",
+        description: "",
+        objectReferences: [],
+        detailNote: { mode: "none" },
+        completed: false,
+        priority: "normal",
+        due: "2026-08-22",
+        timebox: null,
+        reminders: [],
+    };
+    const formatDateValue = (value: string) =>
+        formatRelativeMarkdownLink("Persona/Report.md", "Journal/2026-08-22.md", value);
+
+    assert.deepEqual(buildScheduledItemFormBlockEdit(data, undefined, formatDateValue), {
+        status: "ready",
+        edit: {
+            firstLine: `- [ ] Revised proposal | due:${formatDateValue("2026-08-22")}`,
+            description: "",
+            detailNote: { mode: "none" },
         },
     });
 });

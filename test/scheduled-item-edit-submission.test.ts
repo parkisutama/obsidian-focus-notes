@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { resolveRelativeLinkDestination } from "../src/ContextLinkResolver.ts";
+import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
 import { captureLedgerRecord } from "../src/LedgerRecordSource.ts";
 import { retryScheduledItemEditRelated, submitScheduledItemEdit } from "../src/ScheduledItemEditSubmission.ts";
 import type { ScheduledItemFormData } from "../src/ScheduledItemFormData.ts";
@@ -94,6 +95,30 @@ test("writes the primary edit once and logs only newly resolved Object paths", a
     assert.equal(recovered.status, "success");
     assert.equal(primaryWrites, 1);
     assert.deepEqual(relatedAttempts, ["Places/Office.md", "Places/Office.md"]);
+});
+
+test("wraps the edited due date in a link when a formatDateValue dependency is supplied", async () => {
+    let writtenLine: string | null = null;
+    const formatDateValue = (value: string) => formatRelativeMarkdownLink("Tasks.md", "Journal/2026-08-26.md", value);
+
+    const result = await submitScheduledItemEdit(
+        task("Ask @{People/Ana.md}"),
+        task("Ask @{People/Ana.md}"),
+        snapshot(),
+        {
+            contextNotes: [{ path: "People/Ana.md" }],
+            contextSources,
+            resolveLinkDestination: resolveRelativeLinkDestination,
+            writePrimary: async (edit) => {
+                writtenLine = edit.firstLine;
+            },
+            writeRelated: async () => undefined,
+            formatDateValue,
+        },
+    );
+
+    assert.equal(result.status, "success");
+    assert.equal(writtenLine, `- [ ] Review proposal | due:${formatDateValue("2026-08-25")}`);
 });
 
 test("does not attempt related logs when the primary edit fails", async () => {

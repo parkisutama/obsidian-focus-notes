@@ -6,6 +6,7 @@ import {
     retryDetailNoteAttachment,
 } from "./DetailNotePromotion.ts";
 import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter";
+import { formatRelativeMarkdownLink } from "./InboxMarkdown.ts";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
 import { createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
@@ -15,7 +16,7 @@ import {
     type ScheduledItemEditSubmissionResult,
     submitScheduledItemEdit,
 } from "./ScheduledItemEditSubmission.ts";
-import { hydrateScheduledItemFormEdit } from "./ScheduledItemFormAdapter.ts";
+import { hydrateScheduledItemFormEdit, parseLocalDateTime } from "./ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
 import { TargetResolver } from "./TargetResolver.ts";
 import type { FocusNotesSettings } from "./types";
@@ -136,6 +137,11 @@ export class ScheduledItemDesktopEditModal extends Modal {
             writeRelated: (request) =>
                 writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
             resolveLinkDestination: createObsidianLinkResolver(this.app),
+            formatDateValue: (value) => {
+                const when = parseLocalDateTime(value, true);
+                const dailyPath = when ? writer.resolveDailyLinkPath()?.(when) : null;
+                return dailyPath ? formatRelativeMarkdownLink(this.snapshot.filePath, dailyPath, value) : value;
+            },
         });
         this.latestEditResult = result;
         if (result.status === "failure") throw new Error(result.message);

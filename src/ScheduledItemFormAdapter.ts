@@ -13,7 +13,7 @@ import {
     type DetailNoteSelection,
     type ScheduledItemFormData,
 } from "./ScheduledItemFormData.ts";
-import { editTaskLineWithTitle, parseTaskLineEdit } from "./TaskLineEditor.ts";
+import { editTaskLineWithTitle, type FormatDateValue, parseTaskLineEdit } from "./TaskLineEditor.ts";
 
 export type ScheduledItemFormField =
     | "title"
@@ -103,6 +103,7 @@ export function validateScheduledItemFormData(data: ScheduledItemFormData): Sche
 export function buildScheduledItemFormBlockEdit(
     data: ScheduledItemFormData,
     snapshot?: LedgerRecordSnapshot,
+    formatDateValue?: FormatDateValue,
 ): BuildScheduledItemFormBlockResult {
     const validation = validateScheduledItemFormData(data);
     if (!validation.valid) return buildInvalid(validation.field, validation.message);
@@ -110,13 +111,18 @@ export function buildScheduledItemFormBlockEdit(
     const sourceLine = snapshot?.rawLine ?? canonicalPlaceholder(data);
     const lineResult =
         data.kind === "task"
-            ? editTaskLineWithTitle(sourceLine, data.title, {
-                  completed: data.completed,
-                  priority: data.priority,
-                  due: data.due,
-                  timebox: data.timebox,
-                  reminders: data.reminders,
-              })
+            ? editTaskLineWithTitle(
+                  sourceLine,
+                  data.title,
+                  {
+                      completed: data.completed,
+                      priority: data.priority,
+                      due: data.due,
+                      timebox: data.timebox,
+                      reminders: data.reminders,
+                  },
+                  formatDateValue,
+              )
             : editEventLineWithTitle(sourceLine, data.title, {
                   allDay: data.allDay,
                   start: data.start,
@@ -246,7 +252,7 @@ function detailBlockFromSelection(
     return { mode: "link", title: itemTitle, path: selection.path };
 }
 
-function parseLocalDateTime(value: string, allowDateOnly: boolean): Date | null {
+export function parseLocalDateTime(value: string, allowDateOnly: boolean): Date | null {
     const match = value.match(/^(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}))?$/);
     if (!match || (!allowDateOnly && match[4] === undefined)) return null;
     const [year, month, day, hour, minute] = [match[1], match[2], match[3], match[4] ?? "0", match[5] ?? "0"].map(

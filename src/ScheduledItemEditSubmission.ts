@@ -16,6 +16,7 @@ import {
 import type { ScheduledItemBlockEdit } from "./ScheduledItemBlockEditor.ts";
 import { buildScheduledItemFormBlockEdit } from "./ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
+import type { FormatDateValue } from "./TaskLineEditor.ts";
 import type { ContextSourceSettings } from "./types";
 
 export interface ScheduledItemEditSubmissionDependencies {
@@ -25,6 +26,7 @@ export interface ScheduledItemEditSubmissionDependencies {
     writePrimary(edit: ScheduledItemBlockEdit): Promise<void>;
     writeRelated: RelatedWriteOperation;
     resolveLinkDestination: LinkDestinationResolver;
+    formatDateValue?: FormatDateValue;
 }
 
 export type ScheduledItemEditSubmissionResult =
@@ -43,7 +45,7 @@ export async function submitScheduledItemEdit(
     snapshot: LedgerRecordSnapshot,
     dependencies: ScheduledItemEditSubmissionDependencies,
 ): Promise<ScheduledItemEditSubmissionResult> {
-    const built = buildScheduledItemFormBlockEdit(next, snapshot);
+    const built = buildScheduledItemFormBlockEdit(next, snapshot, dependencies.formatDateValue);
     if (built.status === "invalid") {
         return { status: "failure", phase: "validation", message: built.message };
     }

@@ -39,7 +39,27 @@ Full design/rationale: `C:\Users\parki\.claude\plans\elegant-strolling-riddle.md
       shipped: `[^\]]*` excluded every `]` including escaped ones, so a label containing `\[...\]` couldn't
       round-trip — fixed via `(?:\\.|[^\]\\])*`. `pnpm run check` (format/lint/typecheck/test — 266/266) and
       `pnpm run build`/`verify:artifacts` all green via `fnm use`.
-- [ ] 5. Task date fields as relative Markdown links — edit path (`TaskLineEditor.ts`,
-      `ScheduledItemFormAdapter.ts`, `ScheduledItemEditSubmission.ts`, both Edit modals).
+- [x] 5. Task date fields as relative Markdown links — edit path. `TaskLineEditor.ts`'s `parseTaskLineEdit`
+      unwraps `due`/`start`/`end`/`remind` via `unwrapMarkdownLinkLabel` before validation (not `priority`);
+      `editTaskLine`/`editTaskLineWithTitle`/`editTaskLineWithOptionalTitle` gained an optional trailing
+      `formatDateValue?: FormatDateValue` param, threaded into `desiredMetadata`. Confirmed the "unchanged"
+      comparison needed no change — regenerating the same link from the same resolved path produces the
+      same string. `ScheduledItemFormAdapter.ts`'s `buildScheduledItemFormBlockEdit` gained the same param
+      and exported its local `parseLocalDateTime` for reuse (avoiding a 4th duplicate copy).
+      `ScheduledItemEditSubmission.ts`'s dependencies gained `formatDateValue?`. Both Edit
+      modals/screens build `formatDateValue` by reusing `writer.resolveDailyLinkPath()` (exposed in Phase
+      4) combined with `formatRelativeMarkdownLink` — simpler than the plan's original sketch of a fresh
+      `TargetResolver`, since the writer already had one. Confirmed `TaskLedgerEditor.captureTaskLedgerEdit`
+      (live, used for the initial edit snapshot) already reuses `parseTaskLineEdit`, so the unwrap fix
+      covers it too; `TaskLedgerEditor.saveTaskLedgerEdit`/`TaskEditModal.ts` remain dead code, left
+      untouched. `pnpm run check` (format/lint/typecheck/test — 272/272) and `pnpm run build`/
+      `verify:artifacts` all green via `fnm use`.
 
 Each phase = one atomic commit, own test updates, in that order per the plan file.
+
+All 5 phases complete. Remaining: real Obsidian desktop/mobile acceptance testing (automated checks don't
+substitute for it) — toggle an Object Source between folder-only/property-only/both and confirm the
+@-suggester and the @-mention backlink agree; flip an Object Source's and Moment's backlink position and
+confirm newest-first vs newest-last actually lands where expected; create then edit a Task with a due date
+and confirm the daily note's Linked Mentions panel shows it both times, and that re-editing a pre-existing
+plain-text due date upgrades it to a link.

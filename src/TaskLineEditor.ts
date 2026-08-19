@@ -1,4 +1,8 @@
+import { unwrapMarkdownLinkLabel } from "./InboxMarkdown.ts";
 import type { TaskPriority } from "./ScheduledItemTypes";
+
+/** Wraps a plain date/time edit value (e.g. into a relative Markdown link) before it's written. */
+export type FormatDateValue = (value: string) => string;
 
 export interface TaskLineEdit {
     completed: boolean;
@@ -37,13 +41,14 @@ function metadataValue(segment: string): string {
     return separator === -1 ? "" : segment.slice(separator + 1).trim();
 }
 
-function desiredMetadata(edit: TaskLineEdit): Record<OwnedKey, string[]> {
+function desiredMetadata(edit: TaskLineEdit, formatDateValue?: FormatDateValue): Record<OwnedKey, string[]> {
+    const link = (value: string): string => (formatDateValue ? formatDateValue(value) : value);
     return {
         priority: edit.priority === "normal" ? [] : [edit.priority],
-        due: edit.due ? [edit.due] : [],
-        start: edit.timebox ? [edit.timebox.start] : [],
-        end: edit.timebox ? [edit.timebox.end] : [],
-        remind: [...edit.reminders],
+        due: edit.due ? [link(edit.due)] : [],
+        start: edit.timebox ? [link(edit.timebox.start)] : [],
+        end: edit.timebox ? [link(edit.timebox.end)] : [],
+        remind: edit.reminders.map(link),
     };
 }
 
@@ -74,7 +79,9 @@ export function parseTaskLineEdit(line: string): ParseTaskLineEditResult {
     const values: Record<OwnedKey, string[]> = { priority: [], due: [], start: [], end: [], remind: [] };
     for (const segment of segments) {
         const key = metadataKey(segment);
-        if (key && OWNED_KEYS.includes(key as OwnedKey)) values[key as OwnedKey].push(metadataValue(segment));
+        if (!key || !OWNED_KEYS.includes(key as OwnedKey)) continue;
+        const raw = metadataValue(segment);
+        values[key as OwnedKey].push(key === "priority" ? raw : unwrapMarkdownLinkLabel(raw));
     }
     if ([values.priority, values.due, values.start, values.end].some((owned) => owned.length > 1)) {
         return { status: "invalid", reason: "duplicate-owned-field" };
@@ -113,22 +120,32 @@ export function parseTaskLineEdit(line: string): ParseTaskLineEditResult {
 
 const OWNED_PRIORITIES: ReadonlySet<string> = new Set(["high", "medium", "normal", "low"]);
 
-export function editTaskLine(line: string, edit: TaskLineEdit): EditTaskLineResult {
-    return editTaskLineWithOptionalTitle(line, null, edit);
+export function editTaskLine(line: string, edit: TaskLineEdit, formatDateValue?: FormatDateValue): EditTaskLineResult {
+    return editTaskLineWithOptionalTitle(line, null, edit, formatDateValue);
 }
 
-export function editTaskLineWithTitle(line: string, title: string, edit: TaskLineEdit): EditTaskLineResult {
-    return editTaskLineWithOptionalTitle(line, title, edit);
+export function editTaskLineWithTitle(
+    line: string,
+    title: string,
+    edit: TaskLineEdit,
+    formatDateValue?: FormatDateValue,
+): EditTaskLineResult {
+    return editTaskLineWithOptionalTitle(line, title, edit, formatDateValue);
 }
 
-function editTaskLineWithOptionalTitle(line: string, titleEdit: string | null, edit: TaskLineEdit): EditTaskLineResult {
+function editTaskLineWithOptionalTitle(
+    line: string,
+    titleEdit: string | null,
+    edit: TaskLineEdit,
+    formatDateValue?: FormatDateValue,
+): EditTaskLineResult {
     const match = line.match(/^(\s*-\s+\[)( |x|X)(\]\s+)(.+)$/);
     if (!match) return { status: "invalid", reason: "not-task" };
 
     const segments = match[4].split(" | ");
     const originalTitle = segments.shift() ?? "";
     const title = titleEdit === null ? originalTitle : renderEditedTitle(originalTitle, titleEdit);
-    const desired = desiredMetadata(edit);
+    const desired = desiredMetadata(edit, formatDateValue);
     const consumed: Record<OwnedKey, number> = { priority: 0, due: 0, start: 0, end: 0, remind: 0 };
     const metadata: string[] = [];
     const ownedPositions: number[] = [];

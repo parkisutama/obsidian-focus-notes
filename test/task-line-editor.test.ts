@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
 import { editTaskLine, parseTaskLineEdit } from "../src/TaskLineEditor.ts";
 
 test("parses every editable Task field including multiple reminders", () => {
@@ -110,6 +111,59 @@ test("normalizes out-of-order owned metadata into canonical order even without f
         }),
         { status: "ready", line: "- [ ] Task | priority:high | owner:Ana | due:2026-08-16" },
     );
+});
+
+test("parses a link-wrapped due date back to its plain edit value", () => {
+    const link = formatRelativeMarkdownLink("Persona/Report.md", "Journal/2026-08-16.md", "2026-08-16");
+    const line = `- [ ] Task | due:${link}`;
+
+    assert.deepEqual(parseTaskLineEdit(line), {
+        status: "parsed",
+        edit: { completed: false, priority: "normal", due: "2026-08-16", timebox: null, reminders: [] },
+    });
+});
+
+test("re-wraps an edited date into a link when a formatDateValue resolver is supplied", () => {
+    const line = "- [ ] Task | owner:Ana";
+    const formatDateValue = (value: string) =>
+        formatRelativeMarkdownLink("Persona/Report.md", "Journal/2026-08-17.md", value);
+
+    const result = editTaskLine(
+        line,
+        { completed: false, priority: "normal", due: "2026-08-17", timebox: null, reminders: [] },
+        formatDateValue,
+    );
+
+    assert.deepEqual(result, {
+        status: "ready",
+        line: `- [ ] Task | owner:Ana | due:${formatDateValue("2026-08-17")}`,
+    });
+});
+
+test("keeps an already-linked date unchanged when re-saved with the same resolver", () => {
+    const formatDateValue = (value: string) =>
+        formatRelativeMarkdownLink("Persona/Report.md", "Journal/2026-08-16.md", value);
+    const line = `- [ ] Task | due:${formatDateValue("2026-08-16")}`;
+
+    const result = editTaskLine(
+        line,
+        { completed: false, priority: "normal", due: "2026-08-16", timebox: null, reminders: [] },
+        formatDateValue,
+    );
+
+    assert.deepEqual(result, { status: "ready", line });
+});
+
+test("leaves date fields as plain text when no formatDateValue resolver is supplied", () => {
+    const result = editTaskLine("- [ ] Task", {
+        completed: false,
+        priority: "normal",
+        due: "2026-08-16",
+        timebox: null,
+        reminders: [],
+    });
+
+    assert.deepEqual(result, { status: "ready", line: "- [ ] Task | due:2026-08-16" });
 });
 
 test("removes optional owned attributes and refuses non-Task lines", () => {
