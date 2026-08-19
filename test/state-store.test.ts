@@ -45,6 +45,41 @@ test("merges new weekly-note Inbox fields onto a partially saved inbox object", 
     assert.equal(merged.inbox.dailyBacklinkHeading, DEFAULT_SETTINGS.inbox.dailyBacklinkHeading);
 });
 
+test("seeds default Daily/Weekly periodical profiles and syncs Daily from core plugin by default", () => {
+    const merged = mergeSettingsWithDefaults({ pomodoroMinutes: 45 });
+
+    assert.equal(merged.periodicalNotes.syncDailyFromCorePlugin, true);
+    assert.deepEqual(
+        merged.periodicalNotes.profiles.map((profile) => profile.id),
+        ["daily", "weekly"],
+    );
+    const daily = merged.periodicalNotes.profiles[0];
+    assert.equal(daily?.fileFormat, "YYYY-MM-DD");
+    assert.equal(daily?.headingFormat, "");
+    const weekly = merged.periodicalNotes.profiles[1];
+    assert.equal(weekly?.folder, "Weekly");
+    assert.equal(weekly?.fileFormat, "GGGG-[W]WW");
+    assert.equal(weekly?.headingFormat, "YYYY-MM-DD");
+});
+
+test("preserves a saved periodical profile list and clones it, not sharing mutable state", () => {
+    const saved = {
+        periodicalNotes: {
+            syncDailyFromCorePlugin: false,
+            profiles: [{ id: "daily", name: "Daily", folder: "Journal", fileFormat: "YYYY-MM-DD", headingFormat: "" }],
+        },
+    };
+    const first = mergeSettingsWithDefaults(saved);
+    const second = mergeSettingsWithDefaults(saved);
+
+    assert.equal(first.periodicalNotes.syncDailyFromCorePlugin, false);
+    assert.equal(first.periodicalNotes.profiles.length, 1);
+    assert.equal(first.periodicalNotes.profiles[0]?.folder, "Journal");
+
+    first.periodicalNotes.profiles[0].folder = "Changed";
+    assert.equal(second.periodicalNotes.profiles[0]?.folder, "Journal");
+});
+
 test("clones Object Source state during settings merge", () => {
     const first = mergeSettingsWithDefaults({ inbox: { ...DEFAULT_SETTINGS.inbox } });
     const second = mergeSettingsWithDefaults({});

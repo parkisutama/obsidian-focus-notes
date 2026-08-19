@@ -2,6 +2,7 @@ import { type App, PluginSettingTab, Setting, setIcon } from "obsidian";
 import { createContextSource, findSharedFolderConflicts } from "./ContextSourceSettings";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
 import type FocusNotesPlugin from "./main";
+import { createPeriodicalProfile } from "./PeriodicalNoteSettings";
 import { type FocusNotesSettingsPage, settingsTabForSection } from "./SettingsLayout";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
@@ -11,6 +12,7 @@ import type {
     InboxTargetMode,
     InsertPosition,
     ObjectNotePlacement,
+    PeriodicalNoteProfile,
     TimelineMode,
 } from "./types";
 import { isTFile } from "./utils";
@@ -669,7 +671,98 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 }),
             );
 
+        this.renderPeriodicalNotes(containerEl);
+
         this.organizeSettingsTabs(containerEl);
+    }
+
+    private renderPeriodicalNotes(containerEl: HTMLElement): void {
+        containerEl.createEl("h3", { text: "Periodical Notes" });
+        containerEl.createEl("p", {
+            cls: "setting-item-description",
+            text:
+                "Define where each kind of periodical note lives — daily, weekly, or any custom cadence. " +
+                "Focus session, Event, and Task capture each pick one of these profiles as their destination.",
+        });
+
+        new Setting(containerEl)
+            .setName("Sync Daily profile from core Daily Notes plugin")
+            .setDesc(
+                "When the core Daily Notes plugin is enabled, the \"Daily\" profile's folder and file format " +
+                    "are read from it live. Disabled, unavailable, or any other profile: its own fields below apply.",
+            )
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.periodicalNotes.syncDailyFromCorePlugin).onChange(async (v) => {
+                    this.plugin.settings.periodicalNotes.syncDailyFromCorePlugin = v;
+                    await this.plugin.saveSettings();
+                }),
+            );
+
+        const list = containerEl.createDiv({ cls: "fn-periodical-profile-list" });
+        const profiles = this.plugin.settings.periodicalNotes.profiles;
+        profiles.forEach((profile, index) => {
+            this.renderPeriodicalProfile(list, profile, index);
+        });
+
+        new Setting(containerEl).addButton((button) =>
+            button
+                .setButtonText("Add profile")
+                .setCta()
+                .onClick(async () => {
+                    profiles.push(createPeriodicalProfile(profiles));
+                    await this.plugin.saveSettings();
+                    this.display();
+                }),
+        );
+    }
+
+    private renderPeriodicalProfile(container: HTMLElement, profile: PeriodicalNoteProfile, index: number): void {
+        const card = container.createDiv({ cls: "fn-periodical-profile-card" });
+        const header = card.createDiv({ cls: "fn-periodical-profile-header" });
+        header.createEl("strong", { text: profile.name || profile.id });
+        header.createEl("small", { text: `ID: ${profile.id}` });
+        const remove = header.createEl("button", {
+            cls: "clickable-icon",
+            attr: { "aria-label": `Remove ${profile.name || profile.id}` },
+        });
+        setIcon(remove, "trash-2");
+        remove.addEventListener("click", async () => {
+            this.plugin.settings.periodicalNotes.profiles.splice(index, 1);
+            await this.plugin.saveSettings();
+            this.display();
+        });
+
+        const fields = card.createDiv({ cls: "fn-periodical-profile-grid" });
+        this.contextTextField(fields, "Name", "Monthly", profile.name, async (value) => {
+            profile.name = value.trim() || profile.id;
+            header.querySelector("strong")?.setText(profile.name);
+            await this.plugin.saveSettings();
+        });
+        const folderInput = this.contextTextField(
+            fields,
+            "Folder",
+            "Journal/{{date:YYYY}}",
+            profile.folder,
+            async (value) => {
+                profile.folder = value.trim();
+                await this.plugin.saveSettings();
+            },
+        );
+        new FolderSuggest(this.app, folderInput);
+        this.contextTextField(fields, "File format", "YYYY-MM-DD", profile.fileFormat, async (value) => {
+            profile.fileFormat = value.trim() || "YYYY-MM-DD";
+            await this.plugin.saveSettings();
+        });
+        this.contextTextField(
+            fields,
+            "Heading format",
+            "empty = fixed heading per capture kind",
+            profile.headingFormat,
+            async (value) => {
+                profile.headingFormat = value.trim();
+                await this.plugin.saveSettings();
+            },
+        );
     }
 
     private renderTimelineAlignmentStatus(container: HTMLElement): void {
@@ -947,6 +1040,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             { id: "focus", label: "Focus" },
             { id: "timeline", label: "Timeline" },
             { id: "capture", label: "Capture" },
+            { id: "periodical", label: "Periodical Notes" },
             { id: "objects", label: "Objects" },
         ];
         const nav = container.createDiv({ cls: "fn-settings-tabs", attr: { role: "tablist" } });

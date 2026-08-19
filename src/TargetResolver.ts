@@ -1,6 +1,6 @@
 import { type App, moment } from "obsidian";
 import { normalizeDailyNoteFormat } from "./DailyNotePath";
-import type { FocusNotesSettings, FocusTarget } from "./types";
+import type { FocusNotesSettings, FocusTarget, PeriodicalNoteProfile } from "./types";
 
 /**
  * Resolves abstract targets (which may contain template tokens or be empty)
@@ -105,6 +105,66 @@ export class TargetResolver {
             this.settings.dailyNoteFormat || "YYYY-MM-DD",
         );
         return { ...resolved, heading: moment(when).format(headingFormat) };
+    }
+
+    /**
+     * Resolve a user-defined Periodical Note profile for an explicit date.
+     * Returns null when no profile with that id exists — callers must surface
+     * that rather than silently falling back elsewhere.
+     *
+     * The reserved "daily" profile optionally syncs its folder/fileFormat live
+     * from the core Daily Notes plugin (settings.periodicalNotes.
+     * syncDailyFromCorePlugin); every other profile is always resolved purely
+     * from its own manual fields, so this never hard-depends on that plugin.
+     */
+    public getPeriodicalTarget(profileId: string, when: Date = new Date()): FocusTarget | null {
+        const profile = this.findProfile(profileId);
+        if (!profile) return null;
+
+        let folder = profile.folder;
+        let fileFormat = profile.fileFormat;
+        if (profile.id === "daily" && this.settings.periodicalNotes.syncDailyFromCorePlugin) {
+            const dn = this.readDailyNotesConfig();
+            if (dn) {
+                folder = dn.folder ?? folder;
+                fileFormat = normalizeDailyNoteFormat(dn.format, fileFormat);
+            }
+        }
+
+        const folderPrefix = folder ? `${folder.replace(/\/+$/, "")}/` : "";
+        const format = normalizeDailyNoteFormat(fileFormat, "YYYY-MM-DD");
+        const resolved = this.resolve(
+            { file: `${folderPrefix}{{date:${format}}}.md`, heading: "", position: "end" },
+            when,
+        );
+        const heading = profile.headingFormat ? moment(when).format(profile.headingFormat) : "";
+        return { ...resolved, heading };
+    }
+
+    /**
+     * Folder for a Periodical Note profile (no date expansion), or null when
+     * no profile with that id exists. Used for Timeline auto-inclusion and
+     * Detail Note folder placement. Replaces the old Daily-Notes-only
+     * getDailyNoteFolder() with the same core-plugin-sync behavior, scoped to
+     * whichever profile id is asked for.
+     */
+    public getProfileFolder(profileId: string): string | null {
+        const profile = this.findProfile(profileId);
+        if (!profile) return null;
+        let folder = profile.folder;
+        if (profile.id === "daily" && this.settings.periodicalNotes.syncDailyFromCorePlugin) {
+            const dn = this.readDailyNotesConfig();
+            if (dn?.folder !== undefined) folder = dn.folder;
+        }
+        const normalized = folder
+            .trim()
+            .replace(/\\/g, "/")
+            .replace(/^\/+|\/+$/g, "");
+        return normalized || null;
+    }
+
+    private findProfile(profileId: string): PeriodicalNoteProfile | null {
+        return this.settings.periodicalNotes.profiles.find((profile) => profile.id === profileId) ?? null;
     }
 
     /** Configured Daily Notes base folder, or null when unavailable/root-scoped. */

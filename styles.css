@@ -3782,6 +3782,45 @@ body.fn-mobile-event-screen-open .suggestion-container {
     justify-self: start;
 }
 
+.fn-periodical-profile-list {
+    display: grid;
+    gap: var(--size-4-3);
+    margin-block: var(--size-4-3) var(--size-4-5);
+}
+
+.fn-periodical-profile-card {
+    padding: var(--size-4-3);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--radius-m);
+    background: var(--background-secondary);
+}
+
+.fn-periodical-profile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--size-4-3);
+    margin-bottom: var(--size-4-3);
+}
+
+.fn-periodical-profile-header small {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    margin-left: var(--size-4-2);
+}
+
+.fn-periodical-profile-grid {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1fr) minmax(10rem, 1.4fr) minmax(6rem, 0.8fr) minmax(8rem, 1fr);
+    gap: var(--size-4-2);
+}
+
+@media (max-width: 640px) {
+    .fn-periodical-profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .fn-context-source-warning {
     margin-top: var(--size-4-3);
     padding: var(--size-4-2);
