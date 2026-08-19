@@ -67,81 +67,50 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 }),
             );
 
-        // ---- Default target ---------------------------------------------
-        containerEl.createEl("h3", { text: "Default log target" });
+        // ---- Focus session capture ---------------------------------------
+        containerEl.createEl("h3", { text: "Focus session capture" });
+
+        this.renderProfilePicker(
+            containerEl,
+            "Periodical note",
+            "Which Periodical Notes profile Focus session logs land in by default. Define profiles on the " +
+                "Periodical Notes tab.",
+            this.plugin.settings.captureFocusSession.profileId,
+            async (profileId) => {
+                this.plugin.settings.captureFocusSession.profileId = profileId;
+                this.plugin.settings.liveTarget.file = "";
+                await this.plugin.saveSettings();
+            },
+        );
 
         new Setting(containerEl)
-            .setName("Use Daily Notes plugin settings")
+            .setName("Heading")
             .setDesc(
-                "When enabled, the default file is derived from the core Daily Notes plugin's " +
-                    "folder + format (so today's note is always the fallback). When off, the manual " +
-                    "path below is used.",
-            )
-            .addToggle((toggle) =>
-                toggle.setValue(this.plugin.settings.useDailyNotesAsDefault).onChange(async (v) => {
-                    this.plugin.settings.useDailyNotesAsDefault = v;
-                    this.plugin.settings.liveTarget.file = "";
-                    await this.plugin.saveSettings();
-                    this.display();
-                }),
-            );
-
-        new Setting(containerEl)
-            .setName("Default file (template)")
-            .setDesc(
-                "Used when Daily Notes integration is off. " +
-                    "Supports {{date}} and {{date:FORMAT}} tokens, e.g. Logs/{{date:YYYY/MM}}.md",
-            )
-            .addText((text) => {
-                text.setPlaceholder("Journal/{{date:YYYY-MM-DD}}.md")
-                    .setValue(this.plugin.settings.defaultTarget.file)
-                    .onChange(async (v) => {
-                        this.plugin.settings.defaultTarget.file = v.trim();
-                        this.plugin.settings.liveTarget.file = "";
-                        await this.plugin.saveSettings();
-                    });
-                text.setDisabled(this.plugin.settings.useDailyNotesAsDefault);
-                new FileSuggest(this.app, text.inputEl);
-            });
-
-        new Setting(containerEl)
-            .setName("Default heading")
-            .setDesc(
-                "Heading text (no #) under which entries land. Empty = append to end of file. " +
-                    "Created at level ## if missing.",
+                "Heading text (no #) under which entries land. Used when the chosen profile has no dated " +
+                    "per-period heading. Empty = append to end of file. Created at level ## if missing.",
             )
             .addText((text) =>
                 text
                     .setPlaceholder("Focus timeline")
-                    .setValue(this.plugin.settings.defaultTarget.heading)
+                    .setValue(this.plugin.settings.captureFocusSession.heading)
                     .onChange(async (v) => {
-                        this.plugin.settings.defaultTarget.heading = v.trim();
+                        this.plugin.settings.captureFocusSession.heading = v.trim();
                         this.plugin.settings.liveTarget.heading = "";
                         await this.plugin.saveSettings();
                     }),
             );
 
-        new Setting(containerEl).setName("Default insert position").addDropdown((drop) =>
+        new Setting(containerEl).setName("Insert position").addDropdown((drop) =>
             drop
                 .addOption("end", "End of section (newest at bottom)")
                 .addOption("start", "Start of section (newest at top)")
-                .setValue(this.plugin.settings.defaultTarget.position)
+                .setValue(this.plugin.settings.captureFocusSession.position)
                 .onChange(async (v) => {
-                    this.plugin.settings.defaultTarget.position = v as InsertPosition;
+                    this.plugin.settings.captureFocusSession.position = v as InsertPosition;
                     this.plugin.settings.liveTarget.position = v as InsertPosition;
                     await this.plugin.saveSettings();
                 }),
         );
-
-        new Setting(containerEl)
-            .setName("Daily-note date format")
-            .setDesc("Moment.js format used for the {{date}} token. Example: YYYY-MM-DD.")
-            .addText((text) =>
-                text.setValue(this.plugin.settings.dailyNoteFormat).onChange(async (v) => {
-                    this.plugin.settings.dailyNoteFormat = v || "YYYY-MM-DD";
-                    await this.plugin.saveSettings();
-                }),
-            );
 
         // ---- Date grouping ----------------------------------------------
         containerEl.createEl("h3", { text: "Date grouping" });
@@ -533,18 +502,74 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
 
         this.renderContextSources(containerEl);
 
-        // ---- Event & Task Creation -----------------------------------------
-        containerEl.createEl("h3", { text: "Event & Task Creation" });
+        // ---- Event capture ---------------------------------------------
+        containerEl.createEl("h3", { text: "Event capture" });
 
-        containerEl.createEl("p", {
-            cls: "setting-item-description",
-            text: "Configure folders and default target heading used when creating events or tasks.",
-        });
+        this.renderProfilePicker(
+            containerEl,
+            "Periodical note",
+            "Which Periodical Notes profile new Events default to. Define profiles on the Periodical Notes tab.",
+            this.plugin.settings.captureEvent.profileId,
+            async (profileId) => {
+                this.plugin.settings.captureEvent.profileId = profileId;
+                await this.plugin.saveSettings();
+            },
+        );
+
+        new Setting(containerEl)
+            .setName("Heading")
+            .setDesc(
+                "Heading text where Event lines are inserted. Used when the chosen profile has no dated " +
+                    "per-period heading. Leave empty to append at end of file.",
+            )
+            .addText((text) =>
+                text
+                    .setPlaceholder("Activities & Tasks")
+                    .setValue(this.plugin.settings.captureEvent.heading)
+                    .onChange(async (v) => {
+                        this.plugin.settings.captureEvent.heading = v.trim();
+                        await this.plugin.saveSettings();
+                    }),
+            );
+
+        new Setting(containerEl).setName("Insert position").addDropdown((drop) =>
+            drop
+                .addOption("end", "End of section (newest at bottom)")
+                .addOption("start", "Start of section (newest at top)")
+                .setValue(this.plugin.settings.captureEvent.position)
+                .onChange(async (v) => {
+                    this.plugin.settings.captureEvent.position = v as InsertPosition;
+                    await this.plugin.saveSettings();
+                }),
+        );
 
         new Setting(containerEl)
             .setName("Hub notes folder")
+            .setDesc("Folder where new Event hub notes are created. Created automatically if it doesn't exist.")
+            .addText((text) => {
+                text.setPlaceholder("Notes")
+                    .setValue(this.plugin.settings.captureEvent.hubNotesFolder)
+                    .onChange(async (v) => {
+                        this.plugin.settings.captureEvent.hubNotesFolder = v.trim() || "Notes";
+                        await this.plugin.saveSettings();
+                    });
+                new FolderSuggest(this.app, text.inputEl);
+            });
+
+        // ---- Task & shared note creation ------------------------------------
+        containerEl.createEl("h3", { text: "Task & shared note creation" });
+
+        containerEl.createEl("p", {
+            cls: "setting-item-description",
+            text:
+                "Task destination settings move to their own section soon. Hub folder/heading below are Task-only " +
+                "for now; detail-note settings remain shared by Event and Task.",
+        });
+
+        new Setting(containerEl)
+            .setName("Task hub notes folder")
             .setDesc(
-                "Folder where new hub notes are created when choosing 'New note'. " +
+                "Folder where new Task hub notes are created when choosing 'New note'. " +
                     "Created automatically if it doesn't exist.",
             )
             .addText((text) => {
@@ -558,14 +583,11 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             });
 
         new Setting(containerEl)
-            .setName("Default target heading")
-            .setDesc(
-                "Heading in the target file where event/task lines are inserted. " +
-                    "Leave empty to append at end of file.",
-            )
+            .setName("Task default target heading")
+            .setDesc("Heading in the target file where Task lines are inserted. Leave empty to append at end of file.")
             .addText((text) =>
                 text
-                    .setPlaceholder("Focus timeline")
+                    .setPlaceholder("Activities & Tasks")
                     .setValue(this.plugin.settings.eventTask.defaultSaveHeading)
                     .onChange(async (v) => {
                         this.plugin.settings.eventTask.defaultSaveHeading = v.trim();
@@ -676,6 +698,25 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         this.organizeSettingsTabs(containerEl);
     }
 
+    /** Dropdown of Periodical Notes profiles, shared by Focus/Event/Moment capture sections. */
+    private renderProfilePicker(
+        container: HTMLElement,
+        name: string,
+        desc: string,
+        currentProfileId: string,
+        onChange: (profileId: string) => Promise<void>,
+    ): void {
+        const profiles = this.plugin.settings.periodicalNotes.profiles;
+        new Setting(container)
+            .setName(name)
+            .setDesc(desc)
+            .addDropdown((dropdown) => {
+                if (profiles.length === 0) dropdown.addOption("", "No profiles defined yet");
+                for (const profile of profiles) dropdown.addOption(profile.id, profile.name || profile.id);
+                dropdown.setValue(currentProfileId).onChange(onChange);
+            });
+    }
+
     private renderPeriodicalNotes(containerEl: HTMLElement): void {
         containerEl.createEl("h3", { text: "Periodical Notes" });
         containerEl.createEl("p", {
@@ -694,6 +735,16 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             .addToggle((toggle) =>
                 toggle.setValue(this.plugin.settings.periodicalNotes.syncDailyFromCorePlugin).onChange(async (v) => {
                     this.plugin.settings.periodicalNotes.syncDailyFromCorePlugin = v;
+                    await this.plugin.saveSettings();
+                }),
+            );
+
+        new Setting(containerEl)
+            .setName("Default date format")
+            .setDesc("Moment.js format used for a bare {{date}} token (no explicit :FORMAT). Example: YYYY-MM-DD.")
+            .addText((text) =>
+                text.setValue(this.plugin.settings.dailyNoteFormat).onChange(async (v) => {
+                    this.plugin.settings.dailyNoteFormat = v || "YYYY-MM-DD";
                     await this.plugin.saveSettings();
                 }),
             );
@@ -768,7 +819,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
     private renderTimelineAlignmentStatus(container: HTMLElement): void {
         const settings = this.plugin.settings;
         const resolver = new TargetResolver(this.app, settings);
-        const dailyFolder = settings.useDailyNotesAsDefault ? resolver.getDailyNoteFolder() : null;
+        const dailyFolder = resolver.getProfileFolder("daily");
         const groups = buildTimelineSourceGroups(
             settings.timeline.sourceFolders,
             dailyFolder,
@@ -784,9 +835,9 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
 
         if (dailyFolder) {
             status.createDiv({ text: `Automatically indexed Daily Notes folder: ${dailyFolder}` });
-        } else if (settings.useDailyNotesAsDefault) {
+        } else {
             status.createDiv({
-                text: "Daily Notes uses the vault root or could not be resolved; it is not auto-added.",
+                text: "Daily profile uses the vault root, has no folder configured, or could not be resolved; it is not auto-added.",
             });
         }
 

@@ -339,7 +339,7 @@ export class TimerView extends ItemView {
             this.getSettings().liveTarget = {
                 file: "",
                 heading: "",
-                position: this.getSettings().defaultTarget.position,
+                position: this.getSettings().captureFocusSession.position,
             };
             void this.saveSettings();
             this.syncTargetInputs();

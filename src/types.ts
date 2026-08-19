@@ -47,26 +47,21 @@ export interface FocusNotesSettings {
      */
     lastMode: DisplayMode;
 
-    /** Where logs go when the user has not overridden the target in the sidebar. */
-    defaultTarget: FocusTarget;
+    /** Where Focus session logs go by default — a Periodical Notes profile + heading + position. */
+    captureFocusSession: FocusSessionCaptureSettings;
 
     /**
      * Live override of the target, edited from the sidebar.
      *
      * Per-field fallback semantics: if liveTarget.file is "" the writer falls
-     * back to defaultTarget.file (same for heading). This lets the user clear
-     * a field to "follow the default" without remembering its exact value.
-     * Position is always set (start | end), so it has no fallback notion.
+     * back to the resolved captureFocusSession target's file (same for
+     * heading). This lets the user clear a field to "follow the default"
+     * without remembering its exact value. Position is always set
+     * (start | end), so it has no fallback notion.
      */
     liveTarget: FocusTarget;
 
-    /**
-     * If true, the default file path is auto-derived from the core Daily Notes
-     * plugin's folder + format settings (read defensively from internalPlugins).
-     * The user can still override per-session in the sidebar.
-     */
-    useDailyNotesAsDefault: boolean;
-    /** Format string used for {{date}} when no explicit format is given. */
+    /** Format string used for a bare {{date}} token when no explicit format is given. */
     dailyNoteFormat: string;
 
     /**
@@ -111,6 +106,9 @@ export interface FocusNotesSettings {
 
     /** User-defined registry of periodical notes (daily, weekly, or any custom cadence). */
     periodicalNotes: PeriodicalNotesSettings;
+
+    /** Where new Events default to — a Periodical Notes profile + heading + position + hub folder. */
+    captureEvent: EventCaptureSettings;
 }
 
 /**
@@ -129,6 +127,20 @@ export interface PeriodicalNoteProfile {
     fileFormat: string;
     /** Moment.js format for a per-period heading inside the file. Empty = no dated sub-heading. */
     headingFormat: string;
+}
+
+/** Which Periodical Notes profile + heading + position one capture kind writes to. */
+export interface CaptureHeadingTarget {
+    profileId: string;
+    /** Used verbatim when the resolved profile's headingFormat is empty. */
+    heading: string;
+    position: InsertPosition;
+}
+
+export type FocusSessionCaptureSettings = CaptureHeadingTarget;
+
+export interface EventCaptureSettings extends CaptureHeadingTarget {
+    hubNotesFolder: string;
 }
 
 export interface PeriodicalNotesSettings {
@@ -252,8 +264,8 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
     pomodoroMinutes: 25,
     timerMinutes: 10,
     lastMode: "pomodoro",
-    defaultTarget: {
-        file: "Journal/{{date:YYYY-MM-DD}}.md",
+    captureFocusSession: {
+        profileId: "daily",
         heading: "Focus timeline",
         position: "end",
     },
@@ -262,7 +274,6 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         heading: "",
         position: "end",
     },
-    useDailyNotesAsDefault: true,
     dailyNoteFormat: "YYYY-MM-DD",
 
     // Date grouping defaults: off, level-3 sub-heading, [[wikilinked]] date so
@@ -306,6 +317,12 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         includeStatus: true,
         includePriority: true,
         includeTags: true,
+    },
+    captureEvent: {
+        profileId: "daily",
+        heading: "Activities & Tasks",
+        position: "end",
+        hubNotesFolder: "Notes",
     },
     periodicalNotes: {
         syncDailyFromCorePlugin: true,
@@ -382,9 +399,13 @@ export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): F
     return {
         ...DEFAULT_SETTINGS,
         ...saved,
-        defaultTarget: {
-            ...DEFAULT_SETTINGS.defaultTarget,
-            ...((saved.defaultTarget ?? {}) as Partial<typeof DEFAULT_SETTINGS.defaultTarget>),
+        captureFocusSession: {
+            ...DEFAULT_SETTINGS.captureFocusSession,
+            ...((saved.captureFocusSession ?? {}) as Partial<typeof DEFAULT_SETTINGS.captureFocusSession>),
+        },
+        captureEvent: {
+            ...DEFAULT_SETTINGS.captureEvent,
+            ...((saved.captureEvent ?? {}) as Partial<typeof DEFAULT_SETTINGS.captureEvent>),
         },
         liveTarget: {
             ...DEFAULT_SETTINGS.liveTarget,

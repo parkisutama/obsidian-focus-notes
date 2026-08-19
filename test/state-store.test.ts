@@ -80,6 +80,29 @@ test("preserves a saved periodical profile list and clones it, not sharing mutab
     assert.equal(second.periodicalNotes.profiles[0]?.folder, "Journal");
 });
 
+test("defaults Focus session and Event capture to the daily periodical profile", () => {
+    const merged = mergeSettingsWithDefaults({});
+
+    assert.equal(merged.captureFocusSession.profileId, "daily");
+    assert.equal(merged.captureFocusSession.heading, "Focus timeline");
+    assert.equal(merged.captureFocusSession.position, "end");
+    assert.equal(merged.captureEvent.profileId, "daily");
+    assert.equal(merged.captureEvent.heading, "Activities & Tasks");
+    assert.equal(merged.captureEvent.hubNotesFolder, "Notes");
+});
+
+test("preserves a saved Focus session / Event capture target across settings merges", () => {
+    const merged = mergeSettingsWithDefaults({
+        captureFocusSession: { profileId: "weekly", heading: "Sessions", position: "start" },
+        captureEvent: { profileId: "weekly", heading: "Agenda", position: "start", hubNotesFolder: "Hubs" },
+    });
+
+    assert.equal(merged.captureFocusSession.profileId, "weekly");
+    assert.equal(merged.captureFocusSession.heading, "Sessions");
+    assert.equal(merged.captureEvent.profileId, "weekly");
+    assert.equal(merged.captureEvent.hubNotesFolder, "Hubs");
+});
+
 test("clones Object Source state during settings merge", () => {
     const first = mergeSettingsWithDefaults({ inbox: { ...DEFAULT_SETTINGS.inbox } });
     const second = mergeSettingsWithDefaults({});

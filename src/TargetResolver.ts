@@ -25,23 +25,19 @@ export class TargetResolver {
     ) {}
 
     /**
-     * Returns the abstract default target. The file may still contain tokens.
-     * Use resolve() afterwards to expand them for actual file IO.
+     * Returns the abstract default target for Focus session logging. The file
+     * may still contain {{date}} tokens — use resolve() afterwards to expand
+     * them for actual file IO. This is what the sidebar's editable "Save to"
+     * fields display, so file stays a literal template; heading is resolved
+     * for "now" when the chosen profile has a headingFormat (there is no
+     * sensible way to show a dated-heading template as editable plain text).
      */
     public getDefaultTarget(): FocusTarget {
-        if (this.settings.useDailyNotesAsDefault) {
-            const dn = this.readDailyNotesConfig();
-            if (dn) {
-                const folder = dn.folder ? `${dn.folder.replace(/\/+$/, "")}/` : "";
-                const fmt = normalizeDailyNoteFormat(dn.format, this.settings.dailyNoteFormat);
-                return {
-                    file: `${folder}{{date:${fmt}}}.md`,
-                    heading: this.settings.defaultTarget.heading,
-                    position: this.settings.defaultTarget.position,
-                };
-            }
-        }
-        return { ...this.settings.defaultTarget };
+        const s = this.settings.captureFocusSession;
+        const profile = this.findProfile(s.profileId);
+        const file = this.getProfileFileTemplate(s.profileId) ?? "";
+        const heading = profile?.headingFormat ? moment().format(profile.headingFormat) : s.heading;
+        return { file, heading, position: s.position };
     }
 
     /**
@@ -73,14 +69,8 @@ export class TargetResolver {
         if (!dailyNotes) return null;
         const folder = dailyNotes.folder ? `${dailyNotes.folder.replace(/\/+$/, "")}/` : "";
         const format = normalizeDailyNoteFormat(dailyNotes.format, this.settings.dailyNoteFormat);
-        return this.resolve(
-            {
-                file: `${folder}{{date:${format}}}.md`,
-                heading: "",
-                position: this.settings.defaultTarget.position,
-            },
-            when,
-        );
+        // position is always overridden by every current caller — see getPeriodicalTarget().
+        return this.resolve({ file: `${folder}{{date:${format}}}.md`, heading: "", position: "end" }, when);
     }
 
     /**
@@ -96,10 +86,7 @@ export class TargetResolver {
             ? `${this.settings.inbox.weeklyNoteFolder.replace(/\/+$/, "")}/`
             : "";
         const format = normalizeDailyNoteFormat(this.settings.inbox.weeklyNoteFormat, "GGGG-[W]WW");
-        const resolved = this.resolve(
-            { file: `${folder}{{date:${format}}}.md`, heading: "", position: this.settings.defaultTarget.position },
-            when,
-        );
+        const resolved = this.resolve({ file: `${folder}{{date:${format}}}.md`, heading: "", position: "end" }, when);
         const headingFormat = normalizeDailyNoteFormat(
             this.settings.inbox.weeklyHeadingFormat,
             this.settings.dailyNoteFormat || "YYYY-MM-DD",
@@ -120,17 +107,7 @@ export class TargetResolver {
     public getPeriodicalTarget(profileId: string, when: Date = new Date()): FocusTarget | null {
         const profile = this.findProfile(profileId);
         if (!profile) return null;
-
-        let folder = profile.folder;
-        let fileFormat = profile.fileFormat;
-        if (profile.id === "daily" && this.settings.periodicalNotes.syncDailyFromCorePlugin) {
-            const dn = this.readDailyNotesConfig();
-            if (dn) {
-                folder = dn.folder ?? folder;
-                fileFormat = normalizeDailyNoteFormat(dn.format, fileFormat);
-            }
-        }
-
+        const { folder, fileFormat } = this.resolveProfileFolderAndFormat(profile);
         const folderPrefix = folder ? `${folder.replace(/\/+$/, "")}/` : "";
         const format = normalizeDailyNoteFormat(fileFormat, "YYYY-MM-DD");
         const resolved = this.resolve(
@@ -139,6 +116,20 @@ export class TargetResolver {
         );
         const heading = profile.headingFormat ? moment(when).format(profile.headingFormat) : "";
         return { ...resolved, heading };
+    }
+
+    /**
+     * Unresolved file-name template for a Periodical Note profile (the
+     * {{date:FORMAT}} token stays literal) — what the Focus session sidebar's
+     * editable "Save to" field shows. Null when no profile with that id exists.
+     */
+    public getProfileFileTemplate(profileId: string): string | null {
+        const profile = this.findProfile(profileId);
+        if (!profile) return null;
+        const { folder, fileFormat } = this.resolveProfileFolderAndFormat(profile);
+        const folderPrefix = folder ? `${folder.replace(/\/+$/, "")}/` : "";
+        const format = normalizeDailyNoteFormat(fileFormat, "YYYY-MM-DD");
+        return `${folderPrefix}{{date:${format}}}.md`;
     }
 
     /**
@@ -151,11 +142,7 @@ export class TargetResolver {
     public getProfileFolder(profileId: string): string | null {
         const profile = this.findProfile(profileId);
         if (!profile) return null;
-        let folder = profile.folder;
-        if (profile.id === "daily" && this.settings.periodicalNotes.syncDailyFromCorePlugin) {
-            const dn = this.readDailyNotesConfig();
-            if (dn?.folder !== undefined) folder = dn.folder;
-        }
+        const { folder } = this.resolveProfileFolderAndFormat(profile);
         const normalized = folder
             .trim()
             .replace(/\\/g, "/")
@@ -167,13 +154,23 @@ export class TargetResolver {
         return this.settings.periodicalNotes.profiles.find((profile) => profile.id === profileId) ?? null;
     }
 
-    /** Configured Daily Notes base folder, or null when unavailable/root-scoped. */
-    public getDailyNoteFolder(): string | null {
-        const folder = this.readDailyNotesConfig()
-            ?.folder?.trim()
-            .replace(/\\/g, "/")
-            .replace(/^\/+|\/+$/g, "");
-        return folder || null;
+    /**
+     * Shared "daily" core-plugin-sync rule used by getPeriodicalTarget(),
+     * getProfileFileTemplate(), and getProfileFolder() — the reserved "daily"
+     * profile can read its folder/fileFormat live from the core Daily Notes
+     * plugin when enabled; every other profile always uses its own fields.
+     */
+    private resolveProfileFolderAndFormat(profile: PeriodicalNoteProfile): { folder: string; fileFormat: string } {
+        let folder = profile.folder;
+        let fileFormat = profile.fileFormat;
+        if (profile.id === "daily" && this.settings.periodicalNotes.syncDailyFromCorePlugin) {
+            const dn = this.readDailyNotesConfig();
+            if (dn) {
+                folder = dn.folder ?? folder;
+                fileFormat = normalizeDailyNoteFormat(dn.format, fileFormat);
+            }
+        }
+        return { folder, fileFormat };
     }
 
     /**
@@ -188,7 +185,7 @@ export class TargetResolver {
     public getDetailNotesFolder(targetFile: string): string {
         const parent = targetFile.includes("/") ? targetFile.slice(0, targetFile.lastIndexOf("/")) : "";
         if (!parent) return this.settings.eventTask.detailNotesFolder;
-        const dailyFolder = this.settings.useDailyNotesAsDefault ? this.getDailyNoteFolder() : null;
+        const dailyFolder = this.getProfileFolder("daily");
         const withinDailyNotes =
             dailyFolder !== null && (parent === dailyFolder || parent.startsWith(`${dailyFolder}/`));
         return withinDailyNotes ? this.settings.eventTask.detailNotesFolder : parent;

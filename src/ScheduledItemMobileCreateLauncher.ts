@@ -18,8 +18,12 @@ export function openMobileScheduledItemCreate(
     // matching comment in EventTaskModal.ts's openDesktopScheduledItemCreate().
     const configured: FocusTarget =
         kind === "task"
-            ? { file: "", heading: settings.eventTask.defaultSaveHeading, position: settings.defaultTarget.position }
-            : resolver.resolve(resolver.getActiveTarget(), anchorDate);
+            ? { file: "", heading: settings.eventTask.defaultSaveHeading, position: "end" }
+            : resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate) ?? {
+                  file: "",
+                  heading: settings.captureEvent.heading,
+                  position: settings.captureEvent.position,
+              };
     const activeFile = app.workspace.getActiveFile();
     const preferred = preferActiveNoteTarget(
         configured,
@@ -32,7 +36,10 @@ export function openMobileScheduledItemCreate(
         kind,
         {
             ...preferred,
-            heading: settings.eventTask.defaultSaveHeading || preferred.heading,
+            heading:
+                kind === "task"
+                    ? settings.eventTask.defaultSaveHeading || preferred.heading
+                    : settings.captureEvent.heading || preferred.heading,
         },
         onComplete,
     ).open();

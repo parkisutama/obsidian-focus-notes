@@ -44,11 +44,14 @@ export class ScheduledItemDesktopCreateModal extends Modal {
     ) {
         super(app);
         const settings = getSettings();
+        // Hub notes are retired from this create flow (scheduledItemFormDataFromCreateState
+        // doesn't carry hub fields), but the per-kind folder is still threaded through in case
+        // that feature returns, matching the split the settings tab already exposes.
         const state = new EventTaskFormState(anchorDate, {
             file: target.file,
             heading: target.heading,
             position: target.position,
-            hubNotesFolder: settings.eventTask.hubNotesFolder,
+            hubNotesFolder: kind === "event" ? settings.captureEvent.hubNotesFolder : settings.eventTask.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
         });
         state.kind = kind;

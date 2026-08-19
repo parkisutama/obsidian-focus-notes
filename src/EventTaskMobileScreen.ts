@@ -47,7 +47,11 @@ export class EventTaskMobileScreen extends Component {
         super();
         const settings = getSettings();
         const resolver = new TargetResolver(app, settings);
-        const configured = resolver.resolve(resolver.getActiveTarget(), anchorDate);
+        const configured: FocusTarget = resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate) ?? {
+            file: "",
+            heading: settings.captureEvent.heading,
+            position: settings.captureEvent.position,
+        };
         const activeFile = app.workspace.getActiveFile();
         const target = preferActiveNoteTarget(
             configured,
@@ -63,7 +67,7 @@ export class EventTaskMobileScreen extends Component {
         });
         this.form = new EventTaskFormState(anchorDate, {
             file: target.file,
-            heading: settings.eventTask.defaultSaveHeading || target.heading,
+            heading: settings.captureEvent.heading || target.heading,
             position: target.position,
             hubNotesFolder: settings.eventTask.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
@@ -435,7 +439,7 @@ export class EventTaskMobileScreen extends Component {
         const updateAlignment = (): void => {
             const settings = this.getSettings();
             const resolver = new TargetResolver(this.app, settings);
-            const dailyFolder = settings.useDailyNotesAsDefault ? resolver.getDailyNoteFolder() : null;
+            const dailyFolder = resolver.getProfileFolder("daily");
             const groups = buildTimelineSourceGroups(
                 settings.timeline.sourceFolders,
                 dailyFolder,
@@ -722,15 +726,13 @@ export class EventTaskMobileScreen extends Component {
         const settings = this.getSettings();
         if (settings.inbox.defaultTargetMode !== "weekly-note") return null;
         const resolver = new TargetResolver(this.app, settings);
-        // Prefer the core Daily Notes plugin when it's actually enabled and
-        // configured, but fall back to the same general daily target Event and
-        // Focus session logging already use — the core plugin is commonly
-        // disabled in favor of a community journaling plugin (e.g. Journals),
-        // and the backlink should still land wherever "today" already resolves.
-        const dailyNoteTarget =
-            resolver.getDailyNoteTarget(record.capturedAt) ??
-            resolver.resolve(resolver.getDefaultTarget(), record.capturedAt);
-        if (!dailyNoteTarget.file.trim()) return null;
+        // The "daily" Periodical Notes profile already syncs from the core
+        // Daily Notes plugin when enabled and falls back to its own manual
+        // fields otherwise (see TargetResolver.getPeriodicalTarget()), so this
+        // single call covers both cases without depending on Focus session's
+        // own target (which may now point at a different profile entirely).
+        const dailyNoteTarget = resolver.getPeriodicalTarget("daily", record.capturedAt);
+        if (!dailyNoteTarget?.file.trim()) return null;
         return {
             ...dailyNoteTarget,
             heading: settings.inbox.dailyBacklinkHeading || "Moments",

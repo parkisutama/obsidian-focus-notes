@@ -388,9 +388,7 @@ export class TimelineView extends ItemView {
 
     private getEffectiveSourceGroups() {
         const settings = this.getSettings();
-        const dailyFolder = settings.useDailyNotesAsDefault
-            ? new TargetResolver(this.app, settings).getDailyNoteFolder()
-            : null;
+        const dailyFolder = new TargetResolver(this.app, settings).getProfileFolder("daily");
         return buildTimelineSourceGroups(settings.timeline.sourceFolders, dailyFolder, settings.inbox.contextSources);
     }
 
