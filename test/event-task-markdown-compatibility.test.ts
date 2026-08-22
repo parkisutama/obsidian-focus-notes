@@ -6,7 +6,7 @@ import {
 } from "../src/features/capture/scheduled-item/domain/EventTaskMarkdown.ts";
 import type { EventRecord, TaskRecord } from "../src/features/capture/scheduled-item/domain/EventTaskRecord.ts";
 import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
-import { ScheduledItemParser } from "../src/ScheduledItemParser.ts";
+import { ScheduledItemParser } from "../src/features/capture/scheduled-item/domain/ScheduledItemParser.ts";
 
 const source = {
     groupId: "daily-notes",

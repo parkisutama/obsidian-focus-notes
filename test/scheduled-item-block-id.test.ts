@@ -6,7 +6,7 @@ import {
     extractScheduledItemBlockId,
     formatScheduledItemBlockTarget,
 } from "../src/features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
-import { ScheduledItemParser } from "../src/ScheduledItemParser.ts";
+import { ScheduledItemParser } from "../src/features/capture/scheduled-item/domain/ScheduledItemParser.ts";
 
 const source = {
     groupId: "daily-notes",

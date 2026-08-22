@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { formatEventTaskEntry } from "../src/features/capture/scheduled-item/domain/EventTaskMarkdown.ts";
 import type { EventRecord } from "../src/features/capture/scheduled-item/domain/EventTaskRecord.ts";
-import { ScheduledItemParser } from "../src/ScheduledItemParser.ts";
+import { ScheduledItemParser } from "../src/features/capture/scheduled-item/domain/ScheduledItemParser.ts";
 
 const source = {
     groupId: "daily-notes",

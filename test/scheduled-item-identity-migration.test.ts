@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildScheduledItemIdentityChange } from "../src/ScheduledItemIdentityMigration.ts";
-import { ScheduledItemParser } from "../src/ScheduledItemParser.ts";
+import { ScheduledItemParser } from "../src/features/capture/scheduled-item/domain/ScheduledItemParser.ts";
 
 const source = {
     groupId: "active-note",
