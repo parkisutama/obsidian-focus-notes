@@ -5,7 +5,7 @@ import type {
     TaskRecord,
 } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import type { TaskPriority } from "./features/capture/scheduled-item/domain/ScheduledItem";
-import { appendScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
+import { appendScheduledItemBlockId } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 
 /** Formats a date value as a link (or plain text, if unresolvable) for a Task date field. */
 export type FormatDateLink = (when: Date, label: string) => string;

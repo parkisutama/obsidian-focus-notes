@@ -1,5 +1,8 @@
 import { unwrapMarkdownLinkLabel } from "./InboxMarkdown.ts";
-import { appendScheduledItemBlockId, extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
+import {
+    appendScheduledItemBlockId,
+    extractScheduledItemBlockId,
+} from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 import type { TaskPriority } from "./features/capture/scheduled-item/domain/ScheduledItem";
 
 /** Wraps a plain date/time edit value (e.g. into a relative Markdown link) before it's written. */

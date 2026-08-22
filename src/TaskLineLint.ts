@@ -1,5 +1,8 @@
 import { parseTaskLineEdit, type TaskLineInvalidReason } from "./TaskLineEditor.ts";
-import { appendScheduledItemBlockId, extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
+import {
+    appendScheduledItemBlockId,
+    extractScheduledItemBlockId,
+} from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 
 export type TaskLineLintStatus = "plain" | "valid" | "needs-format" | "warning";
 

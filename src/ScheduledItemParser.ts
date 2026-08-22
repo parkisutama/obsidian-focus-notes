@@ -1,5 +1,5 @@
 import { unwrapMarkdownLinkLabel } from "./InboxMarkdown.ts";
-import { extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
+import { extractScheduledItemBlockId } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 import type {
     EventOccurrenceStatus,
     ScheduledItem,

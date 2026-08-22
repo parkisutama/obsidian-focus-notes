@@ -1,5 +1,8 @@
 import type { EventOccurrenceStatus } from "./features/capture/scheduled-item/domain/ScheduledItem";
-import { appendScheduledItemBlockId, extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
+import {
+    appendScheduledItemBlockId,
+    extractScheduledItemBlockId,
+} from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 
 export interface EventLineEdit {
     allDay: boolean;
