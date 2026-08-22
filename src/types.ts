@@ -23,8 +23,6 @@ import type { ContextSourceSettings, InboxSettings } from "./features/object-not
 import type { FocusTimelineSettings } from "./features/timeline/domain/TimelineSettings";
 import type { EventTaskSettings } from "./features/capture/scheduled-item/domain/DetailNoteSettings";
 
-export type { InboxSettings } from "./features/object-notes/domain/ContextSourceSettings";
-
 export interface FocusNotesSettings {
     /** Default focus duration for the Pomodoro tab. */
     pomodoroMinutes: number;
