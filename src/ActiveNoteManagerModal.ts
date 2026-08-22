@@ -6,7 +6,7 @@ import {
     buildActiveNoteManagerModel,
     buildActiveNoteManagerScopeOptions,
 } from "./ActiveNoteManagerModel";
-import type { ScheduledItem, ScheduledItemKind } from "./ScheduledItemTypes";
+import type { ScheduledItem, ScheduledItemKind } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import { TaskFormatPreviewModal } from "./TaskFormatPreviewModal";
 import type { TaskFormatChange } from "./TaskFormatWriter";
 import { inspectTaskLine, taskLineLintLabel } from "./TaskLineLint";
