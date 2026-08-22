@@ -19,9 +19,11 @@ import type {
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import type { DisplayMode } from "./features/focus-session/domain/Timer.ts";
 import type { PeriodicalNotesSettings } from "./features/periodical-notes/domain/PeriodicalNote";
-import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
+import type { ContextSourceSettings, InboxSettings } from "./features/object-notes/domain/ContextSourceSettings";
 import type { FocusTimelineSettings } from "./features/timeline/domain/TimelineSettings";
 import type { EventTaskSettings } from "./features/capture/scheduled-item/domain/DetailNoteSettings";
+
+export type { InboxSettings } from "./features/object-notes/domain/ContextSourceSettings";
 
 export interface FocusNotesSettings {
     /** Default focus duration for the Pomodoro tab. */
@@ -103,11 +105,6 @@ export interface FocusNotesSettings {
 
     /** Where new Moments default to — a Periodical Notes profile (or the active Event target) + backlink. */
     captureMoment: MomentCaptureSettings;
-}
-
-export interface InboxSettings {
-    /** Canonical contextual object sources, shared by the @ mention suggester and Task's picker. */
-    contextSources: ContextSourceSettings[];
 }
 
 export const DEFAULT_SETTINGS: FocusNotesSettings = {

@@ -24,3 +24,13 @@ export interface ContextSourceSettings {
     /** Make matching object notes available as a property-filtered Focus Timeline source. */
     includeInTimeline: boolean;
 }
+
+/**
+ * Persisted registry of contextual Object Sources.
+ *
+ * The compatibility name reflects the existing `inbox` settings key even
+ * though the registry is also consumed by Task capture and Timeline.
+ */
+export interface InboxSettings {
+    contextSources: ContextSourceSettings[];
+}
