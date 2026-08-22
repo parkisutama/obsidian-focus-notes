@@ -20,9 +20,10 @@ import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import type { DisplayMode } from "./features/focus-session/domain/Timer.ts";
 import type { PeriodicalNotesSettings } from "./features/periodical-notes/domain/PeriodicalNote";
 import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
-import type { TimelineMode } from "./features/timeline/domain/Timeline";
+import type { FocusTimelineSettings } from "./features/timeline/domain/TimelineSettings";
 
 export type { TimelineMode } from "./features/timeline/domain/Timeline";
+export type { FocusTimelineSettings } from "./features/timeline/domain/TimelineSettings";
 
 export interface FocusNotesSettings {
     /** Default focus duration for the Pomodoro tab. */
@@ -104,20 +105,6 @@ export interface FocusNotesSettings {
 
     /** Where new Moments default to — a Periodical Notes profile (or the active Event target) + backlink. */
     captureMoment: MomentCaptureSettings;
-}
-
-export interface FocusTimelineSettings {
-    enabled: boolean;
-    defaultMode: TimelineMode;
-    multiDaySpanDays: number;
-    weekStartsOn: number;
-    sourceFolders: string[];
-    sourceHeadings: string[];
-    showCompletedTasks: boolean;
-    showPendingSummary: boolean;
-    sourceSidebarCollapsed: boolean;
-    sourceVisibility: Record<string, boolean>;
-    sourceColors: Record<string, string>;
 }
 
 export interface EventTaskSettings {
