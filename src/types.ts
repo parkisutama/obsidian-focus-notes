@@ -17,10 +17,8 @@ import type { PeriodicalNotesSettings } from "./features/periodical-notes/domain
 import type { TimelineMode } from "./features/timeline/domain/Timeline";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
 
-export type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 export type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
 export type { TimelineMode } from "./features/timeline/domain/Timeline";
-export type { InsertPosition } from "./shared/markdown/InsertPosition";
 
 export interface FocusNotesSettings {
     /** Default focus duration for the Pomodoro tab. */
