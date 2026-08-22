@@ -9,8 +9,8 @@ import {
 import type { ScheduledItem, ScheduledItemKind } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import { TaskFormatPreviewModal } from "./TaskFormatPreviewModal";
 import type { TaskFormatChange } from "./TaskFormatWriter";
-import { inspectTaskLine, taskLineLintLabel } from "./TaskLineLint";
 import { createScheduledItemBlockId } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
+import { inspectTaskLine, taskLineLintLabel } from "./features/capture/scheduled-item/domain/TaskLineLint.ts";
 import { buildScheduledItemIdentityChange } from "./ScheduledItemIdentityMigration.ts";
 
 export class ActiveNoteManagerModal extends Modal {

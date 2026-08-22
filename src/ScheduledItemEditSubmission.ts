@@ -16,8 +16,8 @@ import {
 import type { ScheduledItemBlockEdit } from "./ScheduledItemBlockEditor.ts";
 import { buildScheduledItemFormBlockEdit } from "./ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
-import type { FormatDateValue } from "./TaskLineEditor.ts";
 import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
+import type { FormatDateValue } from "./features/capture/scheduled-item/domain/TaskLineEditor.ts";
 import {
     appendScheduledItemBlockId,
     createScheduledItemBlockId,

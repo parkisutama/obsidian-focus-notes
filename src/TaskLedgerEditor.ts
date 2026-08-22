@@ -6,14 +6,14 @@ import {
     type LedgerRecordSource,
     replaceLedgerRecord,
 } from "./LedgerRecordSource.ts";
+import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 import {
     editTaskLine,
     parseTaskLineEdit,
     type ParseTaskLineEditResult,
     type TaskLineEdit,
     type TaskLineInvalidReason,
-} from "./TaskLineEditor.ts";
-import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
+} from "./features/capture/scheduled-item/domain/TaskLineEditor.ts";
 
 type FileConflictReason = LedgerRecordConflictReason | "file-missing";
 

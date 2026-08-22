@@ -2,7 +2,7 @@ import { type App, Modal, Notice, Platform, Setting } from "obsidian";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource";
 import { shouldUseMobileForm } from "./MobileFormPolicy";
 import { saveTaskLedgerEdit, type SaveTaskLedgerEditResult } from "./TaskLedgerEditor";
-import type { TaskLineEdit } from "./TaskLineEditor";
+import type { TaskLineEdit } from "./features/capture/scheduled-item/domain/TaskLineEditor";
 
 export function openTaskEditForm(
     app: App,

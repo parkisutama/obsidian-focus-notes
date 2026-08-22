@@ -13,7 +13,11 @@ import {
     type DetailNoteSelection,
     type ScheduledItemFormData,
 } from "./ScheduledItemFormData.ts";
-import { editTaskLineWithTitle, type FormatDateValue, parseTaskLineEdit } from "./TaskLineEditor.ts";
+import {
+    editTaskLineWithTitle,
+    parseTaskLineEdit,
+    type FormatDateValue,
+} from "./features/capture/scheduled-item/domain/TaskLineEditor.ts";
 
 export type ScheduledItemFormField =
     | "title"
