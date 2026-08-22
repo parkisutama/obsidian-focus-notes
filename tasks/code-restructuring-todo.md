@@ -119,8 +119,8 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 
 **Acceptance criteria:**
 
-- [ ] No generic replacement `shared/utils.ts` is introduced.
-- [ ] Pure helpers have no Obsidian/DOM imports; vault mutation remains in infrastructure.
+- [x] No generic replacement `shared/utils.ts` is introduced.
+- [x] Pure helpers have no Obsidian/DOM imports; vault mutation remains separate pending its infrastructure cutover.
 - [ ] Path normalization and folder creation retain current safety and behavior.
 
 **Verification:**
@@ -130,6 +130,12 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 
 **Dependencies:** Task 4.
 **Estimated scope:** Multiple Small batches.
+
+**Progress (2026-08-22):**
+
+- [x] Pure date/time helpers moved to `features/timeline/domain/TimelineDate.ts`; all Timeline/query consumers cut over directly and the central shims were removed.
+- [ ] Obsidian file/folder type guards remain in `utils.ts`.
+- [ ] Vault folder creation remains in `utils.ts` for a separate security-sensitive increment.
 
 ## Checkpoint: Foundations
 
