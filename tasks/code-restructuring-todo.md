@@ -106,7 +106,8 @@
 - [x] Event/Task record consumers cut over directly and the temporary `EventTaskWriter` type shim removed.
 - [x] Capture target and capture settings moved to `features/capture/domain`; `InsertPosition` moved to the proven shared Markdown boundary, all consumers cut over directly, and central re-export shims removed.
 - [x] Object Source settings and placement moved to `features/object-notes/domain`; production/tests cut over directly and central filter/settings/placement shims removed.
-- [ ] Timeline settings and global settings composition remain.
+- [x] Timeline settings moved to `features/timeline/domain`; Settings UI cut over to canonical `TimelineMode` and central Timeline shims removed.
+- [ ] Global settings composition and its remaining Event/Task/Inbox contracts remain.
 
 ## Task 6: Split utilities by proven ownership
 
