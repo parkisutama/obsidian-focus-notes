@@ -1,7 +1,7 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-23
-Status: Task 7 aktif; `TaskLineEditor.ts` dan `TaskLineLint.ts` sudah canonical di domain Scheduled Item tanpa shim
+Status: Task 7 aktif; `TaskLineEditor.ts`, `TaskLineLint.ts`, dan `EventLineEditor.ts` sudah canonical di domain Scheduled Item tanpa shim
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -359,7 +359,7 @@ Acceptance manual tetap diperlukan untuk:
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
 3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 306 tes pada 2026-08-23.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Lanjutkan Task 7 dengan memindahkan `EventLineEditor.ts` ke domain Scheduled Item mengikuti pola Task line editor yang baru selesai, lalu `ScheduledItemParser.ts` setelahnya.
+5. Lanjutkan Task 7 dengan memindahkan `ScheduledItemParser.ts` ke domain Scheduled Item mengikuti pola line editor yang baru selesai; file ini sudah acyclic dengan 5 consumer produksi dan 6 test file.
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 
