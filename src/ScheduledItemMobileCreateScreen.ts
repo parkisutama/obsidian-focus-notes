@@ -6,7 +6,8 @@ import {
     retryDetailNoteAttachment,
 } from "./DetailNotePromotion.ts";
 import { EventTaskFormState } from "./EventTaskFormState.ts";
-import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter.ts";
+import { EventTaskWriter } from "./EventTaskWriter.ts";
+import type { HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import { type MobileScheduledItemCreateContext, MobileScheduledItemForm } from "./MobileScheduledItemForm.ts";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource.ts";
 import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";

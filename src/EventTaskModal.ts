@@ -10,7 +10,8 @@ import {
     submitEventTask,
     submitInbox,
 } from "./EventTaskSubmission";
-import { type EventTaskRecord, EventTaskWriter } from "./EventTaskWriter";
+import { EventTaskWriter } from "./EventTaskWriter";
+import type { EventTaskRecord } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import { InboxDesktopForm } from "./InboxDesktopForm";
 import { ContextNotesController } from "./InboxNotesController";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
