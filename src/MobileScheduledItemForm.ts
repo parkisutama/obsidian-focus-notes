@@ -4,8 +4,8 @@ import { buildMobileScheduledItemFormModel } from "./MobileScheduledItemFormMode
 import { getMobileViewportMetrics } from "./MobileViewport.ts";
 import { ObjectNoteSuggest } from "./ObjectNoteSuggest.ts";
 import { parseObjectReferences } from "./ObjectReference.ts";
-import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
 import { FileSuggest, FolderSuggest } from "./Suggesters.ts";
+import type { ScheduledItemFormData } from "./features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
 import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 
