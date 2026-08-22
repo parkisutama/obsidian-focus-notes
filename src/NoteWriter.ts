@@ -3,7 +3,7 @@ import type { SessionRecord } from "./features/focus-session/domain/SessionRecor
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
-import { ensureFolderPath } from "./utils";
+import { ensureFolderPath } from "./infrastructure/obsidian/VaultFolders.ts";
 import { getMood } from "./MoodReference";
 import { getEmotionCategoryLabel, getStressLevelLabel } from "./EmotionalWellbeingReference";
 

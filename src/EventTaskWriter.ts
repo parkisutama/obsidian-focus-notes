@@ -5,7 +5,7 @@ import type { InboxRecord } from "./features/capture/moment/domain/InboxRecord";
 import { insertUnderHeading } from "./HeadingInsertion";
 import { type FormatInboxEntryOptions, formatInboxEntry } from "./InboxMarkdown";
 import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
-import { ensureFolderPath } from "./utils";
+import { ensureFolderPath } from "./infrastructure/obsidian/VaultFolders.ts";
 import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTaskMarkdown";
 import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
 import { TargetResolver } from "./TargetResolver";
