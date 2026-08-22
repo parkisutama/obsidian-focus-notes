@@ -12,11 +12,10 @@
 
 import type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
 import type { DisplayMode } from "./features/focus-session/domain/Timer.ts";
+import type { EmotionCategory, StressLevel } from "./features/reflection/domain/Wellbeing";
 import type { TimelineMode } from "./features/timeline/domain/Timeline";
 
 export type InsertPosition = "start" | "end";
-export type StressLevel = "low" | "normal" | "medium" | "high";
-export type EmotionCategory = "pleasant" | "neutral" | "unpleasant";
 export type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
 export type { TimelineMode } from "./features/timeline/domain/Timeline";
 
