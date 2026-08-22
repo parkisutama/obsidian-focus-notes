@@ -2,7 +2,9 @@ import { type App, setIcon } from "obsidian";
 import type { EventTaskFormState } from "./EventTaskFormState";
 import { InboxNotesController } from "./InboxNotesController";
 import { FileSuggest } from "./Suggesters";
-import type { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
+import type { FocusNotesSettings } from "./types";
+import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
+import type { InsertPosition } from "./shared/markdown/InsertPosition";
 
 interface InboxDesktopFormOptions {
     app: App;

@@ -1,7 +1,7 @@
 import { type App, FuzzySuggestModal, Modal, Notice, Setting, type TFile } from "obsidian";
 import type { DisplayMode } from "./features/focus-session/domain/Timer";
 import type { EmotionCategory, StressLevel } from "./features/reflection/domain/Wellbeing";
-import type { FocusTarget } from "./types";
+import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import { EmotionalWellbeingPicker } from "./EmotionalWellbeingPicker";
 import { FileSuggest } from "./Suggesters";
 import { isTFile } from "./utils";
