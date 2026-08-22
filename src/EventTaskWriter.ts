@@ -1,5 +1,6 @@
 import { type App, type TFile, normalizePath } from "obsidian";
-import type { EventTaskSettings, FocusNotesSettings } from "./types";
+import type { EventTaskSettings } from "./features/capture/scheduled-item/domain/DetailNoteSettings";
+import type { FocusNotesSettings } from "./types";
 import type { InboxRecord } from "./features/capture/moment/domain/InboxRecord";
 import { insertUnderHeading } from "./HeadingInsertion";
 import { type FormatInboxEntryOptions, formatInboxEntry } from "./InboxMarkdown";
