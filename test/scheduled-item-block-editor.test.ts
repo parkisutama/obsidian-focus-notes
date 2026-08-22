@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { captureLedgerRecord } from "../src/LedgerRecordSource.ts";
-import { parseScheduledItemBlock, replaceScheduledItemBlock } from "../src/ScheduledItemBlockEditor.ts";
+import {
+    parseScheduledItemBlock,
+    replaceScheduledItemBlock,
+} from "../src/features/capture/scheduled-item/domain/ScheduledItemBlockEditor.ts";
 
 test("parses owned description and detail children while preserving unknown children", () => {
     const rawBlock = [
