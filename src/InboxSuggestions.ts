@@ -1,4 +1,4 @@
-import type { ContextSourceSettings } from "./types";
+import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 import { contextSourceMatchesNote } from "./ContextSourceScope.ts";
 
 export type MentionMatchSource = "filename" | "alias";

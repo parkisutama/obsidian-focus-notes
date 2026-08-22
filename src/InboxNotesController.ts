@@ -22,7 +22,7 @@ import { ObjectNoteModal } from "./ObjectNoteModal";
 import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
 import { ObsidianInboxSuggestionSource } from "./ObsidianInboxSuggestionSource";
 import { formatRelativeMarkdownLink } from "./InboxMarkdown.ts";
-import type { ContextSourceSettings } from "./types";
+import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 
 type ContextNotesSuggestion =
     | { kind: "mention"; value: ContextSuggestion }

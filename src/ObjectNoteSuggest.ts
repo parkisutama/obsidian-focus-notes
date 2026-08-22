@@ -2,7 +2,7 @@ import { AbstractInputSuggest, type App, prepareFuzzySearch } from "obsidian";
 import { ContextSuggestionIndex, type SuggestionMatcher } from "./InboxSuggestions";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
 import { applyInputSuggestion } from "./SuggestionSelection";
-import type { ContextSourceSettings } from "./types";
+import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 
 interface ObjectNoteSuggestion {
     path: string;

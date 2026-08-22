@@ -7,7 +7,7 @@ import {
     type SuggestionMatcher,
     type SuggestionNote,
 } from "./InboxSuggestions";
-import type { ContextSourceSettings } from "./types";
+import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 import { getScheduledItemMentionSource } from "./ObsidianScheduledItemMentionSource.ts";
 import type { ScheduledItemKind } from "./features/capture/scheduled-item/domain/ScheduledItem.ts";
 
