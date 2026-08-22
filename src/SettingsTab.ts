@@ -13,7 +13,8 @@ import {
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
-import type { ContextSourceSettings, FocusNotesSettings, ObjectNotePlacement, TimelineMode } from "./types";
+import type { ContextSourceSettings, ObjectNotePlacement } from "./features/object-notes/domain/ContextSourceSettings";
+import type { FocusNotesSettings, TimelineMode } from "./types";
 import type { PeriodicalNoteProfile } from "./features/periodical-notes/domain/PeriodicalNote";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
 import { isTFile } from "./utils";
