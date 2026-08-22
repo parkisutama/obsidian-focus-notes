@@ -6,7 +6,8 @@ import { ObjectNoteSuggest } from "./ObjectNoteSuggest.ts";
 import { parseObjectReferences } from "./ObjectReference.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
 import { FileSuggest, FolderSuggest } from "./Suggesters.ts";
-import type { ContextSourceSettings, InsertPosition } from "./types.ts";
+import type { InsertPosition } from "./shared/markdown/InsertPosition";
+import type { ContextSourceSettings } from "./types.ts";
 
 export interface MobileScheduledItemCreateContext {
     targetFile: string;
