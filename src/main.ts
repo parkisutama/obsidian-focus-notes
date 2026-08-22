@@ -5,13 +5,13 @@ import { openEventTaskForm } from "./EventTaskModal";
 import { NoteWriter } from "./NoteWriter";
 import { RecentEntriesReader } from "./RecentEntriesReader";
 import { openScheduledItemEditor } from "./ScheduledItemEditor";
-import { ScheduledItemParser } from "./ScheduledItemParser";
 import { FocusNotesSettingsTab } from "./SettingsTab";
 import { StateStore } from "./StateStore";
 import { TargetResolver } from "./TargetResolver";
 import { timelineSourceHeadings } from "./TimelineSourceGroups";
 import { TimelineView, VIEW_TYPE_FOCUS_TIMELINE } from "./TimelineView";
 import { TimerView, VIEW_TYPE_FOCUS_NOTES } from "./TimerView";
+import { ScheduledItemParser } from "./features/capture/scheduled-item/domain/ScheduledItemParser";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import { mergeSettingsWithDefaults } from "./features/settings/domain/SettingsDefaults";
 

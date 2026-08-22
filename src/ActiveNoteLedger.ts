@@ -1,5 +1,5 @@
-import type { ScheduledItemParser } from "./ScheduledItemParser";
 import type { ScheduledItem, ScheduledItemSource } from "./features/capture/scheduled-item/domain/ScheduledItem";
+import type { ScheduledItemParser } from "./features/capture/scheduled-item/domain/ScheduledItemParser";
 
 export interface ActiveNoteHeadingScope {
     id: string;

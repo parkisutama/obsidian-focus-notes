@@ -1,6 +1,6 @@
 import type { App, TFile } from "obsidian";
-import type { ScheduledItemParser } from "./ScheduledItemParser";
 import type { ScheduledItem, ScheduledItemSource } from "./features/capture/scheduled-item/domain/ScheduledItem";
+import type { ScheduledItemParser } from "./features/capture/scheduled-item/domain/ScheduledItemParser";
 import type { TimelineSourceGroup } from "./features/timeline/domain/Timeline";
 import { matchTimelineSourceGroup } from "./TimelineSourceGroups.ts";
 import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";

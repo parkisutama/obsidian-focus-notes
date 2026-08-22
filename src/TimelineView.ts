@@ -3,7 +3,7 @@ import { openEventTaskForm } from "./EventTaskModal";
 import { openScheduledItemEditor } from "./ScheduledItemEditor";
 import { ScheduledItemIndexer } from "./ScheduledItemIndexer";
 import { formatScheduledItemBlockTarget } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
-import { ScheduledItemParser } from "./ScheduledItemParser";
+import { ScheduledItemParser } from "./features/capture/scheduled-item/domain/ScheduledItemParser";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
 import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import type { TimelineMode, TimelineRange } from "./features/timeline/domain/Timeline";
