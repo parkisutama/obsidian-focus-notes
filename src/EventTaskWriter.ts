@@ -10,7 +10,7 @@ import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTask
 import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
 import { TargetResolver } from "./TargetResolver";
 import type { EventTaskRecord, HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
-import { createScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
+import { createScheduledItemBlockId } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
 
 export class EventTaskWriter {

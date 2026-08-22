@@ -22,7 +22,7 @@ import {
     appendScheduledItemBlockId,
     createScheduledItemBlockId,
     extractScheduledItemBlockId,
-} from "./ScheduledItemBlockId.ts";
+} from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 
 export interface ScheduledItemEditSubmissionDependencies {
     contextNotes: readonly ContextLinkNote[];

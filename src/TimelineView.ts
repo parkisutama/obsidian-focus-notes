@@ -2,7 +2,7 @@ import { ItemView, Notice, setIcon, TFile, type ViewStateResult, type WorkspaceL
 import { openEventTaskForm } from "./EventTaskModal";
 import { openScheduledItemEditor } from "./ScheduledItemEditor";
 import { ScheduledItemIndexer } from "./ScheduledItemIndexer";
-import { formatScheduledItemBlockTarget } from "./ScheduledItemBlockId.ts";
+import { formatScheduledItemBlockTarget } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 import { ScheduledItemParser } from "./ScheduledItemParser";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
 import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
