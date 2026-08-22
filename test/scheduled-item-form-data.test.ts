@@ -6,7 +6,7 @@ import {
     scheduledItemFormDataFromCreateState,
     scheduledTaskFormDataFromLineEdit,
     type ScheduledItemFormPersistenceContext,
-} from "../src/ScheduledItemFormData.ts";
+} from "../src/features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 
 function createState(): EventTaskFormState {
     return new EventTaskFormState(new Date(2026, 7, 15, 9, 0), {
