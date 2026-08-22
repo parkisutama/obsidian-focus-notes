@@ -1,8 +1,6 @@
 import type { App } from "obsidian";
 import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
-export { isTFile, isTFolder } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
-
 export async function ensureFolderPath(app: App, folderPath: string): Promise<void> {
     const parts = folderPath.split("/").filter(Boolean);
     let current = "";
