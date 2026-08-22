@@ -1,7 +1,7 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-22
-Status: Task 6 selesai; central `types.ts` dan `utils.ts` sudah dihapus tanpa perubahan perilaku
+Status: Task 7 aktif; Scheduled Item block identity sudah canonical di domain tanpa shim
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -359,7 +359,7 @@ Acceptance manual tetap diperlukan untuk:
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
 3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 306 tes pada 2026-08-22.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Mulai Task 7 dengan mengaudit modul pure Scheduled Item dan memilih satu kelompok kecil untuk dipindahkan fisik tanpa mengubah parser atau format Markdown.
+5. Lanjutkan Task 7 dengan mengaudit dependency Event/Task line editor, parser, dan Markdown semantics; pindahkan satu kelompok kohesif kecil tanpa mengubah parser legacy atau output Markdown.
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 

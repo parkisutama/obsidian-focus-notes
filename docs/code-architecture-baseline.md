@@ -115,7 +115,7 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Scheduled Item domain contract | `features/capture/scheduled-item/domain/ScheduledItem.ts`, `features/capture/scheduled-item/domain/EventTaskRecord.ts` | Canonical owner; seluruh consumer record sudah dipotong langsung dan shim `EventTaskWriter.ts` telah dihapus |
 | Scheduled Item detail-note settings | `features/capture/scheduled-item/domain/DetailNoteSettings.ts` | Canonical owner; writer direct-import dan shim `types.ts` telah dihapus |
 | Scheduled Item form semantics | `ScheduledItemFormData.ts`, `ScheduledItemFormAdapter.ts`, `EventTaskFormState.ts`, `SubmissionPolicy.ts` | `features/capture/scheduled-item/domain` or `application` according to side effects |
-| Scheduled Item identity/parser | `ScheduledItemBlockId.ts`, `ScheduledItemParser.ts`, `ScheduledItemIdentityMigration.ts` | Domain; migration orchestration remains application |
+| Scheduled Item identity/parser | `features/capture/scheduled-item/domain/ScheduledItemBlockId.ts`, `ScheduledItemParser.ts`, `ScheduledItemIdentityMigration.ts` | Block identity sudah canonical tanpa shim; parser menuju domain, migration orchestration tetap application |
 | Scheduled Item block editing | `ScheduledItemBlockEditor.ts`, `LedgerRecordSource.ts` | Pure domain editing/snapshot contracts |
 | Scheduled Item application | `ScheduledItemEditSubmission.ts`, `ScheduledItemCreateRelated.ts`, `RelatedWriteRecovery.ts`, `EventTaskSubmission.ts` | `features/capture/scheduled-item/application` |
 | Scheduled Item persistence | `ScheduledItemBlockPersistence.ts`, `EventTaskWriter.ts` | Application port plus `infrastructure/obsidian` adapter |
@@ -158,9 +158,9 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 
 ## Batch berikutnya
 
-1. Audit modul pure Scheduled Item terhadap boundary domain dan import Obsidian/DOM.
-2. Pilih kelompok kohesif berukuran kecil untuk pemindahan fisik pertama Task 7.
-3. Pertahankan parser legacy, format Markdown, dan byte-identical no-op melalui characterization tests.
-4. Perlakukan penolakan dot-segment vault path sebagai hardening behavior-change terpisah, bukan bagian refactor.
+1. Audit dependency Event/Task line editor, parser, dan Markdown semantics terhadap boundary domain.
+2. Pilih kelompok kohesif berukuran kecil untuk pemindahan fisik berikutnya pada Task 7.
+3. Pertahankan parser legacy, format Markdown, block ID, dan byte-identical no-op melalui characterization tests.
+4. Biarkan `ScheduledItemIdentityMigration.ts` di application sampai dependensinya pada writer type dibalik menjadi kontrak domain/application yang semestinya.
 
-Checkpoint 2026-08-22: Task 6 selesai. Timeline date helpers, Obsidian file guards, dan vault folder mutation sudah berada pada owner canonical; seluruh consumer cut over dan central `utils.ts` dihapus. Lima characterization test mengunci perilaku folder lama, sehingga suite menjadi 306 tes; full CI diverifikasi pada checkpoint ini.
+Checkpoint 2026-08-22: Task 7 dimulai dengan memindahkan Scheduled Item block identity ke `features/capture/scheduled-item/domain/ScheduledItemBlockId.ts`. Sepuluh consumer dan tes langsung sudah cut over, shim root dihapus, source tetap acyclic, dan full CI dengan 306 tes diverifikasi pada checkpoint ini.

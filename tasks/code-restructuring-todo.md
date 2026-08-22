@@ -161,6 +161,11 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 **Dependencies:** Tasks 5–6.
 **Estimated scope:** Multiple Small/Medium batches.
 
+**Progress (2026-08-22):**
+
+- [x] Scheduled Item block identity moved to `features/capture/scheduled-item/domain/ScheduledItemBlockId.ts`; all parser, editor, writer, Timeline, and UI consumers cut over directly and the root shim was removed.
+- [ ] Event/Task line editing, parsing, and Markdown semantics remain at the source root pending dependency audit and small physical-move batches.
+
 ## Task 8: Isolate capture persistence and external boundaries
 
 **Description:** Define narrow application ports for vault reads/writes, target resolution, link resolution, suggestions, and related-log recovery; place Obsidian implementations in infrastructure.
