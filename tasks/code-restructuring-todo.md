@@ -104,7 +104,8 @@
 - [x] Periodical Note profile/settings contracts moved with direct consumer cutover.
 - [x] Moment `InboxRecord`, capture form options, and Scheduled Item Event/Task records moved to feature-owned domains.
 - [x] Event/Task record consumers cut over directly and the temporary `EventTaskWriter` type shim removed.
-- [ ] Capture-target, Object Source settings, Timeline settings, and global settings composition remain.
+- [x] Capture target and capture settings moved to `features/capture/domain`; `InsertPosition` moved to the proven shared Markdown boundary, all consumers cut over directly, and central re-export shims removed.
+- [ ] Object Source settings, Timeline settings, and global settings composition remain.
 
 ## Task 6: Split utilities by proven ownership
 

@@ -87,7 +87,7 @@ Timeline / Active Note Manager
 
 - Cycle langsung `types.ts <-> ScheduledItemTypes.ts` telah diputus. Seluruh consumer telah memakai kontrak domain dan shim `ScheduledItemTypes.ts` sudah dihapus setelah full CI lulus.
 - Seluruh relative import di `src` kini acyclic dan dijaga oleh `test/architecture-boundaries.test.ts`. Cycle record/form/writer, desktop/mobile routing, dan `main.ts <-> SettingsTab.ts` diputus tanpa menggabungkan renderer atau mengubah persistence.
-- `types.ts` masih menjadi composition root settings dan mencampur capture-target, object-source, Timeline settings, serta beberapa kontrak settings lain. Kontrak Timer, Session Record, wellbeing, dan Periodical Notes sudah dipindahkan ke owner masing-masing.
+- `types.ts` masih menjadi composition root settings dan mencampur Object Source, Timeline, serta beberapa kontrak settings lain. Capture target dan capture settings sudah dimiliki `features/capture/domain`; kontrak Timer, Session Record, wellbeing, dan Periodical Notes juga sudah berada pada owner masing-masing.
 - `utils.ts` masih mencampur pure date-time helpers dengan Obsidian file/folder guards dan vault folder mutation.
 - Hotspot ukuran dan orchestration: `SettingsTab.ts`, `EventTaskModal.ts`, `EventTaskMobileScreen.ts`, `TimerView.ts`, `InboxNotesController.ts`, `types.ts`, dan `TimelineView.ts`.
 - Timeline mengonsumsi Scheduled Item; Timeline tidak memiliki aturan Task/Event.
@@ -102,6 +102,7 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Plugin composition | `main.ts` | `plugin/FocusNotesPlugin.ts`, `commands.ts`, `view-registration.ts`, `identifiers.ts` |
 | Transitional central contracts | `types.ts` | Split per owner dalam batch kecil; tidak menerima domain baru |
 | Mixed utilities | `utils.ts` | Split pure date-time dari Obsidian vault operations |
+| Capture target/settings contracts | `features/capture/domain/CaptureTarget.ts`, `features/capture/domain/CaptureSettings.ts` | Canonical owner; seluruh consumer target sudah direct-import dan shim `types.ts` telah dihapus |
 | Focus session domain | `features/focus-session/domain/Timer.ts`, `features/focus-session/domain/SessionRecord.ts`, `TimerEngine.ts` | Kontrak Timer dan Session Record sudah canonical; state machine dipindahkan fisik pada batch terpisah |
 | Focus session UI | `TimerView.ts`, `CircularDisplay.ts`, `LogModal.ts` | `features/focus-session/ui` |
 | Focus session application/read model | `RecentEntriesReader.ts` | Feature application dengan vault read port |
@@ -137,8 +138,8 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Object Notes UI | `ObjectNoteModal.ts`, `ObjectNoteSuggest.ts` | `features/object-notes/ui` |
 | Obsidian suggestion/link adapters | `ObsidianInboxSuggestionSource.ts`, `ObsidianLinkResolver.ts`, `ObsidianScheduledItemMentionSource.ts`, `Suggesters.ts` | `infrastructure/obsidian` with feature-facing interfaces |
 | Periodical Notes domain | `features/periodical-notes/domain/PeriodicalNote.ts`, `DailyNotePath.ts`, `PeriodicalNoteSettings.ts` | Kontrak profile/settings sudah canonical; resolver dan helper dipindahkan pada batch terpisah |
-| Target resolution | `CaptureTarget.ts`, `TargetResolver.ts` | Pure selection policy in capture; Obsidian resolution adapter in infrastructure |
-| Markdown insertion primitive | `HeadingInsertion.ts` | `shared/markdown` only after second independent domain consumer is confirmed |
+| Target resolution | `features/capture/domain/CaptureTarget.ts`, `CaptureTarget.ts`, `TargetResolver.ts` | Kontrak dan pure selection policy dimiliki capture; Obsidian resolution adapter menuju infrastructure |
+| Markdown insertion primitive | `shared/markdown/InsertPosition.ts`, `HeadingInsertion.ts` | Semantik posisi canonical di shared Markdown karena dipakai capture, Focus Session, Object Notes, dan writer; operasi insert tetap dipisahkan dari kontraknya |
 | Focus note persistence | `NoteWriter.ts` | `infrastructure/obsidian` implementing focus-session write port |
 | Settings domain/persistence | `StateStore.ts` | Persistence adapter; settings normalization split from plugin storage |
 | Settings UI | `SettingsLayout.ts`, `SettingsTab.ts` | `features/settings/ui`, one category per extraction batch |
@@ -155,9 +156,9 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 
 ## Batch berikutnya
 
-1. Ekstrak satu kelompok tipe tersisa dari `types.ts` per owner; capture target atau Object Source adalah kandidat berikutnya setelah consumer map.
-2. Bentuk boundary canonical capture-target atau Object Source settings dalam batch kecil berdasarkan consumer map.
+1. Ekstrak satu kelompok tipe tersisa dari `types.ts` per owner; Object Source settings adalah kandidat berikutnya setelah consumer map.
+2. Bentuk boundary canonical Object Source settings dalam batch kecil tanpa mengubah schema settings.
 3. Pisahkan pure date-time helpers dari `utils.ts` setelah consumer map dikonfirmasi.
 4. Pindahkan implementasi fisik hanya setelah import consumer mengarah ke boundary canonical.
 
-Checkpoint 2026-08-22: `pnpm run check:ci` lulus dengan 301 tes setelah seluruh source cycle diputus dan guard generik ditambahkan. Deployment vault dinonaktifkan; build produksi, artifact verification, dan VitePress build juga lulus.
+Checkpoint 2026-08-22: `pnpm run check:ci` lulus dengan 301 tes setelah seluruh source cycle diputus, guard generik ditambahkan, dan kontrak capture target/settings dipindahkan ke owner canonical. Deployment vault dinonaktifkan; build produksi, artifact verification, dan VitePress build juga lulus.
