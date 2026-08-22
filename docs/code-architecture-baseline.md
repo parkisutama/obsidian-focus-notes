@@ -87,7 +87,7 @@ Timeline / Active Note Manager
 
 - Cycle langsung `types.ts <-> ScheduledItemTypes.ts` telah diputus. Seluruh consumer telah memakai kontrak domain dan shim `ScheduledItemTypes.ts` sudah dihapus setelah full CI lulus.
 - Seluruh relative import di `src` kini acyclic dan dijaga oleh `test/architecture-boundaries.test.ts`. Cycle record/form/writer, desktop/mobile routing, dan `main.ts <-> SettingsTab.ts` diputus tanpa menggabungkan renderer atau mengubah persistence.
-- `types.ts` masih menjadi composition root settings dan memuat kontrak Event/Task detail, Inbox registry, defaults, serta merge/migration. Timeline settings kini dimiliki `features/timeline/domain`; Object Source, Capture, Timer, Session Record, wellbeing, dan Periodical Notes juga sudah berada pada owner masing-masing.
+- `types.ts` masih menjadi composition root settings dan memuat kontrak Inbox registry, defaults, serta merge/migration. Event/Task detail settings kini dimiliki Scheduled Item; Timeline settings dimiliki `features/timeline/domain`; Object Source, Capture, Timer, Session Record, wellbeing, dan Periodical Notes juga sudah berada pada owner masing-masing.
 - `utils.ts` masih mencampur pure date-time helpers dengan Obsidian file/folder guards dan vault folder mutation.
 - Hotspot ukuran dan orchestration: `SettingsTab.ts`, `EventTaskModal.ts`, `EventTaskMobileScreen.ts`, `TimerView.ts`, `InboxNotesController.ts`, `types.ts`, dan `TimelineView.ts`.
 - Timeline mengonsumsi Scheduled Item; Timeline tidak memiliki aturan Task/Event.
@@ -112,6 +112,7 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Moment suggestions UI/application | `InboxNotesController.ts`, `InboxSuggestions.ts`, `SuggestionSelection.ts` | Moment UI/application; generic primitive only if reuse is proven |
 | Moment settings | `InboxFolderSettings.ts` | `features/capture/moment` or settings renderer owner |
 | Scheduled Item domain contract | `features/capture/scheduled-item/domain/ScheduledItem.ts`, `features/capture/scheduled-item/domain/EventTaskRecord.ts` | Canonical owner; seluruh consumer record sudah dipotong langsung dan shim `EventTaskWriter.ts` telah dihapus |
+| Scheduled Item detail-note settings | `features/capture/scheduled-item/domain/DetailNoteSettings.ts` | Canonical owner; writer direct-import dan shim `types.ts` telah dihapus |
 | Scheduled Item form semantics | `ScheduledItemFormData.ts`, `ScheduledItemFormAdapter.ts`, `EventTaskFormState.ts`, `SubmissionPolicy.ts` | `features/capture/scheduled-item/domain` or `application` according to side effects |
 | Scheduled Item identity/parser | `ScheduledItemBlockId.ts`, `ScheduledItemParser.ts`, `ScheduledItemIdentityMigration.ts` | Domain; migration orchestration remains application |
 | Scheduled Item block editing | `ScheduledItemBlockEditor.ts`, `LedgerRecordSource.ts` | Pure domain editing/snapshot contracts |
@@ -156,9 +157,9 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 
 ## Batch berikutnya
 
-1. Ekstrak satu kelompok tipe tersisa dari `types.ts` per owner; Event/Task detail settings adalah kandidat berikutnya setelah consumer map.
+1. Ekstrak satu kelompok tipe tersisa dari `types.ts` per owner; Inbox settings adalah kandidat berikutnya setelah consumer map.
 2. Pertahankan normalisasi dan composition settings di boundary persistence sampai kontrak domain selesai dipotong langsung.
 3. Pisahkan pure date-time helpers dari `utils.ts` setelah consumer map dikonfirmasi.
 4. Pindahkan implementasi fisik hanya setelah import consumer mengarah ke boundary canonical.
 
-Checkpoint 2026-08-22: `pnpm run check:ci` lulus dengan 301 tes setelah seluruh source cycle diputus, guard generik ditambahkan, serta kontrak Capture, Object Source, dan Timeline settings dipindahkan ke owner canonical tanpa shim tersisa. Deployment vault dinonaktifkan; build produksi, artifact verification, dan VitePress build juga lulus.
+Checkpoint 2026-08-22: `pnpm run check:ci` lulus dengan 301 tes setelah seluruh source cycle diputus, guard generik ditambahkan, serta kontrak Capture, Object Source, Timeline, dan Event/Task detail settings dipindahkan ke owner canonical tanpa shim tersisa. Deployment vault dinonaktifkan; build produksi, artifact verification, dan VitePress build juga lulus.
