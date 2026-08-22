@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ScheduledItemQuery } from "../src/ScheduledItemQuery.ts";
-import type { ScheduledItem, TaskPriority } from "../src/ScheduledItemTypes.ts";
+import type { ScheduledItem, TaskPriority } from "../src/features/capture/scheduled-item/domain/ScheduledItem.ts";
 
 function task(id: string, due: Date, priority: TaskPriority): ScheduledItem {
     return {

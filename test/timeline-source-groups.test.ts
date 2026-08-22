@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { ScheduledItem } from "../src/ScheduledItemTypes.ts";
+import type { ScheduledItem } from "../src/features/capture/scheduled-item/domain/ScheduledItem.ts";
 import {
     assessTimelineTargetGroups,
     buildTimelineSourceGroups,

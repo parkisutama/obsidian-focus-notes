@@ -6,7 +6,7 @@ import {
     buildActiveNoteManagerModel,
     buildActiveNoteManagerScopeOptions,
 } from "../src/ActiveNoteManagerModel.ts";
-import type { ScheduledItem } from "../src/ScheduledItemTypes.ts";
+import type { ScheduledItem } from "../src/features/capture/scheduled-item/domain/ScheduledItem.ts";
 
 function item(title: string, headingPath: string[], lineNumber: number, kind: "event" | "task"): ScheduledItem {
     return {

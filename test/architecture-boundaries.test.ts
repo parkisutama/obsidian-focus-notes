@@ -30,13 +30,13 @@ test("feature domain modules stay independent of Obsidian and outer layers", asy
         assert.doesNotMatch(source, /from\s+["']obsidian["']/, `${relativePath} imports Obsidian`);
         assert.doesNotMatch(
             source,
+            /from\s+["'][^"']*(?:\/|\\)types(?:\.ts)?["']/,
+            `${relativePath} imports central types`,
+        );
+        assert.doesNotMatch(
+            source,
             /from\s+["'][^"']*(?:\/|\\)(?:ui|infrastructure|plugin)(?:\/|\\)/,
             `${relativePath} imports an outer layer`,
         );
     }
-});
-
-test("the Scheduled Item compatibility module does not depend on central types", async () => {
-    const source = await readFile(path.join(sourceRoot, "ScheduledItemTypes.ts"), "utf8");
-    assert.doesNotMatch(source, /from\s+["']\.\/types(?:\.ts)?["']/);
 });
