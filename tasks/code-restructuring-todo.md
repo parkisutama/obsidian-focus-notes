@@ -168,7 +168,8 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 - [x] `unwrapMarkdownLinkLabel` moved from Moment-owned `InboxMarkdown.ts` to `shared/markdown/MarkdownLink.ts`; Moment tests and both Scheduled Item consumers use the canonical primitive without a re-export.
 - [x] `TaskLineEditor.ts` and `TaskLineLint.ts` moved to `features/capture/scheduled-item/domain/`; both test files and all production consumers cut over directly and the root shims were removed.
 - [x] `EventLineEditor.ts` moved to `features/capture/scheduled-item/domain/`; the test file and all production consumers cut over directly and the root shim was removed.
-- [ ] `ScheduledItemParser.ts` remains at the source root; it is acyclic and unblocked, planned next.
+- [x] `ScheduledItemParser.ts` moved to `features/capture/scheduled-item/domain/`; all 6 test files and 5 production consumers cut over directly and the root shim was removed.
+- [ ] `ScheduledItemBlockEditor.ts`, and the semantic validation/adapter layer (`ScheduledItemFormData.ts`, `ScheduledItemFormAdapter.ts`, `ScheduledItemEditSubmission.ts`, `ScheduledItemIdentityMigration.ts`), remain at the source root; the block editor is acyclic and planned next.
 
 ## Task 8: Isolate capture persistence and external boundaries
 
