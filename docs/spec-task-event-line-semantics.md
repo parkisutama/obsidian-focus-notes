@@ -22,7 +22,7 @@ This specification covers the semantic record on the first line. Indented descri
 record but are not metadata segments:
 
 ```markdown
-- [ ] Review the proposal | due:2026-08-10
+- [ ] Review the proposal | due:2026-08-10 ^task-7k3m9x2pqw
     - Compare the revised budget.
     - detail: [Proposal review](../Tasks/Proposal%20review.md)
 ```
@@ -34,7 +34,15 @@ record but are not metadata segments:
 - Metadata segments follow the title and are separated by the exact visual boundary ` | `.
 - Metadata uses `key:value`; keys are interpreted case-insensitively and canonical writers emit lowercase keys.
 - Dates use `YYYY-MM-DD`; local date-times use `YYYY-MM-DD HH:MM` in the user's Obsidian environment.
-- The source file, ledger heading, and line number are provenance. Moving a line can therefore change its runtime identity.
+- A canonical record ends with a stable Obsidian block ID. Focus Notes writes `^task-<10 Base32 characters>` for Tasks and
+  `^event-<10 Base32 characters>` for Events. The suffix carries 50 random bits and is structural syntax, not a
+  ` | key:value` metadata segment.
+- Historical `^fn-task-...` and `^fn-event-...` IDs remain valid and are never renamed automatically, because changing an
+  existing ID would break references.
+- The block ID is the stable runtime identity. Source file, ledger heading, and line number remain provenance and provide
+  a compatibility fallback for legacy records that have not been migrated yet.
+- Legacy records without a block ID remain readable. Saving one through Edit adds an ID; Manage's Format preview can add
+  IDs to all eligible records in the selected scope without silently rewriting the note.
 - A literal ` | ` in a title is outside the current writer contract because it is reserved as the metadata boundary.
 - Frontmatter on a Project, Activity, Person, Place, or other Object note classifies that note. It does not replace the
   lifecycle or schedule stored on an individual ledger line.
@@ -44,8 +52,8 @@ record but are not metadata segments:
 A Task is a completable commitment. Checkbox state owns completion:
 
 ```markdown
-- [ ] Open task
-- [x] Completed task
+- [ ] Open task ^task-7k3m9x2pqw
+- [x] Completed task ^task-r4n8c2v6yz
 ```
 
 Both lowercase and uppercase checked markers (`[x]` and `[X]`) parse as completed. Completion is independent of scheduling:
@@ -64,12 +72,12 @@ a completed Task may retain its original due date, timebox, and reminders as his
 Canonical examples:
 
 ```markdown
-- [ ] Unscheduled task
-- [ ] Submit invoice | due:2026-08-10
-- [ ] Join submission call | due:2026-08-10 14:00
-- [ ] Draft report | start:2026-08-09 09:00 | end:2026-08-09 11:00
-- [ ] Finalize report | due:2026-08-10 | start:2026-08-09 09:00 | end:2026-08-09 11:00 | remind:2026-08-09 08:30
-- [x] Submitted invoice | due:2026-08-10
+- [ ] Unscheduled task ^task-b5h7j3s9wx
+- [ ] Submit invoice | due:2026-08-10 ^task-c8m4q2t7vy
+- [ ] Join submission call | due:2026-08-10 14:00 ^task-d6n9r3w5xz
+- [ ] Draft report | start:2026-08-09 09:00 | end:2026-08-09 11:00 ^task-f2p8s4y6za
+- [ ] Finalize report | due:2026-08-10 | start:2026-08-09 09:00 | end:2026-08-09 11:00 | remind:2026-08-09 08:30 ^task-g7q3t9x2bc
+- [x] Submitted invoice | due:2026-08-10 ^task-h4r8v2z6de
 ```
 
 ### Implemented Task validation and projection
@@ -98,9 +106,9 @@ must not rely on an ignored segment until it becomes part of this contract.
 Priority is an attribute orthogonal to checkbox completion and schedule. The canonical grammar is:
 
 ```markdown
-- [ ] Resolve production regression | priority:high
-- [ ] Review migration notes | priority:medium | due:2026-08-10
-- [ ] Organize references | priority:low
+- [ ] Resolve production regression | priority:high ^task-j3s7w5b9fg
+- [ ] Review migration notes | priority:medium | due:2026-08-10 ^task-k6t2x8c4hm
+- [ ] Organize references | priority:low ^task-m9v3y7d5jn
 ```
 
 Implemented values:
@@ -134,13 +142,13 @@ An Event is an occurrence that occupies time. It has no completion checkbox.
 Canonical timed Event:
 
 ```markdown
-- 2026-08-10 09:00 - 10:00 Review proposal
+- 2026-08-10 09:00 - 10:00 Review proposal ^event-7k3m9x2pqw
 ```
 
 The end may include a full date for a cross-date interval accepted by the parser:
 
 ```markdown
-- 2026-08-10 23:00 - 2026-08-11 00:30 Overnight maintenance
+- 2026-08-10 23:00 - 2026-08-11 00:30 Overnight maintenance ^event-r4n8c2v6yz
 ```
 
 Implemented behavior:
@@ -166,10 +174,10 @@ The implemented Event lifecycle is intentionally separate from Task checkbox com
 Canonical examples:
 
 ```markdown
-- 2026-08-10 09:00 - 10:00 Review proposal | status:completed
-- 2026-08-10 09:00 - 10:00 Review proposal | status:completed | actual-start:2026-08-10 09:12 | actual-end:2026-08-10 10:18
-- 2026-08-10 09:00 - 10:00 Review proposal | status:cancelled
-- 2026-08-10 Company holiday | type:event | all-day:true
+- 2026-08-10 09:00 - 10:00 Review proposal | status:completed ^event-b5h7j3s9wx
+- 2026-08-10 09:00 - 10:00 Review proposal | status:completed | actual-start:2026-08-10 09:12 | actual-end:2026-08-10 10:18 ^event-c8m4q2t7vy
+- 2026-08-10 09:00 - 10:00 Review proposal | status:cancelled ^event-d6n9r3w5xz
+- 2026-08-10 Company holiday | type:event | all-day:true ^event-f2p8s4y6za
 ```
 
 Reserved Event attributes are `type`, `all-day`, `status`, `actual-start`, and `actual-end`. Actual start/end must
@@ -193,6 +201,28 @@ repeatable real-device acceptance remain separate open work.
 
 Never infer one concept from another: a high-priority Task is not necessarily urgent, a timeboxed Task is not an Event, and
 a completed Event is not a checked Task.
+
+## References and navigation
+
+A Task or Event may be mentioned outside its owning ledger without duplicating its lifecycle data. Use Obsidian's native
+block link or embed syntax:
+
+```markdown
+[[Tasks.md#^task-7k3m9x2pqw|Submit invoice]]
+![[Calendar.md#^event-r4n8c2v6yz]]
+```
+
+The ledger line remains the sole editable source. Native block links provide navigation and page preview. Focus Timeline
+opens the block target when an ID exists and falls back to the recorded source line for a legacy record.
+
+In Focus Notes rich Markdown fields, typing `@` first offers Task and Event categories alongside contextual Object Notes.
+Choosing Task or Event enters a kind-scoped fuzzy search (`@task <query>` or `@event <query>`). Selection stores an
+ordinary cross-file block link; the trigger text is never persisted. Only records with unique stable block IDs are offered.
+The shared lazy index uses Obsidian's block metadata to read only files containing scheduled-item IDs, updates individual
+file buckets after metadata/create/rename/delete events, and limits each rendered result set to 20 candidates.
+
+Escape closes an active suggestion without closing its form. Backspace retains the existing cancellation behavior and
+suppresses reopening at the same trigger position until a new trigger is typed.
 
 ## Extension rules
 

@@ -76,6 +76,12 @@ Example:
 - Matching covers a note's filename and aliases from its frontmatter.
 - Matching is case-insensitive and fuzzy/partial; for example, `@ndi` can match `Andi`.
 - Multiple mentions can be selected in one Notes body.
+- A bare `@` also offers Task and Event categories. Choosing one enters a second, kind-scoped fuzzy dropdown; direct
+  `@task <query>` and `@event <query>` input is equivalent.
+- Task/Event selection inserts a native cross-file block link to the canonical ledger record. Only unique records with a
+  stable block ID are eligible; the trigger text itself is not persisted.
+- The shared lazy Scheduled Item index uses Obsidian block metadata to avoid full-vault content scans and keeps at most 20
+  ranked results. Escape dismisses suggestions before modal cancellation; Backspace preserves trigger suppression.
 - Selecting a filename result uses the filename without `.md` as link label.
 - Selecting an alias uses that alias as link label and the actual note as destination.
 - The stored link is ordinary Markdown using a path relative to the destination Inbox file, not a wikilink and not a vault-absolute path:

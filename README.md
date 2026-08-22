@@ -53,17 +53,27 @@ Open the planner via the calendar ribbon icon or the command palette (`Open Focu
 Supported event lines:
 
 ```markdown
-- 2026-05-24 15:00 - 16:00 Testing
-- 2026-05-24 22:00 - 2026-05-25 02:00 Deployment window
+- 2026-05-24 15:00 - 16:00 Testing ^event-7k3m9x2pqw
+- 2026-05-24 22:00 - 2026-05-25 02:00 Deployment window ^event-r4n8c2v6yz
 ```
 
 Supported task lines:
 
 ```markdown
-- [ ] Update CSV blok | due:2026-05-23 | remind:2026-05-23 18:11
-- [ ] Agenda meeting | start:2026-05-20 14:00 | end:2026-05-20 15:00 | due:2026-05-20
-- [x] Daftar aplikasi | due:2026-05-19
+- [ ] Update CSV blok | due:2026-05-23 | remind:2026-05-23 18:11 ^task-7k3m9x2pqw
+- [ ] Agenda meeting | start:2026-05-20 14:00 | end:2026-05-20 15:00 | due:2026-05-20 ^task-r4n8c2v6yz
+- [x] Daftar aplikasi | due:2026-05-19 ^task-b5h7j3s9wx
 ```
+
+Focus Notes assigns a stable Obsidian block ID to newly created Tasks and Events. Mention the canonical record elsewhere
+with `[[Tasks.md#^task-7k3m9x2pqw|Update CSV blok]]` or embed it with `![[Tasks.md#^task-7k3m9x2pqw]]`; scheduling and
+lifecycle metadata remain owned by the original ledger line. Editing a legacy record adds its missing ID, and Manage's
+Format preview can migrate a selected scope in one confirmed write.
+
+Inside Focus Notes rich description fields, type `@` and choose **Task** or **Event**, then fuzzy-search the selected
+record type. The direct forms `@task <query>` and `@event <query>` work as well. Selection stores an ordinary cross-file
+block link, so navigation and page preview remain native to Obsidian. Escape dismisses the active dropdown without
+closing the form; Backspace retains the existing suggestion-cancel behavior.
 
 Timeline behavior:
 
@@ -74,7 +84,8 @@ Timeline behavior:
 - In Day mode, source notes sit above the timeline so the view remains compact in a sidebar/panel.
 - Switching from Day to Weekly View opens a new workspace tab, giving the planner more horizontal room.
 - In Weekly View, source notes use a left navigation rail with a minimal source toggle.
-- Clicking a timeline item opens the source note.
+- Clicking a timeline item's source opens its exact block when an ID is available, with a line-number fallback for legacy
+  records.
 - Day and Weekly View can be switched from the timeline header.
 
 ---
