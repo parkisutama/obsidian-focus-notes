@@ -5,8 +5,9 @@ import { LogModal } from "./LogModal";
 import type { NoteWriter } from "./NoteWriter";
 import type { TargetResolver } from "./TargetResolver";
 import type { RecentEntriesReader } from "./RecentEntriesReader";
+import type { SessionRecord } from "./features/focus-session/domain/SessionRecord";
 import { type DisplayMode, toEngineMode } from "./features/focus-session/domain/Timer";
-import type { FocusNotesSettings, FocusTarget, InsertPosition, SessionRecord } from "./types";
+import type { FocusNotesSettings, FocusTarget, InsertPosition } from "./types";
 import { FileSuggest, HeadingSuggest } from "./Suggesters";
 import { isTFile } from "./utils";
 

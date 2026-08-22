@@ -1,5 +1,6 @@
 import { type App, type TFile, moment, normalizePath } from "obsidian";
-import type { FocusNotesSettings, FocusTarget, SessionRecord } from "./types";
+import type { SessionRecord } from "./features/focus-session/domain/SessionRecord";
+import type { FocusNotesSettings, FocusTarget } from "./types";
 import { ensureFolderPath, isTFile } from "./utils";
 import { getMood } from "./MoodReference";
 import { getEmotionCategoryLabel, getStressLevelLabel } from "./EmotionalWellbeingReference";
