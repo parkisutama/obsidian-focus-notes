@@ -4,7 +4,8 @@ import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSe
 import type { InboxRecord } from "./features/capture/moment/domain/InboxRecord";
 import { insertUnderHeading } from "./HeadingInsertion";
 import { type FormatInboxEntryOptions, formatInboxEntry } from "./InboxMarkdown";
-import { ensureFolderPath, isTFile } from "./utils";
+import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
+import { ensureFolderPath } from "./utils";
 import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTaskMarkdown";
 import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
 import { TargetResolver } from "./TargetResolver";
