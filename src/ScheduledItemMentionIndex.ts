@@ -1,4 +1,4 @@
-import type { ScheduledItemKind } from "./ScheduledItemTypes.ts";
+import type { ScheduledItemKind } from "./features/capture/scheduled-item/domain/ScheduledItem.ts";
 import type { SuggestionMatcher } from "./InboxSuggestions.ts";
 
 export interface ScheduledItemMentionRecord {

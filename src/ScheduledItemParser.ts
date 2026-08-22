@@ -1,6 +1,11 @@
 import { unwrapMarkdownLinkLabel } from "./InboxMarkdown.ts";
 import { extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
-import type { EventOccurrenceStatus, ScheduledItem, ScheduledItemSource, TaskPriority } from "./ScheduledItemTypes";
+import type {
+    EventOccurrenceStatus,
+    ScheduledItem,
+    ScheduledItemSource,
+    TaskPriority,
+} from "./features/capture/scheduled-item/domain/ScheduledItem";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DATETIME_RE = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/;

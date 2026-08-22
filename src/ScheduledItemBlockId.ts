@@ -1,4 +1,4 @@
-import type { ScheduledItemKind } from "./ScheduledItemTypes.ts";
+import type { ScheduledItemKind } from "./features/capture/scheduled-item/domain/ScheduledItem.ts";
 
 const TRAILING_BLOCK_ID = /\s+\^([A-Za-z0-9][A-Za-z0-9_-]*)\s*$/;
 const BASE32_ALPHABET = "0123456789abcdefghjkmnpqrstvwxyz";
