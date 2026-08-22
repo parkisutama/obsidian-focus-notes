@@ -7,7 +7,7 @@ import {
 import type { EventTaskFormState } from "./EventTaskFormState";
 import type { InboxRecord } from "./features/capture/moment/domain/InboxRecord";
 import { formatEventTaskEntry } from "./EventTaskMarkdown.ts";
-import type { EventTaskRecord, HubNoteRef } from "./EventTaskWriter";
+import type { EventTaskRecord, HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import type { FormatInboxEntryOptions } from "./InboxMarkdown.ts";
 import { parseObjectReferences } from "./ObjectReference.ts";
 import { formatRelatedLog } from "./RelatedLog.ts";

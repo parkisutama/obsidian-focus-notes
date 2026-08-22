@@ -1,4 +1,4 @@
-import type { EventTaskRecord, HubNoteRef } from "./EventTaskWriter";
+import type { EventTaskRecord, HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import { buildScheduledItemRecord } from "./ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
 
