@@ -5,7 +5,7 @@ import { captureTaskLedgerEdit } from "./TaskLedgerEditor";
 import { ScheduledItemDesktopEditModal } from "./ScheduledItemDesktopEditModal.ts";
 import { ScheduledItemMobileEditScreen } from "./ScheduledItemMobileEditScreen.ts";
 import { shouldUseMobileForm } from "./MobileFormPolicy";
-import type { FocusNotesSettings } from "./types";
+import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 
 export async function openScheduledItemEditor(
     app: App,

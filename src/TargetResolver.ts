@@ -1,7 +1,7 @@
 import { type App, moment } from "obsidian";
 import { normalizeDailyNoteFormat } from "./DailyNotePath";
 import type { PeriodicalNoteProfile } from "./features/periodical-notes/domain/PeriodicalNote";
-import type { FocusNotesSettings } from "./types";
+import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 
 /**

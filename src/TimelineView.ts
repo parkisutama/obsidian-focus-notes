@@ -14,7 +14,7 @@ import { TimelineLayout } from "./TimelineLayout";
 import { isFileInTimelineSource } from "./TimelineSourceAlignment";
 import { buildTimelineSourceGroups, timelineSourceFolders, timelineSourceHeadings } from "./TimelineSourceGroups";
 import { buildTimelineSourceSummaries, TimelineSourceSidebar } from "./TimelineSourceSidebar";
-import type { FocusNotesSettings } from "./types";
+import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import { addDays, formatDayKey, getIsoWeek, startOfDay, startOfWeek } from "./utils";
 
 export const VIEW_TYPE_FOCUS_TIMELINE = "focus-timeline-view";

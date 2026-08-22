@@ -7,7 +7,7 @@ import type { TargetResolver } from "./TargetResolver";
 import type { RecentEntriesReader } from "./RecentEntriesReader";
 import type { SessionRecord } from "./features/focus-session/domain/SessionRecord";
 import { type DisplayMode, toEngineMode } from "./features/focus-session/domain/Timer";
-import type { FocusNotesSettings } from "./types";
+import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
 import { FileSuggest, HeadingSuggest } from "./Suggesters";

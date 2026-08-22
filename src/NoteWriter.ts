@@ -1,6 +1,6 @@
 import { type App, type TFile, moment, normalizePath } from "obsidian";
 import type { SessionRecord } from "./features/focus-session/domain/SessionRecord";
-import type { FocusNotesSettings } from "./types";
+import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import { ensureFolderPath, isTFile } from "./utils";
 import { getMood } from "./MoodReference";

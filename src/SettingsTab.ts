@@ -15,7 +15,7 @@ import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
 import type { ContextSourceSettings, ObjectNotePlacement } from "./features/object-notes/domain/ContextSourceSettings";
 import type { TimelineMode } from "./features/timeline/domain/Timeline";
-import type { FocusNotesSettings } from "./types";
+import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { PeriodicalNoteProfile } from "./features/periodical-notes/domain/PeriodicalNote";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
 import { isTFile } from "./utils";

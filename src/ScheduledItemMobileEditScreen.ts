@@ -18,7 +18,7 @@ import {
 } from "./ScheduledItemEditSubmission.ts";
 import { hydrateScheduledItemFormEdit, parseLocalDateTime } from "./ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
-import type { FocusNotesSettings } from "./types.ts";
+import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings.ts";
 import { isTFile } from "./utils.ts";
 
 type PartialDetail = Extract<DetailNotePromotionResult, { status: "partial" }>;

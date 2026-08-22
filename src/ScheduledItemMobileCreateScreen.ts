@@ -19,7 +19,7 @@ import {
 import { buildScheduledItemRecord } from "./ScheduledItemFormAdapter.ts";
 import { type ScheduledItemFormData, scheduledItemFormDataFromCreateState } from "./ScheduledItemFormData.ts";
 import { TargetResolver } from "./TargetResolver.ts";
-import type { FocusNotesSettings } from "./types.ts";
+import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings.ts";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import { isTFile } from "./utils.ts";
 
