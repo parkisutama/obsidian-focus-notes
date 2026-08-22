@@ -1,5 +1,6 @@
 import { isPathInContextSourceFolder, matchesContextFilter } from "./ContextSourceScope.ts";
-import type { ContextSourceSettings, InsertPosition } from "./types";
+import type { ContextSourceSettings } from "./types";
+import type { InsertPosition } from "./shared/markdown/InsertPosition";
 
 export interface ContextLinkNote {
     path: string;

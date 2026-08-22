@@ -1,5 +1,5 @@
 import { type App, type TFile, normalizePath } from "obsidian";
-import type { EventTaskSettings, FocusNotesSettings, InsertPosition } from "./types";
+import type { EventTaskSettings, FocusNotesSettings } from "./types";
 import type { InboxRecord } from "./features/capture/moment/domain/InboxRecord";
 import { insertUnderHeading } from "./HeadingInsertion";
 import { type FormatInboxEntryOptions, formatInboxEntry } from "./InboxMarkdown";
@@ -9,6 +9,7 @@ import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
 import { TargetResolver } from "./TargetResolver";
 import type { EventTaskRecord, HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import { createScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
+import type { InsertPosition } from "./shared/markdown/InsertPosition";
 
 export class EventTaskWriter {
     constructor(

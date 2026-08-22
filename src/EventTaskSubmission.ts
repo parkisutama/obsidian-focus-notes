@@ -17,7 +17,9 @@ import {
     retryFailedRelatedWrites,
     writeRelatedDestinations,
 } from "./RelatedWriteRecovery.ts";
-import type { ContextSourceSettings, FocusTarget, InsertPosition } from "./types";
+import type { ContextSourceSettings } from "./types";
+import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
+import type { InsertPosition } from "./shared/markdown/InsertPosition";
 
 interface NoteFile {
     path: string;

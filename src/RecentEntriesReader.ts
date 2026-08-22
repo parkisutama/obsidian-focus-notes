@@ -1,5 +1,5 @@
 import { type App, normalizePath } from "obsidian";
-import type { FocusTarget } from "./types";
+import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import { isTFile } from "./utils";
 
 /**
