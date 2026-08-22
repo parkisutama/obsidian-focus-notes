@@ -1,7 +1,7 @@
 import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import type { TimelineMode, TimelineRange } from "./features/timeline/domain/Timeline";
 import type { TimelineLayoutResult } from "./TimelineLayout";
-import { addDays, formatDayKey, formatTime, startOfDay } from "./utils";
+import { addDays, formatDayKey, formatTime, startOfDay } from "./features/timeline/domain/TimelineDate.ts";
 
 const HOUR_PX = 60;
 
