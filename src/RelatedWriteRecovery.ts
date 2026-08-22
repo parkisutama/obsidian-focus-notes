@@ -1,4 +1,4 @@
-import type { InsertPosition } from "./types";
+import type { InsertPosition } from "./shared/markdown/InsertPosition";
 
 export interface RelatedWriteRequest {
     readonly destinationPath: string;

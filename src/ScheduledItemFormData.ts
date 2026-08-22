@@ -3,7 +3,7 @@ import type { EventTaskFormState } from "./EventTaskFormState";
 import { parseObjectReferences, type ObjectReference } from "./ObjectReference.ts";
 import type { EventOccurrenceStatus, TaskPriority } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import type { TaskLineEdit } from "./TaskLineEditor";
-import type { InsertPosition } from "./types";
+import type { InsertPosition } from "./shared/markdown/InsertPosition";
 
 export type DetailNoteSelection =
     | { mode: "none" }
