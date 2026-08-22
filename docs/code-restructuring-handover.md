@@ -1,7 +1,7 @@
 # Code restructuring handover
 
-Tanggal: 2026-08-22
-Status: Task 7 aktif; dependency Moment dari Scheduled Item parser/editor sudah dihapus melalui primitive shared Markdown
+Tanggal: 2026-08-23
+Status: Task 7 aktif; `TaskLineEditor.ts` dan `TaskLineLint.ts` sudah canonical di domain Scheduled Item tanpa shim
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -357,9 +357,9 @@ Acceptance manual tetap diperlukan untuk:
 
 1. Baca dokumen handover ini, `docs/spec-code-quality-remediation.md`, dan `tasks/unified-scheduled-item-form-plan.md`.
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
-3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 306 tes pada 2026-08-22.
+3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 306 tes pada 2026-08-23.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Lanjutkan Task 7 dengan memindahkan `TaskLineEditor.ts` dan `TaskLineLint.ts` sebagai satu kelompok Task domain, memakai `shared/markdown/MarkdownLink.ts` dan characterization tests yang ada.
+5. Lanjutkan Task 7 dengan memindahkan `EventLineEditor.ts` ke domain Scheduled Item mengikuti pola Task line editor yang baru selesai, lalu `ScheduledItemParser.ts` setelahnya.
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 

@@ -144,6 +144,7 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Target resolution | `features/capture/domain/CaptureTarget.ts`, `CaptureTarget.ts`, `TargetResolver.ts` | Kontrak dan pure selection policy dimiliki capture; Obsidian resolution adapter menuju infrastructure |
 | Markdown insertion primitive | `shared/markdown/InsertPosition.ts`, `HeadingInsertion.ts` | Semantik posisi canonical di shared Markdown karena dipakai capture, Focus Session, Object Notes, dan writer; operasi insert tetap dipisahkan dari kontraknya |
 | Markdown link primitive | `shared/markdown/MarkdownLink.ts` | Canonical `unwrapMarkdownLinkLabel` untuk Moment, Task editor, dan Scheduled Item parser; regex serta legacy plain-text fallback dipertahankan tanpa re-export feature |
+| Task line editor/lint | `features/capture/scheduled-item/domain/TaskLineEditor.ts`, `features/capture/scheduled-item/domain/TaskLineLint.ts` | Parsing, edit, dan lint kanonis; seluruh consumer direct-import dan shim root telah dihapus |
 | Focus note persistence | `NoteWriter.ts` | `infrastructure/obsidian` implementing focus-session write port |
 | Settings domain/persistence | `StateStore.ts` | Persistence adapter; settings normalization split from plugin storage |
 | Settings UI | `SettingsLayout.ts`, `SettingsTab.ts` | `features/settings/ui`, one category per extraction batch |
@@ -160,9 +161,9 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 
 ## Batch berikutnya
 
-1. Pindahkan `TaskLineEditor.ts` dan `TaskLineLint.ts` sebagai satu kelompok Task domain dengan shim sementara.
+1. Pindahkan `EventLineEditor.ts` ke domain Scheduled Item dengan shim sementara, mengikuti pola yang sama dengan Task line editor.
 2. Cut over tests dan consumer dalam batch kecil, lalu hapus shim setelah zero-reference proof.
-3. Pertahankan parsing link legacy, metadata tak dikenal, block ID, dan byte-identical no-op.
-4. Pindahkan `ScheduledItemParser.ts` hanya setelah kelompok Task editor selesai dan tetap acyclic.
+3. Pertahankan parsing marker legacy, metadata tak dikenal, block ID, dan byte-identical no-op.
+4. Pindahkan `ScheduledItemParser.ts` hanya setelah kelompok Event line editor selesai dan tetap acyclic.
 
-Checkpoint 2026-08-22: `unwrapMarkdownLinkLabel` sudah canonical di `shared/markdown/MarkdownLink.ts`. Moment tests, Task editor, dan Scheduled Item parser sudah cut over langsung; definisi/re-export feature dihapus, dependency Moment hilang, dan full CI dengan 306 tes diverifikasi pada checkpoint ini.
+Checkpoint 2026-08-23: `TaskLineEditor.ts` dan `TaskLineLint.ts` sudah canonical di `features/capture/scheduled-item/domain/`. Kedua test file dan seluruh consumer produksi (`ScheduledItemFormAdapter.ts`, `ScheduledItemEditSubmission.ts`, `ScheduledItemFormData.ts`, `TaskEditModal.ts`, `TaskLedgerEditor.ts`, `ActiveNoteManagerModal.ts`) sudah cut over langsung, shim root telah dihapus, source tetap acyclic, dan full CI dengan 306 tes diverifikasi pada checkpoint ini.
