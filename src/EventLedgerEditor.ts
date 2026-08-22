@@ -5,7 +5,7 @@ import {
     type EventLineInvalidReason,
     parseEventLineEdit,
     type ParseEventLineEditResult,
-} from "./EventLineEditor.ts";
+} from "./features/capture/scheduled-item/domain/EventLineEditor.ts";
 import {
     captureLedgerRecord,
     type LedgerRecordConflictReason,

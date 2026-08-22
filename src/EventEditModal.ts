@@ -1,6 +1,6 @@
 import { type App, Modal, Notice, Platform, Setting } from "obsidian";
-import type { EventLineEdit } from "./EventLineEditor";
 import { saveEventLedgerEdit, type SaveEventLedgerEditResult } from "./EventLedgerEditor";
+import type { EventLineEdit } from "./features/capture/scheduled-item/domain/EventLineEditor";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource";
 import { shouldUseMobileForm } from "./MobileFormPolicy";
 

@@ -1,5 +1,8 @@
-import { editEventLineWithTitle, parseEventLineEdit } from "./EventLineEditor.ts";
 import type { EventTaskRecord } from "./features/capture/scheduled-item/domain/EventTaskRecord";
+import {
+    editEventLineWithTitle,
+    parseEventLineEdit,
+} from "./features/capture/scheduled-item/domain/EventLineEditor.ts";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
 import { normalizeObjectReferencePath, parseObjectReferences } from "./ObjectReference.ts";
 import {
