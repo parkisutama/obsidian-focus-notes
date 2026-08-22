@@ -1,4 +1,4 @@
-import type { TimelineSourceGroup } from "./ScheduledItemTypes";
+import type { TimelineSourceGroup } from "./features/timeline/domain/Timeline";
 import { isFileInTimelineSource, type TimelineTargetAlignment } from "./TimelineSourceAlignment.ts";
 import type { ContextSourceSettings } from "./types";
 

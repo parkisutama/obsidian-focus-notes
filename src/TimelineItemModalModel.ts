@@ -1,4 +1,4 @@
-import type { ScheduledItem } from "./ScheduledItemTypes";
+import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
 
 export interface TimelineItemModalModel {
     title: string;
