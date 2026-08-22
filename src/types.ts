@@ -11,24 +11,16 @@
  */
 
 import type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
+import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import type { DisplayMode } from "./features/focus-session/domain/Timer.ts";
 import type { PeriodicalNotesSettings } from "./features/periodical-notes/domain/PeriodicalNote";
 import type { TimelineMode } from "./features/timeline/domain/Timeline";
+import type { InsertPosition } from "./shared/markdown/InsertPosition";
 
-export type InsertPosition = "start" | "end";
+export type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 export type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
 export type { TimelineMode } from "./features/timeline/domain/Timeline";
-
-/**
- * A logging target. The `file` field is a *template* and may contain
- * `{{date}}` or `{{date:FORMAT}}` tokens — TargetResolver expands them
- * at write time so "today's daily note" stays correct as the day rolls.
- */
-export interface FocusTarget {
-    file: string;
-    heading: string;
-    position: InsertPosition;
-}
+export type { InsertPosition } from "./shared/markdown/InsertPosition";
 
 export interface FocusNotesSettings {
     /** Default focus duration for the Pomodoro tab. */
