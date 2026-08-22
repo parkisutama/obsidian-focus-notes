@@ -1,6 +1,6 @@
 import { type App, normalizePath } from "obsidian";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
-import { isTFile } from "./utils";
+import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 /**
  * Reads back the user's recent log entries from the active target.

@@ -13,7 +13,7 @@ import {
     type TaskLineEdit,
     type TaskLineInvalidReason,
 } from "./TaskLineEditor.ts";
-import { isTFile } from "./utils.ts";
+import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 type FileConflictReason = LedgerRecordConflictReason | "file-missing";
 

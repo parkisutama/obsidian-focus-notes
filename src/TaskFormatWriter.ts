@@ -1,5 +1,5 @@
 import type { App } from "obsidian";
-import { isTFile } from "./utils.ts";
+import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 export interface TaskFormatChange {
     lineNumber: number;

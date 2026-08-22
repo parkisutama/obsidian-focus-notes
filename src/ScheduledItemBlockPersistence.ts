@@ -1,7 +1,7 @@
 import type { App } from "obsidian";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
 import { replaceScheduledItemBlock, type ScheduledItemBlockEdit } from "./ScheduledItemBlockEditor.ts";
-import { isTFile } from "./utils.ts";
+import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 export type SaveScheduledItemBlockResult =
     | { status: "saved" | "unchanged" }
