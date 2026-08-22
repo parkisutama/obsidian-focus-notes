@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { inspectTaskLine, taskLineLintLabel } from "../src/TaskLineLint.ts";
+import { inspectTaskLine, taskLineLintLabel } from "../src/features/capture/scheduled-item/domain/TaskLineLint.ts";
 
 test("distinguishes plain, canonical, and formatable task lines", () => {
     assert.deepEqual(inspectTaskLine("- [ ] Draft invoice"), {

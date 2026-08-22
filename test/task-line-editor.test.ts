@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { editTaskLine, parseTaskLineEdit } from "../src/features/capture/scheduled-item/domain/TaskLineEditor.ts";
 import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
-import { editTaskLine, parseTaskLineEdit } from "../src/TaskLineEditor.ts";
 
 test("parses every editable Task field including multiple reminders", () => {
     const line =
