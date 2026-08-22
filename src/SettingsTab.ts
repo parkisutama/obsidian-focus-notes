@@ -14,13 +14,8 @@ import {
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
-import type {
-    ContextSourceSettings,
-    InsertPosition,
-    ObjectNotePlacement,
-    PeriodicalNoteProfile,
-    TimelineMode,
-} from "./types";
+import type { ContextSourceSettings, InsertPosition, ObjectNotePlacement, TimelineMode } from "./types";
+import type { PeriodicalNoteProfile } from "./features/periodical-notes/domain/PeriodicalNote";
 import { isTFile } from "./utils";
 
 type FocusNotesSettingsView = { id: NavigableViewId } | { id: "objects-source"; sourceId: string };
