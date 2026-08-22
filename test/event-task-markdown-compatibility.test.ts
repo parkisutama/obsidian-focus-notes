@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "../src/EventTaskMarkdown.ts";
-import type { EventRecord, TaskRecord } from "../src/EventTaskWriter.ts";
+import type { EventRecord, TaskRecord } from "../src/features/capture/scheduled-item/domain/EventTaskRecord.ts";
 import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
 import { ScheduledItemParser } from "../src/ScheduledItemParser.ts";
 

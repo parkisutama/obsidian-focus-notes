@@ -4,7 +4,8 @@ import {
     promoteScheduledItemDetail,
     retryDetailNoteAttachment,
 } from "./DetailNotePromotion.ts";
-import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter.ts";
+import { EventTaskWriter } from "./EventTaskWriter.ts";
+import type { HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
 import { MobileScheduledItemForm } from "./MobileScheduledItemForm.ts";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource.ts";
