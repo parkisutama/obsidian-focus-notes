@@ -3,7 +3,8 @@ import { preferActiveNoteTarget } from "./CaptureTarget.ts";
 import { EventTaskMobileScreen } from "./EventTaskMobileScreen.ts";
 import { ScheduledItemMobileCreateScreen } from "./ScheduledItemMobileCreateScreen.ts";
 import { TargetResolver } from "./TargetResolver.ts";
-import type { FocusNotesSettings, FocusTarget } from "./types.ts";
+import type { FocusNotesSettings } from "./types.ts";
+import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 
 export function openMobileScheduledItemCreate(
     app: App,

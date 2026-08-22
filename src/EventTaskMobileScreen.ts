@@ -21,7 +21,8 @@ import { SubmissionPolicy } from "./SubmissionPolicy";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
-import type { FocusNotesSettings, FocusTarget } from "./types";
+import type { FocusNotesSettings } from "./types";
+import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import { isTFile } from "./utils";
 
 export class EventTaskMobileScreen extends Component {

@@ -19,7 +19,8 @@ import {
 import { buildScheduledItemRecord } from "./ScheduledItemFormAdapter.ts";
 import { type ScheduledItemFormData, scheduledItemFormDataFromCreateState } from "./ScheduledItemFormData.ts";
 import { TargetResolver } from "./TargetResolver";
-import type { FocusNotesSettings, FocusTarget } from "./types";
+import type { FocusNotesSettings } from "./types";
+import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import { isTFile } from "./utils.ts";
 
 type PartialDetail = Extract<DetailNotePromotionResult, { status: "partial" }>;
