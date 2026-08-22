@@ -22,11 +22,6 @@ import type { PeriodicalNotesSettings } from "./features/periodical-notes/domain
 import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 import type { TimelineMode } from "./features/timeline/domain/Timeline";
 
-export type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
-export type {
-    ContextSourceSettings,
-    ObjectNotePlacement,
-} from "./features/object-notes/domain/ContextSourceSettings";
 export type { TimelineMode } from "./features/timeline/domain/Timeline";
 
 export interface FocusNotesSettings {
