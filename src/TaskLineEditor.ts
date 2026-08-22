@@ -1,9 +1,9 @@
-import { unwrapMarkdownLinkLabel } from "./InboxMarkdown.ts";
 import {
     appendScheduledItemBlockId,
     extractScheduledItemBlockId,
 } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 import type { TaskPriority } from "./features/capture/scheduled-item/domain/ScheduledItem";
+import { unwrapMarkdownLinkLabel } from "./shared/markdown/MarkdownLink.ts";
 
 /** Wraps a plain date/time edit value (e.g. into a relative Markdown link) before it's written. */
 export type FormatDateValue = (value: string) => string;
