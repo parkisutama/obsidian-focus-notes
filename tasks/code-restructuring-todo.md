@@ -169,7 +169,8 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 - [x] `TaskLineEditor.ts` and `TaskLineLint.ts` moved to `features/capture/scheduled-item/domain/`; both test files and all production consumers cut over directly and the root shims were removed.
 - [x] `EventLineEditor.ts` moved to `features/capture/scheduled-item/domain/`; the test file and all production consumers cut over directly and the root shim was removed.
 - [x] `ScheduledItemParser.ts` moved to `features/capture/scheduled-item/domain/`; all 6 test files and 5 production consumers cut over directly and the root shim was removed.
-- [ ] `ScheduledItemBlockEditor.ts`, and the semantic validation/adapter layer (`ScheduledItemFormData.ts`, `ScheduledItemFormAdapter.ts`, `ScheduledItemEditSubmission.ts`, `ScheduledItemIdentityMigration.ts`), remain at the source root; the block editor is acyclic and planned next.
+- [x] `ScheduledItemBlockEditor.ts` moved to `features/capture/scheduled-item/domain/`; both test files and all 3 production consumers cut over directly and the root shim was removed. `LedgerRecordSource.ts` stays at the source root (12 consumers across Task/Event ledger editors; a separate, wider batch).
+- [ ] `ScheduledItemFormData.ts` and `ScheduledItemFormAdapter.ts` remain at the source root; both are pure and acyclic but have wide consumer sets (13 and 8 files), planned next with per-UI-area cutover. `ScheduledItemEditSubmission.ts` and `ScheduledItemIdentityMigration.ts` are application/orchestration per the ownership map, not pure domain, and belong to Task 8 instead.
 
 ## Task 8: Isolate capture persistence and external boundaries
 

@@ -117,7 +117,7 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Scheduled Item detail-note settings | `features/capture/scheduled-item/domain/DetailNoteSettings.ts` | Canonical owner; writer direct-import dan shim `types.ts` telah dihapus |
 | Scheduled Item form semantics | `ScheduledItemFormData.ts`, `ScheduledItemFormAdapter.ts`, `EventTaskFormState.ts`, `SubmissionPolicy.ts` | `features/capture/scheduled-item/domain` or `application` according to side effects |
 | Scheduled Item identity/parser | `features/capture/scheduled-item/domain/ScheduledItemBlockId.ts`, `ScheduledItemParser.ts`, `ScheduledItemIdentityMigration.ts` | Block identity sudah canonical tanpa shim; parser menuju domain, migration orchestration tetap application |
-| Scheduled Item block editing | `ScheduledItemBlockEditor.ts`, `LedgerRecordSource.ts` | Pure domain editing/snapshot contracts |
+| Scheduled Item block editing | `features/capture/scheduled-item/domain/ScheduledItemBlockEditor.ts`, `LedgerRecordSource.ts` | Block/description/detail-note parsing sudah canonical; seluruh consumer direct-import dan shim root telah dihapus. `LedgerRecordSource.ts` tetap di root (12 consumer produksi lintas Task/Event ledger editor, batch tersendiri) |
 | Scheduled Item application | `ScheduledItemEditSubmission.ts`, `ScheduledItemCreateRelated.ts`, `RelatedWriteRecovery.ts`, `EventTaskSubmission.ts` | `features/capture/scheduled-item/application` |
 | Scheduled Item persistence | `ScheduledItemBlockPersistence.ts`, `EventTaskWriter.ts` | Application port plus `infrastructure/obsidian` adapter |
 | Capture launch/orchestration | `features/capture/domain/CaptureForm.ts`, `ScheduledItemEditor.ts`, `ScheduledItemMobileCreateLauncher.ts` | Shared contract dan routing composition; desktop/mobile renderer tetap terpisah |
@@ -163,9 +163,12 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 
 ## Batch berikutnya
 
-1. Pindahkan `ScheduledItemBlockEditor.ts` ke domain Scheduled Item dengan shim sementara; file ini sudah acyclic (hanya bergantung pada `LedgerRecordSource.ts`, yang tidak punya import).
-2. Cut over 2 test file (`legacy-hub-ui-retirement.test.ts`, `scheduled-item-block-editor.test.ts`) dan 3 consumer produksi (`ScheduledItemBlockPersistence.ts`, `ScheduledItemEditSubmission.ts`, `ScheduledItemFormAdapter.ts`) dalam batch kecil, lalu hapus shim setelah zero-reference proof.
-3. Pertahankan parsing block/description/detail-note legacy dan byte-identical no-op.
-4. Setelah block editor dipindahkan, Task 7 tersisa pada validasi dan semantic adapters (`ScheduledItemFormData.ts`, `ScheduledItemFormAdapter.ts`, `ScheduledItemEditSubmission.ts`, `ScheduledItemIdentityMigration.ts`) sebelum checkpoint Task 7 dapat ditutup.
+1. Pindahkan `ScheduledItemFormData.ts` ke domain Scheduled Item dengan shim sementara; file ini sudah acyclic dan pure (tidak ada import Obsidian/DOM).
+2. `ScheduledItemFormAdapter.ts` bergantung pada `ScheduledItemFormData.ts` dan juga pure (`LedgerRecordSnapshot` hanya type); pindahkan sebagai kelompok yang sama setelah FormData selesai.
+3. Kedua file punya consumer lebar (FormData: 13 file produksi/tes; FormAdapter: 8 file), jadi cut over consumer per area UI (desktop dulu, lalu mobile, lalu application) alih-alih satu batch besar, mengikuti disiplin ~5 file per commit.
+4. `EventTaskFormState.ts` dan `SubmissionPolicy.ts` juga termasuk "Scheduled Item form semantics" pada peta ownership tapi `EventTaskFormState.ts` masih mereferensikan `InboxRecord` milik Moment; tentukan owner akhirnya (capture bersama vs Scheduled Item) sebelum memindahkannya.
+5. `ScheduledItemEditSubmission.ts` dan `ScheduledItemIdentityMigration.ts` adalah application/orchestration (bukan pure domain) menurut ownership map; biarkan di root untuk Task 8, bukan Task 7.
+
+Checkpoint 2026-08-23 (lanjutan): `ScheduledItemBlockEditor.ts` sudah canonical di `features/capture/scheduled-item/domain/`. Kedua test file dan seluruh consumer produksi (`ScheduledItemBlockPersistence.ts`, `ScheduledItemEditSubmission.ts`, `ScheduledItemFormAdapter.ts`) sudah cut over langsung, shim root telah dihapus, source tetap acyclic, dan full CI dengan 306 tes diverifikasi pada checkpoint ini. `LedgerRecordSource.ts` sengaja dibiarkan di root karena consumer-nya (12 file) melampaui lingkup batch ini.
 
 Checkpoint 2026-08-23: `TaskLineEditor.ts`, `TaskLineLint.ts`, `EventLineEditor.ts`, dan `ScheduledItemParser.ts` sudah canonical di `features/capture/scheduled-item/domain/`. Seluruh test file dan consumer produksi (termasuk `ActiveNoteLedger.ts`, `main.ts`, `ObsidianScheduledItemMentionSource.ts`, `ScheduledItemIndexer.ts`, `TimelineView.ts`) sudah cut over langsung, shim root telah dihapus, source tetap acyclic, dan full CI dengan 306 tes diverifikasi pada checkpoint ini.
