@@ -16,8 +16,8 @@ import {
     type ScheduledItemCreateRelatedResult,
     writeScheduledItemCreateRelated,
 } from "./ScheduledItemCreateRelated.ts";
-import { buildScheduledItemRecord } from "./ScheduledItemFormAdapter.ts";
 import { TargetResolver } from "./TargetResolver";
+import { buildScheduledItemRecord } from "./features/capture/scheduled-item/domain/ScheduledItemFormAdapter.ts";
 import {
     type ScheduledItemFormData,
     scheduledItemFormDataFromCreateState,

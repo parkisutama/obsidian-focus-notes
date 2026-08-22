@@ -14,7 +14,7 @@ import {
     writeRelatedDestinations,
 } from "./RelatedWriteRecovery.ts";
 import type { ScheduledItemBlockEdit } from "./features/capture/scheduled-item/domain/ScheduledItemBlockEditor.ts";
-import { buildScheduledItemFormBlockEdit } from "./ScheduledItemFormAdapter.ts";
+import { buildScheduledItemFormBlockEdit } from "./features/capture/scheduled-item/domain/ScheduledItemFormAdapter.ts";
 import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 import type { ScheduledItemFormData } from "./features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 import type { FormatDateValue } from "./features/capture/scheduled-item/domain/TaskLineEditor.ts";

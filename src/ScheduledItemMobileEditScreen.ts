@@ -16,7 +16,10 @@ import {
     type ScheduledItemEditSubmissionResult,
     submitScheduledItemEdit,
 } from "./ScheduledItemEditSubmission.ts";
-import { hydrateScheduledItemFormEdit, parseLocalDateTime } from "./ScheduledItemFormAdapter.ts";
+import {
+    hydrateScheduledItemFormEdit,
+    parseLocalDateTime,
+} from "./features/capture/scheduled-item/domain/ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "./features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings.ts";
 import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
