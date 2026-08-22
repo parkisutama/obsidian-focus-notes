@@ -9,7 +9,7 @@ import {
     parseScheduledItemBlock,
     type ScheduledItemBlockDetail,
     type ScheduledItemBlockEdit,
-} from "./ScheduledItemBlockEditor.ts";
+} from "./features/capture/scheduled-item/domain/ScheduledItemBlockEditor.ts";
 import {
     scheduledEventFormDataFromLineEdit,
     scheduledTaskFormDataFromLineEdit,

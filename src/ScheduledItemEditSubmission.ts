@@ -13,7 +13,7 @@ import {
     retryFailedRelatedWrites,
     writeRelatedDestinations,
 } from "./RelatedWriteRecovery.ts";
-import type { ScheduledItemBlockEdit } from "./ScheduledItemBlockEditor.ts";
+import type { ScheduledItemBlockEdit } from "./features/capture/scheduled-item/domain/ScheduledItemBlockEditor.ts";
 import { buildScheduledItemFormBlockEdit } from "./ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
 import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
