@@ -1,11 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-    formatInboxEntry,
-    formatRelativeMarkdownLink,
-    relativeMarkdownPath,
-    unwrapMarkdownLinkLabel,
-} from "../src/InboxMarkdown.ts";
+import { formatInboxEntry, formatRelativeMarkdownLink, relativeMarkdownPath } from "../src/InboxMarkdown.ts";
+import { unwrapMarkdownLinkLabel } from "../src/shared/markdown/MarkdownLink.ts";
 
 test("formats an untouched or blank Inbox title with one timestamp", () => {
     const capturedAt = new Date(2026, 7, 1, 15, 40);

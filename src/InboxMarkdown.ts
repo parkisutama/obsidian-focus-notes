@@ -1,5 +1,7 @@
 import type { InboxRecord } from "./features/capture/moment/domain/InboxRecord";
 
+export { unwrapMarkdownLinkLabel } from "./shared/markdown/MarkdownLink.ts";
+
 export interface FormatInboxEntryOptions {
     /**
      * Write only the time (HH:mm) instead of the full date-time. Intended for
@@ -50,17 +52,6 @@ export function relativeMarkdownPath(targetFilePath: string, linkedFilePath: str
 /** Create an ordinary relative Markdown link for a selected mention. */
 export function formatRelativeMarkdownLink(targetFilePath: string, linkedFilePath: string, label: string): string {
     return `[${escapeMarkdownLabel(label)}](${relativeMarkdownPath(targetFilePath, linkedFilePath)})`;
-}
-
-/**
- * The inverse of formatRelativeMarkdownLink: recovers the plain label text from
- * a `[label](path)` Markdown link, or returns the value unchanged if it isn't one
- * (so plain, unlinked values -- hand-edited or written before this existed -- keep
- * parsing).
- */
-export function unwrapMarkdownLinkLabel(value: string): string {
-    const match = value.match(/^\[((?:\\.|[^\]\\])*)\]\([^)]*\)$/);
-    return match ? match[1].replace(/\\([[\]\\])/g, "$1") : value;
 }
 
 function formatLocalMinute(date: Date): string {
