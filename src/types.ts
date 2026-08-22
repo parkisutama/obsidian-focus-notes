@@ -10,7 +10,6 @@
  * vs "timer" if the user wants that distinction in their {{mode}} token.
  */
 
-import type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
 import type {
     EventCaptureSettings,
     FocusSessionCaptureSettings,
@@ -20,10 +19,14 @@ import type {
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import type { DisplayMode } from "./features/focus-session/domain/Timer.ts";
 import type { PeriodicalNotesSettings } from "./features/periodical-notes/domain/PeriodicalNote";
+import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 import type { TimelineMode } from "./features/timeline/domain/Timeline";
-import type { InsertPosition } from "./shared/markdown/InsertPosition";
 
 export type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
+export type {
+    ContextSourceSettings,
+    ObjectNotePlacement,
+} from "./features/object-notes/domain/ContextSourceSettings";
 export type { TimelineMode } from "./features/timeline/domain/Timeline";
 
 export interface FocusNotesSettings {
@@ -137,30 +140,6 @@ export interface EventTaskSettings {
     includePriority: boolean;
     /** Include `tags` field in detail note frontmatter. */
     includeTags: boolean;
-}
-
-export type ObjectNotePlacement = "flat" | "folder-note";
-
-export interface ContextSourceSettings {
-    id: string;
-    name: string;
-    icon: string;
-    folders: string[];
-    filter: ContextSourceFilter | null;
-    /** Whether folders[] is required for a note to match this source. */
-    matchByFolder: boolean;
-    /** Whether filter is required for a note to match this source. */
-    matchByProperty: boolean;
-    relatedHeading: string;
-    /** Where a new backlink bullet is inserted under relatedHeading. */
-    relatedPosition: InsertPosition;
-    /** Optional vault-relative template note used when object creation is enabled. */
-    templatePath: string;
-    /** Default physical shape for new object notes. */
-    placement: ObjectNotePlacement;
-    enabled: boolean;
-    /** Make matching object notes available as a property-filtered Focus Timeline source. */
-    includeInTimeline: boolean;
 }
 
 export interface InboxSettings {
