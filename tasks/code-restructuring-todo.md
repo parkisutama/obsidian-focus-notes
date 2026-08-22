@@ -6,14 +6,14 @@
 
 **Acceptance criteria:**
 
-- [ ] Entry-point and compatibility-ID tables cover plugin load/unload, views, commands, ribbons, settings, desktop/mobile launchers, and persistence writers.
-- [ ] Every `src/*.ts` file has an evidence-backed owner/layer; cycles and compatibility shims are explicitly listed.
-- [ ] Create/edit paths for Moment, Event, and Task are traced from launcher to writer.
+- [x] Entry-point and compatibility-ID tables cover plugin load/unload, views, commands, ribbons, settings, desktop/mobile launchers, and persistence writers.
+- [x] Every `src/*.ts` file has an evidence-backed owner/layer; cycles and compatibility shims are explicitly listed.
+- [x] Create/edit paths for Moment, Event, and Task are traced from launcher to writer.
 
 **Verification:**
 
-- [ ] Review imports and registrations against `main.ts` and `TimelineView.ts`.
-- [ ] Confirm the map changes no runtime source.
+- [x] Review imports and registrations against `main.ts` and `TimelineView.ts`.
+- [x] Confirm the map changes no runtime source.
 
 **Dependencies:** None.
 **Estimated scope:** Medium, documentation only.
@@ -65,14 +65,14 @@
 
 **Acceptance criteria:**
 
-- [ ] No cycle exists between `types.ts` and `ScheduledItemTypes.ts`.
-- [ ] Public type meaning and all runtime output remain unchanged.
-- [ ] Any compatibility re-export has an owner and removal task.
+- [x] No cycle exists between `types.ts` and `ScheduledItemTypes.ts`.
+- [x] Public type meaning and all runtime output remain unchanged.
+- [x] Any compatibility re-export has an owner and removal task.
 
 **Verification:**
 
-- [ ] Run the import-cycle guard, context-source tests, settings tests, typecheck, lint, and format check.
-- [ ] Run `git diff --check`; inspect that the diff contains no generated Markdown or identifier change.
+- [x] Run the import-cycle guard, context-source tests, settings tests, typecheck, lint, and format check.
+- [x] Run `git diff --check`; inspect that the diff contains no generated Markdown or identifier change.
 
 **Dependencies:** Tasks 1–2.
 **Files likely touched:** `src/types.ts`, `src/ScheduledItemTypes.ts`, one context-source type module, one focused test.
