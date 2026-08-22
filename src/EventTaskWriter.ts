@@ -7,7 +7,7 @@ import { ensureFolderPath, isTFile } from "./utils";
 import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTaskMarkdown";
 import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
 import { TargetResolver } from "./TargetResolver";
-import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItemTypes";
+import type { EventOccurrenceStatus, TaskPriority } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import { createScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
 
 /** Reference to a hub note, used to build a markdown link. */

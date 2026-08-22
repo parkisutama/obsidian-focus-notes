@@ -1,4 +1,4 @@
-import type { ScheduledItemKind } from "./ScheduledItemTypes.ts";
+import type { ScheduledItemKind } from "./features/capture/scheduled-item/domain/ScheduledItem.ts";
 
 export type InboxTriggerKind = "mention" | "tag" | "scheduled-item";
 

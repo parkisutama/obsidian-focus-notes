@@ -5,7 +5,7 @@ import {
     type ScheduledItemMentionRecord,
 } from "./ScheduledItemMentionIndex.ts";
 import { ScheduledItemParser } from "./ScheduledItemParser.ts";
-import type { ScheduledItemKind, ScheduledItemSource } from "./ScheduledItemTypes.ts";
+import type { ScheduledItemKind, ScheduledItemSource } from "./features/capture/scheduled-item/domain/ScheduledItem.ts";
 
 interface BlockCacheLike {
     position: { start: { line: number } };

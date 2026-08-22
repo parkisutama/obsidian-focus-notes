@@ -1,6 +1,6 @@
 import { type App, Notice, Platform } from "obsidian";
 import { captureEventLedgerEdit } from "./EventLedgerEditor";
-import type { ScheduledItem } from "./ScheduledItemTypes";
+import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import { captureTaskLedgerEdit } from "./TaskLedgerEditor";
 import { ScheduledItemDesktopEditModal } from "./ScheduledItemDesktopEditModal.ts";
 import { ScheduledItemMobileEditScreen } from "./ScheduledItemMobileEditScreen.ts";
