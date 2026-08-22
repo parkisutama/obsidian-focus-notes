@@ -6,7 +6,10 @@ import { insertUnderHeading } from "./HeadingInsertion";
 import { type FormatInboxEntryOptions, formatInboxEntry } from "./InboxMarkdown";
 import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 import { ensureFolderPath } from "./infrastructure/obsidian/VaultFolders.ts";
-import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTaskMarkdown";
+import {
+    formatEventTaskEntry,
+    formatTaskPriorityFrontmatter,
+} from "./features/capture/scheduled-item/domain/EventTaskMarkdown.ts";
 import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
 import { TargetResolver } from "./TargetResolver";
 import type { EventTaskRecord, HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
