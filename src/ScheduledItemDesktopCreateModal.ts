@@ -17,8 +17,11 @@ import {
     writeScheduledItemCreateRelated,
 } from "./ScheduledItemCreateRelated.ts";
 import { buildScheduledItemRecord } from "./ScheduledItemFormAdapter.ts";
-import { type ScheduledItemFormData, scheduledItemFormDataFromCreateState } from "./ScheduledItemFormData.ts";
 import { TargetResolver } from "./TargetResolver";
+import {
+    type ScheduledItemFormData,
+    scheduledItemFormDataFromCreateState,
+} from "./features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";

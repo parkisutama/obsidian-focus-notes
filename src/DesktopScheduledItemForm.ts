@@ -3,8 +3,8 @@ import { buildDesktopScheduledItemFormModel } from "./DesktopScheduledItemFormMo
 import { ContextNotesController } from "./InboxNotesController";
 import { ObjectNoteSuggest } from "./ObjectNoteSuggest.ts";
 import { parseObjectReferences } from "./ObjectReference.ts";
-import type { ScheduledItemFormData } from "./ScheduledItemFormData";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
+import type { ScheduledItemFormData } from "./features/capture/scheduled-item/domain/ScheduledItemFormData";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
 import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 

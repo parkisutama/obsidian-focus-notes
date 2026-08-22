@@ -1,4 +1,4 @@
-import type { ScheduledItemFormData } from "./ScheduledItemFormData";
+import type { ScheduledItemFormData } from "./features/capture/scheduled-item/domain/ScheduledItemFormData";
 
 export type DesktopScheduledItemFormSection = "identity" | "task" | "event" | "description" | "detail";
 
