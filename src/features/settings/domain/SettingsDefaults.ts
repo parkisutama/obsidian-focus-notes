@@ -1,5 +1,5 @@
-import type { ContextSourceSettings, InboxSettings } from "./features/object-notes/domain/ContextSourceSettings";
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
+import type { ContextSourceSettings, InboxSettings } from "../../object-notes/domain/ContextSourceSettings";
+import type { FocusNotesSettings } from "./FocusNotesSettings";
 
 export const DEFAULT_SETTINGS: FocusNotesSettings = {
     pomodoroMinutes: 25,

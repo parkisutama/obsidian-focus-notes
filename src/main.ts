@@ -13,7 +13,7 @@ import { timelineSourceHeadings } from "./TimelineSourceGroups";
 import { TimelineView, VIEW_TYPE_FOCUS_TIMELINE } from "./TimelineView";
 import { TimerView, VIEW_TYPE_FOCUS_NOTES } from "./TimerView";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
-import { mergeSettingsWithDefaults } from "./types";
+import { mergeSettingsWithDefaults } from "./features/settings/domain/SettingsDefaults";
 
 /**
  * Plugin shell.
