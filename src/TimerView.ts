@@ -11,7 +11,7 @@ import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSe
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
 import { FileSuggest, HeadingSuggest } from "./Suggesters";
-import { isTFile } from "./utils";
+import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 export const VIEW_TYPE_FOCUS_NOTES = "focus-notes-view";
 

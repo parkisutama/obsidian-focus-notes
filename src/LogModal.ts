@@ -4,7 +4,7 @@ import type { EmotionCategory, StressLevel } from "./features/reflection/domain/
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import { EmotionalWellbeingPicker } from "./EmotionalWellbeingPicker";
 import { FileSuggest } from "./Suggesters";
-import { isTFile } from "./utils";
+import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 import { ReflectionFocusModal } from "./ReflectionFocusModal";
 
 export interface LogModalResult {
