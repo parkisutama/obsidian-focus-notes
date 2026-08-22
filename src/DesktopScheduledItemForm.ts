@@ -243,7 +243,7 @@ export class DesktopScheduledItemForm {
     private renderDescription(container: HTMLElement): void {
         const setting = new Setting(container)
             .setName("Description")
-            .setDesc("Use @ to insert a relative Markdown link to an Object Note.")
+            .setDesc("Use @ for Object Notes, Tasks, or Events; @task and @event search stable block links.")
             .setClass("fn-scheduled-item-form-wide-field");
         const editor = setting.controlEl.createDiv({
             cls: "fn-gcal-desc-input",

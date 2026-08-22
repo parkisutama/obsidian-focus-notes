@@ -8,6 +8,8 @@ import {
     type SuggestionNote,
 } from "./InboxSuggestions";
 import type { ContextSourceSettings } from "./types";
+import { getScheduledItemMentionSource } from "./ObsidianScheduledItemMentionSource.ts";
+import type { ScheduledItemKind } from "./ScheduledItemTypes.ts";
 
 export function readContextSuggestionNotes(app: App): SuggestionNote[] {
     return app.vault.getMarkdownFiles().map((file) => {
@@ -25,19 +27,45 @@ export function readContextSuggestionNotes(app: App): SuggestionNote[] {
 export class ObsidianInboxSuggestionSource {
     private readonly snapshot: InboxSuggestionSnapshot;
     private contextIndex: ContextSuggestionIndex | null = null;
-    private readonly metadataEventRef: EventRef;
+    private readonly metadataEventRefs: EventRef[];
     private readonly vaultEventRefs: EventRef[];
+    private readonly scheduledItemReadyCallbacks = new Set<() => void>();
 
     constructor(private app: App) {
         this.snapshot = new InboxSuggestionSnapshot(
             () => this.loadNotes(),
             () => this.loadTags(),
         );
-        this.metadataEventRef = app.metadataCache.on("changed", () => this.invalidate());
+        this.metadataEventRefs = [
+            app.metadataCache.on("changed", (file) => {
+                this.invalidateContext();
+                void getScheduledItemMentionSource(this.app)
+                    .refreshFile(file)
+                    .then(() => this.notifyScheduledItemsReady());
+            }),
+            app.metadataCache.on("resolved", () => {
+                void getScheduledItemMentionSource(this.app)
+                    .rebuild()
+                    .then(() => this.notifyScheduledItemsReady());
+            }),
+        ];
         this.vaultEventRefs = [
-            app.vault.on("create", () => this.invalidate()),
-            app.vault.on("rename", () => this.invalidate()),
-            app.vault.on("delete", () => this.invalidate()),
+            app.vault.on("create", (file) => {
+                this.invalidateContext();
+                if ("extension" in file) {
+                    void getScheduledItemMentionSource(this.app).refreshFile(file as import("obsidian").TFile);
+                }
+            }),
+            app.vault.on("rename", (file, oldPath) => {
+                this.invalidateContext();
+                const mentions = getScheduledItemMentionSource(this.app);
+                mentions.removeFile(oldPath);
+                if ("extension" in file) void mentions.refreshFile(file as import("obsidian").TFile);
+            }),
+            app.vault.on("delete", (file) => {
+                this.invalidateContext();
+                getScheduledItemMentionSource(this.app).removeFile(file.path);
+            }),
         ];
     }
 
@@ -50,14 +78,24 @@ export class ObsidianInboxSuggestionSource {
         return buildTagSuggestions(this.snapshot.getTags(), this.matcher(query), limit);
     }
 
-    destroy(): void {
-        this.app.metadataCache.offref(this.metadataEventRef);
-        for (const ref of this.vaultEventRefs) this.app.vault.offref(ref);
+    getScheduledItemSuggestions(kind: ScheduledItemKind, query: string, limit: number, onReady: () => void) {
+        this.scheduledItemReadyCallbacks.add(onReady);
+        return getScheduledItemMentionSource(this.app).query(kind, query, limit, onReady);
     }
 
-    private invalidate(): void {
+    destroy(): void {
+        for (const ref of this.metadataEventRefs) this.app.metadataCache.offref(ref);
+        for (const ref of this.vaultEventRefs) this.app.vault.offref(ref);
+        this.scheduledItemReadyCallbacks.clear();
+    }
+
+    private invalidateContext(): void {
         this.snapshot.invalidate();
         this.contextIndex = null;
+    }
+
+    private notifyScheduledItemsReady(): void {
+        for (const callback of this.scheduledItemReadyCallbacks) callback();
     }
 
     private loadNotes(): SuggestionNote[] {

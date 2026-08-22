@@ -12,18 +12,22 @@ import {
     type InboxRichTextPart,
     isInboxLineBreakInput,
     parseInboxRichText,
-    parseObjectReferenceRichText,
+    parseContextRichText,
     serializeInboxRichText,
 } from "./InboxRichText";
 import type { ContextSuggestion } from "./InboxSuggestions";
+import type { ScheduledItemMentionCandidate } from "./ScheduledItemMentionIndex.ts";
 import { getCreatableObjectSources } from "./ObjectNote";
 import { ObjectNoteModal } from "./ObjectNoteModal";
 import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
 import { ObsidianInboxSuggestionSource } from "./ObsidianInboxSuggestionSource";
+import { formatRelativeMarkdownLink } from "./InboxMarkdown.ts";
 import type { ContextSourceSettings } from "./types";
 
 type ContextNotesSuggestion =
     | { kind: "mention"; value: ContextSuggestion }
+    | { kind: "mention-kind"; value: "task" | "event" }
+    | { kind: "scheduled-item"; value: ScheduledItemMentionCandidate }
     | { kind: "tag"; value: string }
     | { kind: "create-object"; value: string };
 
@@ -45,6 +49,7 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     private suppressedTriggerStart: number | null = null;
     private targetFile: string;
     private readonly source: ObsidianInboxSuggestionSource;
+    private readonly onScheduledItemsReady = (): void => this.requerySuggestions();
     private readonly onInput = (): void => this.emitMarkdown();
     private readonly onBeforeInput = (event: InputEvent): void => {
         if (!isInboxLineBreakInput(event.inputType)) return;
@@ -58,6 +63,14 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     private readonly onKeyDown = (event: KeyboardEvent): void => {
         if (event.key === "Enter" && event.target instanceof HTMLAnchorElement) {
             this.openInternalLink(event);
+            return;
+        }
+        if (event.key === "Escape" && this.activeTrigger) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.suppressedTriggerStart = this.activeTrigger.start;
+            this.activeTrigger = null;
+            this.close();
             return;
         }
         // Backspacing while a suggestion is open is a "never mind" signal: close it
@@ -121,8 +134,25 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
                 .getContextSuggestions(this.activeTrigger.query, sources, this.limit)
                 .map((value) => ({ kind: "mention" as const, value }));
             const query = this.activeTrigger.query.trim();
-            if (!query || getCreatableObjectSources(sources).length === 0) return matches;
+            if (!query) {
+                return [
+                    { kind: "mention-kind", value: "task" },
+                    { kind: "mention-kind", value: "event" },
+                    ...matches.slice(0, Math.max(0, this.limit - 2)),
+                ];
+            }
+            if (getCreatableObjectSources(sources).length === 0) return matches;
             return [...matches.slice(0, Math.max(0, this.limit - 1)), { kind: "create-object", value: query }];
+        }
+        if (this.activeTrigger.kind === "scheduled-item" && this.activeTrigger.itemKind) {
+            return this.source
+                .getScheduledItemSuggestions(
+                    this.activeTrigger.itemKind,
+                    this.activeTrigger.query,
+                    this.limit,
+                    this.onScheduledItemsReady,
+                )
+                .map((value) => ({ kind: "scheduled-item" as const, value }));
         }
         return this.source
             .getTagSuggestions(this.activeTrigger.query, this.limit)
@@ -139,6 +169,19 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
             el.createDiv({ text: "New Object Note from a configured template", cls: "fn-inbox-suggestion-context" });
             return;
         }
+        if (suggestion.kind === "mention-kind") {
+            el.createDiv({ text: suggestion.value === "task" ? "Task" : "Event", cls: "fn-inbox-suggestion-label" });
+            el.createDiv({ text: "Link an existing scheduled item", cls: "fn-inbox-suggestion-context" });
+            return;
+        }
+        if (suggestion.kind === "scheduled-item") {
+            el.createDiv({ text: suggestion.value.title, cls: "fn-inbox-suggestion-label" });
+            el.createDiv({
+                text: `${suggestion.value.kind === "task" ? "Task" : "Event"} · ${suggestion.value.status} · ${suggestion.value.filePath}`,
+                cls: "fn-inbox-suggestion-context",
+            });
+            return;
+        }
         const { value } = suggestion;
         el.createDiv({ text: value.label, cls: "fn-inbox-suggestion-label" });
         el.createDiv({
@@ -150,6 +193,15 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     selectSuggestion(suggestion: ContextNotesSuggestion): void {
         const trigger = this.activeTrigger;
         if (!trigger) return;
+        if (suggestion.kind === "mention-kind") {
+            const replacement = this.inputEl.ownerDocument.createTextNode(`@${suggestion.value} `);
+            replaceVisibleRange(this.inputEl, trigger.start, trigger.end, replacement);
+            placeCaretAtEnd(replacement);
+            this.activeTrigger = null;
+            this.emitMarkdown();
+            this.requerySuggestions();
+            return;
+        }
         if (suggestion.kind === "create-object") {
             this.close();
             new ObjectNoteModal(this.app, this.options.getContextSources(), suggestion.value, (file, label) =>
@@ -161,7 +213,9 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
         const replacement =
             suggestion.kind === "tag"
                 ? this.inputEl.ownerDocument.createTextNode(suggestion.value)
-                : this.createLink(suggestion.value.filePath, suggestion.value.label);
+                : suggestion.kind === "scheduled-item"
+                  ? this.createLink(suggestion.value.filePath, suggestion.value.title, `#^${suggestion.value.blockId}`)
+                  : this.createLink(suggestion.value.filePath, suggestion.value.label);
 
         replaceVisibleRange(this.inputEl, trigger.start, trigger.end, replacement);
         const cursorNode = this.inputEl.ownerDocument.createTextNode(separator);
@@ -202,29 +256,31 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     }
 
     private renderInitialValue(markdown: string): void {
+        const resolveDestination = (destination: string): string | null => {
+            const decoded = safeDecodeURIComponent(destination);
+            return this.app.metadataCache.getFirstLinkpathDest(decoded, this.targetFile)?.path ?? null;
+        };
         const parts =
             this.options.referenceFormat === "object-reference"
-                ? parseObjectReferenceRichText(markdown)
-                : parseInboxRichText(markdown, (destination) => {
-                      const decoded = safeDecodeURIComponent(destination);
-                      return this.app.metadataCache.getFirstLinkpathDest(decoded, this.targetFile)?.path ?? null;
-                  });
+                ? parseContextRichText(markdown, resolveDestination)
+                : parseInboxRichText(markdown, resolveDestination);
         this.inputEl.empty();
         for (const part of parts) {
             this.inputEl.appendChild(
                 part.kind === "text"
                     ? this.inputEl.ownerDocument.createTextNode(part.value)
-                    : this.createLink(part.filePath, part.label),
+                    : this.createLink(part.filePath, part.label, part.subpath),
             );
         }
     }
 
-    private createLink(filePath: string, label: string): HTMLAnchorElement {
+    private createLink(filePath: string, label: string, subpath?: string): HTMLAnchorElement {
         const link = this.inputEl.ownerDocument.createElement("a");
         link.addClass("internal-link", "fn-inbox-inline-link");
         link.dataset.href = filePath;
         link.dataset.inboxFilePath = filePath;
-        link.href = filePath;
+        if (subpath) link.dataset.inboxSubpath = subpath;
+        link.href = `${filePath}${subpath ?? ""}`;
         link.textContent = label;
         link.contentEditable = "false";
         link.tabIndex = 0;
@@ -233,8 +289,10 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     }
 
     private emitMarkdown(): void {
-        const formatter =
-            this.options.referenceFormat === "object-reference" ? formatObjectReferencePart : this.formatObsidianLink;
+        const formatter = (targetFile: string, filePath: string, label: string, subpath?: string): string =>
+            subpath || this.options.referenceFormat !== "object-reference"
+                ? this.formatRichLink(targetFile, filePath, label, subpath)
+                : formatObjectReferencePart(targetFile, filePath, label);
         this.options.onChange(serializeInboxRichText(readDomParts(this.inputEl), this.targetFile, formatter));
     }
 
@@ -244,6 +302,20 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
      * falling back to one if the target can't be resolved to a file anymore.
      */
     private readonly formatObsidianLink = createObsidianLinkFormatter(this.app);
+
+    private readonly formatRichLink = (
+        targetFile: string,
+        filePath: string,
+        label: string,
+        subpath?: string,
+    ): string => {
+        if (!subpath) return this.formatObsidianLink(targetFile, filePath, label);
+        return formatRelativeMarkdownLink(targetFile, filePath, label).replace(/\)$/, `${subpath})`);
+    };
+
+    private requerySuggestions(): void {
+        queueMicrotask(() => this.inputEl.dispatchEvent(new Event("input", { bubbles: true })));
+    }
 
     private readVisibleText(): string {
         return this.inputEl.innerText.replace(/\u00a0/g, " ").replace(/\r\n/g, "\n");
@@ -309,7 +381,7 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
         if (!link) return;
         event.preventDefault();
         void this.app.workspace.openLinkText(
-            link.dataset.inboxFilePath ?? "",
+            `${link.dataset.inboxFilePath ?? ""}${link.dataset.inboxSubpath ?? ""}`,
             this.targetFile,
             Keymap.isModEvent(event),
         );
@@ -324,7 +396,7 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
             source: "focus-notes-inbox",
             hoverParent: this,
             targetEl: link,
-            linktext: filePath,
+            linktext: `${filePath}${link.dataset.inboxSubpath ?? ""}`,
             sourcePath: this.targetFile,
         });
     }
@@ -342,7 +414,12 @@ function readDomParts(root: HTMLElement): InboxRichTextPart[] {
         if (!(node instanceof HTMLElement)) return;
         const filePath = node.dataset.inboxFilePath;
         if (node instanceof HTMLAnchorElement && filePath) {
-            parts.push({ kind: "link", label: node.textContent ?? filePath, filePath });
+            parts.push({
+                kind: "link",
+                label: node.textContent ?? filePath,
+                filePath,
+                ...(node.dataset.inboxSubpath ? { subpath: node.dataset.inboxSubpath } : {}),
+            });
             return;
         }
         if (node instanceof HTMLBRElement) {

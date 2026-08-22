@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { performance } from "node:perf_hooks";
 import { ContextSuggestionIndex } from "../src/InboxSuggestions.ts";
+import { ScheduledItemMentionIndex } from "../src/ScheduledItemMentionIndex.ts";
 import type { ContextSourceSettings } from "../src/types.ts";
 
 test("records a bounded synthetic baseline and reuses warm candidates", () => {
@@ -36,4 +37,28 @@ test("records a bounded synthetic baseline and reuses warm candidates", () => {
     assert.equal(index.candidateBuildCount, 1);
     assert.ok(coldMs < 5_000, `10k-note cold query took ${coldMs.toFixed(1)}ms`);
     assert.ok(warmMs < 1_000, `10k-note warm query took ${warmMs.toFixed(1)}ms`);
+});
+
+test("keeps a 10k Scheduled Item fuzzy query bounded to 20 results", () => {
+    const index = new ScheduledItemMentionIndex();
+    index.replaceAll([
+        {
+            filePath: "Tasks.md",
+            records: Array.from({ length: 10_000 }, (_, item) => ({
+                blockId: `task-${item.toString(32).padStart(10, "0")}`,
+                kind: "task" as const,
+                title: `Invoice ${item}`,
+                completed: false,
+                status: "open" as const,
+                lineNumber: item + 1,
+            })),
+        },
+    ]);
+
+    const started = performance.now();
+    const result = index.query("task", (text) => (text.includes("99") ? text.length : null), 20);
+    const elapsed = performance.now() - started;
+
+    assert.equal(result.length, 20);
+    assert.ok(elapsed < 1_000, `10k Scheduled Item query took ${elapsed.toFixed(1)}ms`);
 });

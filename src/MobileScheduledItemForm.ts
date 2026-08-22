@@ -239,7 +239,7 @@ export class MobileScheduledItemForm extends Component {
     private renderDescription(body: HTMLElement): void {
         const setting = new Setting(body)
             .setName("Description")
-            .setDesc("Use @ to insert a relative Markdown link to an Object Note.");
+            .setDesc("Use @ for Object Notes, Tasks, or Events; @task and @event search stable block links.");
         const editor = setting.controlEl.createDiv({
             cls: "fn-mobile-event-description",
             attr: { role: "textbox", "aria-label": "Description", "aria-multiline": "true" },

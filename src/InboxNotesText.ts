@@ -1,7 +1,10 @@
-export type InboxTriggerKind = "mention" | "tag";
+import type { ScheduledItemKind } from "./ScheduledItemTypes.ts";
+
+export type InboxTriggerKind = "mention" | "tag" | "scheduled-item";
 
 export interface InboxTrigger {
     kind: InboxTriggerKind;
+    itemKind?: ScheduledItemKind;
     start: number;
     end: number;
     query: string;
@@ -20,6 +23,16 @@ export function findInboxTrigger(text: string, cursor: number): InboxTrigger | n
     const boundary = start === 0 ? "" : beforeCursor[start - 1];
     if (boundary && !/[\s([{,;:!?]/.test(boundary)) return null;
 
+    const scheduled = match[0].match(/^@(task|event)(?:\s+(.*))?$/i);
+    if (scheduled) {
+        return {
+            kind: "scheduled-item",
+            itemKind: scheduled[1].toLowerCase() as ScheduledItemKind,
+            start,
+            end: cursor,
+            query: scheduled[2] ?? "",
+        };
+    }
     return {
         kind: beforeCursor[start] === "@" ? "mention" : "tag",
         start,

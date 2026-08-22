@@ -17,6 +17,23 @@ test("finds mention and tag triggers immediately before the cursor", () => {
     });
 });
 
+test("recognizes staged Task and Event mention queries", () => {
+    assert.deepEqual(findInboxTrigger("Link @task invoice", 18), {
+        kind: "scheduled-item",
+        itemKind: "task",
+        start: 5,
+        end: 18,
+        query: "invoice",
+    });
+    assert.deepEqual(findInboxTrigger("Link @event review", 18), {
+        kind: "scheduled-item",
+        itemKind: "event",
+        start: 5,
+        end: 18,
+        query: "review",
+    });
+});
+
 test("uses the cursor position instead of a later trigger", () => {
     const text = "Temui @Andi lalu #follow-up";
     assert.deepEqual(findInboxTrigger(text, 11), {

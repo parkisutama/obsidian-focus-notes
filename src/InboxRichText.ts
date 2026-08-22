@@ -1,6 +1,8 @@
 import { parseObjectReferences, serializeObjectReference } from "./ObjectReference.ts";
 
-export type InboxRichTextPart = { kind: "text"; value: string } | { kind: "link"; label: string; filePath: string };
+export type InboxRichTextPart =
+    | { kind: "text"; value: string }
+    | { kind: "link"; label: string; filePath: string; subpath?: string };
 
 export function isInboxLineBreakInput(inputType: string): boolean {
     return inputType === "insertParagraph" || inputType === "insertLineBreak";
@@ -23,12 +25,14 @@ export function parseInboxRichText(
     let match = pattern.exec(markdown);
     while (match !== null) {
         if (match.index > cursor) pushText(markdown.slice(cursor, match.index));
-        const filePath = resolveDestination(match[2]);
+        const { destination, subpath } = splitBlockSubpath(match[2]);
+        const filePath = resolveDestination(destination);
         if (filePath) {
             parts.push({
                 kind: "link",
                 label: match[1].replace(/\\([[\]\\])/g, "$1"),
                 filePath,
+                ...(subpath ? { subpath } : {}),
             });
         } else {
             pushText(match[0]);
@@ -44,10 +48,12 @@ export function parseInboxRichText(
 export function serializeInboxRichText(
     parts: InboxRichTextPart[],
     targetFile: string,
-    formatLink: (targetFile: string, filePath: string, label: string) => string,
+    formatLink: (targetFile: string, filePath: string, label: string, subpath?: string) => string,
 ): string {
     return parts
-        .map((part) => (part.kind === "text" ? part.value : formatLink(targetFile, part.filePath, part.label)))
+        .map((part) =>
+            part.kind === "text" ? part.value : formatLink(targetFile, part.filePath, part.label, part.subpath),
+        )
         .join("");
 }
 
@@ -68,6 +74,22 @@ export function parseObjectReferenceRichText(markdown: string): InboxRichTextPar
     return parts;
 }
 
+export function parseContextRichText(
+    markdown: string,
+    resolveDestination: (destination: string) => string | null,
+): InboxRichTextPart[] {
+    return parseInboxRichText(markdown, resolveDestination).flatMap((part) =>
+        part.kind === "text" ? parseObjectReferenceRichText(part.value) : [part],
+    );
+}
+
 export function formatObjectReferencePart(_targetFile: string, filePath: string, label: string): string {
     return serializeObjectReference({ label, vaultPath: filePath });
+}
+
+function splitBlockSubpath(destination: string): { destination: string; subpath: string | null } {
+    const index = destination.indexOf("#^");
+    return index === -1
+        ? { destination, subpath: null }
+        : { destination: destination.slice(0, index), subpath: destination.slice(index) };
 }
