@@ -85,7 +85,7 @@ Timeline / Active Note Manager
 
 ## Cycle dan coupling baseline
 
-- Cycle langsung `types.ts <-> ScheduledItemTypes.ts` telah diputus pada batch fondasi. `ScheduledItemTypes.ts` sekarang compatibility shim satu arah.
+- Cycle langsung `types.ts <-> ScheduledItemTypes.ts` telah diputus. Seluruh consumer telah memakai kontrak domain dan shim `ScheduledItemTypes.ts` sudah dihapus setelah full CI lulus.
 - `types.ts` masih mencampur settings, timer, capture, object-source, periodical, dan wellbeing contracts.
 - `utils.ts` masih mencampur pure date-time helpers dengan Obsidian file/folder guards dan vault folder mutation.
 - Hotspot ukuran dan orchestration: `SettingsTab.ts`, `EventTaskModal.ts`, `EventTaskMobileScreen.ts`, `TimerView.ts`, `InboxNotesController.ts`, `types.ts`, dan `TimelineView.ts`.
@@ -99,9 +99,9 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Owner / layer | Source files | Arah target |
 | --- | --- | --- |
 | Plugin composition | `main.ts` | `plugin/FocusNotesPlugin.ts`, `commands.ts`, `view-registration.ts`, `identifiers.ts` |
-| Compatibility contracts | `types.ts`, `ScheduledItemTypes.ts` | Re-export sementara; habis setelah consumer cutover |
+| Transitional central contracts | `types.ts` | Split per owner dalam batch kecil; tidak menerima domain baru |
 | Mixed utilities | `utils.ts` | Split pure date-time dari Obsidian vault operations |
-| Focus session domain | `TimerEngine.ts` | `features/focus-session/domain` |
+| Focus session domain | `features/focus-session/domain/Timer.ts`, `TimerEngine.ts` | Kontrak Timer sudah canonical; state machine dipindahkan fisik pada batch terpisah |
 | Focus session UI | `TimerView.ts`, `CircularDisplay.ts`, `LogModal.ts` | `features/focus-session/ui` |
 | Focus session application/read model | `RecentEntriesReader.ts` | Feature application dengan vault read port |
 | Reflection/CBT domain | `CognitiveDistortions.ts`, `MoodReference.ts`, `EmotionalWellbeingReference.ts` | `features/reflection/domain` |
@@ -154,7 +154,7 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 
 ## Batch berikutnya
 
-1. Pindahkan direct consumers dari `ScheduledItemTypes.ts` ke canonical Scheduled Item atau Timeline modules dalam batch per owner.
-2. Hapus shim hanya setelah `rg` membuktikan tidak ada consumer.
-3. Ekstrak satu kelompok tipe settings dari `types.ts`; jangan memecah seluruh file sekaligus.
-4. Pisahkan pure date-time helpers dari `utils.ts` setelah consumer map dikonfirmasi.
+1. Ekstrak satu kelompok tipe dari `types.ts` per owner; kontrak Timer/Focus Session sudah menjadi contoh canonical.
+2. Pisahkan wellbeing/reflection dan SessionRecord tanpa mencampur perubahan persistence.
+3. Pisahkan pure date-time helpers dari `utils.ts` setelah consumer map dikonfirmasi.
+4. Pindahkan implementasi fisik hanya setelah import consumer mengarah ke boundary canonical.
