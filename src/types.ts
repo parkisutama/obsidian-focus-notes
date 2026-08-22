@@ -23,8 +23,6 @@ import type { ContextSourceSettings } from "./features/object-notes/domain/Conte
 import type { FocusTimelineSettings } from "./features/timeline/domain/TimelineSettings";
 import type { EventTaskSettings } from "./features/capture/scheduled-item/domain/DetailNoteSettings";
 
-export type { EventTaskSettings } from "./features/capture/scheduled-item/domain/DetailNoteSettings";
-
 export interface FocusNotesSettings {
     /** Default focus duration for the Pomodoro tab. */
     pomodoroMinutes: number;
