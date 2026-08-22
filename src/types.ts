@@ -11,20 +11,16 @@
  */
 
 import type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
+import type { DisplayMode } from "./features/focus-session/domain/Timer.ts";
 import type { TimelineMode } from "./features/timeline/domain/Timeline";
 
-export type DisplayMode = "pomodoro" | "timer" | "stopwatch";
-export type EngineMode = "countdown" | "stopwatch";
-export type TimerStatus = "idle" | "running" | "paused" | "completed";
 export type InsertPosition = "start" | "end";
 export type StressLevel = "low" | "normal" | "medium" | "high";
 export type EmotionCategory = "pleasant" | "neutral" | "unpleasant";
 export type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
+export { toEngineMode } from "./features/focus-session/domain/Timer.ts";
+export type { DisplayMode, EngineMode, TimerStatus } from "./features/focus-session/domain/Timer.ts";
 export type { TimelineMode } from "./features/timeline/domain/Timeline";
-
-export function toEngineMode(d: DisplayMode): EngineMode {
-    return d === "stopwatch" ? "stopwatch" : "countdown";
-}
 
 /**
  * A logging target. The `file` field is a *template* and may contain
