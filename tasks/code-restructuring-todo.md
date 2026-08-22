@@ -85,13 +85,13 @@
 **Acceptance criteria:**
 
 - [ ] Each batch covers one owner and touches at most about five files.
-- [ ] Domain modules do not import Obsidian or UI types.
-- [ ] Temporary re-exports decrease after each consumer cutover.
+- [x] Domain modules do not import Obsidian or UI types.
+- [x] Temporary re-exports decrease after each consumer cutover.
 
 **Verification:**
 
-- [ ] Run focused domain tests and standard per-batch gates.
-- [ ] Re-run the cycle/import guard after every batch.
+- [x] Run focused domain tests and standard per-batch gates.
+- [x] Re-run the cycle/import guard after every batch.
 
 **Dependencies:** Task 4.
 **Estimated scope:** Multiple Small/Medium batches.
@@ -109,7 +109,9 @@
 - [x] Timeline settings moved to `features/timeline/domain`; Settings UI cut over to canonical `TimelineMode` and central Timeline shims removed.
 - [x] Event/Task detail settings moved to the Scheduled Item domain; the writer cut over directly and the central shim was removed.
 - [x] Persisted Inbox/Object Source registry settings moved to the Object Notes domain and the central shim was removed.
-- [ ] Global settings composition, defaults, and migration merge remain.
+- [x] Global settings composition, defaults, and migration merge moved to `features/settings/domain`; all consumers cut over and central `types.ts` was removed.
+
+Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 18 production consumers in one owner-only commit, so the approximately-five-file sizing target remains unmet even though the change was import-only and independently verified.
 
 ## Task 6: Split utilities by proven ownership
 
@@ -133,7 +135,7 @@
 
 - [ ] Full CI passes.
 - [ ] Foundational cycles are gone and no new cycle exists.
-- [ ] Central `types.ts`/`utils.ts` have a documented remaining owner for every export.
+- [x] Central `types.ts` is removed; every remaining `utils.ts` export has a documented target owner for Task 6.
 
 ## Task 7: Establish the pure Scheduled Item domain
 

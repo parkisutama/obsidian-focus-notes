@@ -87,9 +87,9 @@ Timeline / Active Note Manager
 
 - Cycle langsung `types.ts <-> ScheduledItemTypes.ts` telah diputus. Seluruh consumer telah memakai kontrak domain dan shim `ScheduledItemTypes.ts` sudah dihapus setelah full CI lulus.
 - Seluruh relative import di `src` kini acyclic dan dijaga oleh `test/architecture-boundaries.test.ts`. Cycle record/form/writer, desktop/mobile routing, dan `main.ts <-> SettingsTab.ts` diputus tanpa menggabungkan renderer atau mengubah persistence.
-- `types.ts` kini hanya menjadi composition root settings yang memuat defaults serta merge/migration. Inbox/Object Source registry, Event/Task detail settings, Timeline settings, Capture, Timer, Session Record, wellbeing, dan Periodical Notes sudah berada pada owner masing-masing.
+- Central `types.ts` sudah dihapus. `FocusNotesSettings` serta defaults/legacy normalization kini dimiliki settings domain; seluruh feature settings contract juga sudah berada pada owner masing-masing.
 - `utils.ts` masih mencampur pure date-time helpers dengan Obsidian file/folder guards dan vault folder mutation.
-- Hotspot ukuran dan orchestration: `SettingsTab.ts`, `EventTaskModal.ts`, `EventTaskMobileScreen.ts`, `TimerView.ts`, `InboxNotesController.ts`, `types.ts`, dan `TimelineView.ts`.
+- Hotspot ukuran dan orchestration: `SettingsTab.ts`, `EventTaskModal.ts`, `EventTaskMobileScreen.ts`, `TimerView.ts`, `InboxNotesController.ts`, dan `TimelineView.ts`.
 - Timeline mengonsumsi Scheduled Item; Timeline tidak memiliki aturan Task/Event.
 - Object Sources dimiliki Object Notes/context domain dan dikonsumsi capture serta Timeline.
 
@@ -100,7 +100,7 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Owner / layer | Source files | Arah target |
 | --- | --- | --- |
 | Plugin composition | `main.ts` | `plugin/FocusNotesPlugin.ts`, `commands.ts`, `view-registration.ts`, `identifiers.ts` |
-| Settings composition and normalization | `types.ts` | Ekstrak composition/default/merge sebagai batch persistence-sensitive terakhir; tidak menerima domain baru |
+| Settings composition and normalization | `features/settings/domain/FocusNotesSettings.ts`, `features/settings/domain/SettingsDefaults.ts` | Canonical owner; central `types.ts` sudah dihapus setelah direct-consumer cutover dan persistence characterization lulus |
 | Mixed utilities | `utils.ts` | Split pure date-time dari Obsidian vault operations |
 | Capture target/settings contracts | `features/capture/domain/CaptureTarget.ts`, `features/capture/domain/CaptureSettings.ts` | Canonical owner; seluruh consumer target sudah direct-import dan shim `types.ts` telah dihapus |
 | Focus session domain | `features/focus-session/domain/Timer.ts`, `features/focus-session/domain/SessionRecord.ts`, `TimerEngine.ts` | Kontrak Timer dan Session Record sudah canonical; state machine dipindahkan fisik pada batch terpisah |
@@ -157,9 +157,9 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 
 ## Batch berikutnya
 
-1. Tetapkan owner akhir composition/default/merge di `types.ts`; pertahankan nama persisted key dan seluruh normalisasi legacy.
-2. Pindahkan composition settings hanya setelah consumer map dan characterization test persistence dikonfirmasi.
-3. Pisahkan pure date-time helpers dari `utils.ts` setelah consumer map dikonfirmasi.
+1. Mulai Task 6 dengan consumer map untuk pure date-time helpers di `utils.ts`.
+2. Pisahkan pure helpers tanpa membawa Obsidian file/folder operations ke shared module.
+3. Pertahankan path normalization dan folder-creation behavior melalui characterization tests.
 4. Pindahkan implementasi fisik hanya setelah import consumer mengarah ke boundary canonical.
 
-Checkpoint 2026-08-22: `pnpm run check:ci` lulus dengan 301 tes setelah seluruh source cycle diputus, guard generik ditambahkan, serta kontrak Capture, Object Source termasuk Inbox registry, Timeline, dan Event/Task detail settings dipindahkan ke owner canonical tanpa shim tersisa. Deployment vault dinonaktifkan; build produksi, artifact verification, dan VitePress build juga lulus.
+Checkpoint 2026-08-22: `pnpm run check:ci` lulus dengan 301 tes setelah central `types.ts` dihapus dan settings composition/default/legacy normalization dipindahkan ke owner canonical tanpa mengubah persisted keys. Seluruh source tetap acyclic; deployment vault dinonaktifkan, build produksi, artifact verification, dan VitePress build juga lulus.
