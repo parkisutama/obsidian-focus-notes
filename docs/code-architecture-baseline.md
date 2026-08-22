@@ -86,6 +86,7 @@ Timeline / Active Note Manager
 ## Cycle dan coupling baseline
 
 - Cycle langsung `types.ts <-> ScheduledItemTypes.ts` telah diputus. Seluruh consumer telah memakai kontrak domain dan shim `ScheduledItemTypes.ts` sudah dihapus setelah full CI lulus.
+- Seluruh relative import di `src` kini acyclic dan dijaga oleh `test/architecture-boundaries.test.ts`. Cycle record/form/writer, desktop/mobile routing, dan `main.ts <-> SettingsTab.ts` diputus tanpa menggabungkan renderer atau mengubah persistence.
 - `types.ts` masih menjadi composition root settings dan mencampur capture-target, object-source, Timeline settings, serta beberapa kontrak settings lain. Kontrak Timer, Session Record, wellbeing, dan Periodical Notes sudah dipindahkan ke owner masing-masing.
 - `utils.ts` masih mencampur pure date-time helpers dengan Obsidian file/folder guards dan vault folder mutation.
 - Hotspot ukuran dan orchestration: `SettingsTab.ts`, `EventTaskModal.ts`, `EventTaskMobileScreen.ts`, `TimerView.ts`, `InboxNotesController.ts`, `types.ts`, dan `TimelineView.ts`.
@@ -106,16 +107,16 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Focus session application/read model | `RecentEntriesReader.ts` | Feature application dengan vault read port |
 | Reflection/CBT domain | `features/reflection/domain/Wellbeing.ts`, `CognitiveDistortions.ts`, `MoodReference.ts`, `EmotionalWellbeingReference.ts` | Kontrak wellbeing sudah canonical; reference data lain menyusul berdasarkan consumer |
 | Reflection/CBT UI | `MoodPicker.ts`, `EmotionalWellbeingPicker.ts`, `ReflectionFocusModal.ts` | `features/reflection/ui` |
-| Moment form and semantic text | `InboxDesktopForm.ts`, `InboxMobileForm.ts`, `InboxNotesText.ts`, `InboxRichText.ts`, `InboxMarkdown.ts`, `InboxTarget.ts` | `features/capture/moment` split by domain/UI |
+| Moment form and semantic text | `features/capture/moment/domain/InboxRecord.ts`, `InboxDesktopForm.ts`, `InboxMobileForm.ts`, `InboxNotesText.ts`, `InboxRichText.ts`, `InboxMarkdown.ts`, `InboxTarget.ts` | Record contract sudah canonical; form/text split berikutnya berdasarkan domain/UI |
 | Moment suggestions UI/application | `InboxNotesController.ts`, `InboxSuggestions.ts`, `SuggestionSelection.ts` | Moment UI/application; generic primitive only if reuse is proven |
 | Moment settings | `InboxFolderSettings.ts` | `features/capture/moment` or settings renderer owner |
-| Scheduled Item domain contract | `features/capture/scheduled-item/domain/ScheduledItem.ts` | Canonical owner |
+| Scheduled Item domain contract | `features/capture/scheduled-item/domain/ScheduledItem.ts`, `features/capture/scheduled-item/domain/EventTaskRecord.ts` | Canonical owner; `EventTaskWriter.ts` sementara mere-ekspor record types sampai consumer legacy dipotong langsung |
 | Scheduled Item form semantics | `ScheduledItemFormData.ts`, `ScheduledItemFormAdapter.ts`, `EventTaskFormState.ts`, `SubmissionPolicy.ts` | `features/capture/scheduled-item/domain` or `application` according to side effects |
 | Scheduled Item identity/parser | `ScheduledItemBlockId.ts`, `ScheduledItemParser.ts`, `ScheduledItemIdentityMigration.ts` | Domain; migration orchestration remains application |
 | Scheduled Item block editing | `ScheduledItemBlockEditor.ts`, `LedgerRecordSource.ts` | Pure domain editing/snapshot contracts |
 | Scheduled Item application | `ScheduledItemEditSubmission.ts`, `ScheduledItemCreateRelated.ts`, `RelatedWriteRecovery.ts`, `EventTaskSubmission.ts` | `features/capture/scheduled-item/application` |
 | Scheduled Item persistence | `ScheduledItemBlockPersistence.ts`, `EventTaskWriter.ts` | Application port plus `infrastructure/obsidian` adapter |
-| Scheduled Item launch/orchestration | `ScheduledItemEditor.ts`, `ScheduledItemMobileCreateLauncher.ts` | Application/UI composition |
+| Capture launch/orchestration | `features/capture/domain/CaptureForm.ts`, `ScheduledItemEditor.ts`, `ScheduledItemMobileCreateLauncher.ts` | Shared contract dan routing composition; desktop/mobile renderer tetap terpisah |
 | Scheduled Item desktop UI | `DesktopScheduledItemForm.ts`, `DesktopScheduledItemFormModel.ts`, `ScheduledItemDesktopCreateModal.ts`, `ScheduledItemDesktopEditModal.ts` | `features/capture/scheduled-item/ui/desktop` |
 | Scheduled Item mobile UI | `MobileScheduledItemForm.ts`, `MobileScheduledItemFormModel.ts`, `MobileFormPolicy.ts`, `MobileViewport.ts`, `ScheduledItemMobileCreateScreen.ts`, `ScheduledItemMobileEditScreen.ts` | `features/capture/scheduled-item/ui/mobile` |
 | Active legacy/delegating capture UI | `EventTaskModal.ts`, `EventTaskMobileScreen.ts` | Moment renderer plus cutover shell; split before retirement |
@@ -155,8 +156,8 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 ## Batch berikutnya
 
 1. Ekstrak satu kelompok tipe tersisa dari `types.ts` per owner; capture target atau Object Source adalah kandidat berikutnya setelah consumer map.
-2. Tambahkan deteksi cycle generik pada architecture guard sebelum perpindahan aplikasi/UI yang lebih besar.
+2. Potong consumer legacy dari re-export record types di `EventTaskWriter.ts`, lalu hapus shim saat referensi mencapai nol.
 3. Pisahkan pure date-time helpers dari `utils.ts` setelah consumer map dikonfirmasi.
 4. Pindahkan implementasi fisik hanya setelah import consumer mengarah ke boundary canonical.
 
-Checkpoint 2026-08-22: `pnpm run check:ci` lulus dengan 300 tes setelah cutover Timer, Session Record, wellbeing, dan Periodical Notes. Deployment vault dinonaktifkan; build produksi, artifact verification, dan VitePress build juga lulus.
+Checkpoint 2026-08-22: `pnpm run check:ci` lulus dengan 301 tes setelah seluruh source cycle diputus dan guard generik ditambahkan. Deployment vault dinonaktifkan; build produksi, artifact verification, dan VitePress build juga lulus.

@@ -24,14 +24,14 @@
 
 **Acceptance criteria:**
 
-- [ ] Tests fail if persistent IDs or golden Markdown change unexpectedly.
-- [ ] A lightweight import guard rejects Obsidian/DOM dependencies in designated pure modules and detects new cycles.
-- [ ] Existing behavioral assertions are preserved rather than renamed to match file moves.
+- [x] Tests fail if persistent IDs or golden Markdown change unexpectedly.
+- [x] A lightweight import guard rejects Obsidian/DOM dependencies in designated pure modules and detects new cycles.
+- [x] Existing behavioral assertions are preserved rather than renamed to match file moves.
 
 **Verification:**
 
-- [ ] Run focused architecture/compatibility tests.
-- [ ] Run `pnpm run check:ci` with vault deployment disabled.
+- [x] Run focused architecture/compatibility tests.
+- [x] Run `pnpm run check:ci` with vault deployment disabled.
 
 **Dependencies:** Task 1.
 **Estimated scope:** Medium, 3–5 files.
@@ -102,6 +102,7 @@
 - [x] Timer and Session Record contracts moved to Focus Session.
 - [x] Wellbeing contracts moved to Reflection.
 - [x] Periodical Note profile/settings contracts moved with direct consumer cutover.
+- [x] Moment `InboxRecord`, capture form options, and Scheduled Item Event/Task records moved to feature-owned domains.
 - [ ] Capture-target, Object Source settings, Timeline settings, and global settings composition remain.
 
 ## Task 6: Split utilities by proven ownership
