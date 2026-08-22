@@ -1,7 +1,5 @@
 import type { InboxRecord } from "./features/capture/moment/domain/InboxRecord";
 
-export { unwrapMarkdownLinkLabel } from "./shared/markdown/MarkdownLink.ts";
-
 export interface FormatInboxEntryOptions {
     /**
      * Write only the time (HH:mm) instead of the full date-time. Intended for
