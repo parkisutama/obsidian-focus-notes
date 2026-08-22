@@ -171,7 +171,8 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 - [x] `ScheduledItemParser.ts` moved to `features/capture/scheduled-item/domain/`; all 6 test files and 5 production consumers cut over directly and the root shim was removed.
 - [x] `ScheduledItemBlockEditor.ts` moved to `features/capture/scheduled-item/domain/`; both test files and all 3 production consumers cut over directly and the root shim was removed. `LedgerRecordSource.ts` stays at the source root (12 consumers across Task/Event ledger editors; a separate, wider batch).
 - [x] `ScheduledItemFormData.ts` moved to `features/capture/scheduled-item/domain/`; its direct test file and all consumers cut over per UI area (desktop, mobile, application) and the root shim was removed.
-- [ ] `ScheduledItemFormAdapter.ts` remains at the source root; it is pure and acyclic with 6 production consumers and 2 test files, planned next. `ScheduledItemEditSubmission.ts` and `ScheduledItemIdentityMigration.ts` are application/orchestration per the ownership map, not pure domain, and belong to Task 8 instead.
+- [x] `ScheduledItemFormAdapter.ts` moved to `features/capture/scheduled-item/domain/`; both test files and all 6 production consumers cut over directly and the root shim was removed. `ScheduledItemEditSubmission.ts` and `ScheduledItemIdentityMigration.ts` are application/orchestration per the ownership map, not pure domain, and belong to Task 8 instead.
+- [ ] `EventTaskFormState.ts` (still references Moment's `InboxRecord`) and `SubmissionPolicy.ts` (generic submission guard, 2 production consumers) remain at the source root pending an owner decision — not yet moved. Once resolved, verify the three acceptance criteria below and close Task 7.
 
 ## Task 8: Isolate capture persistence and external boundaries
 

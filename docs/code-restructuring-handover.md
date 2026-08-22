@@ -1,7 +1,7 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-23
-Status: Task 7 aktif; `TaskLineEditor.ts`, `TaskLineLint.ts`, `EventLineEditor.ts`, `ScheduledItemParser.ts`, `ScheduledItemBlockEditor.ts`, dan `ScheduledItemFormData.ts` sudah canonical di domain Scheduled Item tanpa shim
+Status: Task 7 aktif; `TaskLineEditor.ts`, `TaskLineLint.ts`, `EventLineEditor.ts`, `ScheduledItemParser.ts`, `ScheduledItemBlockEditor.ts`, `ScheduledItemFormData.ts`, dan `ScheduledItemFormAdapter.ts` sudah canonical di domain Scheduled Item tanpa shim. Hanya `EventTaskFormState.ts`/`SubmissionPolicy.ts` yang tersisa, menunggu keputusan owner.
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -359,7 +359,7 @@ Acceptance manual tetap diperlukan untuk:
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
 3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 306 tes pada 2026-08-23.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Lanjutkan Task 7 dengan memindahkan `ScheduledItemFormAdapter.ts`; file ini pure dan acyclic dengan 6 consumer produksi dan 2 test file. `EventTaskFormState.ts`/`SubmissionPolicy.ts` perlu keputusan owner dulu karena `EventTaskFormState.ts` masih mereferensikan Moment.
+5. Selesaikan Task 7 dengan memutuskan owner `EventTaskFormState.ts` (masih mereferensikan `InboxRecord` milik Moment) dan `SubmissionPolicy.ts` (generic submission guard, hanya 2 consumer). Setelah itu verifikasi tiga acceptance criteria Task 7 di `tasks/code-restructuring-todo.md`, tandai selesai, lalu lanjut ke Task 8 (isolasi persistence/boundary capture: `ScheduledItemEditSubmission.ts`, `ScheduledItemIdentityMigration.ts`, `LedgerRecordSource.ts` yang consumer-nya lebar).
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 
