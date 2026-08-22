@@ -1,4 +1,5 @@
 import { unwrapMarkdownLinkLabel } from "./InboxMarkdown.ts";
+import { appendScheduledItemBlockId, extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
 import type { TaskPriority } from "./ScheduledItemTypes";
 
 /** Wraps a plain date/time edit value (e.g. into a relative Markdown link) before it's written. */
@@ -71,7 +72,8 @@ function parseLocalDateTime(value: string, allowDateOnly: boolean): Date | null 
 }
 
 export function parseTaskLineEdit(line: string): ParseTaskLineEditResult {
-    const match = line.match(/^\s*-\s+\[( |x|X)\]\s+(.+)$/);
+    const { semanticLine } = extractScheduledItemBlockId(line);
+    const match = semanticLine.match(/^\s*-\s+\[( |x|X)\]\s+(.+)$/);
     if (!match) return { status: "invalid", reason: "not-task" };
 
     const segments = match[2].split(" | ");
@@ -139,7 +141,8 @@ function editTaskLineWithOptionalTitle(
     edit: TaskLineEdit,
     formatDateValue?: FormatDateValue,
 ): EditTaskLineResult {
-    const match = line.match(/^(\s*-\s+\[)( |x|X)(\]\s+)(.+)$/);
+    const { semanticLine, blockId } = extractScheduledItemBlockId(line);
+    const match = semanticLine.match(/^(\s*-\s+\[)( |x|X)(\]\s+)(.+)$/);
     if (!match) return { status: "invalid", reason: "not-task" };
 
     const segments = match[4].split(" | ");
@@ -201,7 +204,8 @@ function editTaskLineWithOptionalTitle(
     const originalCheckboxMatches = (match[2].toLowerCase() === "x") === edit.completed;
     const checkboxValue = originalCheckboxMatches ? match[2] : checkbox;
     const payload = [title, ...metadata].join(" | ");
-    return { status: "ready", line: `${match[1]}${checkboxValue}${match[3]}${payload}` };
+    const editedLine = `${match[1]}${checkboxValue}${match[3]}${payload}`;
+    return { status: "ready", line: blockId ? appendScheduledItemBlockId(editedLine, blockId) : editedLine };
 }
 
 function renderEditedTitle(original: string, title: string): string {

@@ -76,6 +76,22 @@ test("keeps a semantic no-op byte-identical, including title links and unknown m
     );
 });
 
+test("parses and preserves a trailing block ID without treating it as Task metadata", () => {
+    const line = "- [ ] Review | due:2026-08-16 ^fn-task-a1b2c3";
+
+    assert.equal(parseTaskLineEdit(line).status, "parsed");
+    assert.deepEqual(
+        editTaskLine(line, {
+            completed: false,
+            priority: "high",
+            due: "2026-08-17",
+            timebox: null,
+            reminders: [],
+        }),
+        { status: "ready", line: "- [ ] Review | due:2026-08-17 | priority:high ^fn-task-a1b2c3" },
+    );
+});
+
 test("updates owned Task attributes without rewriting unknown metadata or its order", () => {
     const line =
         "- [ ] [[Proposal|Review proposal]] | owner:Ana | due:2026-08-16 | x-plugin:value | remind:2026-08-16 08:00";

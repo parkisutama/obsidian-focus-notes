@@ -1,4 +1,5 @@
 import { parseTaskLineEdit, type TaskLineInvalidReason } from "./TaskLineEditor.ts";
+import { appendScheduledItemBlockId, extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
 
 export type TaskLineLintStatus = "plain" | "valid" | "needs-format" | "warning";
 
@@ -25,7 +26,8 @@ export function inspectTaskLine(line: string): TaskLineInspection {
     const parsed = parseTaskLineEdit(line);
     if (parsed.status === "invalid") return { status: "warning", normalizedLine: null, reason: parsed.reason };
 
-    const match = line.match(/^(\s*-\s+\[(?: |x|X)\]\s+)(.+)$/);
+    const { semanticLine, blockId } = extractScheduledItemBlockId(line);
+    const match = semanticLine.match(/^(\s*-\s+\[(?: |x|X)\]\s+)(.+)$/);
     if (!match) return { status: "warning", normalizedLine: null, reason: "not-task" };
     const segments = match[2].split(" | ");
     const title = segments.shift() ?? "";
@@ -46,7 +48,10 @@ export function inspectTaskLine(line: string): TaskLineInspection {
     for (const [index, position] of ownedPositions.entries()) {
         normalizedSegments[position] = ownedSegments[index].segment;
     }
-    const normalizedLine = `${match[1]}${[title, ...normalizedSegments].join(" | ")}`;
+    const semanticNormalizedLine = `${match[1]}${[title, ...normalizedSegments].join(" | ")}`;
+    const normalizedLine = blockId
+        ? appendScheduledItemBlockId(semanticNormalizedLine, blockId)
+        : semanticNormalizedLine;
     return {
         status: normalizedLine === line ? "valid" : "needs-format",
         normalizedLine,

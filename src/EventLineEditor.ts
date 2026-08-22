@@ -1,4 +1,5 @@
 import type { EventOccurrenceStatus } from "./ScheduledItemTypes";
+import { appendScheduledItemBlockId, extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
 
 export interface EventLineEdit {
     allDay: boolean;
@@ -63,12 +64,13 @@ function splitPayload(payload: string): { title: string; metadata: string[] } {
 }
 
 function parseStructure(line: string): EventStructure | null {
-    const timed = line.match(TIMED_RE);
+    const { semanticLine } = extractScheduledItemBlockId(line);
+    const timed = semanticLine.match(TIMED_RE);
     if (timed) {
         const end = timed[2].includes(" ") ? timed[2] : `${timed[1].slice(0, 10)} ${timed[2]}`;
         return { allDay: false, start: timed[1], end, ...splitPayload(timed[3]) };
     }
-    const allDay = line.match(ALL_DAY_RE);
+    const allDay = semanticLine.match(ALL_DAY_RE);
     return allDay ? { allDay: true, start: allDay[1], end: null, ...splitPayload(allDay[2]) } : null;
 }
 
@@ -164,7 +166,9 @@ function editEventLineWithOptionalTitle(
     if (edit.allDay) metadata.push("type:event", "all-day:true");
     if (edit.status !== "planned") metadata.push(`status:${edit.status}`);
     if (edit.actual) metadata.push(`actual-start:${edit.actual.start}`, `actual-end:${edit.actual.end}`);
-    return { status: "ready", line: [prefix, ...metadata].join(" | ") };
+    const editedLine = [prefix, ...metadata].join(" | ");
+    const { blockId } = extractScheduledItemBlockId(line);
+    return { status: "ready", line: blockId ? appendScheduledItemBlockId(editedLine, blockId) : editedLine };
 }
 
 function renderEditedTitle(original: string, title: string): string {

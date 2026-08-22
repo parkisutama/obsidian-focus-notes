@@ -2,6 +2,7 @@ import { ItemView, Notice, setIcon, TFile, type ViewStateResult, type WorkspaceL
 import { openEventTaskForm } from "./EventTaskModal";
 import { openScheduledItemEditor } from "./ScheduledItemEditor";
 import { ScheduledItemIndexer } from "./ScheduledItemIndexer";
+import { formatScheduledItemBlockTarget } from "./ScheduledItemBlockId.ts";
 import { ScheduledItemParser } from "./ScheduledItemParser";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
 import type { ScheduledItem, TimelineMode, TimelineRange } from "./ScheduledItemTypes";
@@ -421,6 +422,14 @@ export class TimelineView extends ItemView {
         const file = this.app.vault.getAbstractFileByPath(item.source.filePath);
         if (!(file instanceof TFile)) {
             new Notice(`Source note not found: ${item.source.filePath}`);
+            return;
+        }
+        if (item.blockId) {
+            await this.app.workspace.openLinkText(
+                formatScheduledItemBlockTarget(item.source.filePath, item.blockId),
+                item.source.filePath,
+                false,
+            );
             return;
         }
         const leaf = this.app.workspace.getLeaf(false);

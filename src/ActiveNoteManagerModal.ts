@@ -10,6 +10,8 @@ import type { ScheduledItem, ScheduledItemKind } from "./ScheduledItemTypes";
 import { TaskFormatPreviewModal } from "./TaskFormatPreviewModal";
 import type { TaskFormatChange } from "./TaskFormatWriter";
 import { inspectTaskLine, taskLineLintLabel } from "./TaskLineLint";
+import { createScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
+import { buildScheduledItemIdentityChange } from "./ScheduledItemIdentityMigration.ts";
 
 export class ActiveNoteManagerModal extends Modal {
     constructor(
@@ -28,6 +30,7 @@ export class ActiveNoteManagerModal extends Modal {
 
     private scopes: ActiveNoteManagerScopeOption[];
     private selectedScopeId = "ledger";
+    private pendingBlockIds = new Map<string, string>();
 
     onOpen(): void {
         this.modalEl.addClass("fn-active-note-manager-modal");
@@ -64,6 +67,24 @@ export class ActiveNoteManagerModal extends Modal {
     private formatChanges(): TaskFormatChange[] {
         const scope = this.scopes.find((candidate) => candidate.id === this.selectedScopeId) ?? this.scopes[0];
         return (scope?.items ?? []).flatMap((item) => {
+            let normalizedLine = item.rawLine;
+            if (item.kind === "task") {
+                const inspection = inspectTaskLine(item.rawLine);
+                if (inspection.status === "needs-format" && inspection.normalizedLine) {
+                    normalizedLine = inspection.normalizedLine;
+                }
+            }
+            if (!item.blockId) {
+                let blockId = this.pendingBlockIds.get(item.id);
+                if (!blockId) {
+                    blockId = createScheduledItemBlockId(item.kind);
+                    this.pendingBlockIds.set(item.id, blockId);
+                }
+                const identityChange = buildScheduledItemIdentityChange(item, blockId);
+                if (identityChange) {
+                    return [{ ...identityChange, normalizedLine: `${normalizedLine} ^${blockId}` }];
+                }
+            }
             if (item.kind !== "task") return [];
             const inspection = inspectTaskLine(item.rawLine);
             if (inspection.status !== "needs-format" || !inspection.normalizedLine) return [];
@@ -118,7 +139,12 @@ export class ActiveNoteManagerModal extends Modal {
                     const lint = inspectTaskLine(item.rawLine);
                     titleRow.createSpan({
                         cls: `fn-active-note-manager-lint fn-active-note-manager-lint-${lint.status}`,
-                        text: taskLineLintLabel(lint.status),
+                        text: item.blockId ? taskLineLintLabel(lint.status) : "Missing block ID",
+                    });
+                } else if (!item.blockId) {
+                    titleRow.createSpan({
+                        cls: "fn-active-note-manager-lint fn-active-note-manager-lint-needs-format",
+                        text: "Missing block ID",
                     });
                 }
                 body.createSpan({ cls: "fn-active-note-manager-meta", text: activeNoteItemMeta(item) });

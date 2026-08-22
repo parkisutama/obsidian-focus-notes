@@ -18,6 +18,11 @@ import { buildScheduledItemFormBlockEdit } from "./ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
 import type { FormatDateValue } from "./TaskLineEditor.ts";
 import type { ContextSourceSettings } from "./types";
+import {
+    appendScheduledItemBlockId,
+    createScheduledItemBlockId,
+    extractScheduledItemBlockId,
+} from "./ScheduledItemBlockId.ts";
 
 export interface ScheduledItemEditSubmissionDependencies {
     contextNotes: readonly ContextLinkNote[];
@@ -28,6 +33,7 @@ export interface ScheduledItemEditSubmissionDependencies {
     resolveLinkDestination: LinkDestinationResolver;
     formatDateValue?: FormatDateValue;
     formatSourceLink?: (targetFilePath: string, linkedFilePath: string, label: string) => string;
+    createBlockId?: (kind: "task" | "event") => string;
 }
 
 export type ScheduledItemEditSubmissionResult =
@@ -49,6 +55,10 @@ export async function submitScheduledItemEdit(
     const built = buildScheduledItemFormBlockEdit(next, snapshot, dependencies.formatDateValue);
     if (built.status === "invalid") {
         return { status: "failure", phase: "validation", message: built.message };
+    }
+    if (!extractScheduledItemBlockId(built.edit.firstLine).blockId) {
+        const createBlockId = dependencies.createBlockId ?? createScheduledItemBlockId;
+        built.edit.firstLine = appendScheduledItemBlockId(built.edit.firstLine, createBlockId(next.kind));
     }
 
     try {

@@ -155,6 +155,25 @@ test("Task date fields stay plain text when no formatDateLink resolver is suppli
     assert.equal(markdown, "- [ ] Submit invoice | due:2026-08-02");
 });
 
+test("canonical writer appends a supplied block ID after all Task metadata", () => {
+    const record: TaskRecord = {
+        kind: "task",
+        title: "Submit invoice",
+        priority: "normal",
+        due: new Date(2026, 7, 2),
+        dueHasTime: false,
+        timebox: null,
+        reminders: [],
+        description: "",
+        hubNoteRef: null,
+    };
+
+    assert.equal(
+        formatEventTaskEntry(record, null, undefined, "fn-task-a1b2c3"),
+        "- [ ] Submit invoice | due:2026-08-02 ^fn-task-a1b2c3",
+    );
+});
+
 test("Task priority parser accepts canonical values and safely defaults invalid values", () => {
     const parser = new ScheduledItemParser();
 

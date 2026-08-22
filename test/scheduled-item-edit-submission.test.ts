@@ -114,11 +114,44 @@ test("wraps the edited due date in a link when a formatDateValue dependency is s
             },
             writeRelated: async () => undefined,
             formatDateValue,
+            createBlockId: () => "fn-task-a1b2c3",
         },
     );
 
     assert.equal(result.status, "success");
-    assert.equal(writtenLine, `- [ ] Review proposal | due:${formatDateValue("2026-08-25")}`);
+    assert.equal(writtenLine, `- [ ] Review proposal | due:${formatDateValue("2026-08-25")} ^fn-task-a1b2c3`);
+});
+
+test("edit adds an ID to a legacy record and preserves an existing ID", async () => {
+    const written: string[] = [];
+    const dependencies = {
+        contextNotes: [{ path: "People/Ana.md" }],
+        contextSources,
+        resolveLinkDestination: resolveRelativeLinkDestination,
+        writePrimary: async (edit: { firstLine: string }) => {
+            written.push(edit.firstLine);
+        },
+        writeRelated: async () => undefined,
+        createBlockId: () => "fn-task-migrated",
+    };
+
+    await submitScheduledItemEdit(task("Ask @{People/Ana.md}"), task("Ask @{People/Ana.md}"), snapshot(), dependencies);
+
+    const existingLine = "- [ ] Review proposal | due:2026-08-25 ^fn-task-existing";
+    const captured = captureLedgerRecord(existingLine, { filePath: "Tasks.md", lineNumber: 1, rawLine: existingLine });
+    assert.equal(captured.status, "captured");
+    if (captured.status !== "captured") return;
+    await submitScheduledItemEdit(
+        task("Ask @{People/Ana.md}"),
+        task("Ask @{People/Ana.md}"),
+        captured.snapshot,
+        dependencies,
+    );
+
+    assert.deepEqual(written, [
+        "- [ ] Review proposal | due:2026-08-25 ^fn-task-migrated",
+        "- [ ] Review proposal | due:2026-08-25 ^fn-task-existing",
+    ]);
 });
 
 test("does not attempt related logs when the primary edit fails", async () => {

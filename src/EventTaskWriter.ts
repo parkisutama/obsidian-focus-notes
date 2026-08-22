@@ -8,6 +8,7 @@ import { formatEventTaskEntry, formatTaskPriorityFrontmatter } from "./EventTask
 import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
 import { TargetResolver } from "./TargetResolver";
 import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItemTypes";
+import { createScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
 
 /** Reference to a hub note, used to build a markdown link. */
 export interface HubNoteRef {
@@ -64,7 +65,12 @@ export class EventTaskWriter {
         const formatDateLink = this.getFocusSettings
             ? (when: Date, label: string) => this.formatDailyLink(when, targetFilePath, label)
             : undefined;
-        const content = formatEventTaskEntry(record, detailNoteRef, formatDateLink);
+        const content = formatEventTaskEntry(
+            record,
+            detailNoteRef,
+            formatDateLink,
+            createScheduledItemBlockId(record.kind),
+        );
         await this.insertIntoFile(file, targetHeading, content, position);
     }
 

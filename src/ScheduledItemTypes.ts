@@ -21,6 +21,8 @@ export interface TimelineSourceGroup {
 
 export interface ScheduledItem {
     id: string;
+    /** Stable Obsidian block identity. Absent only on legacy records awaiting migration. */
+    blockId?: string | null;
     kind: ScheduledItemKind;
     title: string;
     start: Date | null;

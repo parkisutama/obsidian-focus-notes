@@ -13,6 +13,25 @@ test("keeps a valid Event no-op byte-identical with links and unknown metadata",
     assert.deepEqual(editEventLine(line, parsed.edit), { status: "ready", line });
 });
 
+test("parses and preserves a trailing block ID while editing Event lifecycle", () => {
+    const line = "- 2026-08-20 09:00 - 10:30 Review | owner:Ana ^fn-event-a1b2c3";
+
+    assert.equal(parseEventLineEdit(line).status, "parsed");
+    assert.deepEqual(
+        editEventLine(line, {
+            allDay: false,
+            start: "2026-08-20 09:00",
+            end: "2026-08-20 10:30",
+            status: "completed",
+            actual: null,
+        }),
+        {
+            status: "ready",
+            line: "- 2026-08-20 09:00 - 10:30 Review | owner:Ana | status:completed ^fn-event-a1b2c3",
+        },
+    );
+});
+
 test("updates planned and lifecycle fields while preserving unknown metadata", () => {
     const line =
         "- 2026-08-20 09:00 - 10:30 [[Proposal|Review]] | owner:Ana | status:completed" +

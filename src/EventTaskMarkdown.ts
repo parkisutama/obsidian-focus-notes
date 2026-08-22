@@ -1,5 +1,6 @@
 import type { EventRecord, EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
 import type { TaskPriority } from "./ScheduledItemTypes";
+import { appendScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
 
 /** Formats a date value as a link (or plain text, if unresolvable) for a Task date field. */
 export type FormatDateLink = (when: Date, label: string) => string;
@@ -8,8 +9,10 @@ export function formatEventTaskEntry(
     record: EventTaskRecord,
     detailNoteRef?: HubNoteRef | null,
     formatDateLink?: FormatDateLink,
+    blockId?: string,
 ): string {
-    const line = record.kind === "event" ? formatEventLine(record) : formatTaskLine(record, formatDateLink);
+    const semanticLine = record.kind === "event" ? formatEventLine(record) : formatTaskLine(record, formatDateLink);
+    const line = blockId ? appendScheduledItemBlockId(semanticLine, blockId) : semanticLine;
     const parts = [line];
     for (const descriptionLine of record.description.split(/\r?\n/)) {
         const description = descriptionLine.trim();

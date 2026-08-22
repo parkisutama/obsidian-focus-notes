@@ -1,4 +1,5 @@
 import { unwrapMarkdownLinkLabel } from "./InboxMarkdown.ts";
+import { extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
 import type { EventOccurrenceStatus, ScheduledItem, ScheduledItemSource, TaskPriority } from "./ScheduledItemTypes";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -7,10 +8,19 @@ const TIME_RE = /^\d{2}:\d{2}$/;
 
 export class ScheduledItemParser {
     parseLine(line: string, ctx: ScheduledItemSource): ScheduledItem | null {
-        return this.parseEventLine(line, ctx) ?? this.parseTaskLine(line, ctx);
+        const { semanticLine, blockId } = extractScheduledItemBlockId(line);
+        return (
+            this.parseEventLine(semanticLine, ctx, line, blockId) ??
+            this.parseTaskLine(semanticLine, ctx, line, blockId)
+        );
     }
 
-    private parseEventLine(line: string, ctx: ScheduledItemSource): ScheduledItem | null {
+    private parseEventLine(
+        line: string,
+        ctx: ScheduledItemSource,
+        rawLine: string,
+        blockId: string | null,
+    ): ScheduledItem | null {
         const match = line.match(
             /^-\s+(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\s+-\s+((?:\d{4}-\d{2}-\d{2} )?\d{2}:\d{2})\s+(.+)$/,
         );
@@ -18,7 +28,7 @@ export class ScheduledItemParser {
             const start = this.parseDateTime(match[1]);
             const end = start ? this.parseEventEnd(match[2], start) : null;
             if (!start || !end || end <= start) return null;
-            return this.buildEventItem(match[3], start, end, false, ctx, line);
+            return this.buildEventItem(match[3], start, end, false, ctx, rawLine, blockId);
         }
 
         const allDayMatch = line.match(/^-\s+(\d{4}-\d{2}-\d{2})\s+(.+)$/);
@@ -26,7 +36,7 @@ export class ScheduledItemParser {
         const start = this.parseDate(allDayMatch[1]);
         if (!start) return null;
         const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
-        return this.buildEventItem(allDayMatch[2], start, end, true, ctx, line);
+        return this.buildEventItem(allDayMatch[2], start, end, true, ctx, rawLine, blockId);
     }
 
     private buildEventItem(
@@ -36,6 +46,7 @@ export class ScheduledItemParser {
         allDay: boolean,
         ctx: ScheduledItemSource,
         rawLine: string,
+        blockId: string | null,
     ): ScheduledItem | null {
         const parts = payload.split(" | ").map((part) => part.trim());
         const title = this.cleanTitle(parts.shift() ?? "");
@@ -46,7 +57,8 @@ export class ScheduledItemParser {
         if (!allDay && metadata.allDay) return null;
 
         return {
-            id: this.buildItemId(ctx),
+            id: blockId ?? this.buildItemId(ctx),
+            blockId,
             kind: "event",
             title,
             start,
@@ -104,7 +116,12 @@ export class ScheduledItemParser {
         return { status, actualStart, actualEnd, explicitEvent, allDay };
     }
 
-    private parseTaskLine(line: string, ctx: ScheduledItemSource): ScheduledItem | null {
+    private parseTaskLine(
+        line: string,
+        ctx: ScheduledItemSource,
+        rawLine: string,
+        blockId: string | null,
+    ): ScheduledItem | null {
         const match = line.match(/^-\s+\[( |x|X)\]\s+(.+)$/);
         if (!match) return null;
 
@@ -114,7 +131,8 @@ export class ScheduledItemParser {
 
         const metadata = this.parseTaskMetadata(parts);
         return {
-            id: this.buildItemId(ctx),
+            id: blockId ?? this.buildItemId(ctx),
+            blockId,
             kind: "task",
             title,
             start: metadata.start,
@@ -129,7 +147,7 @@ export class ScheduledItemParser {
             allDay: false,
             isCompleted: match[1].toLowerCase() === "x",
             source: ctx,
-            rawLine: line,
+            rawLine,
         };
     }
 
