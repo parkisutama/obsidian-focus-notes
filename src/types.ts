@@ -22,9 +22,6 @@ import type { PeriodicalNotesSettings } from "./features/periodical-notes/domain
 import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 import type { FocusTimelineSettings } from "./features/timeline/domain/TimelineSettings";
 
-export type { TimelineMode } from "./features/timeline/domain/Timeline";
-export type { FocusTimelineSettings } from "./features/timeline/domain/TimelineSettings";
-
 export interface FocusNotesSettings {
     /** Default focus duration for the Pomodoro tab. */
     pomodoroMinutes: number;
