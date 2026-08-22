@@ -13,7 +13,7 @@ import {
     writeRelatedDestinations,
 } from "./RelatedWriteRecovery.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
-import type { ContextSourceSettings } from "./types";
+import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 
 export interface ScheduledItemCreateRelatedDependencies {
     contextNotes: readonly ContextLinkNote[];

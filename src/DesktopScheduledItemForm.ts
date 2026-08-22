@@ -6,7 +6,7 @@ import { parseObjectReferences } from "./ObjectReference.ts";
 import type { ScheduledItemFormData } from "./ScheduledItemFormData";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
-import type { ContextSourceSettings } from "./types";
+import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 
 export interface DesktopScheduledItemCreateContext {
     targetFile: string;
