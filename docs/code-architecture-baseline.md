@@ -110,7 +110,7 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Moment form and semantic text | `features/capture/moment/domain/InboxRecord.ts`, `InboxDesktopForm.ts`, `InboxMobileForm.ts`, `InboxNotesText.ts`, `InboxRichText.ts`, `InboxMarkdown.ts`, `InboxTarget.ts` | Record contract sudah canonical; form/text split berikutnya berdasarkan domain/UI |
 | Moment suggestions UI/application | `InboxNotesController.ts`, `InboxSuggestions.ts`, `SuggestionSelection.ts` | Moment UI/application; generic primitive only if reuse is proven |
 | Moment settings | `InboxFolderSettings.ts` | `features/capture/moment` or settings renderer owner |
-| Scheduled Item domain contract | `features/capture/scheduled-item/domain/ScheduledItem.ts`, `features/capture/scheduled-item/domain/EventTaskRecord.ts` | Canonical owner; `EventTaskWriter.ts` sementara mere-ekspor record types sampai consumer legacy dipotong langsung |
+| Scheduled Item domain contract | `features/capture/scheduled-item/domain/ScheduledItem.ts`, `features/capture/scheduled-item/domain/EventTaskRecord.ts` | Canonical owner; seluruh consumer record sudah dipotong langsung dan shim `EventTaskWriter.ts` telah dihapus |
 | Scheduled Item form semantics | `ScheduledItemFormData.ts`, `ScheduledItemFormAdapter.ts`, `EventTaskFormState.ts`, `SubmissionPolicy.ts` | `features/capture/scheduled-item/domain` or `application` according to side effects |
 | Scheduled Item identity/parser | `ScheduledItemBlockId.ts`, `ScheduledItemParser.ts`, `ScheduledItemIdentityMigration.ts` | Domain; migration orchestration remains application |
 | Scheduled Item block editing | `ScheduledItemBlockEditor.ts`, `LedgerRecordSource.ts` | Pure domain editing/snapshot contracts |
@@ -156,7 +156,7 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 ## Batch berikutnya
 
 1. Ekstrak satu kelompok tipe tersisa dari `types.ts` per owner; capture target atau Object Source adalah kandidat berikutnya setelah consumer map.
-2. Potong consumer legacy dari re-export record types di `EventTaskWriter.ts`, lalu hapus shim saat referensi mencapai nol.
+2. Bentuk boundary canonical capture-target atau Object Source settings dalam batch kecil berdasarkan consumer map.
 3. Pisahkan pure date-time helpers dari `utils.ts` setelah consumer map dikonfirmasi.
 4. Pindahkan implementasi fisik hanya setelah import consumer mengarah ke boundary canonical.
 
