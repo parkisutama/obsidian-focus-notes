@@ -108,7 +108,8 @@
 - [x] Object Source settings and placement moved to `features/object-notes/domain`; production/tests cut over directly and central filter/settings/placement shims removed.
 - [x] Timeline settings moved to `features/timeline/domain`; Settings UI cut over to canonical `TimelineMode` and central Timeline shims removed.
 - [x] Event/Task detail settings moved to the Scheduled Item domain; the writer cut over directly and the central shim was removed.
-- [ ] Global settings composition and its remaining Inbox contract remain.
+- [x] Persisted Inbox/Object Source registry settings moved to the Object Notes domain and the central shim was removed.
+- [ ] Global settings composition, defaults, and migration merge remain.
 
 ## Task 6: Split utilities by proven ownership
 

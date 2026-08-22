@@ -1,7 +1,7 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-22
-Status: Implementasi bertahap aktif; checkpoint Capture, Object Source, Timeline, dan Event/Task detail settings selesai tanpa perubahan perilaku
+Status: Implementasi bertahap aktif; seluruh feature settings contract sudah memiliki owner canonical tanpa perubahan perilaku
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -22,7 +22,7 @@ Dokumen ini adalah handover implementasi awal, bukan keputusan bahwa seluruh str
 | `src/EventTaskModal.ts` | 876 | legacy capture, routing form baru, target resolution, rendering desktop, submit |
 | `src/EventTaskMobileScreen.ts` | 759 | rendering mobile, form state, target resolution, submit, recovery |
 | `src/TimerView.ts` | 703 | view lifecycle, timer controls, target editor, recent entries, logging, notices |
-| `src/types.ts` | 417 | composition settings tersisa, Inbox contract, persistence defaults, migration merge |
+| `src/types.ts` | 412 | composition settings, persistence defaults, migration merge |
 | `src/InboxNotesController.ts` | 554 | rich-text interaction, mentions, tags, scheduled-item suggestions, link insertion |
 | `src/TimelineView.ts` | 441 | view lifecycle, indexing, range navigation, source state, rendering, notices |
 
@@ -33,7 +33,7 @@ Temuan struktur utama:
 - Awalan `Inbox*` masih dipakai untuk kemampuan contextual notes yang juga digunakan Event, Task, dan Scheduled Item. Nama file tidak lagi menggambarkan cakupan aktual.
 - Implementasi capture lama (`EventTaskModal`/`EventTaskMobileScreen`) hidup berdampingan dengan renderer Scheduled Item baru. Batas legacy dan jalur aktif perlu dipastikan sebelum penghapusan.
 - UI desktop dan mobile memang berbeda, tetapi sudah berbagi sebagian model, adapter, submission, dan recovery. Restrukturisasi tidak boleh menyatukan renderer secara paksa.
-- Cycle `types.ts`/Scheduled Item dan seluruh source cycle sudah diputus. Kontrak Capture, Object Source, Timeline, serta Event/Task detail settings kini canonical di feature domain masing-masing, sedangkan `InsertPosition` berada di `shared/markdown`; seluruh re-export kompatibilitas terkait sudah dihapus setelah zero-reference proof.
+- Cycle `types.ts`/Scheduled Item dan seluruh source cycle sudah diputus. Kontrak Capture, Object Source termasuk Inbox registry, Timeline, serta Event/Task detail settings kini canonical di feature domain masing-masing, sedangkan `InsertPosition` berada di `shared/markdown`; seluruh re-export kompatibilitas terkait sudah dihapus setelah zero-reference proof.
 
 ## Sumber kebenaran yang sudah ada
 
@@ -358,8 +358,8 @@ Acceptance manual tetap diperlukan untuk:
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
 3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 301 tes pada 2026-08-22.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Lanjutkan Task 5 dengan satu owner per commit. Kandidat terdekat: Inbox settings setelah consumer map dikonfirmasi; Capture, Object Source, Timeline, dan Event/Task detail settings sudah selesai.
-6. Pertahankan source import tetap acyclic; shim `EventTaskWriter.ts` dan re-export central untuk Capture, Object Source, Timeline, serta Event/Task detail settings sudah dihapus setelah direct-consumer cutover selesai.
+5. Selesaikan Task 5 dengan menetapkan boundary composition/default/merge setelah consumer map dan persistence characterization dikonfirmasi; seluruh feature settings contract sudah selesai.
+6. Pertahankan source import tetap acyclic; seluruh re-export central untuk kontrak feature settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 
 ## Kriteria handover ini dianggap selesai

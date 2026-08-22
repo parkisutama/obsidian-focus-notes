@@ -87,7 +87,7 @@ Timeline / Active Note Manager
 
 - Cycle langsung `types.ts <-> ScheduledItemTypes.ts` telah diputus. Seluruh consumer telah memakai kontrak domain dan shim `ScheduledItemTypes.ts` sudah dihapus setelah full CI lulus.
 - Seluruh relative import di `src` kini acyclic dan dijaga oleh `test/architecture-boundaries.test.ts`. Cycle record/form/writer, desktop/mobile routing, dan `main.ts <-> SettingsTab.ts` diputus tanpa menggabungkan renderer atau mengubah persistence.
-- `types.ts` masih menjadi composition root settings dan memuat kontrak Inbox registry, defaults, serta merge/migration. Event/Task detail settings kini dimiliki Scheduled Item; Timeline settings dimiliki `features/timeline/domain`; Object Source, Capture, Timer, Session Record, wellbeing, dan Periodical Notes juga sudah berada pada owner masing-masing.
+- `types.ts` kini hanya menjadi composition root settings yang memuat defaults serta merge/migration. Inbox/Object Source registry, Event/Task detail settings, Timeline settings, Capture, Timer, Session Record, wellbeing, dan Periodical Notes sudah berada pada owner masing-masing.
 - `utils.ts` masih mencampur pure date-time helpers dengan Obsidian file/folder guards dan vault folder mutation.
 - Hotspot ukuran dan orchestration: `SettingsTab.ts`, `EventTaskModal.ts`, `EventTaskMobileScreen.ts`, `TimerView.ts`, `InboxNotesController.ts`, `types.ts`, dan `TimelineView.ts`.
 - Timeline mengonsumsi Scheduled Item; Timeline tidak memiliki aturan Task/Event.
@@ -100,7 +100,7 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Owner / layer | Source files | Arah target |
 | --- | --- | --- |
 | Plugin composition | `main.ts` | `plugin/FocusNotesPlugin.ts`, `commands.ts`, `view-registration.ts`, `identifiers.ts` |
-| Transitional central contracts | `types.ts` | Split per owner dalam batch kecil; tidak menerima domain baru |
+| Settings composition and normalization | `types.ts` | Ekstrak composition/default/merge sebagai batch persistence-sensitive terakhir; tidak menerima domain baru |
 | Mixed utilities | `utils.ts` | Split pure date-time dari Obsidian vault operations |
 | Capture target/settings contracts | `features/capture/domain/CaptureTarget.ts`, `features/capture/domain/CaptureSettings.ts` | Canonical owner; seluruh consumer target sudah direct-import dan shim `types.ts` telah dihapus |
 | Focus session domain | `features/focus-session/domain/Timer.ts`, `features/focus-session/domain/SessionRecord.ts`, `TimerEngine.ts` | Kontrak Timer dan Session Record sudah canonical; state machine dipindahkan fisik pada batch terpisah |
@@ -134,7 +134,7 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Timeline application | `ScheduledItemQuery.ts`, `ScheduledItemIndexer.ts` | Timeline query/index orchestration; Obsidian indexing behind adapter |
 | Timeline UI | `TimelineView.ts`, `TimelineGrid.ts`, `TimelineSourceSidebar.ts`, `TimelineItemModal.ts` | `features/timeline/ui` |
 | Scheduled mention domain/index | `ScheduledItemMentionIndex.ts` | Scheduled Item/query domain according to final consumers |
-| Object Notes domain | `features/object-notes/domain/ContextSourceFilter.ts`, `features/object-notes/domain/ContextSourceSettings.ts`, `ObjectReference.ts`, `ContextSourceScope.ts`, `ContextSourceSettings.ts` | Filter dan settings contract sudah canonical; seluruh consumer direct-import dan shim `types.ts` telah dihapus |
+| Object Notes domain | `features/object-notes/domain/ContextSourceFilter.ts`, `features/object-notes/domain/ContextSourceSettings.ts`, `ObjectReference.ts`, `ContextSourceScope.ts` | Filter, source settings, dan persisted Inbox registry contract sudah canonical; seluruh consumer direct-import dan shim `types.ts` telah dihapus |
 | Object Notes application | `ObjectNote.ts`, `ContextLinkResolver.ts` | `features/object-notes/application` with explicit link/vault ports |
 | Object Notes UI | `ObjectNoteModal.ts`, `ObjectNoteSuggest.ts` | `features/object-notes/ui` |
 | Obsidian suggestion/link adapters | `ObsidianInboxSuggestionSource.ts`, `ObsidianLinkResolver.ts`, `ObsidianScheduledItemMentionSource.ts`, `Suggesters.ts` | `infrastructure/obsidian` with feature-facing interfaces |
@@ -157,9 +157,9 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 
 ## Batch berikutnya
 
-1. Ekstrak satu kelompok tipe tersisa dari `types.ts` per owner; Inbox settings adalah kandidat berikutnya setelah consumer map.
-2. Pertahankan normalisasi dan composition settings di boundary persistence sampai kontrak domain selesai dipotong langsung.
+1. Tetapkan owner akhir composition/default/merge di `types.ts`; pertahankan nama persisted key dan seluruh normalisasi legacy.
+2. Pindahkan composition settings hanya setelah consumer map dan characterization test persistence dikonfirmasi.
 3. Pisahkan pure date-time helpers dari `utils.ts` setelah consumer map dikonfirmasi.
 4. Pindahkan implementasi fisik hanya setelah import consumer mengarah ke boundary canonical.
 
-Checkpoint 2026-08-22: `pnpm run check:ci` lulus dengan 301 tes setelah seluruh source cycle diputus, guard generik ditambahkan, serta kontrak Capture, Object Source, Timeline, dan Event/Task detail settings dipindahkan ke owner canonical tanpa shim tersisa. Deployment vault dinonaktifkan; build produksi, artifact verification, dan VitePress build juga lulus.
+Checkpoint 2026-08-22: `pnpm run check:ci` lulus dengan 301 tes setelah seluruh source cycle diputus, guard generik ditambahkan, serta kontrak Capture, Object Source termasuk Inbox registry, Timeline, dan Event/Task detail settings dipindahkan ke owner canonical tanpa shim tersisa. Deployment vault dinonaktifkan; build produksi, artifact verification, dan VitePress build juga lulus.
