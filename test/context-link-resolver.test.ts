@@ -7,7 +7,7 @@ import {
     resolvedMarkdownLinkPaths,
     resolveRelativeLinkDestination,
 } from "../src/ContextLinkResolver.ts";
-import type { ContextSourceSettings } from "../src/types.ts";
+import type { ContextSourceSettings } from "../src/features/object-notes/domain/ContextSourceSettings.ts";
 
 const sources: ContextSourceSettings[] = [
     {

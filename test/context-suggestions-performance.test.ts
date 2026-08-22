@@ -3,7 +3,7 @@ import test from "node:test";
 import { performance } from "node:perf_hooks";
 import { ContextSuggestionIndex } from "../src/InboxSuggestions.ts";
 import { ScheduledItemMentionIndex } from "../src/ScheduledItemMentionIndex.ts";
-import type { ContextSourceSettings } from "../src/types.ts";
+import type { ContextSourceSettings } from "../src/features/object-notes/domain/ContextSourceSettings.ts";
 
 test("records a bounded synthetic baseline and reuses warm candidates", () => {
     const notes = Array.from({ length: 10_000 }, (_, index) => ({

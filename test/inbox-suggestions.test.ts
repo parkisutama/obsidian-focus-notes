@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildTagSuggestions, ContextSuggestionIndex, InboxSuggestionSnapshot } from "../src/InboxSuggestions.ts";
-import type { ContextSourceSettings } from "../src/types.ts";
+import type { ContextSourceSettings } from "../src/features/object-notes/domain/ContextSourceSettings.ts";
 
 const notes = [{ path: "Objects/Example.md", basename: "Example", aliases: [] }];
 

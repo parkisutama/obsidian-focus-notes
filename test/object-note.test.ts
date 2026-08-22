@@ -7,7 +7,7 @@ import {
     expandObjectNoteTemplate,
     getCreatableObjectSources,
 } from "../src/ObjectNote.ts";
-import type { ContextSourceSettings } from "../src/types.ts";
+import type { ContextSourceSettings } from "../src/features/object-notes/domain/ContextSourceSettings.ts";
 
 test("builds a safe Object Note path inside a configured source folder", () => {
     assert.equal(buildObjectNotePath("Place", "Kantor: Jakarta/Utara", "flat"), "Place/Kantor_ Jakarta_Utara.md");
