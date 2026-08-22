@@ -10,13 +10,6 @@ import { TargetResolver } from "./TargetResolver";
 import type { EventTaskRecord, HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import { createScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
 
-export type {
-    EventRecord,
-    EventTaskRecord,
-    HubNoteRef,
-    TaskRecord,
-} from "./features/capture/scheduled-item/domain/EventTaskRecord";
-
 export class EventTaskWriter {
     constructor(
         private app: App,
