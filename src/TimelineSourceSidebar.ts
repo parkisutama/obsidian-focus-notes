@@ -1,4 +1,5 @@
-import type { ScheduledItem, TimelineSourceGroup } from "./ScheduledItemTypes";
+import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
+import type { TimelineSourceGroup } from "./features/timeline/domain/Timeline";
 
 export interface TimelineSourceSummary {
     id: string;

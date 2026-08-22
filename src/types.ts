@@ -10,8 +10,8 @@
  * vs "timer" if the user wants that distinction in their {{mode}} token.
  */
 
-import type { TimelineMode } from "./ScheduledItemTypes";
 import type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
+import type { TimelineMode } from "./features/timeline/domain/Timeline";
 
 export type DisplayMode = "pomodoro" | "timer" | "stopwatch";
 export type EngineMode = "countdown" | "stopwatch";
@@ -19,8 +19,8 @@ export type TimerStatus = "idle" | "running" | "paused" | "completed";
 export type InsertPosition = "start" | "end";
 export type StressLevel = "low" | "normal" | "medium" | "high";
 export type EmotionCategory = "pleasant" | "neutral" | "unpleasant";
-export type { TimelineMode } from "./ScheduledItemTypes";
 export type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
+export type { TimelineMode } from "./features/timeline/domain/Timeline";
 
 export function toEngineMode(d: DisplayMode): EngineMode {
     return d === "stopwatch" ? "stopwatch" : "countdown";
