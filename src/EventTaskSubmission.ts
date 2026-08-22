@@ -4,7 +4,8 @@ import {
     resolveContextLinks,
     resolveContextPaths,
 } from "./ContextLinkResolver.ts";
-import type { EventTaskFormState, InboxRecord } from "./EventTaskFormState";
+import type { EventTaskFormState } from "./EventTaskFormState";
+import type { InboxRecord } from "./features/capture/moment/domain/InboxRecord";
 import { formatEventTaskEntry } from "./EventTaskMarkdown.ts";
 import type { EventTaskRecord, HubNoteRef } from "./EventTaskWriter";
 import type { FormatInboxEntryOptions } from "./InboxMarkdown.ts";

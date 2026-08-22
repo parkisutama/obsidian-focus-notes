@@ -1,4 +1,4 @@
-import type { InboxRecord } from "./EventTaskFormState";
+import type { InboxRecord } from "./features/capture/moment/domain/InboxRecord";
 
 export interface FormatInboxEntryOptions {
     /**

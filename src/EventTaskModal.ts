@@ -1,7 +1,8 @@
 import { type App, type Component, Modal, Notice, Platform, setIcon } from "obsidian";
 import { preferActiveNoteTarget } from "./CaptureTarget";
-import { EventTaskFormState, type EventTaskKind, formatLocalDate } from "./EventTaskFormState";
+import { EventTaskFormState, formatLocalDate } from "./EventTaskFormState";
 import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
+import type { EventTaskKind, OpenEventTaskFormOptions } from "./features/capture/domain/CaptureForm";
 import {
     type EventTaskSubmissionResult,
     type PartialSubmissionResult,
@@ -25,11 +26,6 @@ import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./Timelin
 import type { FocusNotesSettings, FocusTarget } from "./types";
 import { isTFile } from "./utils";
 
-export interface OpenEventTaskFormOptions {
-    initialKind?: EventTaskKind;
-    targetFile?: string;
-}
-
 export function openEventTaskForm(
     app: App,
     getSettings: () => FocusNotesSettings,
@@ -50,7 +46,9 @@ export function openEventTaskForm(
             );
             return;
         }
-        new EventTaskMobileScreen(app, getSettings, anchorDate, onComplete, options).open(owner);
+        new EventTaskMobileScreen(app, getSettings, anchorDate, onComplete, options, (kind) =>
+            openMobileScheduledItemCreate(app, getSettings, anchorDate, onComplete, kind),
+        ).open(owner);
         return;
     }
 
@@ -111,6 +109,13 @@ export function openDesktopScheduledItemCreate(
                     : settings.captureEvent.heading || preferred.heading,
         },
         onComplete,
+        (nextKind) => {
+            if (nextKind === "inbox") {
+                new EventTaskModal(app, getSettings, anchorDate, onComplete, { initialKind: "inbox" }).open();
+                return;
+            }
+            openDesktopScheduledItemCreate(app, getSettings, anchorDate, onComplete, nextKind);
+        },
     ).open();
 }
 

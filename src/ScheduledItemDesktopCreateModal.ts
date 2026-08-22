@@ -7,7 +7,6 @@ import {
     retryDetailNoteAttachment,
 } from "./DetailNotePromotion.ts";
 import { EventTaskFormState } from "./EventTaskFormState";
-import { EventTaskModal, openDesktopScheduledItemCreate } from "./EventTaskModal.ts";
 import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
 import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
@@ -38,10 +37,11 @@ export class ScheduledItemDesktopCreateModal extends Modal {
     constructor(
         app: App,
         private readonly getSettings: () => FocusNotesSettings,
-        private readonly anchorDate: Date,
+        anchorDate: Date,
         private readonly kind: "task" | "event",
         target: FocusTarget,
         private readonly onComplete: () => void,
+        private readonly openKind: (kind: "inbox" | "event" | "task") => void,
     ) {
         super(app);
         const settings = getSettings();
@@ -89,13 +89,7 @@ export class ScheduledItemDesktopCreateModal extends Modal {
     private switchKind(kind: "inbox" | "event" | "task"): void {
         if (kind === this.kind) return;
         this.close();
-        if (kind === "inbox") {
-            new EventTaskModal(this.app, this.getSettings, this.anchorDate, this.onComplete, {
-                initialKind: "inbox",
-            }).open();
-            return;
-        }
-        openDesktopScheduledItemCreate(this.app, this.getSettings, this.anchorDate, this.onComplete, kind);
+        this.openKind(kind);
     }
 
     onClose(): void {

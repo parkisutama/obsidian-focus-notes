@@ -6,7 +6,6 @@ import {
     retryDetailNoteAttachment,
 } from "./DetailNotePromotion.ts";
 import { EventTaskFormState } from "./EventTaskFormState.ts";
-import { EventTaskMobileScreen } from "./EventTaskMobileScreen.ts";
 import { EventTaskWriter, type HubNoteRef } from "./EventTaskWriter.ts";
 import { type MobileScheduledItemCreateContext, MobileScheduledItemForm } from "./MobileScheduledItemForm.ts";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource.ts";
@@ -18,7 +17,6 @@ import {
 } from "./ScheduledItemCreateRelated.ts";
 import { buildScheduledItemRecord } from "./ScheduledItemFormAdapter.ts";
 import { type ScheduledItemFormData, scheduledItemFormDataFromCreateState } from "./ScheduledItemFormData.ts";
-import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
 import { TargetResolver } from "./TargetResolver.ts";
 import type { FocusNotesSettings, FocusTarget } from "./types.ts";
 import { isTFile } from "./utils.ts";
@@ -40,10 +38,11 @@ export class ScheduledItemMobileCreateScreen extends Component {
     constructor(
         private readonly app: App,
         private readonly getSettings: () => FocusNotesSettings,
-        private readonly anchorDate: Date,
+        anchorDate: Date,
         private readonly kind: "task" | "event",
         target: FocusTarget,
         private readonly onComplete: () => void,
+        private readonly openKind: (kind: "inbox" | "event" | "task") => void,
     ) {
         super();
         const settings = getSettings();
@@ -91,13 +90,7 @@ export class ScheduledItemMobileCreateScreen extends Component {
     private switchKind(kind: "inbox" | "event" | "task"): void {
         if (kind === this.kind) return;
         this.close();
-        if (kind === "inbox") {
-            new EventTaskMobileScreen(this.app, this.getSettings, this.anchorDate, this.onComplete, {
-                initialKind: "inbox",
-            }).open();
-            return;
-        }
-        openMobileScheduledItemCreate(this.app, this.getSettings, this.anchorDate, this.onComplete, kind);
+        this.openKind(kind);
     }
 
     close(): void {

@@ -1,7 +1,6 @@
-import { type App, PluginSettingTab, Setting, setIcon, ToggleComponent } from "obsidian";
+import { type App, type Plugin, PluginSettingTab, Setting, setIcon, ToggleComponent } from "obsidian";
 import { createContextSource, findSharedFolderConflicts } from "./ContextSourceSettings";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
-import type FocusNotesPlugin from "./main";
 import { createPeriodicalProfile } from "./PeriodicalNoteSettings";
 import {
     CAPTURE_CATEGORIES,
@@ -14,17 +13,28 @@ import {
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
-import type { ContextSourceSettings, InsertPosition, ObjectNotePlacement, TimelineMode } from "./types";
+import type {
+    ContextSourceSettings,
+    FocusNotesSettings,
+    InsertPosition,
+    ObjectNotePlacement,
+    TimelineMode,
+} from "./types";
 import type { PeriodicalNoteProfile } from "./features/periodical-notes/domain/PeriodicalNote";
 import { isTFile } from "./utils";
 
 type FocusNotesSettingsView = { id: NavigableViewId } | { id: "objects-source"; sourceId: string };
 
+interface FocusNotesSettingsHost extends Plugin {
+    settings: FocusNotesSettings;
+    saveSettings(): Promise<void>;
+}
+
 export class FocusNotesSettingsTab extends PluginSettingTab {
     private view: FocusNotesSettingsView = { id: "root" };
     constructor(
         app: App,
-        private plugin: FocusNotesPlugin,
+        private plugin: FocusNotesSettingsHost,
     ) {
         super(app, plugin);
     }

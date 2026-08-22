@@ -1,5 +1,6 @@
 import type { App } from "obsidian";
 import { preferActiveNoteTarget } from "./CaptureTarget.ts";
+import { EventTaskMobileScreen } from "./EventTaskMobileScreen.ts";
 import { ScheduledItemMobileCreateScreen } from "./ScheduledItemMobileCreateScreen.ts";
 import { TargetResolver } from "./TargetResolver.ts";
 import type { FocusNotesSettings, FocusTarget } from "./types.ts";
@@ -42,5 +43,14 @@ export function openMobileScheduledItemCreate(
                     : settings.captureEvent.heading || preferred.heading,
         },
         onComplete,
+        (nextKind) => {
+            if (nextKind === "inbox") {
+                new EventTaskMobileScreen(app, getSettings, anchorDate, onComplete, { initialKind: "inbox" }, (kind) =>
+                    openMobileScheduledItemCreate(app, getSettings, anchorDate, onComplete, kind),
+                ).open();
+                return;
+            }
+            openMobileScheduledItemCreate(app, getSettings, anchorDate, onComplete, nextKind);
+        },
     ).open();
 }

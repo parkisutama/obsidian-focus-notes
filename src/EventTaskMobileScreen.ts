@@ -1,7 +1,7 @@
 import { type App, Component, Notice, setIcon } from "obsidian";
 import { preferActiveNoteTarget } from "./CaptureTarget";
-import { EventTaskFormState, type EventTaskKind, formatLocalDate } from "./EventTaskFormState";
-import type { OpenEventTaskFormOptions } from "./EventTaskModal";
+import { EventTaskFormState, formatLocalDate } from "./EventTaskFormState";
+import type { EventTaskKind, OpenEventTaskFormOptions } from "./features/capture/domain/CaptureForm";
 import {
     type EventTaskSubmissionResult,
     type PartialSubmissionResult,
@@ -16,7 +16,6 @@ import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { getMobileViewportMetrics } from "./MobileViewport";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
 import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
-import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
 import { SubmissionPolicy } from "./SubmissionPolicy";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
@@ -43,6 +42,7 @@ export class EventTaskMobileScreen extends Component {
         private readonly anchorDate: Date = new Date(),
         private readonly onComplete: () => void = () => {},
         options: OpenEventTaskFormOptions = {},
+        private readonly openScheduledItem: (kind: "task" | "event") => void,
     ) {
         super();
         const settings = getSettings();
@@ -263,7 +263,7 @@ export class EventTaskMobileScreen extends Component {
         // Recompute fresh instead of forwarding this.form.targetFile: that shared
         // field only ever holds Event's Daily-Notes-derived default (it's not
         // kind-aware), which would otherwise leak into Task too.
-        openMobileScheduledItemCreate(this.app, this.getSettings, this.anchorDate, this.onComplete, kind);
+        this.openScheduledItem(kind);
     }
 
     private renderEventFields(container: HTMLElement): void {

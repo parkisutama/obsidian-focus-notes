@@ -1,17 +1,10 @@
-import type { EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
+import type { InboxRecord } from "./features/capture/moment/domain/InboxRecord";
+import type { EventTaskKind } from "./features/capture/domain/CaptureForm";
+import type { EventTaskRecord, HubNoteRef, TaskRecord } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import type { InsertPosition } from "./types";
 import type { EventOccurrenceStatus, TaskPriority } from "./features/capture/scheduled-item/domain/ScheduledItem";
 
-export type EventTaskKind = "inbox" | "event" | "task";
 export type HubMode = "none" | "link" | "create";
-
-export interface InboxRecord {
-    kind: "inbox";
-    capturedAt: Date;
-    defaultTitle: string;
-    title: string;
-    body: string;
-}
 
 export type CaptureRecord = EventTaskRecord | InboxRecord;
 

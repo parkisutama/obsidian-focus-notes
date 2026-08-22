@@ -1,4 +1,9 @@
-import type { EventRecord, EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
+import type {
+    EventRecord,
+    EventTaskRecord,
+    HubNoteRef,
+    TaskRecord,
+} from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import type { TaskPriority } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import { appendScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
 
