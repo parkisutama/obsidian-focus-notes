@@ -1,5 +1,5 @@
 import type { EventRecord, EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
-import type { TaskPriority } from "./ScheduledItemTypes";
+import type { TaskPriority } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import { appendScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
 
 /** Formats a date value as a link (or plain text, if unresolvable) for a Task date field. */

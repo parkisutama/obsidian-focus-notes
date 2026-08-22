@@ -1,6 +1,6 @@
 import type { EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskWriter";
 import type { InsertPosition } from "./types";
-import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItemTypes";
+import type { EventOccurrenceStatus, TaskPriority } from "./features/capture/scheduled-item/domain/ScheduledItem";
 
 export type EventTaskKind = "inbox" | "event" | "task";
 export type HubMode = "none" | "link" | "create";

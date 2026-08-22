@@ -1,4 +1,4 @@
-import type { EventOccurrenceStatus } from "./ScheduledItemTypes";
+import type { EventOccurrenceStatus } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import { appendScheduledItemBlockId, extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
 
 export interface EventLineEdit {

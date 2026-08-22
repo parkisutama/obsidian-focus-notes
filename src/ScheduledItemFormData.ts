@@ -1,7 +1,7 @@
 import type { EventLineEdit } from "./EventLineEditor";
 import type { EventTaskFormState } from "./EventTaskFormState";
 import { parseObjectReferences, type ObjectReference } from "./ObjectReference.ts";
-import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItemTypes";
+import type { EventOccurrenceStatus, TaskPriority } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import type { TaskLineEdit } from "./TaskLineEditor";
 import type { InsertPosition } from "./types";
 
