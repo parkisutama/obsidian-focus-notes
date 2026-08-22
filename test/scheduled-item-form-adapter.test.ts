@@ -7,7 +7,7 @@ import {
     hydrateScheduledItemFormEdit,
     validateScheduledItemFormData,
 } from "../src/ScheduledItemFormAdapter.ts";
-import type { ScheduledItemFormData } from "../src/ScheduledItemFormData.ts";
+import type { ScheduledItemFormData } from "../src/features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 
 function capture(rawBlock: string) {
     const rawLine = rawBlock.split(/\r?\n/)[0];

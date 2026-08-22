@@ -12,8 +12,8 @@ import {
     retryFailedRelatedWrites,
     writeRelatedDestinations,
 } from "./RelatedWriteRecovery.ts";
-import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
 import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
+import type { ScheduledItemFormData } from "./features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 
 export interface ScheduledItemCreateRelatedDependencies {
     contextNotes: readonly ContextLinkNote[];

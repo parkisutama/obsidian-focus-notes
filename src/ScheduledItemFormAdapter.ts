@@ -15,7 +15,7 @@ import {
     scheduledTaskFormDataFromLineEdit,
     type DetailNoteSelection,
     type ScheduledItemFormData,
-} from "./ScheduledItemFormData.ts";
+} from "./features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 import {
     editTaskLineWithTitle,
     parseTaskLineEdit,
