@@ -1,7 +1,7 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-22
-Status: Task 6 aktif; pure Timeline date helpers selesai dipindahkan tanpa perubahan perilaku
+Status: Task 6 aktif; Timeline date helpers dan Obsidian file guards selesai dipindahkan tanpa perubahan perilaku
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -30,7 +30,7 @@ Dokumen ini adalah handover implementasi awal, bukan keputusan bahwa seluruh str
 Temuan struktur utama:
 
 - Central `types.ts` sudah dihapus setelah setiap kontrak berpindah ke owner canonical dan seluruh consumer cut over langsung.
-- `utils.ts` tersisa 44 baris berisi Obsidian type guards dan vault folder mutation. Pure Timeline date helpers sudah canonical di `features/timeline/domain/TimelineDate.ts` tanpa shim.
+- `utils.ts` tersisa 18 baris khusus vault folder mutation. Pure Timeline date helpers sudah canonical di `features/timeline/domain/TimelineDate.ts`, sedangkan `isTFile`/`isTFolder` canonical di `infrastructure/obsidian/ObsidianFileTypes.ts`; keduanya tanpa shim.
 - Awalan `Inbox*` masih dipakai untuk kemampuan contextual notes yang juga digunakan Event, Task, dan Scheduled Item. Nama file tidak lagi menggambarkan cakupan aktual.
 - Implementasi capture lama (`EventTaskModal`/`EventTaskMobileScreen`) hidup berdampingan dengan renderer Scheduled Item baru. Batas legacy dan jalur aktif perlu dipastikan sebelum penghapusan.
 - UI desktop dan mobile memang berbeda, tetapi sudah berbagi sebagian model, adapter, submission, dan recovery. Restrukturisasi tidak boleh menyatukan renderer secara paksa.
@@ -359,7 +359,7 @@ Acceptance manual tetap diperlukan untuk:
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
 3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 301 tes pada 2026-08-22.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Lanjutkan Task 6 dengan memindahkan `isTFile`/`isTFolder` ke `infrastructure/obsidian`, lalu `ensureFolderPath` sebagai batch vault mutation terpisah.
+5. Lanjutkan Task 6 dengan memindahkan `ensureFolderPath` ke boundary vault-folder infrastructure dalam batch terpisah, didahului characterization untuk keamanan path dan perilaku collision/race.
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 

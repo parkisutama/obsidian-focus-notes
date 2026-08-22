@@ -88,7 +88,7 @@ Timeline / Active Note Manager
 - Cycle langsung `types.ts <-> ScheduledItemTypes.ts` telah diputus. Seluruh consumer telah memakai kontrak domain dan shim `ScheduledItemTypes.ts` sudah dihapus setelah full CI lulus.
 - Seluruh relative import di `src` kini acyclic dan dijaga oleh `test/architecture-boundaries.test.ts`. Cycle record/form/writer, desktop/mobile routing, dan `main.ts <-> SettingsTab.ts` diputus tanpa menggabungkan renderer atau mengubah persistence.
 - Central `types.ts` sudah dihapus. `FocusNotesSettings` serta defaults/legacy normalization kini dimiliki settings domain; seluruh feature settings contract juga sudah berada pada owner masing-masing.
-- `utils.ts` kini hanya memuat Obsidian file/folder guards dan vault folder mutation; pure Timeline date helpers sudah dipindahkan ke domain canonical tanpa shim.
+- `infrastructure/obsidian/ObsidianFileTypes.ts` kini menjadi owner canonical file/folder guards; seluruh consumer sudah direct-import tanpa shim. `utils.ts` tinggal memuat vault folder mutation.
 - Hotspot ukuran dan orchestration: `SettingsTab.ts`, `EventTaskModal.ts`, `EventTaskMobileScreen.ts`, `TimerView.ts`, `InboxNotesController.ts`, dan `TimelineView.ts`.
 - Timeline mengonsumsi Scheduled Item; Timeline tidak memiliki aturan Task/Event.
 - Object Sources dimiliki Object Notes/context domain dan dikonsumsi capture serta Timeline.
@@ -101,7 +101,8 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | --- | --- | --- |
 | Plugin composition | `main.ts` | `plugin/FocusNotesPlugin.ts`, `commands.ts`, `view-registration.ts`, `identifiers.ts` |
 | Settings composition and normalization | `features/settings/domain/FocusNotesSettings.ts`, `features/settings/domain/SettingsDefaults.ts` | Canonical owner; central `types.ts` sudah dihapus setelah direct-consumer cutover dan persistence characterization lulus |
-| Transitional Obsidian utilities | `utils.ts` | Pindahkan type guards dan vault folder mutation ke modul infrastructure terpisah, lalu hapus file central |
+| Obsidian file type adapter | `infrastructure/obsidian/ObsidianFileTypes.ts` | Canonical owner untuk runtime-safe `isTFile`/`isTFolder`; pertahankan duck-typing lintas runtime |
+| Transitional vault folder utility | `utils.ts` | Pindahkan `ensureFolderPath` ke modul infrastructure tersendiri, lalu hapus file central |
 | Capture target/settings contracts | `features/capture/domain/CaptureTarget.ts`, `features/capture/domain/CaptureSettings.ts` | Canonical owner; seluruh consumer target sudah direct-import dan shim `types.ts` telah dihapus |
 | Focus session domain | `features/focus-session/domain/Timer.ts`, `features/focus-session/domain/SessionRecord.ts`, `TimerEngine.ts` | Kontrak Timer dan Session Record sudah canonical; state machine dipindahkan fisik pada batch terpisah |
 | Focus session UI | `TimerView.ts`, `CircularDisplay.ts`, `LogModal.ts` | `features/focus-session/ui` |
@@ -157,9 +158,9 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 
 ## Batch berikutnya
 
-1. Pindahkan `isTFile`/`isTFolder` ke adapter type-guard di `infrastructure/obsidian` dengan characterization tests tetap langsung.
-2. Pindahkan `ensureFolderPath` ke modul vault-folder operation terpisah setelah consumer map dikonfirmasi.
-3. Pertahankan folder-creation race tolerance dan file-collision behavior melalui characterization tests.
-4. Pindahkan implementasi fisik hanya setelah import consumer mengarah ke boundary canonical.
+1. Pindahkan `ensureFolderPath` ke modul vault-folder operation terpisah setelah consumer map dikonfirmasi.
+2. Pertahankan folder-creation race tolerance dan file-collision behavior melalui characterization tests.
+3. Tambahkan boundary case path yang belum tercakup sebelum mengubah validasi atau normalisasi.
+4. Hapus `utils.ts` hanya setelah seluruh consumer memakai boundary canonical.
 
-Checkpoint 2026-08-22: `pnpm run check:ci` lulus dengan 301 tes setelah pure date helpers dipindahkan dari `utils.ts` ke Timeline domain dan seluruh consumer cut over tanpa shim. `utils.ts` tersisa 44 baris khusus operasi Obsidian; deployment vault dinonaktifkan, build produksi, artifact verification, dan VitePress build juga lulus.
+Checkpoint 2026-08-22: `isTFile`/`isTFolder` sudah canonical di `infrastructure/obsidian/ObsidianFileTypes.ts`; seluruh consumer cut over dan shim di `utils.ts` dihapus dengan 301 tes lulus. `utils.ts` tersisa 18 baris khusus `ensureFolderPath`; full CI diverifikasi pada checkpoint dokumentasi ini.
