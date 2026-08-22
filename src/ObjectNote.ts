@@ -1,5 +1,5 @@
 import type { App, TFile } from "obsidian";
-import type { ContextSourceSettings, ObjectNotePlacement } from "./types";
+import type { ContextSourceSettings, ObjectNotePlacement } from "./features/object-notes/domain/ContextSourceSettings";
 import { ensureFolderPath, isTFile } from "./utils.ts";
 
 export interface CreateObjectNoteInput {

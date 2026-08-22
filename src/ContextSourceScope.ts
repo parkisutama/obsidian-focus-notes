@@ -1,4 +1,4 @@
-import type { ContextSourceSettings } from "./types";
+import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 
 /** A source folder owns its descendants and an optional sibling folder note named after the folder. */
 export function isPathInContextSourceFolder(path: string, folder: string): boolean {
