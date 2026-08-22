@@ -5,7 +5,7 @@ import {
     createScheduledItemBlockId,
     extractScheduledItemBlockId,
     formatScheduledItemBlockTarget,
-} from "../src/ScheduledItemBlockId.ts";
+} from "../src/features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 import { ScheduledItemParser } from "../src/ScheduledItemParser.ts";
 
 const source = {
