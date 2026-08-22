@@ -21,6 +21,9 @@ import type { DisplayMode } from "./features/focus-session/domain/Timer.ts";
 import type { PeriodicalNotesSettings } from "./features/periodical-notes/domain/PeriodicalNote";
 import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 import type { FocusTimelineSettings } from "./features/timeline/domain/TimelineSettings";
+import type { EventTaskSettings } from "./features/capture/scheduled-item/domain/DetailNoteSettings";
+
+export type { EventTaskSettings } from "./features/capture/scheduled-item/domain/DetailNoteSettings";
 
 export interface FocusNotesSettings {
     /** Default focus duration for the Pomodoro tab. */
@@ -102,23 +105,6 @@ export interface FocusNotesSettings {
 
     /** Where new Moments default to — a Periodical Notes profile (or the active Event target) + backlink. */
     captureMoment: MomentCaptureSettings;
-}
-
-export interface EventTaskSettings {
-    /** Folder where Event/Task Detail Notes are created. */
-    detailNotesFolder: string;
-    /** Body template for event detail notes. Tokens: {{title}}, {{date}}, {{start}}, {{end}}, {{description}}. */
-    eventNoteTemplate: string;
-    /** Body template for task detail notes. Tokens: {{title}}, {{date}}, {{due}}, {{start}}, {{end}}, {{remind}}, {{description}}. */
-    taskNoteTemplate: string;
-    /** Format for the `related` frontmatter field (links to target/daily note). {{date}} = event/task date, {{targetFile}} = target path. Empty = omit. */
-    relatedFieldFormat: string;
-    /** Include `status` field in detail note frontmatter. */
-    includeStatus: boolean;
-    /** Include `priority` field in task detail note frontmatter. */
-    includePriority: boolean;
-    /** Include `tags` field in detail note frontmatter. */
-    includeTags: boolean;
 }
 
 export interface InboxSettings {
