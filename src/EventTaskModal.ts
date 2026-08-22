@@ -26,7 +26,7 @@ import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
-import { isTFile } from "./utils";
+import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 export function openEventTaskForm(
     app: App,

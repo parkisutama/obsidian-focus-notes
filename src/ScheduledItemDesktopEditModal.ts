@@ -20,7 +20,7 @@ import { hydrateScheduledItemFormEdit, parseLocalDateTime } from "./ScheduledIte
 import type { ScheduledItemFormData } from "./ScheduledItemFormData.ts";
 import { TargetResolver } from "./TargetResolver.ts";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
-import { isTFile } from "./utils.ts";
+import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 type PartialDetail = Extract<DetailNotePromotionResult, { status: "partial" }>;
 type PartialRelated = Extract<ScheduledItemEditSubmissionResult, { status: "partial" }>;

@@ -21,7 +21,7 @@ import { type ScheduledItemFormData, scheduledItemFormDataFromCreateState } from
 import { TargetResolver } from "./TargetResolver";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
-import { isTFile } from "./utils.ts";
+import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 type PartialDetail = Extract<DetailNotePromotionResult, { status: "partial" }>;
 type PartialRelated = Extract<ScheduledItemCreateRelatedResult, { status: "partial" }>;
