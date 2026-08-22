@@ -113,6 +113,7 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Moment suggestions UI/application | `InboxNotesController.ts`, `InboxSuggestions.ts`, `SuggestionSelection.ts` | Moment UI/application; generic primitive only if reuse is proven |
 | Moment settings | `InboxFolderSettings.ts` | `features/capture/moment` or settings renderer owner |
 | Scheduled Item domain contract | `features/capture/scheduled-item/domain/ScheduledItem.ts`, `features/capture/scheduled-item/domain/EventTaskRecord.ts` | Canonical owner; seluruh consumer record sudah dipotong langsung dan shim `EventTaskWriter.ts` telah dihapus |
+| Scheduled Item Markdown rendering | `features/capture/scheduled-item/domain/EventTaskMarkdown.ts` | Canonical pure renderer untuk Event/Task Markdown; seluruh compatibility tests dan consumer sudah direct-import tanpa shim |
 | Scheduled Item detail-note settings | `features/capture/scheduled-item/domain/DetailNoteSettings.ts` | Canonical owner; writer direct-import dan shim `types.ts` telah dihapus |
 | Scheduled Item form semantics | `ScheduledItemFormData.ts`, `ScheduledItemFormAdapter.ts`, `EventTaskFormState.ts`, `SubmissionPolicy.ts` | `features/capture/scheduled-item/domain` or `application` according to side effects |
 | Scheduled Item identity/parser | `features/capture/scheduled-item/domain/ScheduledItemBlockId.ts`, `ScheduledItemParser.ts`, `ScheduledItemIdentityMigration.ts` | Block identity sudah canonical tanpa shim; parser menuju domain, migration orchestration tetap application |
@@ -123,7 +124,7 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Scheduled Item desktop UI | `DesktopScheduledItemForm.ts`, `DesktopScheduledItemFormModel.ts`, `ScheduledItemDesktopCreateModal.ts`, `ScheduledItemDesktopEditModal.ts` | `features/capture/scheduled-item/ui/desktop` |
 | Scheduled Item mobile UI | `MobileScheduledItemForm.ts`, `MobileScheduledItemFormModel.ts`, `MobileFormPolicy.ts`, `MobileViewport.ts`, `ScheduledItemMobileCreateScreen.ts`, `ScheduledItemMobileEditScreen.ts` | `features/capture/scheduled-item/ui/mobile` |
 | Active legacy/delegating capture UI | `EventTaskModal.ts`, `EventTaskMobileScreen.ts` | Moment renderer plus cutover shell; split before retirement |
-| Event domain | `EventTaskMarkdown.ts`, `EventLineEditor.ts`, `EventLedgerEditor.ts` | `features/capture/scheduled-item/domain/event` |
+| Event domain | `EventLineEditor.ts`, `EventLedgerEditor.ts` | `features/capture/scheduled-item/domain/event` |
 | Event legacy UI candidate | `EventEditModal.ts` | Prove inactive, then deletion-only batch |
 | Task domain | `TaskLineEditor.ts`, `TaskLineLint.ts`, `TaskLedgerEditor.ts` | `features/capture/scheduled-item/domain/task` |
 | Task formatting application/UI | `TaskFormatWriter.ts`, `TaskFormatPreviewModal.ts` | Task application and UI respectively |
@@ -158,9 +159,9 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 
 ## Batch berikutnya
 
-1. Audit dependency Event/Task line editor, parser, dan Markdown semantics terhadap boundary domain.
-2. Pilih kelompok kohesif berukuran kecil untuk pemindahan fisik berikutnya pada Task 7.
-3. Pertahankan parser legacy, format Markdown, block ID, dan byte-identical no-op melalui characterization tests.
+1. Ekstrak `unwrapMarkdownLinkLabel` dari `InboxMarkdown.ts` ke primitive shared Markdown karena dipakai Moment, Task editor, dan Scheduled Item parser.
+2. Cut over seluruh consumer helper tanpa mengubah escaping atau parsing link legacy, lalu hapus definisi lama setelah zero-reference proof.
+3. Setelah dependency leak hilang, pindahkan Task line editor/parser dalam kelompok kecil dengan byte-identical tests.
 4. Biarkan `ScheduledItemIdentityMigration.ts` di application sampai dependensinya pada writer type dibalik menjadi kontrak domain/application yang semestinya.
 
-Checkpoint 2026-08-22: Task 7 dimulai dengan memindahkan Scheduled Item block identity ke `features/capture/scheduled-item/domain/ScheduledItemBlockId.ts`. Sepuluh consumer dan tes langsung sudah cut over, shim root dihapus, source tetap acyclic, dan full CI dengan 306 tes diverifikasi pada checkpoint ini.
+Checkpoint 2026-08-22: Scheduled Item block identity dan Event/Task Markdown rendering sudah canonical di domain. Seluruh consumer dan compatibility tests direct-import, kedua shim root sudah dihapus, source tetap acyclic, dan full CI dengan 306 tes diverifikasi pada checkpoint ini.

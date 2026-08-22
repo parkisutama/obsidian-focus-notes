@@ -1,7 +1,7 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-22
-Status: Task 7 aktif; Scheduled Item block identity sudah canonical di domain tanpa shim
+Status: Task 7 aktif; Scheduled Item block identity dan Markdown rendering sudah canonical di domain tanpa shim
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -359,7 +359,7 @@ Acceptance manual tetap diperlukan untuk:
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
 3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 306 tes pada 2026-08-22.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Lanjutkan Task 7 dengan mengaudit dependency Event/Task line editor, parser, dan Markdown semantics; pindahkan satu kelompok kohesif kecil tanpa mengubah parser legacy atau output Markdown.
+5. Lanjutkan Task 7 dengan mengekstrak `unwrapMarkdownLinkLabel` dari Moment-owned `InboxMarkdown.ts` ke primitive shared Markdown, lalu cut over Moment dan Scheduled Item consumers sebelum memindahkan parser/editor.
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 
