@@ -1,15 +1,5 @@
 import type { App, TFile, TFolder } from "obsidian";
 
-export {
-    addDays,
-    endOfDay,
-    formatDayKey,
-    formatTime,
-    getIsoWeek,
-    startOfDay,
-    startOfWeek,
-} from "./features/timeline/domain/TimelineDate.ts";
-
 /**
  * Property-based TFile detector.
  *
