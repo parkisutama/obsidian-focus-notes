@@ -11,6 +11,7 @@
  */
 
 import type { TimelineMode } from "./ScheduledItemTypes";
+import type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
 
 export type DisplayMode = "pomodoro" | "timer" | "stopwatch";
 export type EngineMode = "countdown" | "stopwatch";
@@ -19,6 +20,7 @@ export type InsertPosition = "start" | "end";
 export type StressLevel = "low" | "normal" | "medium" | "high";
 export type EmotionCategory = "pleasant" | "neutral" | "unpleasant";
 export type { TimelineMode } from "./ScheduledItemTypes";
+export type { ContextSourceFilter } from "./features/object-notes/domain/ContextSourceFilter";
 
 export function toEngineMode(d: DisplayMode): EngineMode {
     return d === "stopwatch" ? "stopwatch" : "countdown";
@@ -203,11 +205,6 @@ export interface EventTaskSettings {
     includePriority: boolean;
     /** Include `tags` field in detail note frontmatter. */
     includeTags: boolean;
-}
-
-export interface ContextSourceFilter {
-    property: string;
-    value: string;
 }
 
 export type ObjectNotePlacement = "flat" | "folder-note";
