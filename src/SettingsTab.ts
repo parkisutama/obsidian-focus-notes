@@ -18,7 +18,7 @@ import type { TimelineMode } from "./features/timeline/domain/Timeline";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { PeriodicalNoteProfile } from "./features/periodical-notes/domain/PeriodicalNote";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
-import { isTFile } from "./utils";
+import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 type FocusNotesSettingsView = { id: NavigableViewId } | { id: "objects-source"; sourceId: string };
 
