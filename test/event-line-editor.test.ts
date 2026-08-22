@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { editEventLine, parseEventLineEdit } from "../src/EventLineEditor.ts";
+import { editEventLine, parseEventLineEdit } from "../src/features/capture/scheduled-item/domain/EventLineEditor.ts";
 
 test("keeps a valid Event no-op byte-identical with links and unknown metadata", () => {
     const line =
