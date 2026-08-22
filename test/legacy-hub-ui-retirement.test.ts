@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { captureLedgerRecord } from "../src/LedgerRecordSource.ts";
-import { buildScheduledItemFormBlockEdit, hydrateScheduledItemFormEdit } from "../src/ScheduledItemFormAdapter.ts";
+import {
+    buildScheduledItemFormBlockEdit,
+    hydrateScheduledItemFormEdit,
+} from "../src/features/capture/scheduled-item/domain/ScheduledItemFormAdapter.ts";
 import { replaceScheduledItemBlock } from "../src/features/capture/scheduled-item/domain/ScheduledItemBlockEditor.ts";
 
 test("active desktop and mobile capture shells do not render legacy Related Note controls", async () => {

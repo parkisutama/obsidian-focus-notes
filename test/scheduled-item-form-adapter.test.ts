@@ -6,7 +6,7 @@ import {
     buildScheduledItemFormBlockEdit,
     hydrateScheduledItemFormEdit,
     validateScheduledItemFormData,
-} from "../src/ScheduledItemFormAdapter.ts";
+} from "../src/features/capture/scheduled-item/domain/ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "../src/features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 
 function capture(rawBlock: string) {
