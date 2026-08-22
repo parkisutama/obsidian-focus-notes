@@ -1,7 +1,7 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-22
-Status: Task 6 aktif; Timeline date helpers dan Obsidian file guards selesai dipindahkan tanpa perubahan perilaku
+Status: Task 6 selesai; central `types.ts` dan `utils.ts` sudah dihapus tanpa perubahan perilaku
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -30,7 +30,7 @@ Dokumen ini adalah handover implementasi awal, bukan keputusan bahwa seluruh str
 Temuan struktur utama:
 
 - Central `types.ts` sudah dihapus setelah setiap kontrak berpindah ke owner canonical dan seluruh consumer cut over langsung.
-- `utils.ts` tersisa 18 baris khusus vault folder mutation. Pure Timeline date helpers sudah canonical di `features/timeline/domain/TimelineDate.ts`, sedangkan `isTFile`/`isTFolder` canonical di `infrastructure/obsidian/ObsidianFileTypes.ts`; keduanya tanpa shim.
+- Central `utils.ts` sudah dihapus. Pure Timeline date helpers canonical di `features/timeline/domain/TimelineDate.ts`; `isTFile`/`isTFolder` canonical di `infrastructure/obsidian/ObsidianFileTypes.ts`; dan vault folder mutation canonical di `infrastructure/obsidian/VaultFolders.ts`, semuanya tanpa shim.
 - Awalan `Inbox*` masih dipakai untuk kemampuan contextual notes yang juga digunakan Event, Task, dan Scheduled Item. Nama file tidak lagi menggambarkan cakupan aktual.
 - Implementasi capture lama (`EventTaskModal`/`EventTaskMobileScreen`) hidup berdampingan dengan renderer Scheduled Item baru. Batas legacy dan jalur aktif perlu dipastikan sebelum penghapusan.
 - UI desktop dan mobile memang berbeda, tetapi sudah berbagi sebagian model, adapter, submission, dan recovery. Restrukturisasi tidak boleh menyatukan renderer secara paksa.
@@ -357,9 +357,9 @@ Acceptance manual tetap diperlukan untuk:
 
 1. Baca dokumen handover ini, `docs/spec-code-quality-remediation.md`, dan `tasks/unified-scheduled-item-form-plan.md`.
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
-3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 301 tes pada 2026-08-22.
+3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 306 tes pada 2026-08-22.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Lanjutkan Task 6 dengan memindahkan `ensureFolderPath` ke boundary vault-folder infrastructure dalam batch terpisah, didahului characterization untuk keamanan path dan perilaku collision/race.
+5. Mulai Task 7 dengan mengaudit modul pure Scheduled Item dan memilih satu kelompok kecil untuk dipindahkan fisik tanpa mengubah parser atau format Markdown.
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 

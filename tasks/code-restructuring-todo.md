@@ -120,13 +120,13 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 **Acceptance criteria:**
 
 - [x] No generic replacement `shared/utils.ts` is introduced.
-- [x] Pure helpers have no Obsidian/DOM imports; vault mutation remains separate pending its infrastructure cutover.
-- [ ] Path normalization and folder creation retain current safety and behavior.
+- [x] Pure helpers have no Obsidian/DOM imports; vault mutation is isolated in its infrastructure adapter.
+- [x] Existing path handling and folder creation behavior are characterized and retained without a behavior change.
 
 **Verification:**
 
-- [ ] Run utility, daily-note, timeline layout/query, and writer tests.
-- [ ] Add boundary cases for root/traversal/empty paths if absent.
+- [x] Run utility, daily-note, timeline layout/query, and writer tests.
+- [x] Add boundary cases for root/traversal/empty paths if absent.
 
 **Dependencies:** Task 4.
 **Estimated scope:** Multiple Small batches.
@@ -135,13 +135,13 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 
 - [x] Pure date/time helpers moved to `features/timeline/domain/TimelineDate.ts`; all Timeline/query consumers cut over directly and the central shims were removed.
 - [x] Obsidian file/folder type guards moved to `infrastructure/obsidian/ObsidianFileTypes.ts`; all consumers cut over and the central shims were removed.
-- [ ] Vault folder creation remains in `utils.ts` for a separate security-sensitive increment.
+- [x] Vault folder creation moved to `infrastructure/obsidian/VaultFolders.ts`; all consumers cut over and `utils.ts` was removed.
 
 ## Checkpoint: Foundations
 
-- [ ] Full CI passes.
-- [ ] Foundational cycles are gone and no new cycle exists.
-- [x] Central `types.ts` is removed; every remaining `utils.ts` export has a documented target owner for Task 6.
+- [x] Full CI passes.
+- [x] Foundational cycles are gone and no new cycle exists.
+- [x] Central `types.ts` and `utils.ts` are removed after every consumer moved to a canonical owner.
 
 ## Task 7: Establish the pure Scheduled Item domain
 
