@@ -356,11 +356,11 @@ Acceptance manual tetap diperlukan untuk:
 
 1. Baca dokumen handover ini, `docs/spec-code-quality-remediation.md`, dan `tasks/unified-scheduled-item-form-plan.md`.
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
-3. Jalankan baseline quality gate tanpa deployment ke vault.
-4. Bangun import graph dan file-ownership table; jangan memindahkan file dulu.
-5. Telusuri entry point create/edit Moment, Event, dan Task dari `main.ts` dan `TimelineView.ts` sampai writer.
-6. Usulkan Batch 1 dengan daftar file eksplisit, dependency direction, tests, dan rollback boundary.
-7. Batch pertama yang disarankan adalah pemutusan cycle tipe atau ekstraksi utility kecil yang murni—bukan pemecahan `SettingsTab` sekaligus.
+3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 300 tes pada 2026-08-22.
+4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
+5. Lanjutkan Task 5 dengan satu owner per commit. Kandidat terdekat: capture-target atau Object Source settings setelah consumer map dikonfirmasi.
+6. Tambahkan deteksi cycle generik pada architecture guard sebelum pemindahan aplikasi/UI besar.
+7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 
 ## Kriteria handover ini dianggap selesai
 

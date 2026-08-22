@@ -96,6 +96,14 @@
 **Dependencies:** Task 4.
 **Estimated scope:** Multiple Small/Medium batches.
 
+**Progress (2026-08-22):**
+
+- [x] Scheduled Item contract moved and the compatibility shim removed.
+- [x] Timer and Session Record contracts moved to Focus Session.
+- [x] Wellbeing contracts moved to Reflection.
+- [x] Periodical Note profile/settings contracts moved with direct consumer cutover.
+- [ ] Capture-target, Object Source settings, Timeline settings, and global settings composition remain.
+
 ## Task 6: Split utilities by proven ownership
 
 **Description:** Separate pure date/time operations from Obsidian file/folder guards and vault folder creation; colocate feature-private helpers with their owner.

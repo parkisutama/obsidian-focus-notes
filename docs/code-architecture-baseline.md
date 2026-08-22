@@ -86,7 +86,7 @@ Timeline / Active Note Manager
 ## Cycle dan coupling baseline
 
 - Cycle langsung `types.ts <-> ScheduledItemTypes.ts` telah diputus. Seluruh consumer telah memakai kontrak domain dan shim `ScheduledItemTypes.ts` sudah dihapus setelah full CI lulus.
-- `types.ts` masih mencampur settings, timer, capture, object-source, periodical, dan wellbeing contracts.
+- `types.ts` masih menjadi composition root settings dan mencampur capture-target, object-source, Timeline settings, serta beberapa kontrak settings lain. Kontrak Timer, Session Record, wellbeing, dan Periodical Notes sudah dipindahkan ke owner masing-masing.
 - `utils.ts` masih mencampur pure date-time helpers dengan Obsidian file/folder guards dan vault folder mutation.
 - Hotspot ukuran dan orchestration: `SettingsTab.ts`, `EventTaskModal.ts`, `EventTaskMobileScreen.ts`, `TimerView.ts`, `InboxNotesController.ts`, `types.ts`, dan `TimelineView.ts`.
 - Timeline mengonsumsi Scheduled Item; Timeline tidak memiliki aturan Task/Event.
@@ -101,10 +101,10 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Plugin composition | `main.ts` | `plugin/FocusNotesPlugin.ts`, `commands.ts`, `view-registration.ts`, `identifiers.ts` |
 | Transitional central contracts | `types.ts` | Split per owner dalam batch kecil; tidak menerima domain baru |
 | Mixed utilities | `utils.ts` | Split pure date-time dari Obsidian vault operations |
-| Focus session domain | `features/focus-session/domain/Timer.ts`, `TimerEngine.ts` | Kontrak Timer sudah canonical; state machine dipindahkan fisik pada batch terpisah |
+| Focus session domain | `features/focus-session/domain/Timer.ts`, `features/focus-session/domain/SessionRecord.ts`, `TimerEngine.ts` | Kontrak Timer dan Session Record sudah canonical; state machine dipindahkan fisik pada batch terpisah |
 | Focus session UI | `TimerView.ts`, `CircularDisplay.ts`, `LogModal.ts` | `features/focus-session/ui` |
 | Focus session application/read model | `RecentEntriesReader.ts` | Feature application dengan vault read port |
-| Reflection/CBT domain | `CognitiveDistortions.ts`, `MoodReference.ts`, `EmotionalWellbeingReference.ts` | `features/reflection/domain` |
+| Reflection/CBT domain | `features/reflection/domain/Wellbeing.ts`, `CognitiveDistortions.ts`, `MoodReference.ts`, `EmotionalWellbeingReference.ts` | Kontrak wellbeing sudah canonical; reference data lain menyusul berdasarkan consumer |
 | Reflection/CBT UI | `MoodPicker.ts`, `EmotionalWellbeingPicker.ts`, `ReflectionFocusModal.ts` | `features/reflection/ui` |
 | Moment form and semantic text | `InboxDesktopForm.ts`, `InboxMobileForm.ts`, `InboxNotesText.ts`, `InboxRichText.ts`, `InboxMarkdown.ts`, `InboxTarget.ts` | `features/capture/moment` split by domain/UI |
 | Moment suggestions UI/application | `InboxNotesController.ts`, `InboxSuggestions.ts`, `SuggestionSelection.ts` | Moment UI/application; generic primitive only if reuse is proven |
@@ -135,7 +135,7 @@ Tabel berikut menetapkan owner saat ini dan arah target. Satu baris dapat memuat
 | Object Notes application | `ObjectNote.ts`, `ContextLinkResolver.ts` | `features/object-notes/application` with explicit link/vault ports |
 | Object Notes UI | `ObjectNoteModal.ts`, `ObjectNoteSuggest.ts` | `features/object-notes/ui` |
 | Obsidian suggestion/link adapters | `ObsidianInboxSuggestionSource.ts`, `ObsidianLinkResolver.ts`, `ObsidianScheduledItemMentionSource.ts`, `Suggesters.ts` | `infrastructure/obsidian` with feature-facing interfaces |
-| Periodical Notes domain | `DailyNotePath.ts`, `PeriodicalNoteSettings.ts` | `features/periodical-notes/domain` |
+| Periodical Notes domain | `features/periodical-notes/domain/PeriodicalNote.ts`, `DailyNotePath.ts`, `PeriodicalNoteSettings.ts` | Kontrak profile/settings sudah canonical; resolver dan helper dipindahkan pada batch terpisah |
 | Target resolution | `CaptureTarget.ts`, `TargetResolver.ts` | Pure selection policy in capture; Obsidian resolution adapter in infrastructure |
 | Markdown insertion primitive | `HeadingInsertion.ts` | `shared/markdown` only after second independent domain consumer is confirmed |
 | Focus note persistence | `NoteWriter.ts` | `infrastructure/obsidian` implementing focus-session write port |
@@ -154,7 +154,9 @@ Sebuah file hanya boleh dihapus bila seluruh kondisi berikut terpenuhi:
 
 ## Batch berikutnya
 
-1. Ekstrak satu kelompok tipe dari `types.ts` per owner; kontrak Timer/Focus Session sudah menjadi contoh canonical.
-2. Pisahkan wellbeing/reflection dan SessionRecord tanpa mencampur perubahan persistence.
+1. Ekstrak satu kelompok tipe tersisa dari `types.ts` per owner; capture target atau Object Source adalah kandidat berikutnya setelah consumer map.
+2. Tambahkan deteksi cycle generik pada architecture guard sebelum perpindahan aplikasi/UI yang lebih besar.
 3. Pisahkan pure date-time helpers dari `utils.ts` setelah consumer map dikonfirmasi.
 4. Pindahkan implementasi fisik hanya setelah import consumer mengarah ke boundary canonical.
+
+Checkpoint 2026-08-22: `pnpm run check:ci` lulus dengan 300 tes setelah cutover Timer, Session Record, wellbeing, dan Periodical Notes. Deployment vault dinonaktifkan; build produksi, artifact verification, dan VitePress build juga lulus.
