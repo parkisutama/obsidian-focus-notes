@@ -12,7 +12,7 @@ import {
     type LedgerRecordSnapshot,
     type LedgerRecordSource,
     replaceLedgerRecord,
-} from "./LedgerRecordSource.ts";
+} from "./features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 type FileConflictReason = LedgerRecordConflictReason | "file-missing";

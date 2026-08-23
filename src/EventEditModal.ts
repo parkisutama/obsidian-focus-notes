@@ -1,7 +1,7 @@
 import { type App, Modal, Notice, Platform, Setting } from "obsidian";
 import { saveEventLedgerEdit, type SaveEventLedgerEditResult } from "./EventLedgerEditor";
 import type { EventLineEdit } from "./features/capture/scheduled-item/domain/EventLineEditor";
-import type { LedgerRecordSnapshot } from "./LedgerRecordSource";
+import type { LedgerRecordSnapshot } from "./features/capture/scheduled-item/domain/LedgerRecordSource";
 import { shouldUseMobileForm } from "./MobileFormPolicy";
 
 interface DateTimeInput {
