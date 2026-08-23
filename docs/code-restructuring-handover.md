@@ -1,7 +1,7 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-23
-Status: Task 7 selesai. Task 8 aktif; `ScheduledItemEditSubmission.ts` dan `ScheduledItemCreateRelated.ts` sudah canonical di `features/capture/scheduled-item/application/` tanpa shim. Adapter Obsidian (persistence, link resolver, suggestion sources) belum dipindah ke `infrastructure/obsidian/`.
+Status: Task 7 selesai. Task 8 aktif; application layer (`ScheduledItemEditSubmission.ts`, `ScheduledItemCreateRelated.ts`) dan adapter Obsidian (`ScheduledItemBlockPersistence.ts`, `EventTaskWriter.ts`, `ObsidianLinkResolver.ts`, `ObsidianInboxSuggestionSource.ts`, `ObsidianScheduledItemMentionSource.ts`) sudah canonical tanpa shim.
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -359,7 +359,7 @@ Acceptance manual tetap diperlukan untuk:
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
 3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 306 tes pada 2026-08-23.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Lanjutkan Task 8 dengan memindahkan adapter Obsidian (`saveScheduledItemBlock` dari `ScheduledItemBlockPersistence.ts`, `EventTaskWriter.ts`, `ObsidianLinkResolver.ts`, `ObsidianInboxSuggestionSource.ts`, `ObsidianScheduledItemMentionSource.ts`) ke `infrastructure/obsidian/`, mengikuti pola fungsi `async (app: App, ...)` yang sudah ada (lihat `VaultFolders.ts`) — bukan interface port/DI baru. `ScheduledItemEditSubmission.ts`/`ScheduledItemCreateRelated.ts` sudah pure dan sudah dipindah ke `features/capture/scheduled-item/application/` tanpa perlu port abstrak karena keduanya sudah dependency-injection based.
+5. Lanjutkan Task 8 dengan memverifikasi acceptance criteria kedua (validasi Markdown/settings/path eksternal sebelum persist) pada adapter `infrastructure/obsidian/` yang baru dipindah, lalu tangani `ScheduledItemIdentityMigration.ts` (masih bergantung pada writer type, perlu dibalik menjadi kontrak domain/application). Keputusan ownership `ContextLinkResolver.ts`/`RelatedWriteRecovery.ts`/`RelatedLog.ts`/`ObjectReference.ts` (shared capture application vs tetap root) tidak memblokir dan bisa ditunda.
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 
