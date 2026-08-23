@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { resolveRelativeLinkDestination } from "../src/ContextLinkResolver.ts";
-import { retryScheduledItemCreateRelated, writeScheduledItemCreateRelated } from "../src/ScheduledItemCreateRelated.ts";
+import {
+    retryScheduledItemCreateRelated,
+    writeScheduledItemCreateRelated,
+} from "../src/features/capture/scheduled-item/application/ScheduledItemCreateRelated.ts";
 import type { ScheduledItemFormData } from "../src/features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 
 const data: ScheduledItemFormData = {

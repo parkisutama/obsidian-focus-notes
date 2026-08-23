@@ -3,7 +3,10 @@ import test from "node:test";
 import { resolveRelativeLinkDestination } from "../src/ContextLinkResolver.ts";
 import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
 import { captureLedgerRecord } from "../src/features/capture/scheduled-item/domain/LedgerRecordSource.ts";
-import { retryScheduledItemEditRelated, submitScheduledItemEdit } from "../src/ScheduledItemEditSubmission.ts";
+import {
+    retryScheduledItemEditRelated,
+    submitScheduledItemEdit,
+} from "../src/features/capture/scheduled-item/application/ScheduledItemEditSubmission.ts";
 import type { ScheduledItemFormData } from "../src/features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 
 const contextSources = [
