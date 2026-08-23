@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyTaskFormatChanges } from "../src/TaskFormatWriter.ts";
+import { applyTaskFormatChanges } from "../src/features/capture/scheduled-item/domain/TaskFormatWriter.ts";
 
 test("applies multiple task formatting changes atomically while preserving CRLF", () => {
     const content = [
