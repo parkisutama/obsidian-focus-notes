@@ -8,8 +8,8 @@ import {
 } from "./ActiveNoteManagerModel";
 import type { ScheduledItem, ScheduledItemKind } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import { TaskFormatPreviewModal } from "./TaskFormatPreviewModal";
-import type { TaskFormatChange } from "./TaskFormatWriter";
 import { createScheduledItemBlockId } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
+import type { TaskFormatChange } from "./features/capture/scheduled-item/domain/TaskFormatWriter";
 import { inspectTaskLine, taskLineLintLabel } from "./features/capture/scheduled-item/domain/TaskLineLint.ts";
 import { buildScheduledItemIdentityChange } from "./ScheduledItemIdentityMigration.ts";
 
