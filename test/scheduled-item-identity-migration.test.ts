@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildScheduledItemIdentityChange } from "../src/ScheduledItemIdentityMigration.ts";
+import { buildScheduledItemIdentityChange } from "../src/features/capture/scheduled-item/domain/ScheduledItemIdentityMigration.ts";
 import { ScheduledItemParser } from "../src/features/capture/scheduled-item/domain/ScheduledItemParser.ts";
 
 const source = {

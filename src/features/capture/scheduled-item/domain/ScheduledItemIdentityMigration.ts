@@ -1,5 +1,5 @@
-import { appendScheduledItemBlockId } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
-import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem.ts";
+import { appendScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
+import type { ScheduledItem } from "./ScheduledItem.ts";
 import type { TaskFormatChange } from "./TaskFormatWriter.ts";
 
 export function buildScheduledItemIdentityChange(item: ScheduledItem, blockId: string): TaskFormatChange | null {
