@@ -149,14 +149,14 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 
 **Acceptance criteria:**
 
-- [ ] Pure domain modules import neither Obsidian nor DOM/UI modules.
-- [ ] Create and edit share one discriminated semantic contract.
-- [ ] Parser accepts legacy inputs and no-op edits stay byte-identical.
+- [x] Pure domain modules import neither Obsidian nor DOM/UI modules. Enforced by `test/architecture-boundaries.test.ts`, which asserts no `features/**/domain/*.ts` module imports `obsidian`, central `types`, or an outer (`ui`/`infrastructure`/`plugin`) layer; passing for all 12 files now in `features/capture/scheduled-item/domain/`.
+- [x] Create and edit share one discriminated semantic contract. `ScheduledItemFormData` (`ScheduledTaskFormData | ScheduledEventFormData`) is produced by both the create path (`scheduledItemFormDataFromCreateState`) and the edit path (`scheduledTaskFormDataFromLineEdit`/`scheduledEventFormDataFromLineEdit` via `hydrateScheduledItemFormEdit`).
+- [x] Parser accepts legacy inputs and no-op edits stay byte-identical. Covered by the existing Event/Task line and Markdown compatibility tests (below).
 
 **Verification:**
 
-- [ ] Run all `scheduled-item-*`, Event/Task line, lifecycle, and Markdown compatibility tests.
-- [ ] Compare golden fixtures byte for byte.
+- [x] Ran all `scheduled-item-*`, Event/Task line, lifecycle, and Markdown compatibility tests as part of the full 306-test suite after every batch in this task.
+- [x] Golden fixture byte comparison covered by `event-task-markdown-compatibility.test.ts` and `legacy-hub-ui-retirement.test.ts`.
 
 **Dependencies:** Tasks 5–6.
 **Estimated scope:** Multiple Small/Medium batches.
@@ -172,7 +172,9 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 - [x] `ScheduledItemBlockEditor.ts` moved to `features/capture/scheduled-item/domain/`; both test files and all 3 production consumers cut over directly and the root shim was removed. `LedgerRecordSource.ts` stays at the source root (12 consumers across Task/Event ledger editors; a separate, wider batch).
 - [x] `ScheduledItemFormData.ts` moved to `features/capture/scheduled-item/domain/`; its direct test file and all consumers cut over per UI area (desktop, mobile, application) and the root shim was removed.
 - [x] `ScheduledItemFormAdapter.ts` moved to `features/capture/scheduled-item/domain/`; both test files and all 6 production consumers cut over directly and the root shim was removed. `ScheduledItemEditSubmission.ts` and `ScheduledItemIdentityMigration.ts` are application/orchestration per the ownership map, not pure domain, and belong to Task 8 instead.
-- [ ] `EventTaskFormState.ts` (still references Moment's `InboxRecord`) and `SubmissionPolicy.ts` (generic submission guard, 2 production consumers) remain at the source root pending an owner decision — not yet moved. Once resolved, verify the three acceptance criteria below and close Task 7.
+- [x] Decision: `EventTaskFormState.ts` and `SubmissionPolicy.ts` stay at the source root. Both are scoped to the legacy unified `EventTaskModal.ts`/`EventTaskMobileScreen.ts` capture path, which handles Moment, Event, and Task together through a `kind` discriminator (`"inbox" | "task" | "event"`) — they are not Scheduled-Item-only domain modules. Moving them now would mislabel ownership; they belong with Task 9's legacy-path retirement, where the unified modal is split or removed.
+
+**Task 7 acceptance criteria closed 2026-08-23.** Scheduled Item parsing, block editing, validation, identity, and semantic adapters are canonical in `features/capture/scheduled-item/domain/`, acyclic, and free of Obsidian/DOM imports. `LedgerRecordSource.ts` (block/snapshot capture, pure, 12 consumers) is the last Task 7-scoped mechanical move and follows immediately as its own batch. `ScheduledItemEditSubmission.ts` and `ScheduledItemIdentityMigration.ts` are application/orchestration per the ownership map and belong to Task 8. `EventTaskFormState.ts`/`SubmissionPolicy.ts` are legacy-scoped per the decision above and belong to Task 9.
 
 ## Task 8: Isolate capture persistence and external boundaries
 
