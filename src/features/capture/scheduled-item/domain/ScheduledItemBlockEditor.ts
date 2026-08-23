@@ -2,7 +2,7 @@ import {
     type LedgerRecordSnapshot,
     type ReplaceLedgerRecordResult,
     replaceLedgerRecordBlock,
-} from "../../../../LedgerRecordSource.ts";
+} from "./LedgerRecordSource.ts";
 
 export type ScheduledItemBlockDetail = { mode: "none" } | { mode: "link"; title: string; path: string };
 

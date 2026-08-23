@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { captureLedgerRecord, replaceLedgerRecord } from "../src/LedgerRecordSource.ts";
+import {
+    captureLedgerRecord,
+    replaceLedgerRecord,
+} from "../src/features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 
 const source = {
     filePath: "Daily/2026-08-15.md",
