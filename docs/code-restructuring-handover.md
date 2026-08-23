@@ -1,7 +1,7 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-23
-Status: Task 7 aktif; `TaskLineEditor.ts`, `TaskLineLint.ts`, `EventLineEditor.ts`, `ScheduledItemParser.ts`, `ScheduledItemBlockEditor.ts`, `ScheduledItemFormData.ts`, dan `ScheduledItemFormAdapter.ts` sudah canonical di domain Scheduled Item tanpa shim. Hanya `EventTaskFormState.ts`/`SubmissionPolicy.ts` yang tersisa, menunggu keputusan owner.
+Status: Task 7 selesai. Seluruh pure Scheduled Item domain (contract, Markdown rendering, detail-note settings, identity, parser, block editing, `LedgerRecordSource.ts`, form data, form adapter/validation) sudah canonical di `features/capture/scheduled-item/domain/` tanpa shim. `EventTaskFormState.ts`/`SubmissionPolicy.ts` sengaja tidak dipindah — keduanya milik jalur capture legacy bersama Moment, ditangani di Task 9. Task 8 (isolasi persistence/boundary) berikutnya.
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -359,7 +359,7 @@ Acceptance manual tetap diperlukan untuk:
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
 3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 306 tes pada 2026-08-23.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Selesaikan Task 7 dengan memutuskan owner `EventTaskFormState.ts` (masih mereferensikan `InboxRecord` milik Moment) dan `SubmissionPolicy.ts` (generic submission guard, hanya 2 consumer). Setelah itu verifikasi tiga acceptance criteria Task 7 di `tasks/code-restructuring-todo.md`, tandai selesai, lalu lanjut ke Task 8 (isolasi persistence/boundary capture: `ScheduledItemEditSubmission.ts`, `ScheduledItemIdentityMigration.ts`, `LedgerRecordSource.ts` yang consumer-nya lebar).
+5. Mulai Task 8 (isolasi capture persistence dan external boundary): definisikan application port sempit untuk vault read/write, target resolution, link resolution, suggestions, dan related-log recovery, dengan implementasi Obsidian di `infrastructure`. Kandidat awal: `ScheduledItemBlockPersistence.ts`, `EventTaskWriter.ts`, `ScheduledItemEditSubmission.ts`, `ScheduledItemCreateRelated.ts`, `RelatedWriteRecovery.ts`. Ini perubahan arsitektural (port/adapter baru), bukan mechanical move seperti Task 7 — mulai dari desain port yang testable tanpa `App`/`Vault`/`TFile`/`Notice`/DOM.
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 
