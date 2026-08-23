@@ -4,13 +4,16 @@ import {
     promoteScheduledItemDetail,
     retryDetailNoteAttachment,
 } from "./DetailNotePromotion.ts";
-import { EventTaskWriter } from "./EventTaskWriter.ts";
+import { EventTaskWriter } from "./infrastructure/obsidian/EventTaskWriter.ts";
 import type { HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import type { LedgerRecordSnapshot } from "./features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import { MobileScheduledItemForm } from "./MobileScheduledItemForm.ts";
-import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource.ts";
-import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
-import { saveScheduledItemBlock } from "./ScheduledItemBlockPersistence.ts";
+import { readContextSuggestionNotes } from "./infrastructure/obsidian/ObsidianInboxSuggestionSource.ts";
+import {
+    createObsidianLinkFormatter,
+    createObsidianLinkResolver,
+} from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
+import { saveScheduledItemBlock } from "./infrastructure/obsidian/ScheduledItemBlockPersistence.ts";
 import {
     retryScheduledItemEditRelated,
     type ScheduledItemEditSubmissionResult,

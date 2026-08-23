@@ -19,8 +19,8 @@ import type { ContextSuggestion } from "./InboxSuggestions";
 import type { ScheduledItemMentionCandidate } from "./ScheduledItemMentionIndex.ts";
 import { getCreatableObjectSources } from "./ObjectNote";
 import { ObjectNoteModal } from "./ObjectNoteModal";
-import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
-import { ObsidianInboxSuggestionSource } from "./ObsidianInboxSuggestionSource";
+import { ObsidianInboxSuggestionSource } from "./infrastructure/obsidian/ObsidianInboxSuggestionSource";
+import { createObsidianLinkFormatter } from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
 import { formatRelativeMarkdownLink } from "./InboxMarkdown.ts";
 import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 

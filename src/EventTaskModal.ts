@@ -10,14 +10,17 @@ import {
     submitEventTask,
     submitInbox,
 } from "./EventTaskSubmission";
-import { EventTaskWriter } from "./EventTaskWriter";
+import { EventTaskWriter } from "./infrastructure/obsidian/EventTaskWriter";
 import type { EventTaskRecord } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import { InboxDesktopForm } from "./InboxDesktopForm";
 import { ContextNotesController } from "./InboxNotesController";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { shouldUseMobileForm } from "./MobileFormPolicy";
-import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
-import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
+import { readContextSuggestionNotes } from "./infrastructure/obsidian/ObsidianInboxSuggestionSource";
+import {
+    createObsidianLinkFormatter,
+    createObsidianLinkResolver,
+} from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
 import { ScheduledItemDesktopCreateModal } from "./ScheduledItemDesktopCreateModal.ts";
 import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
 import { SubmissionPolicy } from "./SubmissionPolicy";

@@ -7,10 +7,13 @@ import {
     retryDetailNoteAttachment,
 } from "./DetailNotePromotion.ts";
 import { EventTaskFormState } from "./EventTaskFormState";
-import { EventTaskWriter } from "./EventTaskWriter";
+import { EventTaskWriter } from "./infrastructure/obsidian/EventTaskWriter";
 import type { HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
-import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
-import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
+import { readContextSuggestionNotes } from "./infrastructure/obsidian/ObsidianInboxSuggestionSource";
+import {
+    createObsidianLinkFormatter,
+    createObsidianLinkResolver,
+} from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
 import { TargetResolver } from "./TargetResolver";
 import {
     retryScheduledItemCreateRelated,

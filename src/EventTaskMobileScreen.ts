@@ -9,14 +9,17 @@ import {
     submitEventTask,
     submitInbox,
 } from "./EventTaskSubmission";
-import { EventTaskWriter } from "./EventTaskWriter";
+import { EventTaskWriter } from "./infrastructure/obsidian/EventTaskWriter";
 import type { EventTaskRecord } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import { InboxMobileForm } from "./InboxMobileForm";
 import { ContextNotesController } from "./InboxNotesController";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { getMobileViewportMetrics } from "./MobileViewport";
-import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
-import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
+import { readContextSuggestionNotes } from "./infrastructure/obsidian/ObsidianInboxSuggestionSource";
+import {
+    createObsidianLinkFormatter,
+    createObsidianLinkResolver,
+} from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
 import { SubmissionPolicy } from "./SubmissionPolicy";
 import { FileSuggest, FolderSuggest } from "./Suggesters";
 import { TargetResolver } from "./TargetResolver";
