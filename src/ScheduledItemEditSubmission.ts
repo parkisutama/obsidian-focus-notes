@@ -4,7 +4,7 @@ import {
     type LinkDestinationResolver,
     resolveContextPaths,
 } from "./ContextLinkResolver.ts";
-import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
+import type { LedgerRecordSnapshot } from "./features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import { addedResolvedObjectReferencePaths } from "./ObjectReference.ts";
 import { formatRelatedLog } from "./RelatedLog.ts";
 import {

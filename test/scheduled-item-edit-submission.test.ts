@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { resolveRelativeLinkDestination } from "../src/ContextLinkResolver.ts";
 import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
-import { captureLedgerRecord } from "../src/LedgerRecordSource.ts";
+import { captureLedgerRecord } from "../src/features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import { retryScheduledItemEditRelated, submitScheduledItemEdit } from "../src/ScheduledItemEditSubmission.ts";
 import type { ScheduledItemFormData } from "../src/features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { App } from "obsidian";
-import { captureLedgerRecord } from "../src/LedgerRecordSource.ts";
+import { captureLedgerRecord } from "../src/features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import { saveScheduledItemBlock } from "../src/ScheduledItemBlockPersistence.ts";
 
 function fakeApp(initial: string): { app: App; read: () => string } {

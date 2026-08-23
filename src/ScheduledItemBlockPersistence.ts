@@ -1,5 +1,5 @@
 import type { App } from "obsidian";
-import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
+import type { LedgerRecordSnapshot } from "./features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import {
     replaceScheduledItemBlock,
     type ScheduledItemBlockEdit,

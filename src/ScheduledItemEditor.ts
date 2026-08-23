@@ -55,7 +55,7 @@ export async function openScheduledItemEditor(
 function openMobileEditor(
     app: App,
     getSettings: () => FocusNotesSettings,
-    snapshot: import("./LedgerRecordSource").LedgerRecordSnapshot,
+    snapshot: import("./features/capture/scheduled-item/domain/LedgerRecordSource").LedgerRecordSnapshot,
     kind: "task" | "event",
     title: string,
     onComplete: () => void,
@@ -70,7 +70,7 @@ function openMobileEditor(
 function openDesktopEditor(
     app: App,
     getSettings: () => FocusNotesSettings,
-    snapshot: import("./LedgerRecordSource").LedgerRecordSnapshot,
+    snapshot: import("./features/capture/scheduled-item/domain/LedgerRecordSource").LedgerRecordSnapshot,
     kind: "task" | "event",
     title: string,
     onComplete: () => void,

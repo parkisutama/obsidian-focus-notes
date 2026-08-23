@@ -7,7 +7,7 @@ import {
 } from "./DetailNotePromotion.ts";
 import { EventTaskWriter } from "./EventTaskWriter";
 import type { HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
-import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
+import type { LedgerRecordSnapshot } from "./features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
 import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
 import { saveScheduledItemBlock } from "./ScheduledItemBlockPersistence.ts";
