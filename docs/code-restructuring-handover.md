@@ -1,7 +1,7 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-23
-Status: Task 7 selesai. Task 8 aktif; application layer (`ScheduledItemEditSubmission.ts`, `ScheduledItemCreateRelated.ts`) dan adapter Obsidian (`ScheduledItemBlockPersistence.ts`, `EventTaskWriter.ts`, `ObsidianLinkResolver.ts`, `ObsidianInboxSuggestionSource.ts`, `ObsidianScheduledItemMentionSource.ts`) sudah canonical tanpa shim.
+Status: Task 7 selesai. Task 8 aktif; application layer, adapter Obsidian, `TaskFormatWriter.ts` (domain/infrastructure split), dan `ScheduledItemIdentityMigration.ts` sudah canonical tanpa shim. Celah validasi Detail Note create-folder ditemukan dan diperbaiki. Sisa Task 8 didominasi keputusan ownership (shared capture primitives, `Suggesters.ts`), bukan mechanical move lagi.
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -359,7 +359,7 @@ Acceptance manual tetap diperlukan untuk:
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
 3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 306 tes pada 2026-08-23.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Lanjutkan Task 8 dengan memverifikasi acceptance criteria kedua (validasi Markdown/settings/path eksternal sebelum persist) pada adapter `infrastructure/obsidian/` yang baru dipindah, lalu tangani `ScheduledItemIdentityMigration.ts` (masih bergantung pada writer type, perlu dibalik menjadi kontrak domain/application). Keputusan ownership `ContextLinkResolver.ts`/`RelatedWriteRecovery.ts`/`RelatedLog.ts`/`ObjectReference.ts` (shared capture application vs tetap root) tidak memblokir dan bisa ditunda.
+5. Lanjutkan Task 8 dengan memutuskan ownership `ContextLinkResolver.ts`/`RelatedWriteRecovery.ts`/`RelatedLog.ts`/`ObjectReference.ts` (shared capture application vs tetap root) dan mengevaluasi `Suggesters.ts` untuk `infrastructure/obsidian/`. Kedua acceptance criteria mechanical Task 8 (Obsidian-free policy, path validation) sudah terpenuhi; sisa yang belum jelas adalah keputusan ownership, bukan mechanical move.
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 
