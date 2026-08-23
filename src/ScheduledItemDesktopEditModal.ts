@@ -11,12 +11,12 @@ import type { LedgerRecordSnapshot } from "./features/capture/scheduled-item/dom
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource";
 import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
 import { saveScheduledItemBlock } from "./ScheduledItemBlockPersistence.ts";
+import { TargetResolver } from "./TargetResolver.ts";
 import {
     retryScheduledItemEditRelated,
     type ScheduledItemEditSubmissionResult,
     submitScheduledItemEdit,
-} from "./ScheduledItemEditSubmission.ts";
-import { TargetResolver } from "./TargetResolver.ts";
+} from "./features/capture/scheduled-item/application/ScheduledItemEditSubmission.ts";
 import {
     hydrateScheduledItemFormEdit,
     parseLocalDateTime,

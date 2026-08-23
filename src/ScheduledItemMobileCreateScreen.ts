@@ -11,12 +11,12 @@ import type { HubNoteRef } from "./features/capture/scheduled-item/domain/EventT
 import { type MobileScheduledItemCreateContext, MobileScheduledItemForm } from "./MobileScheduledItemForm.ts";
 import { readContextSuggestionNotes } from "./ObsidianInboxSuggestionSource.ts";
 import { createObsidianLinkFormatter, createObsidianLinkResolver } from "./ObsidianLinkResolver.ts";
+import { TargetResolver } from "./TargetResolver.ts";
 import {
     retryScheduledItemCreateRelated,
     type ScheduledItemCreateRelatedResult,
     writeScheduledItemCreateRelated,
-} from "./ScheduledItemCreateRelated.ts";
-import { TargetResolver } from "./TargetResolver.ts";
+} from "./features/capture/scheduled-item/application/ScheduledItemCreateRelated.ts";
 import { buildScheduledItemRecord } from "./features/capture/scheduled-item/domain/ScheduledItemFormAdapter.ts";
 import {
     type ScheduledItemFormData,

@@ -15,7 +15,7 @@ import {
     retryScheduledItemEditRelated,
     type ScheduledItemEditSubmissionResult,
     submitScheduledItemEdit,
-} from "./ScheduledItemEditSubmission.ts";
+} from "./features/capture/scheduled-item/application/ScheduledItemEditSubmission.ts";
 import {
     hydrateScheduledItemFormEdit,
     parseLocalDateTime,
