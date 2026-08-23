@@ -195,6 +195,13 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 **Dependencies:** Task 7.
 **Estimated scope:** Multiple Medium batches.
 
+**Progress (2026-08-23):**
+
+- [x] `ScheduledItemEditSubmission.ts` and `ScheduledItemCreateRelated.ts` moved to `features/capture/scheduled-item/application/`. Both were already dependency-injection based (`writePrimary`, `writeRelated`, `resolveLinkDestination` passed in) and imported no Obsidian/DOM before the move, so this batch was purely organizational — it establishes the intended `application/` layer alongside `domain/`. All 4 production UI consumers (`ScheduledItemDesktopEditModal.ts`, `ScheduledItemMobileEditScreen.ts`, `ScheduledItemDesktopCreateModal.ts`, `ScheduledItemMobileCreateScreen.ts`) and their test files were cut over directly and the root shims were removed.
+- [ ] Shared primitives `ContextLinkResolver.ts`, `RelatedWriteRecovery.ts`, `RelatedLog.ts`, and `ObjectReference.ts` stay at the source root: they're used by both the new Scheduled Item application files above and the legacy `EventTaskSubmission.ts` (Moment+Event+Task combined). Their eventual home (a shared `features/capture/application/` layer vs. staying put) is a separate decision, not blocking further Task 8 work.
+- [ ] `EventTaskSubmission.ts` itself is legacy-scoped (only consumed by `EventTaskModal.ts`/`EventTaskMobileScreen.ts`/`SubmissionPolicy.ts`), matching the `EventTaskFormState.ts`/`SubmissionPolicy.ts` decision from Task 7 — it belongs to Task 9, not Task 8, despite the ownership map originally listing it under "Scheduled Item application".
+- [ ] The actual Obsidian-touching adapters (`ScheduledItemBlockPersistence.ts`'s `saveScheduledItemBlock`, `EventTaskWriter.ts`, `ObsidianLinkResolver.ts`, `ObsidianInboxSuggestionSource.ts`, `ObsidianScheduledItemMentionSource.ts`) have not yet moved into `infrastructure/obsidian/`; that is the next batch.
+
 ## Task 9: Cut renderers over and retire proven legacy paths
 
 **Description:** Make desktop/mobile create and edit shells depend on the shared application boundary, then delete legacy implementations only after every launcher is proven migrated.
