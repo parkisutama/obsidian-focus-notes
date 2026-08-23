@@ -92,12 +92,27 @@ export function validateScheduledItemFormData(data: ScheduledItemFormData): Sche
             return invalid("detailNote", "Detail Note must use a vault-root Markdown path.");
         }
     }
-    if (data.detailNote.mode === "create" && !data.detailNote.name.trim()) {
-        return invalid("detailNote", "Detail Note name is required.");
+    if (data.detailNote.mode === "create") {
+        if (!data.detailNote.name.trim()) return invalid("detailNote", "Detail Note name is required.");
+        if (!isSafeVaultFolderPath(data.detailNote.folder)) {
+            return invalid("detailNote", "Detail Note folder must be a vault-root path.");
+        }
     }
 
     if (data.kind === "task") return validateTask(data);
     return validateEvent(data);
+}
+
+/** Rejects absolute paths and `.`/`..` segments so a new-folder Detail Note can't escape the vault. */
+function isSafeVaultFolderPath(value: string): boolean {
+    const trimmed = value.trim();
+    if (/^[\\/]/.test(trimmed)) return false;
+    const normalized = trimmed
+        .replace(/\\/g, "/")
+        .replace(/\/{2,}/g, "/")
+        .replace(/\/+$/, "");
+    if (!normalized) return true;
+    return normalized.split("/").every((segment) => segment && segment !== "." && segment !== "..");
 }
 
 export function buildScheduledItemFormBlockEdit(

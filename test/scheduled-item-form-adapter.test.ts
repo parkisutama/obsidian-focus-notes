@@ -193,3 +193,42 @@ test("rejects stale derived Object References and invalid detail paths", () => {
         message: "Detail Note must use a vault-root Markdown path.",
     });
 });
+
+test("rejects a new Detail Note folder that escapes the vault root", () => {
+    const base: ScheduledItemFormData = {
+        kind: "task",
+        title: "Task",
+        description: "",
+        objectReferences: [],
+        detailNote: { mode: "create", name: "Detail", folder: "../Outside" },
+        completed: false,
+        priority: "normal",
+        due: null,
+        timebox: null,
+        reminders: [],
+    };
+    assert.deepEqual(validateScheduledItemFormData(base), {
+        valid: false,
+        field: "detailNote",
+        message: "Detail Note folder must be a vault-root path.",
+    });
+
+    const absolute: ScheduledItemFormData = {
+        ...base,
+        detailNote: { mode: "create", name: "Detail", folder: "/Outside" },
+    };
+    assert.deepEqual(validateScheduledItemFormData(absolute), {
+        valid: false,
+        field: "detailNote",
+        message: "Detail Note folder must be a vault-root path.",
+    });
+
+    const rootFolder: ScheduledItemFormData = { ...base, detailNote: { mode: "create", name: "Detail", folder: "" } };
+    assert.deepEqual(validateScheduledItemFormData(rootFolder), { valid: true });
+
+    const nestedFolder: ScheduledItemFormData = {
+        ...base,
+        detailNote: { mode: "create", name: "Detail", folder: "Details/Archive" },
+    };
+    assert.deepEqual(validateScheduledItemFormData(nestedFolder), { valid: true });
+});
