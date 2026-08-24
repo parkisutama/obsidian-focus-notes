@@ -1,17 +1,13 @@
-import { Notice, Plugin, TFile, type WorkspaceLeaf } from "obsidian";
-import { scanActiveNoteChecklistScopes, scanActiveNoteLedger } from "./ActiveNoteLedger";
-import { ActiveNoteManagerModal } from "./ActiveNoteManagerModal";
+import { Plugin, TFile, type WorkspaceLeaf } from "obsidian";
+import { openActiveNoteManager } from "./ActiveNoteManagerLauncher";
 import { openEventTaskForm } from "./EventTaskCaptureLauncher";
 import { NoteWriter } from "./NoteWriter";
 import { RecentEntriesReader } from "./RecentEntriesReader";
-import { openScheduledItemEditor } from "./ScheduledItemEditor";
 import { FocusNotesSettingsTab } from "./SettingsTab";
 import { StateStore } from "./StateStore";
 import { TargetResolver } from "./TargetResolver";
-import { timelineSourceHeadings } from "./TimelineSourceGroups";
 import { TimelineView, VIEW_TYPE_FOCUS_TIMELINE } from "./TimelineView";
 import { TimerView, VIEW_TYPE_FOCUS_NOTES } from "./TimerView";
-import { ScheduledItemParser } from "./features/capture/scheduled-item/domain/ScheduledItemParser";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import { mergeSettingsWithDefaults } from "./features/settings/domain/SettingsDefaults";
 
@@ -82,7 +78,7 @@ export default class FocusNotesPlugin extends Plugin {
             checkCallback: (checking) => {
                 const file = this.app.workspace.getActiveFile();
                 const available = file instanceof TFile && file.extension === "md";
-                if (available && !checking) void this.openActiveNoteManager(file);
+                if (available && !checking) void openActiveNoteManager(this.app, () => this.settings, this, file);
                 return available;
             },
         });
@@ -117,36 +113,6 @@ export default class FocusNotesPlugin extends Plugin {
 
     async saveSettings(): Promise<void> {
         await this.stateStore.save(this.settings);
-    }
-
-    private async openActiveNoteManager(file: TFile): Promise<void> {
-        const content = await this.app.vault.cachedRead(file);
-        const headings = timelineSourceHeadings(this.settings.timeline.sourceHeadings, [
-            this.settings.captureEvent.heading,
-            this.settings.captureTask.heading,
-        ]);
-        const items = scanActiveNoteLedger(file.path, file.name, content, headings, new ScheduledItemParser());
-        const checklistScopes = scanActiveNoteChecklistScopes(file.path, file.name, content, new ScheduledItemParser());
-        new ActiveNoteManagerModal(
-            this.app,
-            file.name,
-            file.path,
-            items,
-            checklistScopes,
-            (kind) =>
-                openEventTaskForm(this.app, () => this.settings, new Date(), undefined, this, {
-                    initialKind: kind,
-                    targetFile: file.path,
-                }),
-            (item) =>
-                void openScheduledItemEditor(
-                    this.app,
-                    item,
-                    () => this.settings,
-                    () => new Notice("Task or Event updated."),
-                ),
-            () => void this.openActiveNoteManager(file),
-        ).open();
     }
 
     private async activateView(): Promise<void> {
