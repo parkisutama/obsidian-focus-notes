@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatRelatedLog } from "../src/RelatedLog.ts";
+import { formatRelatedLog } from "../src/features/capture/domain/RelatedLog.ts";
 
 test("formats a self-contained Event historical log", () => {
     assert.equal(

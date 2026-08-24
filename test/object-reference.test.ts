@@ -5,7 +5,7 @@ import {
     normalizeObjectReferencePath,
     parseObjectReferences,
     serializeObjectReference,
-} from "../src/ObjectReference.ts";
+} from "../src/features/capture/domain/ObjectReference.ts";
 
 test("parses unresolved and vault-root resolved Object References", () => {
     const text = "Ask @Rachel and @{People/Rachel Smith.md}; keep @Ops_Team informed.";

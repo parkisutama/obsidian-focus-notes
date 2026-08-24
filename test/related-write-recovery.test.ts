@@ -4,7 +4,7 @@ import {
     retryFailedRelatedWrites,
     writeRelatedDestinations,
     type RelatedWriteRequest,
-} from "../src/RelatedWriteRecovery.ts";
+} from "../src/features/capture/application/RelatedWriteRecovery.ts";
 
 const requests: RelatedWriteRequest[] = [
     { destinationPath: "People/Andi.md", heading: "Interactions", position: "end", markdown: "person log" },
