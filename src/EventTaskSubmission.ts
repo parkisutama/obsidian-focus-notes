@@ -14,54 +14,10 @@ import {
 } from "./features/capture/application/RelatedWriteRecovery.ts";
 import { parseObjectReferences } from "./features/capture/domain/ObjectReference.ts";
 import { formatRelatedLog } from "./features/capture/domain/RelatedLog.ts";
-import { formatEventTaskEntry } from "./features/capture/scheduled-item/domain/EventTaskMarkdown.ts";
-import type { EventTaskRecord, HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import type { FormatInboxEntryOptions } from "./InboxMarkdown.ts";
 import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
-
-interface NoteFile {
-    path: string;
-}
-
-interface EventTaskSubmissionWriter {
-    createHubNote(title: string, record: EventTaskRecord, folder: string): Promise<NoteFile>;
-    createDetailNote(
-        title: string,
-        record: EventTaskRecord,
-        folder: string,
-        targetPath: string,
-        hubPath: string | null,
-    ): Promise<NoteFile>;
-    write(
-        record: EventTaskRecord,
-        targetFilePath: string,
-        targetHeading: string,
-        position: InsertPosition,
-        detailNoteRef?: HubNoteRef | null,
-    ): Promise<void>;
-    writeRelated(
-        markdown: string,
-        targetFilePath: string,
-        targetHeading: string,
-        position: InsertPosition,
-    ): Promise<void>;
-}
-
-export interface EventTaskSubmissionDependencies {
-    writer: EventTaskSubmissionWriter;
-    defaultHubNotesFolder: string;
-    defaultDetailNotesFolder: string;
-    resolveTargetFile(record: EventTaskRecord): string;
-    findMarkdownFile(path: string): NoteFile | null;
-    openFile(file: NoteFile): void;
-    contextNotes?: readonly ContextLinkNote[];
-    contextSources?: readonly ContextSourceSettings[];
-    resolveLinkDestination: LinkDestinationResolver;
-    formatDailyLink?: (when: Date, targetFilePath: string, label: string) => string;
-    formatSourceLink?: (targetFilePath: string, linkedFilePath: string, label: string) => string;
-}
 
 interface InboxSubmissionWriter {
     writeInbox(
@@ -127,7 +83,7 @@ export type PartialSubmissionResult = Extract<EventTaskSubmissionResult, { statu
 
 export async function retryRelatedSubmission(
     result: PartialSubmissionResult,
-    writer: Pick<EventTaskSubmissionWriter, "writeRelated">,
+    writer: Pick<InboxSubmissionWriter, "writeRelated">,
 ): Promise<EventTaskSubmissionResult> {
     const recovery = await retryFailedRelatedWrites(result.recovery, (request) =>
         writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
@@ -142,120 +98,6 @@ export async function retryRelatedSubmission(
         );
     }
     return { status: "success", message: "Related logs saved.", createdNotes: result.createdNotes };
-}
-
-export async function submitEventTask(
-    state: EventTaskFormState,
-    dependencies: EventTaskSubmissionDependencies,
-): Promise<EventTaskSubmissionResult> {
-    const validation = state.validateTemporalFields();
-    if (!validation.valid) {
-        return failure("validation", validation.message);
-    }
-
-    const { writer } = dependencies;
-    let hubNoteRef: HubNoteRef | null = null;
-    let hubNoteFilePath: string | null = null;
-    let createdHubNotePath: string | null = null;
-    let detailNoteFilePath: string | null = null;
-
-    if (state.hubMode === "create") {
-        const hubName = state.hubCreateName.trim() || state.title.trim();
-        if (hubName) {
-            try {
-                const hubFile = await writer.createHubNote(
-                    hubName,
-                    state.buildRecord(null),
-                    state.hubCreateFolder.trim() || dependencies.defaultHubNotesFolder,
-                );
-                hubNoteRef = { title: state.title.trim(), path: hubFile.path };
-                hubNoteFilePath = hubFile.path;
-                createdHubNotePath = hubFile.path;
-                dependencies.openFile(hubFile);
-            } catch (error) {
-                return failure("hub-note", "Failed to create note", error, createdHubNotePath, detailNoteFilePath);
-            }
-        }
-    } else if (state.hubMode === "link" && state.hubLinkPath.trim()) {
-        const typedPath = state.hubLinkPath.trim();
-        const found = dependencies.findMarkdownFile(typedPath);
-        const path = found?.path ?? (typedPath.endsWith(".md") ? typedPath : `${typedPath}.md`);
-        hubNoteRef = { title: state.title.trim(), path };
-        hubNoteFilePath = path;
-    }
-
-    const record = state.buildRecord(hubNoteRef);
-    const resolvedTargetFile = dependencies.resolveTargetFile(record);
-    if (!resolvedTargetFile.trim()) {
-        return failure("validation", "Please select a target file.", undefined, createdHubNotePath, detailNoteFilePath);
-    }
-    let detailNoteRef: HubNoteRef | null = null;
-
-    if (state.detailNoteEnabled) {
-        const detailName = state.detailNoteName.trim() || state.title.trim();
-        if (detailName) {
-            try {
-                const detailFile = await writer.createDetailNote(
-                    detailName,
-                    record,
-                    state.detailNoteFolder.trim() || dependencies.defaultDetailNotesFolder,
-                    resolvedTargetFile,
-                    hubNoteFilePath,
-                );
-                detailNoteRef = { title: state.title.trim(), path: detailFile.path };
-                detailNoteFilePath = detailFile.path;
-                dependencies.openFile(detailFile);
-            } catch (error) {
-                return failure(
-                    "detail-note",
-                    "Failed to create detail note",
-                    error,
-                    createdHubNotePath,
-                    detailNoteFilePath,
-                );
-            }
-        }
-    }
-
-    const heading = state.targetHeading.trim();
-    const position = state.targetPosition;
-    try {
-        await writer.write(record, resolvedTargetFile, heading, position, detailNoteRef);
-    } catch (error) {
-        return failure("primary", "Failed to save", error, createdHubNotePath, detailNoteFilePath);
-    }
-
-    const relatedWrites: RelatedWriteRequest[] = [];
-    if (state.writeToHubNote && hubNoteFilePath) {
-        const targetRef: HubNoteRef = { title: state.title.trim(), path: resolvedTargetFile };
-        const relatedRecord = { ...record, hubNoteRef: targetRef };
-        relatedWrites.push({
-            destinationPath: hubNoteFilePath,
-            heading,
-            position,
-            markdown: formatEventTaskEntry(
-                relatedRecord,
-                detailNoteRef,
-                dependencies.formatDailyLink
-                    ? (when, label) => dependencies.formatDailyLink?.(when, hubNoteFilePath, label) ?? label
-                    : undefined,
-            ),
-        });
-    }
-    relatedWrites.push(...buildEventTaskContextWrites(state, record, resolvedTargetFile, dependencies));
-
-    const recovery = await writeRelatedDestinations(relatedWrites, (request) =>
-        writer.writeRelated(request.markdown, request.destinationPath, request.heading, request.position),
-    );
-    if (recovery.failedWrites.length > 0) {
-        return partialResult(state.kind, resolvedTargetFile, recovery, createdHubNotePath, detailNoteFilePath);
-    }
-
-    return {
-        status: "success",
-        message: state.kind === "event" ? "Event saved." : "Task saved.",
-        createdNotes: { hubPath: createdHubNotePath, detailPath: detailNoteFilePath },
-    };
 }
 
 export async function submitInbox(
@@ -293,34 +135,6 @@ export async function submitInbox(
         message: "Inbox saved.",
         createdNotes: { hubPath: null, detailPath: null },
     };
-}
-
-function buildEventTaskContextWrites(
-    state: EventTaskFormState,
-    record: EventTaskRecord,
-    primaryPath: string,
-    dependencies: EventTaskSubmissionDependencies,
-): RelatedWriteRequest[] {
-    const destinations = resolveConfiguredContext(record.description, primaryPath, dependencies);
-    const occurredAt =
-        record.kind === "event" ? record.start : (record.timebox?.start ?? record.due ?? state.inboxCapturedAt);
-    const endedAt = record.kind === "event" ? record.end : (record.timebox?.end ?? null);
-    return destinations.map((destination) => ({
-        destinationPath: destination.filePath,
-        heading: destination.relatedHeading,
-        position: destination.relatedPosition,
-        markdown: formatRelatedLog({
-            kind: record.kind,
-            title: record.title,
-            occurredAt,
-            endedAt,
-            allDay:
-                record.kind === "event" ? record.allDay : !record.timebox && record.due !== null && !record.dueHasTime,
-            primaryFilePath: primaryPath,
-            destinationFilePath: destination.filePath,
-            formatSourceLink: dependencies.formatSourceLink,
-        }),
-    }));
 }
 
 function buildInboxContextWrites(
@@ -372,7 +186,7 @@ function buildDailyBacklinkWrite(
 function resolveConfiguredContext(
     markdown: string,
     primaryPath: string,
-    dependencies: Pick<EventTaskSubmissionDependencies, "contextNotes" | "contextSources" | "resolveLinkDestination">,
+    dependencies: Pick<InboxSubmissionDependencies, "contextNotes" | "contextSources" | "resolveLinkDestination">,
 ) {
     if (!dependencies.contextNotes?.length || !dependencies.contextSources?.length) return [];
     const notes = [...dependencies.contextNotes];
