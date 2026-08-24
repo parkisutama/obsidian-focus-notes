@@ -1,18 +1,15 @@
 import { type App, Component, Notice, setIcon } from "obsidian";
 import { preferActiveNoteTarget } from "./CaptureTarget";
-import { EventTaskFormState, formatLocalDate } from "./EventTaskFormState";
+import { EventTaskFormState } from "./EventTaskFormState";
 import type { EventTaskKind, OpenEventTaskFormOptions } from "./features/capture/domain/CaptureForm";
 import {
     type EventTaskSubmissionResult,
     type PartialSubmissionResult,
     retryRelatedSubmission,
-    submitEventTask,
     submitInbox,
 } from "./EventTaskSubmission";
 import { EventTaskWriter } from "./infrastructure/obsidian/EventTaskWriter";
-import type { EventTaskRecord } from "./features/capture/scheduled-item/domain/EventTaskRecord";
 import { InboxMobileForm } from "./InboxMobileForm";
-import { ContextNotesController } from "./InboxNotesController";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
 import { getMobileViewportMetrics } from "./MobileViewport";
 import { readContextSuggestionNotes } from "./infrastructure/obsidian/ObsidianInboxSuggestionSource";
@@ -21,13 +18,16 @@ import {
     createObsidianLinkResolver,
 } from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
 import { SubmissionPolicy } from "./SubmissionPolicy";
-import { FileSuggest, FolderSuggest } from "./infrastructure/obsidian/Suggesters";
 import { TargetResolver } from "./TargetResolver";
-import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
-import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
+/**
+ * Moment (Inbox) capture shell. Event and Task both redirect to
+ * ScheduledItemMobileCreateScreen before any of their fields are ever
+ * rendered or read — see the Event/Task buttons in renderKindSelector() —
+ * so this class only ever renders and submits the Inbox kind.
+ */
 export class EventTaskMobileScreen extends Component {
     private rootEl: HTMLElement | null = null;
     private bodyEl: HTMLElement | null = null;
@@ -36,7 +36,6 @@ export class EventTaskMobileScreen extends Component {
     private readonly submissionPolicy = new SubmissionPolicy();
     private owner: Component | null = null;
     private readonly form: EventTaskFormState;
-    private contextNotesController: ContextNotesController | null = null;
     private pendingRecovery: PartialSubmissionResult | null = null;
     private recoveryInFlight = false;
     private completionNotified = false;
@@ -44,7 +43,7 @@ export class EventTaskMobileScreen extends Component {
     constructor(
         private readonly app: App,
         private readonly getSettings: () => FocusNotesSettings,
-        private readonly anchorDate: Date = new Date(),
+        anchorDate: Date = new Date(),
         private readonly onComplete: () => void = () => {},
         options: OpenEventTaskFormOptions = {},
         private readonly openScheduledItem: (kind: "task" | "event") => void,
@@ -152,44 +151,15 @@ export class EventTaskMobileScreen extends Component {
             }
         });
 
-        const eventTaskFields = this.bodyEl.createDiv({ cls: "fn-mobile-event-task-fields fn-gcal-hidden" });
-        const eventSection = eventTaskFields.createDiv({ cls: "fn-mobile-event-primary" });
-        const taskSection = eventTaskFields.createDiv({ cls: "fn-mobile-event-primary fn-gcal-hidden" });
-        const taskOptions = eventTaskFields.createDiv({ cls: "fn-mobile-event-task-options fn-gcal-hidden" });
         const inboxSection = this.bodyEl.createDiv({ cls: "fn-mobile-inbox-primary" });
         this.renderKindSelector(
             this.bodyEl,
             (kind) => {
                 title.value = this.form.getTitleForKind(kind);
-                const isInbox = kind === "inbox";
-                const isEvent = kind === "event";
-                eventTaskFields.toggleClass("fn-gcal-hidden", isInbox);
-                inboxSection.toggleClass("fn-gcal-hidden", !isInbox);
-                eventSection.toggleClass("fn-gcal-hidden", !isEvent);
-                taskSection.toggleClass("fn-gcal-hidden", isInbox || isEvent);
-                taskOptions.toggleClass("fn-gcal-hidden", isInbox || isEvent);
+                inboxSection.toggleClass("fn-gcal-hidden", kind !== "inbox");
             },
-            eventTaskFields,
+            inboxSection,
         );
-        this.renderEventFields(eventSection);
-        this.renderEventLifecycleFields(eventSection);
-        this.renderTaskDueFields(taskSection);
-        this.renderTaskPriorityFields(taskSection);
-        this.renderDescription(eventTaskFields);
-
-        const options = this.disclosure(
-            eventTaskFields,
-            "More options",
-            "sliders-horizontal",
-            "Notes, details, and destination",
-        );
-        const timebox = this.disclosure(taskOptions, "Timebox", "timer");
-        this.renderTaskTimebox(timebox);
-        const reminders = this.disclosure(taskOptions, "Reminders", "bell");
-        this.renderReminders(reminders);
-        options.appendChild(taskOptions);
-        this.renderDetailNote(this.disclosure(options, "Detail note", "file-text"));
-        this.renderSaveTarget(this.disclosure(options, "Save to", "folder", this.form.targetFile));
 
         new InboxMobileForm({
             app: this.app,
@@ -203,21 +173,6 @@ export class EventTaskMobileScreen extends Component {
         this.registerDomEvent(save, "click", () => void this.submit());
         const focusTimer = window.setTimeout(() => title.focus(), 50);
         this.register(() => window.clearTimeout(focusTimer));
-    }
-
-    private renderTaskPriorityFields(container: HTMLElement): void {
-        const card = this.fieldGroup(container, "Priority", "signal");
-        this.segmented(
-            card,
-            [
-                { value: "normal", label: "Normal" },
-                { value: "low", label: "Low" },
-                { value: "medium", label: "Medium" },
-                { value: "high", label: "High" },
-            ],
-            this.form.taskPriority,
-            (priority) => (this.form.taskPriority = priority),
-        );
     }
 
     private renderKindSelector(
@@ -271,316 +226,12 @@ export class EventTaskMobileScreen extends Component {
         this.openScheduledItem(kind);
     }
 
-    private renderEventFields(container: HTMLElement): void {
-        const card = this.fieldGroup(container, "When", "calendar-clock");
-        const date = this.input(card, "date", "Event date", this.form.eventDate);
-        const times = card.createDiv({ cls: "fn-mobile-event-grid" });
-        const start = this.input(times, "time", "Start time", this.form.eventStartTime);
-        const end = this.input(times, "time", "End time", this.form.eventEndTime);
-        const allDay = this.checkbox(card, "All day", this.form.eventAllDay, (checked) => {
-            this.form.eventAllDay = checked;
-            times.toggleClass("fn-gcal-hidden", checked);
-        });
-        this.registerDomEvent(date, "change", () => (this.form.eventDate = date.value));
-        this.registerDomEvent(start, "change", () => (this.form.eventStartTime = start.value));
-        this.registerDomEvent(end, "change", () => (this.form.eventEndTime = end.value));
-        allDay.checked = this.form.eventAllDay;
-    }
-
-    private renderEventLifecycleFields(container: HTMLElement): void {
-        const statusCard = this.fieldGroup(container, "Status", "circle-dot");
-        const actualCard = this.fieldGroup(container, "Actual time", "clock-check");
-        let actualFields: HTMLElement;
-        const actualToggle = this.checkbox(actualCard, "Record different actual time", false, (checked) => {
-            this.form.eventActualTimeEnabled = checked;
-            actualFields.toggleClass("fn-gcal-hidden", !checked);
-        });
-        actualFields = actualCard.createDiv({ cls: "fn-mobile-event-conditional fn-gcal-hidden" });
-        const startRow = actualFields.createDiv({ cls: "fn-mobile-event-grid" });
-        const startDate = this.input(startRow, "date", "Actual start date", this.form.eventActualStartDate);
-        const startTime = this.input(startRow, "time", "Actual start time", this.form.eventActualStartTime);
-        const endRow = actualFields.createDiv({ cls: "fn-mobile-event-grid" });
-        const endDate = this.input(endRow, "date", "Actual end date", this.form.eventActualEndDate);
-        const endTime = this.input(endRow, "time", "Actual end time", this.form.eventActualEndTime);
-        this.segmented(
-            statusCard,
-            [
-                { value: "planned", label: "Planned" },
-                { value: "completed", label: "Completed" },
-                { value: "cancelled", label: "Cancelled" },
-            ],
-            this.form.eventStatus,
-            (status) => {
-                this.form.eventStatus = status;
-                const canRecordActual = status === "completed";
-                actualCard.toggleClass("fn-gcal-hidden", !canRecordActual);
-                if (!canRecordActual) {
-                    actualToggle.checked = false;
-                    this.form.eventActualTimeEnabled = false;
-                    actualFields.addClass("fn-gcal-hidden");
-                }
-            },
-        );
-        actualCard.addClass("fn-gcal-hidden");
-        this.registerDomEvent(startDate, "change", () => (this.form.eventActualStartDate = startDate.value));
-        this.registerDomEvent(startTime, "change", () => (this.form.eventActualStartTime = startTime.value));
-        this.registerDomEvent(endDate, "change", () => (this.form.eventActualEndDate = endDate.value));
-        this.registerDomEvent(endTime, "change", () => (this.form.eventActualEndTime = endTime.value));
-    }
-
-    private renderTaskDueFields(container: HTMLElement): void {
-        const card = this.fieldGroup(container, "Due date", "calendar");
-        const row = card.createDiv({ cls: "fn-mobile-event-grid" });
-        const date = this.input(row, "date", "Due date", this.form.taskDueDate);
-        const time = this.input(row, "time", "Due time", this.form.taskDueTime);
-        time.toggleClass("fn-gcal-hidden", !this.form.taskDueHasTime);
-        this.checkbox(card, "Include time", this.form.taskDueHasTime, (checked) => {
-            this.form.taskDueHasTime = checked;
-            time.toggleClass("fn-gcal-hidden", !checked);
-        });
-        this.registerDomEvent(date, "change", () => (this.form.taskDueDate = date.value));
-        this.registerDomEvent(time, "change", () => (this.form.taskDueTime = time.value));
-    }
-
-    private renderDescription(container: HTMLElement): void {
-        const card = this.fieldGroup(container, "Description", "align-left");
-        const editor = card.createDiv({
-            cls: "fn-mobile-event-description",
-            attr: {
-                "data-placeholder": "Add description. Use @ for contextual notes, # for tags.",
-                "aria-label": "Description",
-            },
-        });
-        const controller = new ContextNotesController(this.app, editor, {
-            initialValue: this.form.description,
-            targetFile: this.form.targetFile,
-            getContextSources: () => this.getSettings().inbox.contextSources,
-            onChange: (value) => (this.form.description = value),
-            referenceFormat: "object-reference",
-        });
-        this.contextNotesController = controller;
-        this.register(() => {
-            controller.destroy();
-            if (this.contextNotesController === controller) this.contextNotesController = null;
-        });
-    }
-
-    private renderTaskTimebox(container: HTMLElement): void {
-        const toggleHost = container.createDiv();
-        const fields = container.createDiv({ cls: "fn-mobile-event-conditional fn-gcal-hidden" });
-        this.checkbox(toggleHost, "Enable timebox", false, (checked) => {
-            this.form.taskTimeboxEnabled = checked;
-            fields.toggleClass("fn-gcal-hidden", !checked);
-        });
-        const date = this.input(fields, "date", "Timebox date", this.form.taskTimeboxDate);
-        const times = fields.createDiv({ cls: "fn-mobile-event-grid" });
-        const start = this.input(times, "time", "Timebox start", this.form.taskTimeboxStartTime);
-        const end = this.input(times, "time", "Timebox end", this.form.taskTimeboxEndTime);
-        this.registerDomEvent(date, "change", () => (this.form.taskTimeboxDate = date.value));
-        this.registerDomEvent(start, "change", () => (this.form.taskTimeboxStartTime = start.value));
-        this.registerDomEvent(end, "change", () => (this.form.taskTimeboxEndTime = end.value));
-    }
-
-    private renderReminders(container: HTMLElement): void {
-        const list = container.createDiv({ cls: "fn-mobile-event-reminders" });
-        const add = container.createEl("button", {
-            cls: "fn-mobile-event-secondary-action",
-            text: "Add reminder",
-            attr: { type: "button" },
-        });
-        this.registerDomEvent(add, "click", () => {
-            const index = this.form.reminders.length;
-            this.form.reminders.push({ date: formatLocalDate(this.anchorDate), time: "09:00" });
-            this.renderReminderRow(list, index);
-        });
-    }
-
-    private renderReminderRow(container: HTMLElement, index: number): void {
-        const reminder = this.form.reminders[index];
-        const row = container.createDiv({ cls: "fn-mobile-event-reminder" });
-        const date = this.input(row, "date", "Reminder date", reminder.date);
-        const time = this.input(row, "time", "Reminder time", reminder.time);
-        const remove = row.createEl("button", {
-            cls: "fn-mobile-event-remove",
-            attr: { type: "button", "aria-label": "Remove reminder" },
-        });
-        setIcon(remove, "x");
-        this.registerDomEvent(date, "change", () => (reminder.date = date.value));
-        this.registerDomEvent(time, "change", () => (reminder.time = time.value));
-        this.registerDomEvent(remove, "click", () => {
-            reminder.date = "";
-            row.remove();
-        });
-    }
-
-    private renderDetailNote(container: HTMLElement): void {
-        const toggleHost = container.createDiv();
-        const fields = container.createDiv({ cls: "fn-mobile-event-conditional fn-gcal-hidden" });
-        const name = this.iconInput(fields, "file-text", "Detail note name", "", "Detail note name").input;
-        const folder = this.iconInput(
-            fields,
-            "folder",
-            "Detail note folder",
-            this.form.detailNoteFolder,
-            "Folder for detail note",
-        ).input;
-        this.registerSuggester(new FolderSuggest(this.app, folder));
-        this.checkbox(toggleHost, "Create detail note", false, (checked) => {
-            this.form.detailNoteEnabled = checked;
-            fields.toggleClass("fn-gcal-hidden", !checked);
-            if (checked && !name.value) {
-                name.value = this.form.title;
-                this.form.detailNoteName = name.value;
-            }
-        });
-        this.registerDomEvent(name, "input", () => (this.form.detailNoteName = name.value));
-        this.registerDomEvent(folder, "input", () => (this.form.detailNoteFolder = folder.value));
-    }
-
-    private renderSaveTarget(container: HTMLElement): void {
-        const file = this.iconInput(container, "file-text", "Save to file", this.form.targetFile, "Note path").input;
-        const alignment = container.createDiv({ cls: "fn-capture-timeline-alignment" });
-        const updateAlignment = (): void => {
-            const settings = this.getSettings();
-            const resolver = new TargetResolver(this.app, settings);
-            const dailyFolder = resolver.getProfileFolder("daily");
-            const groups = buildTimelineSourceGroups(
-                settings.timeline.sourceFolders,
-                dailyFolder,
-                settings.inbox.contextSources,
-            );
-            const target = this.app.vault.getAbstractFileByPath(file.value);
-            const properties = isTFile(target)
-                ? (this.app.metadataCache.getFileCache(target)?.frontmatter as Record<string, unknown> | undefined)
-                : undefined;
-            const status = assessTimelineTargetGroups(file.value, properties, groups);
-            alignment.setText(status === "aligned" ? "Indexed by Focus Timeline" : "Outside Focus Timeline sources");
-            alignment.toggleClass("is-warning", status !== "aligned");
-        };
-        updateAlignment();
-        const heading = this.iconInput(
-            container,
-            "hash",
-            "Save under heading",
-            this.form.targetHeading,
-            "Heading (optional)",
-        ).input;
-        this.registerSuggester(new FileSuggest(this.app, file));
-        this.checkbox(container, "Insert at top", this.form.targetPosition === "start", (checked) => {
-            this.form.targetPosition = checked ? "start" : "end";
-        });
-        this.registerDomEvent(file, "input", () => {
-            this.form.targetFile = file.value;
-            this.contextNotesController?.setTargetFile(file.value);
-            updateAlignment();
-        });
-        this.registerDomEvent(heading, "input", () => (this.form.targetHeading = heading.value));
-    }
-
     private setTitle(value: string): void {
         if (this.form.kind === "inbox") {
             this.form.inboxTitle = value;
             return;
         }
         this.form.title = value;
-    }
-
-    private fieldGroup(container: HTMLElement, label: string, icon: string): HTMLElement {
-        const row = container.createDiv({ cls: "fn-mobile-event-field-row" });
-        const iconEl = row.createSpan({ cls: "fn-mobile-event-field-icon" });
-        setIcon(iconEl, icon);
-        const fields = row.createDiv({ cls: "fn-mobile-event-field-content" });
-        fields.createDiv({ cls: "fn-mobile-event-label", text: label });
-        return fields;
-    }
-
-    private input(
-        container: HTMLElement,
-        type: "text" | "date" | "time",
-        label: string,
-        value: string,
-        placeholder?: string,
-    ): HTMLInputElement {
-        const input = container.createEl("input", {
-            type,
-            cls: "fn-mobile-event-input",
-            attr: { "aria-label": label, ...(placeholder ? { placeholder } : {}) },
-        });
-        input.value = value;
-        return input;
-    }
-
-    private iconInput(
-        container: HTMLElement,
-        icon: string,
-        label: string,
-        value: string,
-        placeholder?: string,
-    ): { wrapper: HTMLElement; icon: HTMLElement; input: HTMLInputElement } {
-        const wrapper = container.createDiv({ cls: "fn-mobile-event-icon-input" });
-        const iconEl = wrapper.createSpan({
-            cls: "fn-mobile-event-input-icon",
-            attr: { "aria-hidden": "true" },
-        });
-        setIcon(iconEl, icon);
-        const input = this.input(wrapper, "text", label, value, placeholder);
-        return { wrapper, icon: iconEl, input };
-    }
-
-    private checkbox(
-        container: HTMLElement,
-        label: string,
-        initial: boolean,
-        onChange: (checked: boolean) => void,
-    ): HTMLInputElement {
-        const row = container.createEl("label", { cls: "fn-mobile-event-toggle" });
-        const input = row.createEl("input", { type: "checkbox" });
-        input.checked = initial;
-        row.createSpan({ text: label });
-        this.registerDomEvent(input, "change", () => onChange(input.checked));
-        return input;
-    }
-
-    private segmented<T extends string>(
-        container: HTMLElement,
-        options: Array<{ value: T; label: string }>,
-        initial: T,
-        onChange: (value: T) => void,
-    ): void {
-        const group = container.createDiv({ cls: "fn-mobile-event-segmented", attr: { role: "group" } });
-        for (const option of options) {
-            const button = group.createEl("button", {
-                cls: `fn-mobile-event-segment${option.value === initial ? " is-active" : ""}`,
-                text: option.label,
-                attr: { type: "button", "aria-pressed": String(option.value === initial) },
-            });
-            this.registerDomEvent(button, "click", () => {
-                group.querySelectorAll<HTMLElement>(".fn-mobile-event-segment").forEach((element) => {
-                    element.removeClass("is-active");
-                    element.setAttribute("aria-pressed", "false");
-                });
-                button.addClass("is-active");
-                button.setAttribute("aria-pressed", "true");
-                onChange(option.value);
-            });
-        }
-    }
-
-    private disclosure(container: HTMLElement, label: string, icon: string, value?: string): HTMLElement {
-        const details = container.createEl("details", { cls: "fn-mobile-event-disclosure" });
-        const summary = details.createEl("summary", { cls: "fn-mobile-event-summary" });
-        const iconEl = summary.createSpan({ cls: "fn-mobile-event-summary-icon" });
-        setIcon(iconEl, icon);
-        const text = summary.createSpan({ cls: "fn-mobile-event-summary-text" });
-        text.createSpan({ text: label });
-        if (value) text.createEl("small", { text: value });
-        const chevron = summary.createSpan({ cls: "fn-mobile-event-summary-chevron" });
-        setIcon(chevron, "chevron-down");
-        return details.createDiv({ cls: "fn-mobile-event-disclosure-content" });
-    }
-
-    private registerSuggester(suggester: { close(): void }): void {
-        this.register(() => suggester.close());
     }
 
     private registerLifecycle(): void {
@@ -627,50 +278,16 @@ export class EventTaskMobileScreen extends Component {
         }
         const settings = this.getSettings();
         const writer = new EventTaskWriter(this.app, settings.eventTask, () => this.getSettings());
-        if (this.form.kind === "inbox") {
-            await this.executeSubmission(() =>
-                submitInbox(this.form, {
-                    writer,
-                    resolveTarget: () => this.resolveInboxTarget(),
-                    contextNotes: readContextSuggestionNotes(this.app),
-                    contextSources: settings.inbox.contextSources,
-                    resolveLinkDestination: createObsidianLinkResolver(this.app),
-                    formatSourceLink: createObsidianLinkFormatter(this.app),
-                    resolveDailyBacklinkTarget: (record) => this.resolveMomentBacklinkTarget(record),
-                    usesDatedHeading: this.momentUsesDatedHeading(),
-                }),
-            );
-            return;
-        }
-        if (!this.form.title.trim()) {
-            new Notice("Please enter a title.");
-            return;
-        }
-        if (!this.form.targetFile.trim()) {
-            new Notice("Please select a target file.");
-            return;
-        }
-
         await this.executeSubmission(() =>
-            submitEventTask(this.form, {
+            submitInbox(this.form, {
                 writer,
-                defaultHubNotesFolder: settings.captureEvent.hubNotesFolder,
-                defaultDetailNotesFolder: settings.eventTask.detailNotesFolder,
-                resolveTargetFile: (record) => this.resolveTargetFile(record),
-                findMarkdownFile: (path) => {
-                    const file = this.app.vault.getAbstractFileByPath(path);
-                    return isTFile(file) ? file : null;
-                },
-                openFile: (file) => {
-                    const vaultFile = this.app.vault.getAbstractFileByPath(file.path);
-                    if (isTFile(vaultFile))
-                        void this.app.workspace.getLeaf(false).openFile(vaultFile, { active: false });
-                },
+                resolveTarget: () => this.resolveInboxTarget(),
                 contextNotes: readContextSuggestionNotes(this.app),
                 contextSources: settings.inbox.contextSources,
                 resolveLinkDestination: createObsidianLinkResolver(this.app),
                 formatSourceLink: createObsidianLinkFormatter(this.app),
-                formatDailyLink: (when, path, label) => writer.formatDailyLink(when, path, label),
+                resolveDailyBacklinkTarget: (record) => this.resolveMomentBacklinkTarget(record),
+                usesDatedHeading: this.momentUsesDatedHeading(),
             }),
         );
     }
@@ -750,15 +367,5 @@ export class EventTaskMobileScreen extends Component {
             (candidate) => candidate.id === settings.captureMoment.profileId,
         );
         return Boolean(profile?.headingFormat);
-    }
-
-    private resolveTargetFile(record: EventTaskRecord): string {
-        const when = record.kind === "event" ? record.start : (record.due ?? record.timebox?.start ?? this.anchorDate);
-        const target: FocusTarget = {
-            file: this.form.targetFile.trim(),
-            heading: this.form.targetHeading.trim(),
-            position: this.form.targetPosition,
-        };
-        return new TargetResolver(this.app, this.getSettings()).resolve(target, when).file;
     }
 }
