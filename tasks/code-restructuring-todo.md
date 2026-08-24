@@ -284,17 +284,28 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 
 **Acceptance criteria:**
 
-- [ ] ItemView owns only Obsidian lifecycle and composition.
-- [ ] TimerEngine remains pure and state transitions are unchanged.
-- [ ] View ID, restoration, log Markdown, and interaction behavior remain stable.
+- [x] ItemView owns only Obsidian lifecycle and composition.
+- [x] TimerEngine remains pure and state transitions are unchanged.
+- [x] View ID, restoration, log Markdown, and interaction behavior remain stable.
 
 **Verification:**
 
-- [ ] Run TimerEngine, writer, related-log, and target tests.
-- [ ] Smoke-test open/close/reopen, countdown/stopwatch, pause/resume, and completion logging.
+- [x] Run TimerEngine, writer, related-log, and target tests. No TimerEngine-specific unit tests existed before or after this task (only `toEngineMode` in `Timer.ts` is tested) — this is a pre-existing gap, not something this task introduced or was asked to backfill.
+- [ ] Smoke-test open/close/reopen, countdown/stopwatch, pause/resume, and completion logging. Not performed — same limitation as Task 9/10: `TimerView.ts` and the extracted UI classes depend on live Obsidian classes (`ItemView`, `Menu`, `Modal`) not mockable under `node:test`. Verified instead by diff review (every extraction was pure code motion — method bodies moved verbatim, `this.x` renamed to `this.options.x`/`ctx.x`) plus full CI after every batch. Flagged here as a real gap, not silently dropped.
 
 **Dependencies:** Tasks 5–6.
 **Estimated scope:** Multiple Medium batches.
+
+**Progress (2026-08-24):**
+
+- [x] Batch 1: `TimerEngine.ts` moved to `features/focus-session/domain/TimerEngine.ts` — it was already pure (zero Obsidian imports, only `window.setInterval`/`window.clearInterval`), so this was a relocation, not a purification. `CircularDisplay.ts` and `LogModal.ts` moved to `features/focus-session/ui/` — both already self-contained. Filenames/exported symbols unchanged; only import paths adjusted. `TimerView.ts` (the only consumer of all three) repointed.
+- [x] Batch 2: The "Log target" collapsible section extracted to `features/focus-session/ui/TimerTargetEditor.ts`, taking app/getSettings/saveSettings/buildResolver plus a narrow `onTargetChanged` callback and a `registerEvent` callback (mirrors `Component.registerEvent`) instead of holding a reference to the whole ItemView. `TimerView.ts`: 700→537 lines.
+- [x] Batch 3: The "Recent in section" collapsible panel extracted to `features/focus-session/ui/TimerRecentEntries.ts`, taking app/getSettings/buildResolver/buildReader plus the owning ItemView as a `Component` (only needed to tie `MarkdownRenderer`'s cleanup to the view's lifecycle). `TimerView.ts`: 537→482 lines.
+- [x] Batch 4: `handleStopAndLog`/`handleComplete`/`openLogModal`/`beep` extracted to `features/focus-session/ui/TimerLogWorkflow.ts`, taking an options object (app/engine/getSettings/buildWriter/buildResolver plus narrow accessor callbacks for currentMode, focus input value, planned minutes, and two change-notification callbacks). `TimerView.ts`: 482→388 lines.
+- [x] Batch 5 (final): Mode selector, focus-on input, circular display, duration row, and action buttons extracted to `features/focus-session/ui/TimerControls.ts`, owning `currentMode` and the shared `TimerEngine` reference, exposing narrow accessors/refresh methods that `TimerLogWorkflow`'s callbacks call into. `TimerView.ts`: 388→114 lines — now a pure ItemView shell composing all four extracted classes around one shared `TimerEngine`.
+- [x] Full CI (format, lint, typecheck, 299 tests, production build, artifact verification, docs build) verified after every batch; zero import cycles introduced.
+
+**Task 11 complete 2026-08-24.** All acceptance criteria closed. The one unchecked verification item (manual desktop smoke test) is the same inherent gap noted for Tasks 9/10 — this UI layer has no automated coverage — not an oversight specific to this task.
 
 ## Task 12: Decompose Timeline
 
