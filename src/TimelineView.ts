@@ -1,16 +1,12 @@
 import { ItemView, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import { openEventTaskForm } from "./EventTaskCaptureLauncher";
-import { ScheduledItemQuery } from "./ScheduledItemQuery";
-import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import type { TimelineMode, TimelineRange } from "./features/timeline/domain/Timeline";
-import { TimelineGrid } from "./TimelineGrid";
-import { TimelineLayout } from "./TimelineLayout";
 import { TimelineHeader } from "./features/timeline/ui/TimelineHeader";
 import { TimelineIndex, type TimelineIndexResult } from "./features/timeline/ui/TimelineIndex";
+import { TimelineContentRenderer } from "./features/timeline/ui/TimelineContentRenderer";
 import { TimelineModalLauncher } from "./features/timeline/ui/TimelineModalLauncher";
-import { buildTimelineSourceSummaries, TimelineSourceSidebar } from "./TimelineSourceSidebar";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
-import { addDays, formatDayKey, getIsoWeek, startOfDay, startOfWeek } from "./features/timeline/domain/TimelineDate.ts";
+import { addDays, formatDayKey, startOfDay, startOfWeek } from "./features/timeline/domain/TimelineDate.ts";
 
 export const VIEW_TYPE_FOCUS_TIMELINE = "focus-timeline-view";
 
@@ -20,8 +16,7 @@ export class TimelineView extends ItemView {
     private index: TimelineIndex;
     private modalLauncher: TimelineModalLauncher;
     private header: TimelineHeader;
-    private query = new ScheduledItemQuery();
-    private layout = new TimelineLayout();
+    private contentRenderer!: TimelineContentRenderer;
     private bodyEl!: HTMLElement;
     private sidebarEl!: HTMLElement;
     private gridEl!: HTMLElement;
@@ -52,19 +47,19 @@ export class TimelineView extends ItemView {
                 const settings = this.getSettings();
                 settings.timeline.sourceSidebarCollapsed = !settings.timeline.sourceSidebarCollapsed;
                 void this.saveSettings();
-                this.renderContent();
+                this.contentRenderer.render();
             },
             onPrev: () => this.shift(-1),
             onToday: () => {
                 this.anchorDate = startOfDay(new Date());
-                this.renderContent();
+                this.contentRenderer.render();
             },
             onNext: () => this.shift(1),
             onModeChange: (nextMode) => {
                 this.mode = nextMode;
                 this.getSettings().timeline.defaultMode = nextMode;
                 void this.saveSettings();
-                this.renderContent();
+                this.contentRenderer.render();
             },
             onRefresh: () => void this.refreshIndex(),
         });
@@ -101,7 +96,7 @@ export class TimelineView extends ItemView {
             }
         }
         this.header.setMode(this.mode);
-        if (this.gridEl) this.renderContent();
+        if (this.contentRenderer) this.contentRenderer.render();
     }
 
     async onOpen(): Promise<void> {
@@ -159,6 +154,16 @@ export class TimelineView extends ItemView {
         this.bodyEl = root.createDiv({ cls: "focus-timeline-body" });
         this.sidebarEl = this.bodyEl.createDiv({ cls: "focus-timeline-sidebar" });
         this.gridEl = this.bodyEl.createDiv({ cls: "focus-timeline-main" });
+        this.contentRenderer = new TimelineContentRenderer(this.rootEl, this.sidebarEl, this.gridEl, {
+            getSettings: this.getSettings,
+            saveSettings: this.saveSettings,
+            index: this.index,
+            header: this.header,
+            modalLauncher: this.modalLauncher,
+            getMode: () => this.mode,
+            getAnchorDate: () => this.anchorDate,
+            getRange: () => this.currentRange(),
+        });
     }
 
     private async refreshIndex(): Promise<void> {
@@ -168,81 +173,10 @@ export class TimelineView extends ItemView {
     private handleIndexResult(result: TimelineIndexResult): void {
         if (result.status === "error") return;
         if (result.status === "disabled") {
-            this.renderDisabled();
+            this.contentRenderer.renderDisabled();
             return;
         }
-        this.renderContent();
-    }
-
-    private renderDisabled(): void {
-        this.sidebarEl.empty();
-        this.gridEl.empty();
-        this.gridEl.createDiv({
-            cls: "focus-timeline-empty",
-            text: "Focus Timeline is disabled in settings.",
-        });
-    }
-
-    private renderContent(): void {
-        const settings = this.getSettings();
-        this.rootEl.toggleClass("focus-timeline-day-mode", this.mode === "day");
-        this.rootEl.toggleClass("focus-timeline-multi-day-mode", this.mode === "multi-day");
-        this.header.syncControls(
-            this.mode,
-            getIsoWeek(this.currentRange().start),
-            settings.timeline.sourceSidebarCollapsed,
-        );
-        const range = this.currentRange();
-        const items = this.index.getItems();
-        const allSourceIds = new Set(this.index.getEffectiveSourceGroups().map((source) => source.id));
-        const allRangeItems = this.query.getItemsForRange(items, range, {
-            visibleSources: allSourceIds,
-            includeCompleted: settings.timeline.showCompletedTasks,
-        });
-        const allPendingItems = this.query.getPendingTasks(items, this.anchorDate, allSourceIds);
-        const sources = this.buildSourceSummaries([...allRangeItems, ...allPendingItems]);
-        const visibleSources = new Set(sources.filter((source) => source.visible).map((source) => source.id));
-        const rangeItems = allRangeItems.filter((item) => visibleSources.has(item.source.groupId));
-        const pendingItems = allPendingItems.filter((item) => visibleSources.has(item.source.groupId));
-        const layout = this.layout.build(rangeItems, range);
-
-        new TimelineSourceSidebar(this.sidebarEl, {
-            sources,
-            collapsed: settings.timeline.sourceSidebarCollapsed,
-            onToggleSource: (sourceId, visible) => {
-                settings.timeline.sourceVisibility[sourceId] = visible;
-                void this.saveSettings();
-                this.renderContent();
-            },
-            onToggleCollapsed: (collapsed) => {
-                settings.timeline.sourceSidebarCollapsed = collapsed;
-                void this.saveSettings();
-                this.renderContent();
-            },
-        }).render();
-
-        this.gridEl.toggleClass("focus-timeline-main-expanded", settings.timeline.sourceSidebarCollapsed);
-
-        if (this.index.getEffectiveSourceFolders().length === 0) {
-            this.gridEl.empty();
-            this.gridEl.createDiv({
-                cls: "focus-timeline-empty",
-                text: "Configure timeline source folders in plugin settings.",
-            });
-            return;
-        }
-
-        new TimelineGrid(this.gridEl, {
-            mode: this.mode,
-            range,
-            items: rangeItems,
-            pendingItems,
-            layout,
-            sourceColors: settings.timeline.sourceColors,
-            showPendingSummary: settings.timeline.showPendingSummary,
-            onOpenPendingItems: (items) => this.modalLauncher.openPendingItems(items),
-            onOpenItem: (item) => this.modalLauncher.openItemDetails(item),
-        }).render();
+        this.contentRenderer.render();
     }
 
     private currentRange(): TimelineRange {
@@ -257,17 +191,6 @@ export class TimelineView extends ItemView {
     private shift(direction: number): void {
         const days = this.mode === "day" ? 1 : Math.max(1, this.getSettings().timeline.multiDaySpanDays);
         this.anchorDate = addDays(this.anchorDate, direction * days);
-        this.renderContent();
-    }
-
-    private buildSourceSummaries(activeItems: ScheduledItem[]) {
-        const settings = this.getSettings();
-        return buildTimelineSourceSummaries(
-            this.index.getEffectiveSourceGroups(),
-            activeItems,
-            settings.timeline.sourceVisibility,
-            settings.timeline.sourceColors,
-            (sourceId) => this.index.colorFor(sourceId),
-        );
+        this.contentRenderer.render();
     }
 }
