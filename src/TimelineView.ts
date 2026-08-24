@@ -1,10 +1,11 @@
-import { ItemView, setIcon, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
+import { ItemView, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import { openEventTaskForm } from "./EventTaskCaptureLauncher";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
 import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import type { TimelineMode, TimelineRange } from "./features/timeline/domain/Timeline";
 import { TimelineGrid } from "./TimelineGrid";
 import { TimelineLayout } from "./TimelineLayout";
+import { TimelineHeader } from "./features/timeline/ui/TimelineHeader";
 import { TimelineIndex, type TimelineIndexResult } from "./features/timeline/ui/TimelineIndex";
 import { TimelineModalLauncher } from "./features/timeline/ui/TimelineModalLauncher";
 import { buildTimelineSourceSummaries, TimelineSourceSidebar } from "./TimelineSourceSidebar";
@@ -18,16 +19,13 @@ export class TimelineView extends ItemView {
     private anchorDate = startOfDay(new Date());
     private index: TimelineIndex;
     private modalLauncher: TimelineModalLauncher;
+    private header: TimelineHeader;
     private query = new ScheduledItemQuery();
     private layout = new TimelineLayout();
     private bodyEl!: HTMLElement;
     private sidebarEl!: HTMLElement;
     private gridEl!: HTMLElement;
     private rootEl!: HTMLElement;
-    private modeSelect!: HTMLSelectElement;
-    private weeklyOpenButton!: HTMLButtonElement;
-    private weekLabel!: HTMLElement;
-    private sourceToggleButton!: HTMLButtonElement;
 
     constructor(
         leaf: WorkspaceLeaf,
@@ -41,6 +39,34 @@ export class TimelineView extends ItemView {
             app: this.app,
             getSettings: this.getSettings,
             onRefreshNeeded: () => void this.refreshIndex(),
+        });
+        this.header = new TimelineHeader({
+            app: this.app,
+            viewType: VIEW_TYPE_FOCUS_TIMELINE,
+            getMode: () => this.mode,
+            getAnchorDate: () => this.anchorDate,
+            onAdd: () => {
+                openEventTaskForm(this.app, this.getSettings, this.anchorDate, () => void this.refreshIndex(), this);
+            },
+            onToggleSidebar: () => {
+                const settings = this.getSettings();
+                settings.timeline.sourceSidebarCollapsed = !settings.timeline.sourceSidebarCollapsed;
+                void this.saveSettings();
+                this.renderContent();
+            },
+            onPrev: () => this.shift(-1),
+            onToday: () => {
+                this.anchorDate = startOfDay(new Date());
+                this.renderContent();
+            },
+            onNext: () => this.shift(1),
+            onModeChange: (nextMode) => {
+                this.mode = nextMode;
+                this.getSettings().timeline.defaultMode = nextMode;
+                void this.saveSettings();
+                this.renderContent();
+            },
+            onRefresh: () => void this.refreshIndex(),
         });
     }
 
@@ -74,7 +100,7 @@ export class TimelineView extends ItemView {
                 if (!Number.isNaN(parsed.getTime())) this.anchorDate = parsed;
             }
         }
-        if (this.modeSelect) this.modeSelect.value = this.mode;
+        this.header.setMode(this.mode);
         if (this.gridEl) this.renderContent();
     }
 
@@ -129,94 +155,10 @@ export class TimelineView extends ItemView {
     }
 
     private renderShell(root: HTMLElement): void {
-        const header = root.createDiv({ cls: "focus-timeline-header" });
-        const titleRow = header.createDiv({ cls: "focus-timeline-title-row" });
-        titleRow.createDiv({ cls: "focus-timeline-title", text: "Focus Timeline" });
-
-        const controls = header.createDiv({ cls: "focus-timeline-controls" });
-
-        const addBtn = controls.createEl("button", {
-            cls: "focus-timeline-add-button",
-            attr: { "aria-label": "Tambah event atau task", title: "Tambah event atau task" },
-        });
-        setIcon(addBtn, "plus");
-        addBtn.addEventListener("click", () => {
-            openEventTaskForm(this.app, this.getSettings, this.anchorDate, () => void this.refreshIndex(), this);
-        });
-
-        this.sourceToggleButton = controls.createEl("button", {
-            cls: "focus-timeline-source-toggle",
-            attr: { "aria-label": "Toggle sources", title: "Toggle sources" },
-        });
-        setIcon(this.sourceToggleButton, "panel-left");
-        this.sourceToggleButton.addEventListener("click", () => {
-            const settings = this.getSettings();
-            settings.timeline.sourceSidebarCollapsed = !settings.timeline.sourceSidebarCollapsed;
-            void this.saveSettings();
-            this.renderContent();
-        });
-        this.weekLabel = controls.createDiv({ cls: "focus-timeline-week-label" });
-        this.addButton(controls, "Prev", () => this.shift(-1));
-        this.addButton(controls, "Today", () => {
-            this.anchorDate = startOfDay(new Date());
-            this.renderContent();
-        });
-        this.addButton(controls, "Next", () => this.shift(1));
-
-        this.weeklyOpenButton = controls.createEl("button", {
-            cls: "focus-timeline-weekly-open-button",
-            attr: {
-                "aria-label": "Open Weekly View",
-                title: "Open Weekly View",
-            },
-        });
-        setIcon(this.weeklyOpenButton, "calendar-range");
-        this.weeklyOpenButton.addEventListener("click", () => {
-            void this.openWeeklyPlanner();
-        });
-
-        this.modeSelect = controls.createEl("select", { cls: "focus-timeline-mode-select" });
-        this.modeSelect.createEl("option", { text: "Day", value: "day" });
-        this.modeSelect.createEl("option", { text: "Weekly View", value: "multi-day" });
-        this.modeSelect.value = this.mode;
-        this.modeSelect.addEventListener("change", () => {
-            const nextMode = this.modeSelect.value as TimelineMode;
-            if (nextMode === "multi-day" && this.mode === "day") {
-                this.modeSelect.value = "day";
-                void this.openWeeklyPlanner();
-                return;
-            }
-
-            this.mode = nextMode;
-            this.getSettings().timeline.defaultMode = nextMode;
-            void this.saveSettings();
-            this.renderContent();
-        });
-
-        this.addButton(controls, "Refresh", () => void this.refreshIndex());
-
+        this.header.render(root);
         this.bodyEl = root.createDiv({ cls: "focus-timeline-body" });
         this.sidebarEl = this.bodyEl.createDiv({ cls: "focus-timeline-sidebar" });
         this.gridEl = this.bodyEl.createDiv({ cls: "focus-timeline-main" });
-    }
-
-    private addButton(parent: HTMLElement, text: string, onClick: () => void): HTMLButtonElement {
-        const button = parent.createEl("button", { cls: "focus-timeline-small-button", text });
-        button.addEventListener("click", onClick);
-        return button;
-    }
-
-    private async openWeeklyPlanner(): Promise<void> {
-        const leaf = this.app.workspace.getLeaf("tab");
-        await leaf.setViewState({
-            type: VIEW_TYPE_FOCUS_TIMELINE,
-            active: true,
-            state: {
-                mode: "multi-day",
-                anchorDate: formatDayKey(this.anchorDate),
-            },
-        });
-        this.app.workspace.revealLeaf(leaf);
     }
 
     private async refreshIndex(): Promise<void> {
@@ -245,25 +187,11 @@ export class TimelineView extends ItemView {
         const settings = this.getSettings();
         this.rootEl.toggleClass("focus-timeline-day-mode", this.mode === "day");
         this.rootEl.toggleClass("focus-timeline-multi-day-mode", this.mode === "multi-day");
-        if (this.modeSelect) this.modeSelect.value = this.mode;
-        if (this.modeSelect) this.modeSelect.toggleClass("focus-timeline-mode-select--hidden", this.mode === "day");
-        if (this.weeklyOpenButton)
-            this.weeklyOpenButton.toggleClass("focus-timeline-weekly-open-button--hidden", this.mode !== "day");
-        if (this.weekLabel) this.weekLabel.setText(`Week ${getIsoWeek(this.currentRange().start)}`);
-        if (this.sourceToggleButton) {
-            this.sourceToggleButton.toggleClass(
-                "focus-timeline-source-toggle--active",
-                !settings.timeline.sourceSidebarCollapsed,
-            );
-            this.sourceToggleButton.setAttr(
-                "aria-label",
-                settings.timeline.sourceSidebarCollapsed ? "Show sources" : "Hide sources",
-            );
-            this.sourceToggleButton.setAttr(
-                "title",
-                settings.timeline.sourceSidebarCollapsed ? "Show sources" : "Hide sources",
-            );
-        }
+        this.header.syncControls(
+            this.mode,
+            getIsoWeek(this.currentRange().start),
+            settings.timeline.sourceSidebarCollapsed,
+        );
         const range = this.currentRange();
         const items = this.index.getItems();
         const allSourceIds = new Set(this.index.getEffectiveSourceGroups().map((source) => source.id));
