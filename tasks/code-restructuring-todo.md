@@ -341,17 +341,27 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 
 **Acceptance criteria:**
 
-- [ ] `main.ts` orchestrates lifecycle and composition without feature business logic.
-- [ ] All command, ribbon, view, manifest, CSS, and console identifiers retain their values.
-- [ ] No unowned shim, dead runtime import, or speculative empty folder remains.
+- [x] `main.ts` orchestrates lifecycle and composition without feature business logic.
+- [x] All command, ribbon, view, manifest, CSS, and console identifiers retain their values.
+- [x] No unowned shim, dead runtime import, or speculative empty folder remains. (3 proven-dead files remain by explicit user choice, not oversight — see Progress below.)
 
 **Verification:**
 
-- [ ] Run full CI, artifact verification, dependency audit, import guard, and unused-export inspection.
-- [ ] Complete command/ribbon/view restoration desktop smoke tests and capture mobile acceptance.
+- [x] Run full CI, artifact verification, dependency audit, import guard, and unused-export inspection. `test/architecture-boundaries.test.ts` is the automated import-guard/cycle check (scans all of src/ dynamically, no hardcoded file list — already covers every file created this session). Dead-file audit was manual (heuristic script + grep), documented below.
+- [ ] Complete command/ribbon/view restoration desktop smoke tests and capture mobile acceptance. Not performed — same limitation as Tasks 9–12: no automated coverage for live-Obsidian UI, and manual testing was out of scope this session (mirrors the Task 9 decision). Flagged here as a real gap, not silently dropped.
 
 **Dependencies:** Tasks 9–12.
 **Estimated scope:** Multiple Small batches.
+
+**Progress (2026-08-24):**
+
+- [x] Extracted `openActiveNoteManager` (the only feature business logic remaining in `main.ts`: reading file content, scanning the active note's ledger/checklist scopes, wiring `ActiveNoteManagerModal` callbacks) to a new root file `ActiveNoteManagerLauncher.ts`, matching the existing launch/orchestration pattern. `main.ts`: 181→147 lines.
+- [x] Audited for unowned shims: no empty directories under `features/`; no leftover re-export-only files; `biome lint` clean repo-wide.
+- [x] Heuristic scan for files with zero import references anywhere in `src/` found 3: `EventEditModal.ts`, `TaskEditModal.ts` (both already flagged in the architecture baseline as legacy candidates awaiting proof — now proven), and `MoodPicker.ts` (superseded by `EmotionalWellbeingPicker.ts`, both read from `MoodReference.ts` which stays live via other consumers). Verified with direct grep (case-insensitive, across `src/` and `test/`) — zero references beyond the files' own definitions. A separate historical planning doc (`tasks/backlink-and-task-links-plan.md`) independently corroborates `TaskEditModal.ts` as dead code.
+- [x] **User decision (2026-08-24):** asked whether to delete the 3 proven-dead files; user chose "Leave all 3 alone." Not deleted. Recorded in the ownership map (`docs/code-architecture-baseline.md`) so this isn't silently revisited or mistaken for an oversight later.
+- [x] Full CI (format, lint, typecheck, 299 tests, production build, artifact verification, docs build) verified; `test/compatibility-identifiers.test.ts` confirms all command/ribbon/view/manifest identifiers unchanged.
+
+**Task 13 complete 2026-08-24.** All acceptance criteria closed (the dead-file deletions were offered and explicitly declined by the user, not missed). The one unchecked verification item (manual desktop/mobile smoke test) is the same inherent gap noted for Tasks 9–12.
 
 ## Checkpoint: Complete
 
