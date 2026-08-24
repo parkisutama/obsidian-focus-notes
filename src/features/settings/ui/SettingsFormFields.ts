@@ -1,3 +1,26 @@
+import { Setting } from "obsidian";
+import type { SettingsRenderContext } from "./SettingsRenderContext";
+
+/** Dropdown of Periodical Notes profiles. Shared by Focus/Event/Moment capture category renderers. */
+export function renderProfilePicker(
+    container: HTMLElement,
+    ctx: SettingsRenderContext,
+    name: string,
+    desc: string,
+    currentProfileId: string,
+    onChange: (profileId: string) => Promise<void>,
+): void {
+    const profiles = ctx.settings.periodicalNotes.profiles;
+    new Setting(container)
+        .setName(name)
+        .setDesc(desc)
+        .addDropdown((dropdown) => {
+            if (profiles.length === 0) dropdown.addOption("", "No profiles defined yet");
+            for (const profile of profiles) dropdown.addOption(profile.id, profile.name || profile.id);
+            dropdown.setValue(currentProfileId).onChange(onChange);
+        });
+}
+
 /** Labeled text input row. Shared by Periodical Notes and Object Source category renderers. */
 export function contextTextField(
     container: HTMLElement,
