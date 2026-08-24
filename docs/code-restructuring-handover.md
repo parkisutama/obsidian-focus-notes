@@ -1,7 +1,7 @@
 # Code restructuring handover
 
-Tanggal: 2026-08-23
-Status: Task 7 dan Task 8 selesai. Seluruh capture persistence/boundary (application layer, adapter Obsidian, `TaskFormatWriter`, `ScheduledItemIdentityMigration`, `EventLedgerEditor`/`TaskLedgerEditor`, `DetailNotePromotion`, `Suggesters`, dan shared primitives `ObjectReference`/`RelatedLog`/`ContextLinkResolver`/`RelatedWriteRecovery`) sudah canonical tanpa shim. Celah validasi Detail Note create-folder ditemukan dan diperbaiki. Task 9 (retirement legacy `EventTaskModal.ts`/`EventTaskMobileScreen.ts`) berikutnya.
+Tanggal: 2026-08-24
+Status: Task 7 dan Task 8 selesai. Task 9 aktif: `EventTaskModal.ts`/`EventTaskMobileScreen.ts` sudah dipangkas jadi shell Moment-only (kode Event/Task provably dead dihapus setelah tracing seluruh command/ribbon/launcher), dan `submitEventTask` dihapus dari `EventTaskSubmission.ts` setelah zero caller. `EventTaskFormState.ts`/`SubmissionPolicy.ts` sengaja tidak disentuh — masih load-bearing. **Manual acceptance testing desktop/mobile belum dilakukan** — direkomendasikan sebelum dianggap final.
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -357,9 +357,9 @@ Acceptance manual tetap diperlukan untuk:
 
 1. Baca dokumen handover ini, `docs/spec-code-quality-remediation.md`, dan `tasks/unified-scheduled-item-form-plan.md`.
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
-3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 306 tes pada 2026-08-23.
+3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 299 tes pada 2026-08-24.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Mulai Task 9: telusuri command/ribbon/launcher yang membuka `EventTaskModal.ts`/`EventTaskMobileScreen.ts`, buktikan status aktif/legacy per jalur Moment/Event/Task, lalu cutover Event/Task ke `ScheduledItemDesktopCreateModal.ts`/`ScheduledItemMobileCreateScreen.ts` sebelum retirement. `EventTaskFormState.ts`/`SubmissionPolicy.ts`/`EventTaskSubmission.ts` baru dipindah/dihapus setelah itu.
+5. **Lakukan manual acceptance testing desktop dan mobile dulu** (Moment capture end-to-end, tombol tab Event/Task redirect dengan benar) sebelum lanjut Task 9 — belum diverifikasi di sesi ini. Setelah itu, sisa Task 9: evaluasi apakah `EventTaskModal.ts`/`EventTaskMobileScreen.ts` perlu di-rename untuk mencerminkan peran Moment-only-nya, dan apakah `EventTaskSubmission.ts` (kini hanya `submitInbox`/`retryRelatedSubmission`) perlu direorganisasi lebih lanjut. `EventTaskFormState.ts`/`SubmissionPolicy.ts` tetap load-bearing, jangan dipindah.
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 
