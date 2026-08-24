@@ -1,7 +1,7 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-23
-Status: Task 7 selesai. Task 8 aktif; application layer, adapter Obsidian, `TaskFormatWriter.ts` (domain/infrastructure split), dan `ScheduledItemIdentityMigration.ts` sudah canonical tanpa shim. Celah validasi Detail Note create-folder ditemukan dan diperbaiki. Sisa Task 8 didominasi keputusan ownership (shared capture primitives, `Suggesters.ts`), bukan mechanical move lagi.
+Status: Task 7 dan Task 8 selesai. Seluruh capture persistence/boundary (application layer, adapter Obsidian, `TaskFormatWriter`, `ScheduledItemIdentityMigration`, `EventLedgerEditor`/`TaskLedgerEditor`, `DetailNotePromotion`, `Suggesters`, dan shared primitives `ObjectReference`/`RelatedLog`/`ContextLinkResolver`/`RelatedWriteRecovery`) sudah canonical tanpa shim. Celah validasi Detail Note create-folder ditemukan dan diperbaiki. Task 9 (retirement legacy `EventTaskModal.ts`/`EventTaskMobileScreen.ts`) berikutnya.
 Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
 
 ## Ringkasan keputusan
@@ -359,7 +359,7 @@ Acceptance manual tetap diperlukan untuk:
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
 3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 306 tes pada 2026-08-23.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Lanjutkan Task 8 dengan memutuskan ownership `ContextLinkResolver.ts`/`RelatedWriteRecovery.ts`/`RelatedLog.ts`/`ObjectReference.ts` (shared capture application vs tetap root) dan mengevaluasi `Suggesters.ts` untuk `infrastructure/obsidian/`. Kedua acceptance criteria mechanical Task 8 (Obsidian-free policy, path validation) sudah terpenuhi; sisa yang belum jelas adalah keputusan ownership, bukan mechanical move.
+5. Mulai Task 9: telusuri command/ribbon/launcher yang membuka `EventTaskModal.ts`/`EventTaskMobileScreen.ts`, buktikan status aktif/legacy per jalur Moment/Event/Task, lalu cutover Event/Task ke `ScheduledItemDesktopCreateModal.ts`/`ScheduledItemMobileCreateScreen.ts` sebelum retirement. `EventTaskFormState.ts`/`SubmissionPolicy.ts`/`EventTaskSubmission.ts` baru dipindah/dihapus setelah itu.
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 
