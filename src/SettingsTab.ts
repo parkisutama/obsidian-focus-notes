@@ -1,4 +1,10 @@
 import { type App, type Plugin, PluginSettingTab, Setting, setIcon } from "obsidian";
+import {
+    renderEventCapture,
+    renderMomentCapture,
+    renderSharedNoteCreation,
+    renderTaskCapture,
+} from "./features/settings/ui/CaptureSettings";
 import { renderFocusSession } from "./features/settings/ui/FocusSessionSettings";
 import {
     type ObjectSourceNavigation,
@@ -15,12 +21,10 @@ import {
     ROOT_CATEGORIES,
     type SettingsCategory,
 } from "./SettingsLayout";
-import { FolderSuggest } from "./infrastructure/obsidian/Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
 import type { TimelineMode } from "./features/timeline/domain/Timeline";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
-import type { InsertPosition } from "./shared/markdown/InsertPosition";
 import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 type FocusNotesSettingsView = { id: NavigableViewId } | { id: "objects-source"; sourceId: string };
@@ -107,16 +111,16 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 this.renderCaptureList(containerEl);
                 return;
             case "capture-moment":
-                this.renderMomentCapture(containerEl);
+                renderMomentCapture(containerEl, this.settingsContext());
                 return;
             case "capture-event":
-                this.renderEventCapture(containerEl);
+                renderEventCapture(containerEl, this.settingsContext());
                 return;
             case "capture-task":
-                this.renderTaskCapture(containerEl);
+                renderTaskCapture(containerEl, this.settingsContext());
                 return;
             case "capture-shared":
-                this.renderSharedNoteCreation(containerEl);
+                renderSharedNoteCreation(containerEl, this.settingsContext());
                 return;
             case "timeline":
                 this.renderFocusTimeline(containerEl);
@@ -282,395 +286,6 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 await this.plugin.saveSettings();
             }),
         );
-    }
-
-    private renderMomentCapture(containerEl: HTMLElement): void {
-        containerEl.createEl("h3", { text: "Moment capture" });
-
-        containerEl.createEl("p", {
-            cls: "setting-item-description",
-            text:
-                "Choose where quick Moment captures go and configure Object Sources for contextual @ suggestions, " +
-                "historical logs, and future template-based object creation.",
-        });
-
-        new Setting(containerEl)
-            .setName("Reuse Event's active target")
-            .setDesc(
-                "When on, Moment reuses whatever Event/Task's own active target resolves to (the note you " +
-                    "currently have open, or Event's configured default). When off, Moment uses the Periodical " +
-                    "Notes profile below instead.",
-            )
-            .addToggle((toggle) =>
-                toggle.setValue(this.plugin.settings.captureMoment.useEventCaptureTarget).onChange(async (v) => {
-                    this.plugin.settings.captureMoment.useEventCaptureTarget = v;
-                    await this.plugin.saveSettings();
-                    this.display();
-                }),
-            );
-
-        if (!this.plugin.settings.captureMoment.useEventCaptureTarget) {
-            this.renderProfilePicker(
-                containerEl,
-                "Periodical note",
-                "Which Periodical Notes profile Moment captures land in. A profile with a per-period heading " +
-                    "format (e.g. Weekly) groups captures under a per-day heading automatically.",
-                this.plugin.settings.captureMoment.profileId,
-                async (profileId) => {
-                    this.plugin.settings.captureMoment.profileId = profileId;
-                    await this.plugin.saveSettings();
-                },
-            );
-        }
-
-        new Setting(containerEl)
-            .setName("Heading")
-            .setDesc(
-                "Heading text without #. Used when reusing Event's target, or when the chosen profile has no " +
-                    "per-period heading format. A missing heading is created at level ##.",
-            )
-            .addText((text) =>
-                text
-                    .setPlaceholder("Inbox")
-                    .setValue(this.plugin.settings.captureMoment.heading)
-                    .onChange(async (value) => {
-                        this.plugin.settings.captureMoment.heading = value.replace(/^#+\s*/, "").trim() || "Inbox";
-                        await this.plugin.saveSettings();
-                    }),
-            );
-
-        new Setting(containerEl)
-            .setName("Insert position")
-            .setDesc("Choose whether new captures appear at the top or bottom of the heading.")
-            .addDropdown((dropdown) =>
-                dropdown
-                    .addOption("end", "End of section (newest at bottom)")
-                    .addOption("start", "Start of section (newest at top)")
-                    .setValue(this.plugin.settings.captureMoment.position)
-                    .onChange(async (value) => {
-                        this.plugin.settings.captureMoment.position = value as InsertPosition;
-                        await this.plugin.saveSettings();
-                    }),
-            );
-
-        containerEl.createEl("h4", { text: "Same-day backlink" });
-        containerEl.createEl("p", {
-            cls: "setting-item-description",
-            text:
-                "Optionally leave a short backlink in another profile's file every time a Moment is captured " +
-                "(e.g. a line in that day's Daily note pointing back at a Weekly Moment).",
-        });
-
-        new Setting(containerEl).setName("Enable backlink").addToggle((toggle) =>
-            toggle.setValue(this.plugin.settings.captureMoment.backlink.enabled).onChange(async (v) => {
-                this.plugin.settings.captureMoment.backlink.enabled = v;
-                await this.plugin.saveSettings();
-                this.display();
-            }),
-        );
-
-        if (this.plugin.settings.captureMoment.backlink.enabled) {
-            this.renderProfilePicker(
-                containerEl,
-                "Backlink profile",
-                "Which Periodical Notes profile receives the backlink.",
-                this.plugin.settings.captureMoment.backlink.profileId,
-                async (profileId) => {
-                    this.plugin.settings.captureMoment.backlink.profileId = profileId;
-                    await this.plugin.saveSettings();
-                },
-            );
-
-            new Setting(containerEl)
-                .setName("Backlink heading")
-                .setDesc("Heading in the backlink profile's file where the backlink line is inserted.")
-                .addText((text) =>
-                    text
-                        .setPlaceholder("Moments")
-                        .setValue(this.plugin.settings.captureMoment.backlink.heading)
-                        .onChange(async (v) => {
-                            this.plugin.settings.captureMoment.backlink.heading = v.trim() || "Moments";
-                            await this.plugin.saveSettings();
-                        }),
-                );
-
-            new Setting(containerEl)
-                .setName("Backlink position")
-                .setDesc("Choose whether new backlinks appear at the top or bottom of the heading.")
-                .addDropdown((dropdown) =>
-                    dropdown
-                        .addOption("start", "Start of section (newest at top)")
-                        .addOption("end", "End of section (newest at bottom)")
-                        .setValue(this.plugin.settings.captureMoment.backlink.position)
-                        .onChange(async (v) => {
-                            this.plugin.settings.captureMoment.backlink.position = v as InsertPosition;
-                            await this.plugin.saveSettings();
-                        }),
-                );
-        }
-    }
-
-    private renderEventCapture(containerEl: HTMLElement): void {
-        containerEl.createEl("h3", { text: "Event capture" });
-
-        this.renderProfilePicker(
-            containerEl,
-            "Periodical note",
-            "Which Periodical Notes profile new Events default to. Define profiles on the Periodical Notes tab.",
-            this.plugin.settings.captureEvent.profileId,
-            async (profileId) => {
-                this.plugin.settings.captureEvent.profileId = profileId;
-                await this.plugin.saveSettings();
-            },
-        );
-
-        new Setting(containerEl)
-            .setName("Heading")
-            .setDesc(
-                "Heading text where Event lines are inserted. Used when the chosen profile has no dated " +
-                    "per-period heading. Leave empty to append at end of file.",
-            )
-            .addText((text) =>
-                text
-                    .setPlaceholder("Activities & Tasks")
-                    .setValue(this.plugin.settings.captureEvent.heading)
-                    .onChange(async (v) => {
-                        this.plugin.settings.captureEvent.heading = v.trim();
-                        await this.plugin.saveSettings();
-                    }),
-            );
-
-        new Setting(containerEl).setName("Insert position").addDropdown((drop) =>
-            drop
-                .addOption("end", "End of section (newest at bottom)")
-                .addOption("start", "Start of section (newest at top)")
-                .setValue(this.plugin.settings.captureEvent.position)
-                .onChange(async (v) => {
-                    this.plugin.settings.captureEvent.position = v as InsertPosition;
-                    await this.plugin.saveSettings();
-                }),
-        );
-
-        new Setting(containerEl)
-            .setName("Hub notes folder")
-            .setDesc("Folder where new Event hub notes are created. Created automatically if it doesn't exist.")
-            .addText((text) => {
-                text.setPlaceholder("Notes")
-                    .setValue(this.plugin.settings.captureEvent.hubNotesFolder)
-                    .onChange(async (v) => {
-                        this.plugin.settings.captureEvent.hubNotesFolder = v.trim() || "Notes";
-                        await this.plugin.saveSettings();
-                    });
-                new FolderSuggest(this.app, text.inputEl);
-            });
-    }
-
-    private renderTaskCapture(containerEl: HTMLElement): void {
-        containerEl.createEl("h3", { text: "Task capture" });
-
-        containerEl.createEl("p", {
-            cls: "setting-item-description",
-            text:
-                "Task never defaults to a periodical note — it belongs in a Project or task-list page. Its " +
-                '"Save to" picker draws from whichever Object Sources you allow below (combined); typing a ' +
-                "path that doesn't match still works and shows the usual vault-wide suggestions.",
-        });
-
-        this.renderTaskAllowedSources(containerEl);
-
-        new Setting(containerEl)
-            .setName("Heading")
-            .setDesc("Heading in the chosen note where Task lines are inserted. Leave empty to append at end of file.")
-            .addText((text) =>
-                text
-                    .setPlaceholder("Activities & Tasks")
-                    .setValue(this.plugin.settings.captureTask.heading)
-                    .onChange(async (v) => {
-                        this.plugin.settings.captureTask.heading = v.trim();
-                        await this.plugin.saveSettings();
-                    }),
-            );
-
-        new Setting(containerEl).setName("Insert position").addDropdown((drop) =>
-            drop
-                .addOption("end", "End of section (newest at bottom)")
-                .addOption("start", "Start of section (newest at top)")
-                .setValue(this.plugin.settings.captureTask.position)
-                .onChange(async (v) => {
-                    this.plugin.settings.captureTask.position = v as InsertPosition;
-                    await this.plugin.saveSettings();
-                }),
-        );
-
-        new Setting(containerEl)
-            .setName("Hub notes folder")
-            .setDesc("Folder where new Task hub notes are created. Created automatically if it doesn't exist.")
-            .addText((text) => {
-                text.setPlaceholder("Notes")
-                    .setValue(this.plugin.settings.captureTask.hubNotesFolder)
-                    .onChange(async (v) => {
-                        this.plugin.settings.captureTask.hubNotesFolder = v.trim() || "Notes";
-                        await this.plugin.saveSettings();
-                    });
-                new FolderSuggest(this.app, text.inputEl);
-            });
-    }
-
-    private renderSharedNoteCreation(containerEl: HTMLElement): void {
-        containerEl.createEl("h3", { text: "Shared note creation" });
-
-        containerEl.createEl("p", {
-            cls: "setting-item-description",
-            text: "Detail-note settings below apply to both Event and Task.",
-        });
-
-        new Setting(containerEl)
-            .setName("Detail notes folder")
-            .setDesc(
-                "Folder where event/task detail notes are created (the third file, with full frontmatter). " +
-                    "Created automatically if it doesn't exist.",
-            )
-            .addText((text) => {
-                text.setPlaceholder("Notes")
-                    .setValue(this.plugin.settings.eventTask.detailNotesFolder)
-                    .onChange(async (v) => {
-                        this.plugin.settings.eventTask.detailNotesFolder = v.trim() || "Notes";
-                        await this.plugin.saveSettings();
-                    });
-                new FolderSuggest(this.app, text.inputEl);
-            });
-
-        containerEl.createEl("h4", { text: "Detail note templates" });
-
-        containerEl.createEl("p", {
-            cls: "setting-item-description",
-            text:
-                "Templates for event/task detail notes (the third file). " +
-                "Created when 'Create a detail note' is checked in the modal. " +
-                "Tokens: {{title}}, {{date}}, {{start}}, {{end}}, {{due}}, {{remind}}, {{description}}.",
-        });
-
-        new Setting(containerEl)
-            .setName("Event detail note template")
-            .setDesc("Body template for event detail notes.")
-            .addTextArea((area) => {
-                area.setValue(this.plugin.settings.eventTask.eventNoteTemplate).onChange(async (v) => {
-                    this.plugin.settings.eventTask.eventNoteTemplate = v;
-                    await this.plugin.saveSettings();
-                });
-                area.inputEl.rows = 5;
-                area.inputEl.style.width = "100%";
-            })
-            .settingEl.addClass("fn-settings-wide-field");
-
-        new Setting(containerEl)
-            .setName("Task detail note template")
-            .setDesc("Body template for task detail notes.")
-            .addTextArea((area) => {
-                area.setValue(this.plugin.settings.eventTask.taskNoteTemplate).onChange(async (v) => {
-                    this.plugin.settings.eventTask.taskNoteTemplate = v;
-                    await this.plugin.saveSettings();
-                });
-                area.inputEl.rows = 5;
-                area.inputEl.style.width = "100%";
-            })
-            .settingEl.addClass("fn-settings-wide-field");
-
-        new Setting(containerEl)
-            .setName("Format of 'related' field")
-            .setDesc(
-                "Value of the related field in detail note frontmatter — points to the target daily note. " +
-                    "{{date}} = event/task date, {{targetFile}} = target file path. Leave empty to omit this field.",
-            )
-            .addText((text) =>
-                text
-                    .setPlaceholder("[[{{date}}]]")
-                    .setValue(this.plugin.settings.eventTask.relatedFieldFormat)
-                    .onChange(async (v) => {
-                        this.plugin.settings.eventTask.relatedFieldFormat = v.trim();
-                        await this.plugin.saveSettings();
-                    }),
-            );
-
-        containerEl.createEl("h4", { text: "Detail note frontmatter fields" });
-
-        new Setting(containerEl)
-            .setName("Include 'status' field")
-            .setDesc("Adds the selected Event lifecycle status or Task open status to detail note frontmatter.")
-            .addToggle((toggle) =>
-                toggle.setValue(this.plugin.settings.eventTask.includeStatus).onChange(async (v) => {
-                    this.plugin.settings.eventTask.includeStatus = v;
-                    await this.plugin.saveSettings();
-                }),
-            );
-
-        new Setting(containerEl)
-            .setName("Include 'priority' field (task)")
-            .setDesc("Adds the selected Task priority to the detail note frontmatter.")
-            .addToggle((toggle) =>
-                toggle.setValue(this.plugin.settings.eventTask.includePriority).onChange(async (v) => {
-                    this.plugin.settings.eventTask.includePriority = v;
-                    await this.plugin.saveSettings();
-                }),
-            );
-
-        new Setting(containerEl)
-            .setName("Include 'tags' field")
-            .setDesc("Adds tags: [event] or [task] to the detail note frontmatter.")
-            .addToggle((toggle) =>
-                toggle.setValue(this.plugin.settings.eventTask.includeTags).onChange(async (v) => {
-                    this.plugin.settings.eventTask.includeTags = v;
-                    await this.plugin.saveSettings();
-                }),
-            );
-    }
-
-    /** Dropdown of Periodical Notes profiles, shared by Focus/Event/Moment capture sections. */
-    private renderProfilePicker(
-        container: HTMLElement,
-        name: string,
-        desc: string,
-        currentProfileId: string,
-        onChange: (profileId: string) => Promise<void>,
-    ): void {
-        const profiles = this.plugin.settings.periodicalNotes.profiles;
-        new Setting(container)
-            .setName(name)
-            .setDesc(desc)
-            .addDropdown((dropdown) => {
-                if (profiles.length === 0) dropdown.addOption("", "No profiles defined yet");
-                for (const profile of profiles) dropdown.addOption(profile.id, profile.name || profile.id);
-                dropdown.setValue(currentProfileId).onChange(onChange);
-            });
-    }
-
-    /** Checklist of Object Sources allowed as Task "Save to" destinations. */
-    private renderTaskAllowedSources(container: HTMLElement): void {
-        const sources = this.plugin.settings.inbox.contextSources;
-        const desc =
-            sources.length === 0
-                ? "No Object Sources configured yet — add one below (Objects tab), then come back to allow it here."
-                : 'Which Object Sources a Task\'s "Save to" picker draws from (combined). None checked = search ' +
-                  "the whole vault instead.";
-        const setting = new Setting(container).setName("Allowed Object Sources").setDesc(desc);
-        if (sources.length === 0) return;
-        const list = setting.controlEl.createDiv({ cls: "fn-task-source-list" });
-        for (const source of sources) {
-            const label = list.createEl("label", { cls: "fn-task-source-option" });
-            const checkbox = label.createEl("input", {
-                type: "checkbox",
-                attr: { "aria-label": `Allow ${source.name} as a Task destination` },
-            });
-            checkbox.checked = this.plugin.settings.captureTask.allowedSourceIds.includes(source.id);
-            checkbox.addEventListener("change", async () => {
-                const ids = this.plugin.settings.captureTask.allowedSourceIds;
-                this.plugin.settings.captureTask.allowedSourceIds = checkbox.checked
-                    ? [...new Set([...ids, source.id])]
-                    : ids.filter((id) => id !== source.id);
-                await this.plugin.saveSettings();
-            });
-            label.appendText(` ${source.name}`);
-        }
     }
 
     private renderTimelineAlignmentStatus(container: HTMLElement): void {
