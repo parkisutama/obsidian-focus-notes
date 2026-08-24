@@ -5,7 +5,7 @@ import {
     type DetailNotePromotionResult,
     promoteScheduledItemDetail,
     retryDetailNoteAttachment,
-} from "./DetailNotePromotion.ts";
+} from "./features/capture/scheduled-item/application/DetailNotePromotion.ts";
 import { EventTaskFormState } from "./EventTaskFormState";
 import { EventTaskWriter } from "./infrastructure/obsidian/EventTaskWriter";
 import type { HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";

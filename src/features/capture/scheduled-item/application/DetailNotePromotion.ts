@@ -1,6 +1,6 @@
-import type { EventTaskRecord, HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
-import { buildScheduledItemRecord } from "./features/capture/scheduled-item/domain/ScheduledItemFormAdapter.ts";
-import type { ScheduledItemFormData } from "./features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
+import type { EventTaskRecord, HubNoteRef } from "../domain/EventTaskRecord";
+import { buildScheduledItemRecord } from "../domain/ScheduledItemFormAdapter.ts";
+import type { ScheduledItemFormData } from "../domain/ScheduledItemFormData.ts";
 
 interface DetailNoteFile {
     path: string;

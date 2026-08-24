@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { promoteScheduledItemDetail, retryDetailNoteAttachment } from "../src/DetailNotePromotion.ts";
+import {
+    promoteScheduledItemDetail,
+    retryDetailNoteAttachment,
+} from "../src/features/capture/scheduled-item/application/DetailNotePromotion.ts";
 import type { ScheduledItemFormData } from "../src/features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 
 function task(detailNote: ScheduledItemFormData["detailNote"]): ScheduledItemFormData {
