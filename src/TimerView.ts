@@ -1,7 +1,8 @@
-import { ItemView, Notice, type WorkspaceLeaf, setIcon, MarkdownRenderer, Menu } from "obsidian";
+import { ItemView, Notice, type WorkspaceLeaf, setIcon, Menu } from "obsidian";
 import { TimerEngine } from "./features/focus-session/domain/TimerEngine";
 import { CircularDisplay } from "./features/focus-session/ui/CircularDisplay";
 import { LogModal } from "./features/focus-session/ui/LogModal";
+import { TimerRecentEntries } from "./features/focus-session/ui/TimerRecentEntries";
 import { TimerTargetEditor } from "./features/focus-session/ui/TimerTargetEditor";
 import type { NoteWriter } from "./NoteWriter";
 import type { TargetResolver } from "./TargetResolver";
@@ -11,7 +12,6 @@ import { type DisplayMode, toEngineMode } from "./features/focus-session/domain/
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import { FileSuggest } from "./infrastructure/obsidian/Suggesters";
-import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 export const VIEW_TYPE_FOCUS_NOTES = "focus-notes-view";
 
@@ -47,8 +47,7 @@ export class TimerView extends ItemView {
     private primaryBtn!: HTMLButtonElement;
     private stopBtn!: HTMLButtonElement;
     private targetEditor!: TimerTargetEditor;
-    private recentList!: HTMLElement;
-    private recentTitle!: HTMLElement;
+    private recentEntries!: TimerRecentEntries;
 
     private currentMode: DisplayMode = "pomodoro";
 
@@ -95,15 +94,22 @@ export class TimerView extends ItemView {
             this.getSettings,
             this.saveSettings,
             this.buildResolver,
-            () => void this.refreshRecent(),
+            () => void this.recentEntries.refresh(),
             (ref) => this.registerEvent(ref),
         );
         this.targetEditor.render(wrap);
-        this.renderRecentSection(wrap);
+        this.recentEntries = new TimerRecentEntries(
+            this.app,
+            this,
+            this.getSettings,
+            this.buildResolver,
+            this.buildReader,
+        );
+        this.recentEntries.render(wrap);
 
         this.applyMode(this.currentMode); // sets default duration + display
         this.refreshDisplay();
-        await this.refreshRecent();
+        await this.recentEntries.refresh();
     }
 
     async onClose(): Promise<void> {
@@ -212,28 +218,6 @@ export class TimerView extends ItemView {
         });
         setIcon(btn, icon);
         return btn;
-    }
-
-    private renderRecentSection(parent: HTMLElement): void {
-        const details = parent.createEl("details", { cls: "focus-notes-section" });
-        details.setAttribute("open", "");
-        const summary = details.createEl("summary");
-        this.recentTitle = summary.createEl("span", {
-            text: "Recent in section",
-            cls: "focus-notes-section-title",
-        });
-        const refresh = summary.createEl("button", {
-            cls: "focus-notes-section-refresh",
-            attr: { "aria-label": "Refresh", title: "Refresh" },
-        });
-        setIcon(refresh, "refresh-cw");
-        refresh.addEventListener("click", (evt) => {
-            evt.preventDefault();
-            evt.stopPropagation(); // don't toggle <details>
-            void this.refreshRecent();
-        });
-
-        this.recentList = details.createDiv({ cls: "focus-notes-recent-list" });
     }
 
     // ---------------------------------------------------------------------
@@ -366,7 +350,7 @@ export class TimerView extends ItemView {
                         new Notice("Session logged.");
                         // Clear the focus input so the next session starts fresh.
                         this.focusInput.value = "";
-                        await this.refreshRecent();
+                        await this.recentEntries.refresh();
                     } catch (err) {
                         const msg = err instanceof Error ? err.message : String(err);
                         new Notice(`Log failed: ${msg}`);
@@ -424,45 +408,6 @@ export class TimerView extends ItemView {
         // Lock mode menu while running.
         this.modeButton.disabled = inFlight;
         this.modeButton.toggleClass("focus-notes-mode-locked", inFlight);
-    }
-
-    private async refreshRecent(): Promise<void> {
-        if (!this.recentList) return;
-        this.recentList.empty();
-        const settings = this.getSettings();
-        const resolver = this.buildResolver();
-        const resolved = resolver.resolve(this.activeTarget());
-        this.recentTitle.setText(resolved.heading ? `Recent in “${resolved.heading}”` : "Recent in target file");
-        const reader = this.buildReader();
-        const entries = await reader.read(resolved, settings.recentEntriesCount);
-        if (entries.length === 0) {
-            this.recentList.createDiv({
-                cls: "focus-notes-recent-empty",
-                text: "No entries yet.",
-            });
-            return;
-        }
-        for (const entry of entries) {
-            const item = this.recentList.createDiv({ cls: "focus-notes-recent-item" });
-            item.setAttr("title", "Click to open at this line");
-            // Render markdown so [[wikilinks]] and **bold** display properly.
-            // sourcePath is the target file so relative links resolve correctly.
-            // `this` (Component) ties cleanup to the view's lifecycle.
-            void MarkdownRenderer.render(this.app, entry.text, item, resolved.file, this);
-            item.addEventListener("click", (evt) => {
-                // Don't intercept clicks on rendered links — let them follow
-                // their hrefs via Obsidian's normal handlers.
-                if ((evt.target as HTMLElement).closest("a")) return;
-                void this.openAtLine(resolved.file, entry.lineNumber);
-            });
-        }
-    }
-
-    private async openAtLine(filePath: string, lineNumber: number): Promise<void> {
-        const file = this.app.vault.getAbstractFileByPath(filePath);
-        if (!isTFile(file)) return;
-        const leaf = this.app.workspace.getLeaf(false);
-        await leaf.openFile(file, { eState: { line: lineNumber } });
     }
 
     // ---------------------------------------------------------------------
