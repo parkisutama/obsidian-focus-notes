@@ -10,7 +10,7 @@ import {
     ROOT_CATEGORIES,
     type SettingsCategory,
 } from "./SettingsLayout";
-import { FileSuggest, FolderSuggest } from "./Suggesters";
+import { FileSuggest, FolderSuggest } from "./infrastructure/obsidian/Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
 import type { ContextSourceSettings, ObjectNotePlacement } from "./features/object-notes/domain/ContextSourceSettings";

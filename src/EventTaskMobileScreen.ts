@@ -21,7 +21,7 @@ import {
     createObsidianLinkResolver,
 } from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
 import { SubmissionPolicy } from "./SubmissionPolicy";
-import { FileSuggest, FolderSuggest } from "./Suggesters";
+import { FileSuggest, FolderSuggest } from "./infrastructure/obsidian/Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";

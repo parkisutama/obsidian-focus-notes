@@ -10,7 +10,7 @@ import { type DisplayMode, toEngineMode } from "./features/focus-session/domain/
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
-import { FileSuggest, HeadingSuggest } from "./Suggesters";
+import { FileSuggest, HeadingSuggest } from "./infrastructure/obsidian/Suggesters";
 import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
 export const VIEW_TYPE_FOCUS_NOTES = "focus-notes-view";

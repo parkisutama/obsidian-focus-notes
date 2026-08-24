@@ -1,6 +1,6 @@
 import { AbstractInputSuggest, type App, type TFile, type TFolder } from "obsidian";
-import { applyInputSuggestion } from "./SuggestionSelection";
-import { isTFile, isTFolder } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
+import { applyInputSuggestion } from "../../SuggestionSelection.ts";
+import { isTFile, isTFolder } from "./ObsidianFileTypes.ts";
 
 /**
  * Markdown file path suggester.
