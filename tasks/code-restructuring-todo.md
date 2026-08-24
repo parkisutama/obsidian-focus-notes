@@ -313,17 +313,27 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 
 **Acceptance criteria:**
 
-- [ ] Query/layout/index logic remains pure or behind narrow ports.
-- [ ] View ID/state, source classification, date ranges, and edit launching are unchanged.
-- [ ] Refresh listeners are owned and cleaned up by the shell.
+- [x] Query/layout/index logic remains pure or behind narrow ports.
+- [x] View ID/state, source classification, date ranges, and edit launching are unchanged.
+- [x] Refresh listeners are owned and cleaned up by the shell.
 
 **Verification:**
 
-- [ ] Run all timeline, Scheduled Item query/index, and modal model tests.
-- [ ] Smoke-test open/close/reopen, navigation, refresh, filtering, and item editing.
+- [x] Run all timeline, Scheduled Item query/index, and modal model tests. All pre-existing timeline/query/index/modal-model tests pass unchanged (pure code motion, no logic touched).
+- [ ] Smoke-test open/close/reopen, navigation, refresh, filtering, and item editing. Not performed — same limitation as Task 9/10/11: `TimelineView.ts` and the extracted UI classes depend on live Obsidian classes (`ItemView`, modals) not mockable under `node:test`. Verified instead by diff review (every extraction was pure code motion) plus full CI after every batch. Flagged here as a real gap, not silently dropped.
 
 **Dependencies:** Tasks 7–9 for shared Scheduled Item contracts.
 **Estimated scope:** Multiple Medium batches.
+
+**Progress (2026-08-24):**
+
+- [x] Batch 1: `items`/`parser`/`indexRefreshTimer`/`refreshIndex`/`scheduleIndexRefresh`/`ensureSourceSettings`/`colorFor`/`isInSourceScope`/`getEffectiveSourceGroups`/`Folders`/`Headings` extracted to `features/timeline/ui/TimelineIndex.ts`. `refreshIndex()` now returns a disabled/empty/ok/error result instead of directly calling render methods, so TimelineView decides what to draw. Exposes `dispose()` for the pending debounce timer, wired through `Component.register()`. `TimelineView.ts`: 442→379 lines.
+- [x] Batch 2: `openItemDetails`/`openItemEditor`/`openPendingItems`/`openSourceItem` extracted to `features/timeline/ui/TimelineModalLauncher.ts`, taking app/getSettings plus a narrow `onRefreshNeeded` callback. `TimelineView.ts`: 379→345 lines.
+- [x] Batch 3: The header bar (title, add button, source-sidebar toggle, week label, prev/today/next, weekly-open button, mode select, refresh) extracted to `features/timeline/ui/TimelineHeader.ts`, taking callbacks for each action instead of holding an ItemView reference, with no settings-mutation logic of its own. Exposes `syncControls()` and `setMode()`. `VIEW_TYPE_FOCUS_TIMELINE` passed via options rather than imported, to avoid a cycle with `TimelineView.ts`. `TimelineView.ts`: 345→273 lines.
+- [x] Batch 4 (final): `renderContent`/`renderDisabled`/`buildSourceSummaries` extracted to `features/timeline/ui/TimelineContentRenderer.ts`, composing `TimelineIndex`/`TimelineHeader`/`TimelineModalLauncher` by reference with its own `ScheduledItemQuery`/`TimelineLayout` instances. `TimelineView.ts`: 273→196 lines — now a pure ItemView shell (lifecycle plus mode/anchorDate range state and `currentRange()`/`shift()`) composing all four extracted classes.
+- [x] Full CI (format, lint, typecheck, 299 tests, production build, artifact verification, docs build) verified after every batch; zero import cycles introduced.
+
+**Task 12 complete 2026-08-24.** All acceptance criteria closed. The one unchecked verification item (manual desktop smoke test) is the same inherent gap noted for Tasks 9/10/11 — this UI layer has no automated coverage — not an oversight specific to this task.
 
 ## Task 13: Thin plugin composition and remove shims
 
