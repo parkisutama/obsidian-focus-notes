@@ -226,6 +226,12 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 **Dependencies:** Task 8.
 **Estimated scope:** Multiple Medium batches.
 
+**Progress (2026-08-24):**
+
+- [x] Traced every call site of `openEventTaskForm` (`EventTaskModal.ts`) and confirmed `EventTaskMobileScreen.ts`'s identical pattern. Exactly 3 real call sites: `main.ts`'s `create-event-task` command, `TimelineView.ts`'s "+" button, and `ActiveNoteManagerModal.ts`'s create callback (via `main.ts`). Finding: `openEventTaskForm`/`openMobileScheduledItemCreate ` already intercept `options.initialKind === "task" | "event"` **before** constructing `EventTaskModal`/`EventTaskMobileScreen`, routing straight to `ScheduledItemDesktopCreateModal.ts`/`ScheduledItemMobileCreateScreen.ts` (the canonical Scheduled Item create path) instead. `EventTaskModal`/`EventTaskMobileScreen` are only ever constructed with `kind: "inbox"` (the default when no options are passed), and inside the modal, clicking the Event/Task tab immediately closes the modal and redirects to the canonical create modal via `activate()`/its mobile equivalent — the user can never actually submit through the legacy modal's own Event/Task rendering or its `submitEventTask` call.
+- [x] This makes `EventTaskModal.renderEventSection`/`renderTaskSection`/their sub-renderers, the `submitEventTask` branch of `submit()`, `resolveTargetFile`, and the matching methods in `EventTaskMobileScreen.ts` **provably dead code at runtime** — reachable only via direct unit-test construction with a synthetic `initialKind`, never through any real command/ribbon/launcher. Moment (`kind: "inbox"`) is the only path a user can actually complete through these two files.
+- [ ] Not yet done: stripping the dead Event/Task code from `EventTaskModal.ts`/`EventTaskMobileScreen.ts` down to a Moment-only shell (plus routing helpers `openDesktopScheduledItemCreate`/`openMobileScheduledItemCreate` callers already use), trimming `EventTaskFormState.ts`/`EventTaskSubmission.ts`/`SubmissionPolicy.ts` accordingly, and updating/removing tests for the removed paths. Paused here for explicit direction before editing live Modal/Screen UI code, per the plan's requirement for human approval on legacy deletion and real desktop/mobile acceptance testing that cannot be performed in this session.
+
 ## Checkpoint: Capture boundary
 
 - [ ] Full CI and byte-for-byte fixture comparison pass.
