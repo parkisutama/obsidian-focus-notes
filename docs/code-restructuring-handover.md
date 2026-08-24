@@ -1,8 +1,8 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-24
-Status: Task 7 dan Task 8 selesai. Task 9 aktif: `EventTaskModal.ts`/`EventTaskMobileScreen.ts` sudah dipangkas jadi shell Moment-only (kode Event/Task provably dead dihapus setelah tracing seluruh command/ribbon/launcher). `EventTaskSubmission.ts` dipindah ke `features/capture/moment/application/` (sudah Moment-eksklusif sejak `submitEventTask` dihapus). `EventTaskFormState.ts`/`SubmissionPolicy.ts` sengaja tidak disentuh — masih load-bearing. Rename `EventTaskModal.ts`/`EventTaskMobileScreen.ts` dievaluasi dan ditolak (masih meng-export fungsi routing lintas-kind). **Manual acceptance testing desktop/mobile dilewati atas persetujuan eksplisit pengguna** (2026-08-24), bukan terlewat.
-Tujuan berikutnya: Menetapkan batas modul yang jelas sebelum rebranding UX
+Status: Task 7, Task 8, dan Task 9 selesai — Phase 2 (Capture domain restructuring) tertutup. `EventTaskModal.ts`/`EventTaskMobileScreen.ts` sudah dipangkas jadi shell Moment-only (kode Event/Task provably dead dihapus setelah tracing seluruh command/ribbon/launcher). `EventTaskSubmission.ts` dipindah ke `features/capture/moment/application/` (sudah Moment-eksklusif sejak `submitEventTask` dihapus). `EventTaskFormState.ts`/`SubmissionPolicy.ts` sengaja tidak disentuh — masih load-bearing. Fungsi routing lintas-kind (`openEventTaskForm`, `openDesktopScheduledItemCreate`) sudah diekstrak dari `EventTaskModal.ts` ke `EventTaskCaptureLauncher.ts` setelah class-nya diubah menerima callback `openScheduledItem` (pola yang sama seperti `EventTaskMobileScreen.ts`), menghilangkan risiko import cycle. Rename kedua shell ke nama Moment-eksklusif kini aman tapi sengaja tidak dilakukan — kosmetik saja, bukan syarat Task 9. **Manual acceptance testing desktop/mobile dilewati atas persetujuan eksplisit pengguna** (2026-08-24), bukan terlewat.
+Tujuan berikutnya: Task 10 — Decompose Settings by category (features/settings), atau reprioritisasi sesuai arahan pengguna berikutnya.
 
 ## Ringkasan keputusan
 
@@ -359,7 +359,7 @@ Acceptance manual tetap diperlukan untuk:
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
 3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 299 tes pada 2026-08-24.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Task 9's mechanical work (dead-code strip, `EventTaskSubmission.ts` move) sudah selesai. Manual acceptance testing dilewati atas persetujuan eksplisit pengguna — jangan asumsikan itu "belum sempat", itu keputusan sadar. Sisa Task 9 yang genuinely terbuka: ekstraksi fungsi routing (`openEventTaskForm`, `openDesktopScheduledItemCreate`) dari `EventTaskModal.ts` sebelum rename file jadi aman (lihat catatan di ownership table), atau pindah ke Phase 3/Task 10+ kalau prioritas berubah.
+5. Task 9 selesai (2026-08-24): dead-code strip, `EventTaskSubmission.ts` move, dan ekstraksi routing (`EventTaskCaptureLauncher.ts`) semuanya tertutup. Manual acceptance testing dilewati atas persetujuan eksplisit pengguna — jangan asumsikan itu "belum sempat", itu keputusan sadar. Rename kosmetik `EventTaskModal.ts`/`EventTaskMobileScreen.ts` sengaja tidak dikerjakan (lihat catatan di ownership table); tidak ada pekerjaan Task 9 lain yang terbuka. Mulai Task 10 (Settings decomposition) di sesi berikutnya kecuali prioritas berubah.
 6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
 7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 

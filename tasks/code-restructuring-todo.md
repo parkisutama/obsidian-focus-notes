@@ -214,14 +214,14 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 
 **Acceptance criteria:**
 
-- [ ] Desktop and mobile retain separate DOM, focus, keyboard, and lifecycle code.
-- [ ] Moment remains independent while Event/Task use the unified Scheduled Item path.
-- [ ] Legacy deletion occurs in its own commit with zero runtime imports.
+- [x] Desktop and mobile retain separate DOM, focus, keyboard, and lifecycle code.
+- [x] Moment remains independent while Event/Task use the unified Scheduled Item path.
+- [x] Legacy deletion occurs in its own commit with zero runtime imports.
 
 **Verification:**
 
-- [ ] Run desktop/mobile composition and legacy-retirement tests.
-- [ ] Perform desktop and real-mobile create/edit/retry acceptance.
+- [x] Run desktop/mobile composition and legacy-retirement tests.
+- [ ] Perform desktop and real-mobile create/edit/retry acceptance. Explicitly skipped by user decision 2026-08-24 (see Progress log below) — residual risk accepted, not an oversight.
 
 **Dependencies:** Task 8.
 **Estimated scope:** Multiple Medium batches.
@@ -237,12 +237,17 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 - [x] **User decision (2026-08-24):** manual desktop/real-mobile acceptance testing (Moment capture end-to-end, Event/Task tab redirect) was explicitly skipped by the user, accepting the residual risk based on the code-level tracing evidence and the passing test suite — not an oversight. Recorded here so it isn't mistaken for incomplete work later.
 - [x] Evaluated renaming `EventTaskModal.ts`/`EventTaskMobileScreen.ts` and decided against it: both still export cross-kind routing functions (`openEventTaskForm`, `openDesktopScheduledItemCreate`) that decide where *any* capture (Moment, Event, or Task) opens — not Moment-exclusive. Renaming now would mislabel the file. A future rename would first need the routing functions extracted into their own module (candidate: alongside `ScheduledItemEditor.ts` under "Capture launch/orchestration").
 - [x] `EventTaskSubmission.ts` (`submitInbox`, `retryRelatedSubmission`, shared result types) was confirmed Moment-exclusive after `submitEventTask`'s removal and moved to `features/capture/moment/application/EventTaskSubmission.ts`, keeping the filename and exported symbol names unchanged (consistent with this session's move-without-rename pattern). All 5 consumers (`EventTaskModal.ts`, `EventTaskMobileScreen.ts`, `SubmissionPolicy.ts`, 2 test files) cut over directly and the root shim was removed.
+- [x] Resolved the rename blocker noted above. `EventTaskMobileScreen.ts` already received its "switch to Event/Task" action as an injected constructor callback (`openScheduledItem`) rather than importing the launcher itself; `EventTaskModal.ts` (desktop) did not follow that pattern — its `renderTabs()`/`activate()` imported and called `openDesktopScheduledItemCreate` directly, which would have created a two-file import cycle if that function were ever extracted (launcher needs the class to construct it; the class needed the launcher's routing function). Applied the same constructor-injection pattern already proven on mobile: `EventTaskModal` now takes `openScheduledItem: (kind: "task" | "event") => void` and calls it from `activate()` instead of importing `openDesktopScheduledItemCreate`. This removed the only cycle risk without any interface/DI redesign — same shape already used by `EventTaskMobileScreen.ts`.
+- [x] With the cycle risk gone, extracted `openEventTaskForm` and `openDesktopScheduledItemCreate` out of `EventTaskModal.ts` into a new root file `EventTaskCaptureLauncher.ts`, matching the existing "Capture launch/orchestration" shape (`ScheduledItemEditor.ts`, `ScheduledItemMobileCreateLauncher.ts`): a thin exported entry function plus one platform-specific helper, importing the render classes rather than being imported by them. `EventTaskModal.ts` now exports only the `EventTaskModal` class. All 3 real consumers (`main.ts`, `TimelineView.ts`; `ActiveNoteManagerModal.ts` routes through `main.ts`) repointed at `./EventTaskCaptureLauncher`. Updated `test/mobile-scheduled-item-create-composition.test.ts`'s first test to read the new launcher file instead of `EventTaskModal.ts`. Full CI (format, lint, typecheck, 299 tests, production build, artifact verification, docs build) passes with zero import cycles.
+- [x] Rename of `EventTaskModal.ts`/`EventTaskMobileScreen.ts` to a Moment-specific name is now unblocked but deliberately left undone — it would be cosmetic only (both class names still accurately describe what they render) and isn't required by any Task 9 acceptance criterion. Left as an optional future polish item, not tracked as open work.
 
 ## Checkpoint: Capture boundary
 
-- [ ] Full CI and byte-for-byte fixture comparison pass.
-- [ ] No duplicate primary writes; retry repeats only failed secondary writes.
-- [ ] All launchers and legacy status are documented.
+- [x] Full CI and byte-for-byte fixture comparison pass.
+- [x] No duplicate primary writes; retry repeats only failed secondary writes.
+- [x] All launchers and legacy status are documented.
+
+**Task 9 complete 2026-08-24.** All acceptance criteria closed; the one skipped verification item (real desktop/mobile manual acceptance testing) was a deliberate, documented user decision, not an oversight. Phase 2 (Capture domain restructuring) is now closed. Next: Task 10 (Settings decomposition) or reprioritize per user direction.
 
 ## Task 10: Decompose Settings by category
 
