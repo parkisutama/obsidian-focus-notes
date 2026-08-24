@@ -1,16 +1,14 @@
 import { ItemView, Notice, type WorkspaceLeaf, setIcon, Menu } from "obsidian";
 import { TimerEngine } from "./features/focus-session/domain/TimerEngine";
 import { CircularDisplay } from "./features/focus-session/ui/CircularDisplay";
-import { LogModal } from "./features/focus-session/ui/LogModal";
+import { TimerLogWorkflow } from "./features/focus-session/ui/TimerLogWorkflow";
 import { TimerRecentEntries } from "./features/focus-session/ui/TimerRecentEntries";
 import { TimerTargetEditor } from "./features/focus-session/ui/TimerTargetEditor";
 import type { NoteWriter } from "./NoteWriter";
 import type { TargetResolver } from "./TargetResolver";
 import type { RecentEntriesReader } from "./RecentEntriesReader";
-import type { SessionRecord } from "./features/focus-session/domain/SessionRecord";
 import { type DisplayMode, toEngineMode } from "./features/focus-session/domain/Timer";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
-import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import { FileSuggest } from "./infrastructure/obsidian/Suggesters";
 
 export const VIEW_TYPE_FOCUS_NOTES = "focus-notes-view";
@@ -48,6 +46,7 @@ export class TimerView extends ItemView {
     private stopBtn!: HTMLButtonElement;
     private targetEditor!: TimerTargetEditor;
     private recentEntries!: TimerRecentEntries;
+    private logWorkflow: TimerLogWorkflow;
 
     private currentMode: DisplayMode = "pomodoro";
 
@@ -61,8 +60,26 @@ export class TimerView extends ItemView {
     ) {
         super(leaf);
         this.engine = new TimerEngine();
+        this.logWorkflow = new TimerLogWorkflow({
+            app: this.app,
+            engine: this.engine,
+            getSettings: this.getSettings,
+            buildWriter: this.buildWriter,
+            buildResolver: this.buildResolver,
+            getCurrentMode: () => this.currentMode,
+            getFocusInput: () => this.focusInput.value,
+            setFocusInput: (value) => {
+                this.focusInput.value = value;
+            },
+            getPlannedMinutes: () => this.parseMinutes(),
+            onSessionStateChanged: () => {
+                this.refreshActions();
+                this.refreshDisplay();
+            },
+            onRecentChanged: () => void this.recentEntries.refresh(),
+        });
         this.engine.onTick(() => this.refreshDisplay());
-        this.engine.onComplete(() => this.handleComplete());
+        this.engine.onComplete(() => this.logWorkflow.handleComplete());
         // Re-seed lastMode from settings so the panel reopens where the user
         // left off. Falls back to pomodoro for never-touched installs.
         this.currentMode = this.getSettings().lastMode || "pomodoro";
@@ -203,7 +220,7 @@ export class TimerView extends ItemView {
 
         this.resetBtn.addEventListener("click", () => this.handleReset());
         this.primaryBtn.addEventListener("click", () => this.handlePrimary());
-        this.stopBtn.addEventListener("click", () => this.handleStopAndLog());
+        this.stopBtn.addEventListener("click", () => void this.logWorkflow.handleStopAndLog());
     }
 
     private createIconButton(
@@ -246,15 +263,6 @@ export class TimerView extends ItemView {
         this.refreshDisplay();
     }
 
-    /**
-     * The "what target would write right now" view — pulls from
-     * resolver.getActiveTarget() so live overrides win and empty fields fall
-     * through to defaults. Use this everywhere instead of a transient field.
-     */
-    private activeTarget(): FocusTarget {
-        return this.buildResolver().getActiveTarget();
-    }
-
     // ---------------------------------------------------------------------
     // Action handlers
     // ---------------------------------------------------------------------
@@ -286,81 +294,6 @@ export class TimerView extends ItemView {
         this.refreshActions();
         this.refreshDisplay();
         new Notice("Session discarded.");
-    }
-
-    private async handleStopAndLog(): Promise<void> {
-        const status = this.engine.getStatus();
-        if (status === "idle") return;
-        const result = this.engine.stop();
-        this.refreshActions();
-        this.refreshDisplay();
-        if (!result) return;
-        const elapsedSeconds = Math.round(result.elapsedMs / 1000);
-        if (elapsedSeconds < 1) {
-            new Notice("Session too short to log.");
-            return;
-        }
-        await this.openLogModal(result.startedAt, result.endedAt, elapsedSeconds);
-    }
-
-    private handleComplete(): void {
-        if (this.getSettings().playSound) this.beep();
-        new Notice("Focus session complete.");
-        this.refreshActions();
-        this.refreshDisplay();
-        if (this.getSettings().autoOpenLogModal) {
-            void this.handleStopAndLog();
-        }
-    }
-
-    private async openLogModal(startTime: Date, endTime: Date, durationSeconds: number): Promise<void> {
-        const resolver = this.buildResolver();
-        const resolvedTarget = resolver.resolve(this.activeTarget(), endTime);
-        return new Promise((resolve) => {
-            const modal = new LogModal(
-                this.app,
-                {
-                    mode: this.currentMode,
-                    startTime,
-                    endTime,
-                    durationSeconds,
-                    initialTask: this.focusInput.value,
-                    resolvedTarget,
-                },
-                async (result) => {
-                    if (!result) {
-                        resolve();
-                        return;
-                    }
-                    try {
-                        const record: SessionRecord = {
-                            mode: this.currentMode,
-                            startTime,
-                            endTime,
-                            durationSeconds,
-                            plannedSeconds: this.currentMode === "stopwatch" ? null : this.parseMinutes() * 60,
-                            task: result.task,
-                            notes: result.notes,
-                            stressLevel: result.stressLevel,
-                            emotionCategory: result.emotionCategory,
-                            moodKey: result.moodKey,
-                            links: result.links,
-                        };
-                        await this.buildWriter().writeSession(record, resolvedTarget);
-                        new Notice("Session logged.");
-                        // Clear the focus input so the next session starts fresh.
-                        this.focusInput.value = "";
-                        await this.recentEntries.refresh();
-                    } catch (err) {
-                        const msg = err instanceof Error ? err.message : String(err);
-                        new Notice(`Log failed: ${msg}`);
-                        console.error("[Focus Notes] write failed", err);
-                    }
-                    resolve();
-                },
-            );
-            modal.open();
-        });
     }
 
     // ---------------------------------------------------------------------
@@ -451,32 +384,5 @@ export class TimerView extends ItemView {
         const mm = String(m).padStart(2, "0");
         const ss = String(s).padStart(2, "0");
         return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
-    }
-
-    /**
-     * Brief tone via WebAudio. Wrapped because mobile Safari may refuse
-     * AudioContext outside a user gesture; a failed beep should never
-     * break the timer.
-     */
-    private beep(): void {
-        try {
-            const Ctor =
-                window.AudioContext ||
-                (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-            const ctx = new Ctor();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.frequency.value = 880;
-            gain.gain.setValueAtTime(0.001, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.6);
-            osc.onended = () => ctx.close();
-        } catch (err) {
-            console.warn("[Focus Notes] beep failed", err);
-        }
     }
 }
