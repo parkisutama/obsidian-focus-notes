@@ -1,5 +1,5 @@
 import type { App } from "obsidian";
-import type { LinkDestinationResolver } from "../../ContextLinkResolver.ts";
+import type { LinkDestinationResolver } from "../../features/capture/application/ContextLinkResolver.ts";
 import { formatRelativeMarkdownLink } from "../../InboxMarkdown.ts";
 import { isTFile } from "./ObsidianFileTypes.ts";
 

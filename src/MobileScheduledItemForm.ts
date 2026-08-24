@@ -3,7 +3,7 @@ import { ContextNotesController } from "./InboxNotesController.ts";
 import { buildMobileScheduledItemFormModel } from "./MobileScheduledItemFormModel.ts";
 import { getMobileViewportMetrics } from "./MobileViewport.ts";
 import { ObjectNoteSuggest } from "./ObjectNoteSuggest.ts";
-import { parseObjectReferences } from "./ObjectReference.ts";
+import { parseObjectReferences } from "./features/capture/domain/ObjectReference.ts";
 import { FileSuggest, FolderSuggest } from "./infrastructure/obsidian/Suggesters.ts";
 import type { ScheduledItemFormData } from "./features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";

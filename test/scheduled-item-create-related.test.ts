@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveRelativeLinkDestination } from "../src/ContextLinkResolver.ts";
+import { resolveRelativeLinkDestination } from "../src/features/capture/application/ContextLinkResolver.ts";
 import {
     retryScheduledItemCreateRelated,
     writeScheduledItemCreateRelated,

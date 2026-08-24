@@ -1,5 +1,5 @@
 import type { EventTaskFormState } from "../../../../EventTaskFormState";
-import { parseObjectReferences, type ObjectReference } from "../../../../ObjectReference.ts";
+import { parseObjectReferences, type ObjectReference } from "../../domain/ObjectReference.ts";
 import type { InsertPosition } from "../../../../shared/markdown/InsertPosition";
 import type { EventLineEdit } from "./EventLineEditor";
 import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItem";

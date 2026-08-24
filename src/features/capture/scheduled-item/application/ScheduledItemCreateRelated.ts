@@ -3,15 +3,15 @@ import {
     type LinkDestinationResolver,
     resolveContextPaths,
     resolvedMarkdownLinkPaths,
-} from "../../../../ContextLinkResolver.ts";
-import { resolvedObjectReferencePaths } from "../../../../ObjectReference.ts";
-import { formatRelatedLog } from "../../../../RelatedLog.ts";
+} from "../../application/ContextLinkResolver.ts";
 import {
     type RelatedWriteOperation,
     type RelatedWriteReceipt,
     retryFailedRelatedWrites,
     writeRelatedDestinations,
-} from "../../../../RelatedWriteRecovery.ts";
+} from "../../application/RelatedWriteRecovery.ts";
+import { resolvedObjectReferencePaths } from "../../domain/ObjectReference.ts";
+import { formatRelatedLog } from "../../domain/RelatedLog.ts";
 import type { ContextSourceSettings } from "../../../object-notes/domain/ContextSourceSettings";
 import type { ScheduledItemFormData } from "../domain/ScheduledItemFormData.ts";
 

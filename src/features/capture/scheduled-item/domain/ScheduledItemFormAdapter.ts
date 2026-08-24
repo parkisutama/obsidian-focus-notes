@@ -1,4 +1,4 @@
-import { normalizeObjectReferencePath, parseObjectReferences } from "../../../../ObjectReference.ts";
+import { normalizeObjectReferencePath, parseObjectReferences } from "../../domain/ObjectReference.ts";
 import { editEventLineWithTitle, parseEventLineEdit } from "./EventLineEditor.ts";
 import type { LedgerRecordSnapshot } from "./LedgerRecordSource.ts";
 import type { EventTaskRecord } from "./EventTaskRecord";
