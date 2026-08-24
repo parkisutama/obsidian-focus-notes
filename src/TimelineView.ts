@@ -1,5 +1,5 @@
 import { ItemView, Notice, setIcon, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
-import { openEventTaskForm } from "./EventTaskModal";
+import { openEventTaskForm } from "./EventTaskCaptureLauncher";
 import { openScheduledItemEditor } from "./ScheduledItemEditor";
 import { ScheduledItemIndexer } from "./ScheduledItemIndexer";
 import { formatScheduledItemBlockTarget } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";

@@ -1,7 +1,7 @@
 import { Notice, Plugin, TFile, type WorkspaceLeaf } from "obsidian";
 import { scanActiveNoteChecklistScopes, scanActiveNoteLedger } from "./ActiveNoteLedger";
 import { ActiveNoteManagerModal } from "./ActiveNoteManagerModal";
-import { openEventTaskForm } from "./EventTaskModal";
+import { openEventTaskForm } from "./EventTaskCaptureLauncher";
 import { NoteWriter } from "./NoteWriter";
 import { RecentEntriesReader } from "./RecentEntriesReader";
 import { openScheduledItemEditor } from "./ScheduledItemEditor";

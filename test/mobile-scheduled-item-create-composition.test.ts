@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("mobile Task and Event creates route through the shared create screen", async () => {
-    const source = await readFile(new URL("../src/EventTaskModal.ts", import.meta.url), "utf8");
+    const source = await readFile(new URL("../src/EventTaskCaptureLauncher.ts", import.meta.url), "utf8");
     assert.match(source, /openMobileScheduledItemCreate/);
     assert.match(source, /initialKind === "task" \|\| options\.initialKind === "event"/);
 });

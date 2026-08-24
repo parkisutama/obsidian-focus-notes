@@ -1,7 +1,6 @@
-import { type App, type Component, Modal, Notice, Platform } from "obsidian";
+import { type App, Modal, Notice } from "obsidian";
 import { preferActiveNoteTarget } from "./CaptureTarget";
 import { EventTaskFormState } from "./EventTaskFormState";
-import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
 import type { EventTaskKind, OpenEventTaskFormOptions } from "./features/capture/domain/CaptureForm";
 import {
     type EventTaskSubmissionResult,
@@ -12,117 +11,23 @@ import {
 import { EventTaskWriter } from "./infrastructure/obsidian/EventTaskWriter";
 import { InboxDesktopForm } from "./InboxDesktopForm";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
-import { shouldUseMobileForm } from "./MobileFormPolicy";
 import { readContextSuggestionNotes } from "./infrastructure/obsidian/ObsidianInboxSuggestionSource";
 import {
     createObsidianLinkFormatter,
     createObsidianLinkResolver,
 } from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
-import { ScheduledItemDesktopCreateModal } from "./ScheduledItemDesktopCreateModal.ts";
-import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
 import { SubmissionPolicy } from "./SubmissionPolicy";
 import { TargetResolver } from "./TargetResolver";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 
-export function openEventTaskForm(
-    app: App,
-    getSettings: () => FocusNotesSettings,
-    anchorDate: Date = new Date(),
-    onComplete: () => void = () => {},
-    owner?: Component,
-    options: OpenEventTaskFormOptions = {},
-): void {
-    if (shouldUseMobileForm(Platform.isMobile, window.innerWidth)) {
-        if (options.initialKind === "task" || options.initialKind === "event") {
-            openMobileScheduledItemCreate(
-                app,
-                getSettings,
-                anchorDate,
-                onComplete,
-                options.initialKind,
-                options.targetFile,
-            );
-            return;
-        }
-        new EventTaskMobileScreen(app, getSettings, anchorDate, onComplete, options, (kind) =>
-            openMobileScheduledItemCreate(app, getSettings, anchorDate, onComplete, kind),
-        ).open(owner);
-        return;
-    }
-
-    if (options.initialKind === "task" || options.initialKind === "event") {
-        openDesktopScheduledItemCreate(
-            app,
-            getSettings,
-            anchorDate,
-            onComplete,
-            options.initialKind,
-            options.targetFile,
-        );
-        return;
-    }
-
-    new EventTaskModal(app, getSettings, anchorDate, onComplete, options).open();
-}
-
-export function openDesktopScheduledItemCreate(
-    app: App,
-    getSettings: () => FocusNotesSettings,
-    anchorDate: Date,
-    onComplete: () => void,
-    kind: "task" | "event",
-    targetFile?: string,
-): void {
-    const settings = getSettings();
-    const resolver = new TargetResolver(app, settings);
-    // Task never defaults to Daily Notes / the ambient active target — it should
-    // attach to a specific Project or task-list note, chosen explicitly. An
-    // active markdown note is still preferred below as a convenience default
-    // (typically the project/list note the user is already working in); with
-    // nothing active, the target stays empty and submit() blocks until the
-    // user picks one, avoiding accidental duplication into Daily Notes.
-    const configured: FocusTarget =
-        kind === "task"
-            ? { file: "", heading: settings.captureTask.heading, position: settings.captureTask.position }
-            : (resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate) ?? {
-                  file: "",
-                  heading: settings.captureEvent.heading,
-                  position: settings.captureEvent.position,
-              });
-    const activeFile = app.workspace.getActiveFile();
-    const preferred = preferActiveNoteTarget(
-        configured,
-        targetFile ?? (activeFile?.extension === "md" ? activeFile.path : null),
-    );
-    new ScheduledItemDesktopCreateModal(
-        app,
-        getSettings,
-        anchorDate,
-        kind,
-        {
-            ...preferred,
-            heading:
-                kind === "task"
-                    ? settings.captureTask.heading || preferred.heading
-                    : settings.captureEvent.heading || preferred.heading,
-        },
-        onComplete,
-        (nextKind) => {
-            if (nextKind === "inbox") {
-                new EventTaskModal(app, getSettings, anchorDate, onComplete, { initialKind: "inbox" }).open();
-                return;
-            }
-            openDesktopScheduledItemCreate(app, getSettings, anchorDate, onComplete, nextKind);
-        },
-    ).open();
-}
-
 /**
  * Moment (Inbox) capture shell. Event and Task both redirect to
  * ScheduledItemDesktopCreateModal before any of their fields are ever
  * rendered or read — see the Event/Task tab buttons in renderTabs() — so
- * this class only ever renders and submits the Inbox kind.
+ * this class only ever renders and submits the Inbox kind. The redirect
+ * itself is injected via openScheduledItem (see EventTaskCaptureLauncher.ts)
+ * so this file has no reason to import the launcher back.
  */
 export class EventTaskModal extends Modal {
     protected form: EventTaskFormState;
@@ -141,9 +46,10 @@ export class EventTaskModal extends Modal {
     constructor(
         app: App,
         private getSettings: () => FocusNotesSettings,
-        private anchorDate: Date = new Date(),
+        anchorDate: Date = new Date(),
         private onComplete: () => void = () => {},
         options: OpenEventTaskFormOptions = {},
+        private readonly openScheduledItem: (kind: "task" | "event") => void = () => {},
     ) {
         super(app);
 
@@ -271,7 +177,7 @@ export class EventTaskModal extends Modal {
                 // Recompute fresh instead of forwarding this.form.targetFile: that
                 // shared field only ever holds Event's Daily-Notes-derived default
                 // (it's not kind-aware), which would otherwise leak into Task too.
-                openDesktopScheduledItemCreate(this.app, this.getSettings, this.anchorDate, this.onComplete, kind);
+                this.openScheduledItem(kind);
                 return;
             }
             this.form.kind = kind;

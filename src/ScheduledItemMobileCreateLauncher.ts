@@ -17,7 +17,7 @@ export function openMobileScheduledItemCreate(
     const settings = getSettings();
     const resolver = new TargetResolver(app, settings);
     // Task never defaults to Daily Notes / the ambient active target — see the
-    // matching comment in EventTaskModal.ts's openDesktopScheduledItemCreate().
+    // matching comment in EventTaskCaptureLauncher.ts's openDesktopScheduledItemCreate().
     const configured: FocusTarget =
         kind === "task"
             ? { file: "", heading: settings.captureTask.heading, position: settings.captureTask.position }
