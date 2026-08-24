@@ -1,14 +1,12 @@
-import { ItemView, Notice, setIcon, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
+import { ItemView, setIcon, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import { openEventTaskForm } from "./EventTaskCaptureLauncher";
-import { openScheduledItemEditor } from "./ScheduledItemEditor";
-import { formatScheduledItemBlockTarget } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
 import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import type { TimelineMode, TimelineRange } from "./features/timeline/domain/Timeline";
 import { TimelineGrid } from "./TimelineGrid";
-import { PendingTasksModal, TimelineItemModal } from "./TimelineItemModal";
 import { TimelineLayout } from "./TimelineLayout";
 import { TimelineIndex, type TimelineIndexResult } from "./features/timeline/ui/TimelineIndex";
+import { TimelineModalLauncher } from "./features/timeline/ui/TimelineModalLauncher";
 import { buildTimelineSourceSummaries, TimelineSourceSidebar } from "./TimelineSourceSidebar";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import { addDays, formatDayKey, getIsoWeek, startOfDay, startOfWeek } from "./features/timeline/domain/TimelineDate.ts";
@@ -19,6 +17,7 @@ export class TimelineView extends ItemView {
     private mode: TimelineMode = "day";
     private anchorDate = startOfDay(new Date());
     private index: TimelineIndex;
+    private modalLauncher: TimelineModalLauncher;
     private query = new ScheduledItemQuery();
     private layout = new TimelineLayout();
     private bodyEl!: HTMLElement;
@@ -38,6 +37,11 @@ export class TimelineView extends ItemView {
         super(leaf);
         this.mode = this.getSettings().timeline.defaultMode === "multi-day" ? "day" : "day";
         this.index = new TimelineIndex(this.app, this.getSettings, this.saveSettings);
+        this.modalLauncher = new TimelineModalLauncher({
+            app: this.app,
+            getSettings: this.getSettings,
+            onRefreshNeeded: () => void this.refreshIndex(),
+        });
     }
 
     getViewType(): string {
@@ -308,8 +312,8 @@ export class TimelineView extends ItemView {
             layout,
             sourceColors: settings.timeline.sourceColors,
             showPendingSummary: settings.timeline.showPendingSummary,
-            onOpenPendingItems: (items) => this.openPendingItems(items),
-            onOpenItem: (item) => this.openItemDetails(item),
+            onOpenPendingItems: (items) => this.modalLauncher.openPendingItems(items),
+            onOpenItem: (item) => this.modalLauncher.openItemDetails(item),
         }).render();
     }
 
@@ -337,43 +341,5 @@ export class TimelineView extends ItemView {
             settings.timeline.sourceColors,
             (sourceId) => this.index.colorFor(sourceId),
         );
-    }
-
-    private openItemDetails(item: ScheduledItem): void {
-        new TimelineItemModal(
-            this.app,
-            item,
-            (selected) => void this.openSourceItem(selected),
-            (selected) => void this.openItemEditor(selected),
-        ).open();
-    }
-
-    private async openItemEditor(item: ScheduledItem): Promise<void> {
-        await openScheduledItemEditor(this.app, item, this.getSettings, () => void this.refreshIndex());
-    }
-
-    private openPendingItems(items: ScheduledItem[]): void {
-        new PendingTasksModal(this.app, items, (item) => this.openItemDetails(item)).open();
-    }
-
-    private async openSourceItem(item: ScheduledItem): Promise<void> {
-        const file = this.app.vault.getAbstractFileByPath(item.source.filePath);
-        if (!(file instanceof TFile)) {
-            new Notice(`Source note not found: ${item.source.filePath}`);
-            return;
-        }
-        if (item.blockId) {
-            await this.app.workspace.openLinkText(
-                formatScheduledItemBlockTarget(item.source.filePath, item.blockId),
-                item.source.filePath,
-                false,
-            );
-            return;
-        }
-        const leaf = this.app.workspace.getLeaf(false);
-        await leaf.openFile(file, {
-            active: true,
-            eState: { line: Math.max(0, item.source.lineNumber - 1) },
-        });
     }
 }
