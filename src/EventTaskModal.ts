@@ -8,7 +8,7 @@ import {
     type PartialSubmissionResult,
     retryRelatedSubmission,
     submitInbox,
-} from "./EventTaskSubmission";
+} from "./features/capture/moment/application/EventTaskSubmission";
 import { EventTaskWriter } from "./infrastructure/obsidian/EventTaskWriter";
 import { InboxDesktopForm } from "./InboxDesktopForm";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
