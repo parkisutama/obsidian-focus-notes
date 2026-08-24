@@ -1,9 +1,11 @@
-import { type App, type Plugin, PluginSettingTab, Setting, setIcon, ToggleComponent } from "obsidian";
-import { createContextSource, findSharedFolderConflicts } from "./ContextSourceSettings";
-import { contextSelectField, contextTextField } from "./features/settings/ui/SettingsFormFields";
+import { type App, type Plugin, PluginSettingTab, Setting, setIcon } from "obsidian";
+import {
+    type ObjectSourceNavigation,
+    renderObjectsList,
+    renderObjectSourceEdit,
+} from "./features/settings/ui/ObjectSourceSettings";
 import { renderPeriodicalNotes } from "./features/settings/ui/PeriodicalNotesSettings";
 import type { SettingsRenderContext } from "./features/settings/ui/SettingsRenderContext";
-import { normalizeInboxFolders } from "./InboxFolderSettings";
 import {
     CAPTURE_CATEGORIES,
     type FocusNotesSettingsViewId,
@@ -12,10 +14,9 @@ import {
     ROOT_CATEGORIES,
     type SettingsCategory,
 } from "./SettingsLayout";
-import { FileSuggest, FolderSuggest } from "./infrastructure/obsidian/Suggesters";
+import { FolderSuggest } from "./infrastructure/obsidian/Suggesters";
 import { TargetResolver } from "./TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./TimelineSourceGroups";
-import type { ContextSourceSettings, ObjectNotePlacement } from "./features/object-notes/domain/ContextSourceSettings";
 import type { TimelineMode } from "./features/timeline/domain/Timeline";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
@@ -57,6 +58,13 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         };
     }
 
+    private objectSourceNavigation(): ObjectSourceNavigation {
+        return {
+            toList: () => this.navigateTo("objects"),
+            toSource: (sourceId) => this.navigateToObjectSource(sourceId),
+        };
+    }
+
     display(): void {
         const { containerEl } = this;
         const view = this.view;
@@ -81,10 +89,15 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 renderPeriodicalNotes(containerEl, this.settingsContext());
                 return;
             case "objects":
-                this.renderObjectsList(containerEl);
+                renderObjectsList(containerEl, this.settingsContext(), this.objectSourceNavigation());
                 return;
             case "objects-source":
-                this.renderObjectSourceEdit(containerEl, view.sourceId);
+                renderObjectSourceEdit(
+                    containerEl,
+                    view.sourceId,
+                    this.settingsContext(),
+                    this.objectSourceNavigation(),
+                );
                 return;
             case "focus":
                 this.renderDefaultDurations(containerEl);
@@ -931,288 +944,5 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             status.addClass("is-warning");
             status.createDiv({ text: "The default capture target could not be resolved." });
         }
-    }
-
-    private renderObjectsList(containerEl: HTMLElement): void {
-        containerEl.createEl("p", {
-            cls: "setting-item-description",
-            text:
-                "Each source labels one object type. Match by folder and Match by property can each be turned on or " +
-                "off independently — on their own, in combination, or neither (a source that matches nothing). " +
-                "Multiple object types may share a folder when they use the same Property with distinct Values. " +
-                "Templates are optional; enabled sources with a folder can create objects from the @ suggester.",
-        });
-        const sources = this.plugin.settings.inbox.contextSources;
-        const list = containerEl.createDiv({ cls: "fn-settings-row-list" });
-        sources.forEach((source, index) => {
-            this.renderObjectSourceRow(list, source, index);
-        });
-
-        new Setting(containerEl).addButton((button) =>
-            button
-                .setButtonText("Add object source")
-                .setCta()
-                .onClick(async () => {
-                    const created = createContextSource(sources);
-                    sources.push(created);
-                    await this.saveContextSources();
-                    this.navigateToObjectSource(created.id);
-                }),
-        );
-    }
-
-    private renderObjectSourceRow(container: HTMLElement, source: ContextSourceSettings, index: number): void {
-        const row = container.createDiv({ cls: "fn-settings-row" });
-        const body = row.createDiv({ cls: "fn-settings-row-body" });
-        body.createDiv({ cls: "fn-settings-row-title", text: source.name });
-        body.createDiv({ cls: "fn-settings-row-desc", text: source.enabled ? "Enabled" : "Disabled" });
-
-        const enabled = new ToggleComponent(row)
-            .setValue(source.enabled)
-            .setTooltip(`Enable ${source.name}`)
-            .onChange(async (value) => {
-                source.enabled = value;
-                await this.saveContextSources();
-                this.display();
-            });
-        enabled.toggleEl.addEventListener("click", (event) => event.stopPropagation());
-
-        const remove = row.createEl("button", {
-            cls: "clickable-icon",
-            attr: { "aria-label": `Remove ${source.name}` },
-        });
-        setIcon(remove, "trash-2");
-        remove.addEventListener("click", async (event) => {
-            event.stopPropagation();
-            this.plugin.settings.inbox.contextSources.splice(index, 1);
-            await this.saveContextSources();
-            this.display();
-        });
-
-        const arrow = row.createSpan({ cls: "fn-settings-row-arrow" });
-        setIcon(arrow, "chevron-right");
-        row.addEventListener("click", () => this.navigateToObjectSource(source.id));
-    }
-
-    private renderObjectSourceEdit(containerEl: HTMLElement, sourceId: string): void {
-        const sources = this.plugin.settings.inbox.contextSources;
-        const index = sources.findIndex((s) => s.id === sourceId);
-        const source = sources[index];
-        if (!source) {
-            this.navigateTo("objects");
-            return;
-        }
-        const sharedFolderConflicts = findSharedFolderConflicts(sources);
-        const list = containerEl.createDiv({ cls: "fn-context-source-list" });
-        this.renderContextSource(list, source, index, sharedFolderConflicts);
-    }
-
-    private renderContextSource(
-        container: HTMLElement,
-        source: ContextSourceSettings,
-        index: number,
-        sharedFolderConflicts: ReadonlyMap<string, string[]>,
-    ): void {
-        const card = container.createDiv({ cls: "fn-context-source-card" });
-        const header = card.createDiv({ cls: "fn-context-source-header" });
-        const identity = header.createDiv();
-        identity.createEl("strong", { text: source.name });
-        identity.createEl("small", { text: `ID: ${source.id}` });
-        const actions = header.createDiv({ cls: "fn-context-source-actions" });
-        new ToggleComponent(actions)
-            .setValue(source.enabled)
-            .setTooltip(`Enable ${source.name}`)
-            .onChange(async (value) => {
-                source.enabled = value;
-                await this.saveContextSources();
-                this.display();
-            });
-        const remove = actions.createEl("button", {
-            cls: "clickable-icon",
-            attr: { "aria-label": `Remove ${source.name}` },
-        });
-        setIcon(remove, "trash-2");
-        remove.addEventListener("click", async () => {
-            this.plugin.settings.inbox.contextSources.splice(index, 1);
-            await this.saveContextSources();
-            this.display();
-        });
-
-        let filterProperty = source.filter?.property ?? "";
-        let filterValue = source.filter?.value ?? "";
-        const saveFilter = async (): Promise<void> => {
-            source.filter =
-                filterProperty.trim() && filterValue.trim()
-                    ? { property: filterProperty.trim(), value: filterValue.trim() }
-                    : null;
-            await this.saveContextSources();
-        };
-        const fields = card.createDiv({ cls: "fn-context-source-grid" });
-        contextTextField(fields, "Object label", "Books", source.name, async (value) => {
-            source.name = value.trim() || source.id;
-            identity.querySelector("strong")?.setText(source.name);
-            await this.saveContextSources();
-        });
-        contextTextField(fields, "Icon", "book-open", source.icon, async (value) => {
-            source.icon = value.trim() || "link";
-            await this.saveContextSources();
-        });
-        const matchByFolderField = fields.createDiv({ cls: "fn-context-source-field" });
-        matchByFolderField.createEl("span", { text: "Match by folder" });
-        new ToggleComponent(matchByFolderField)
-            .setValue(source.matchByFolder)
-            .setTooltip(`Match ${source.name} by folder`)
-            .onChange(async (value) => {
-                source.matchByFolder = value;
-                await this.saveContextSources();
-                this.display();
-            });
-        const matchByPropertyField = fields.createDiv({ cls: "fn-context-source-field" });
-        matchByPropertyField.createEl("span", { text: "Match by property" });
-        new ToggleComponent(matchByPropertyField)
-            .setValue(source.matchByProperty)
-            .setTooltip(`Match ${source.name} by property`)
-            .onChange(async (value) => {
-                source.matchByProperty = value;
-                await this.saveContextSources();
-                this.display();
-            });
-        const propertyField = contextTextField(fields, "Property", "type", filterProperty, async (value) => {
-            filterProperty = value;
-            await saveFilter();
-        });
-        const valueField = contextTextField(fields, "Value", "book", filterValue, async (value) => {
-            filterValue = value;
-            await saveFilter();
-        });
-        propertyField.disabled = !source.matchByProperty;
-        valueField.disabled = !source.matchByProperty;
-        contextTextField(fields, "Log heading", "Reading log", source.relatedHeading, async (value) => {
-            source.relatedHeading = value.replace(/^#+\s*/, "").trim() || "Related log";
-            await this.saveContextSources();
-        });
-        contextSelectField(
-            fields,
-            "Log position",
-            [
-                { value: "start", label: "Start of section (newest at top)" },
-                { value: "end", label: "End of section (newest at bottom)" },
-            ],
-            source.relatedPosition,
-            async (value) => {
-                source.relatedPosition = value as InsertPosition;
-                await this.saveContextSources();
-            },
-        );
-        contextSelectField(
-            fields,
-            "Default placement",
-            [
-                { value: "flat", label: "Flat note" },
-                { value: "folder-note", label: "Folder note" },
-            ],
-            source.placement,
-            async (value) => {
-                source.placement = value as ObjectNotePlacement;
-                await this.saveContextSources();
-            },
-        );
-        const timelineField = fields.createDiv({ cls: "fn-context-source-field" });
-        timelineField.createEl("span", { text: "Include in Focus Timeline" });
-        new ToggleComponent(timelineField)
-            .setValue(source.includeInTimeline)
-            .setTooltip(`Include ${source.name} in Focus Timeline`)
-            .onChange(async (value) => {
-                source.includeInTimeline = value;
-                await this.saveContextSources();
-            });
-        const template = contextTextField(
-            fields,
-            "Template note",
-            "Templates/Book.md",
-            source.templatePath,
-            async (value) => {
-                source.templatePath = value.trim().replace(/^\/+/, "");
-                await this.saveContextSources();
-            },
-        );
-        new FileSuggest(this.app, template);
-
-        const conflictingFolders = Array.from(sharedFolderConflicts.entries())
-            .filter(([, sourceIds]) => sourceIds.includes(source.id))
-            .map(([folder]) => folder);
-        if (conflictingFolders.length > 0) {
-            card.createDiv({
-                cls: "fn-context-source-warning",
-                text:
-                    `Shared folder needs one common Property with a distinct Value for each object type: ` +
-                    conflictingFolders.join(", "),
-            });
-        }
-
-        this.renderContextSourceFolders(card, source);
-    }
-
-    private renderContextSourceFolders(container: HTMLElement, source: ContextSourceSettings): void {
-        const rows = container.createDiv({ cls: "fn-context-source-folders" });
-        rows.createEl("span", { cls: "fn-context-source-folders-label", text: "Source folders" });
-        const list = rows.createDiv({ cls: "fn-context-source-folder-list" });
-        const values = [...source.folders];
-        const disabled = !source.matchByFolder;
-        let suggesters: FolderSuggest[] = [];
-
-        const renderRows = (): void => {
-            for (const suggester of suggesters) suggester.close();
-            suggesters = [];
-            list.empty();
-
-            values.forEach((folder, index) => {
-                const row = list.createDiv({ cls: "fn-context-source-folder-row" });
-                const input = row.createEl("input", {
-                    type: "text",
-                    attr: {
-                        placeholder: index === 0 ? "Objects" : "Folder/path",
-                        "aria-label": `${source.name} source folder ${index + 1}`,
-                    },
-                });
-                input.value = folder;
-                input.disabled = disabled;
-                input.addEventListener("input", () => {
-                    values[index] = input.value;
-                    source.folders = normalizeInboxFolders(values);
-                });
-                input.addEventListener("change", async () => {
-                    await this.saveContextSources();
-                });
-                suggesters.push(new FolderSuggest(this.app, input));
-                const remove = row.createEl("button", {
-                    cls: "clickable-icon",
-                    attr: { "aria-label": `Remove ${source.name} folder ${index + 1}` },
-                });
-                remove.disabled = disabled;
-                setIcon(remove, "x");
-                remove.addEventListener("click", async () => {
-                    values.splice(index, 1);
-                    source.folders = normalizeInboxFolders(values);
-                    await this.saveContextSources();
-                    renderRows();
-                });
-            });
-
-            const add = list.createEl("button", { text: "+ Add folder", cls: "fn-context-source-add-folder" });
-            add.disabled = disabled;
-            add.addEventListener("click", () => {
-                values.push("");
-                renderRows();
-                const inputs = list.querySelectorAll<HTMLInputElement>("input");
-                inputs.item(inputs.length - 1)?.focus();
-            });
-        };
-
-        renderRows();
-    }
-
-    private async saveContextSources(): Promise<void> {
-        await this.plugin.saveSettings();
     }
 }
