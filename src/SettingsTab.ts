@@ -1,7 +1,9 @@
 import { type App, type Plugin, PluginSettingTab, Setting, setIcon, ToggleComponent } from "obsidian";
 import { createContextSource, findSharedFolderConflicts } from "./ContextSourceSettings";
+import { contextSelectField, contextTextField } from "./features/settings/ui/SettingsFormFields";
+import { renderPeriodicalNotes } from "./features/settings/ui/PeriodicalNotesSettings";
+import type { SettingsRenderContext } from "./features/settings/ui/SettingsRenderContext";
 import { normalizeInboxFolders } from "./InboxFolderSettings";
-import { createPeriodicalProfile } from "./PeriodicalNoteSettings";
 import {
     CAPTURE_CATEGORIES,
     type FocusNotesSettingsViewId,
@@ -16,7 +18,6 @@ import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "./Timelin
 import type { ContextSourceSettings, ObjectNotePlacement } from "./features/object-notes/domain/ContextSourceSettings";
 import type { TimelineMode } from "./features/timeline/domain/Timeline";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
-import type { PeriodicalNoteProfile } from "./features/periodical-notes/domain/PeriodicalNote";
 import type { InsertPosition } from "./shared/markdown/InsertPosition";
 import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 
@@ -46,6 +47,16 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         this.display();
     }
 
+    /** Narrow context passed to extracted category renderers instead of the whole plugin instance. */
+    private settingsContext(): SettingsRenderContext {
+        return {
+            app: this.app,
+            settings: this.plugin.settings,
+            saveSettings: () => this.plugin.saveSettings(),
+            redisplay: () => this.display(),
+        };
+    }
+
     display(): void {
         const { containerEl } = this;
         const view = this.view;
@@ -67,7 +78,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
 
         switch (view.id) {
             case "periodical":
-                this.renderPeriodicalNotes(containerEl);
+                renderPeriodicalNotes(containerEl, this.settingsContext());
                 return;
             case "objects":
                 this.renderObjectsList(containerEl);
@@ -882,123 +893,6 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         }
     }
 
-    private renderPeriodicalNotes(containerEl: HTMLElement): void {
-        containerEl.createEl("h3", { text: "Periodical Notes" });
-        containerEl.createEl("p", {
-            cls: "setting-item-description",
-            text:
-                "Define where each kind of periodical note lives — daily, weekly, or any custom cadence. " +
-                "Focus session, Event, and Task capture each pick one of these profiles as their destination.",
-        });
-
-        new Setting(containerEl)
-            .setName("Sync Daily profile from core Daily Notes plugin")
-            .setDesc(
-                'When the core Daily Notes plugin is enabled, the "Daily" profile\'s folder and file format ' +
-                    "are read from it live. Disabled, unavailable, or any other profile: its own fields below apply.",
-            )
-            .addToggle((toggle) =>
-                toggle.setValue(this.plugin.settings.periodicalNotes.syncDailyFromCorePlugin).onChange(async (v) => {
-                    this.plugin.settings.periodicalNotes.syncDailyFromCorePlugin = v;
-                    await this.plugin.saveSettings();
-                }),
-            );
-
-        new Setting(containerEl)
-            .setName("Default date format")
-            .setDesc("Moment.js format used for a bare {{date}} token (no explicit :FORMAT). Example: YYYY-MM-DD.")
-            .addText((text) =>
-                text.setValue(this.plugin.settings.dailyNoteFormat).onChange(async (v) => {
-                    this.plugin.settings.dailyNoteFormat = v || "YYYY-MM-DD";
-                    await this.plugin.saveSettings();
-                }),
-            );
-
-        const list = containerEl.createDiv({ cls: "fn-periodical-profile-list" });
-        const profiles = this.plugin.settings.periodicalNotes.profiles;
-        profiles.forEach((profile, index) => {
-            this.renderPeriodicalProfile(list, profile, index);
-        });
-
-        new Setting(containerEl).addButton((button) =>
-            button
-                .setButtonText("Add profile")
-                .setCta()
-                .onClick(async () => {
-                    profiles.push(createPeriodicalProfile(profiles));
-                    await this.plugin.saveSettings();
-                    this.display();
-                }),
-        );
-    }
-
-    private renderPeriodicalProfile(container: HTMLElement, profile: PeriodicalNoteProfile, index: number): void {
-        const card = container.createDiv({ cls: "fn-periodical-profile-card" });
-        const header = card.createDiv({ cls: "fn-periodical-profile-header" });
-        header.createEl("strong", { text: profile.name || profile.id });
-        header.createEl("small", { text: `ID: ${profile.id}` });
-        const remove = header.createEl("button", {
-            cls: "clickable-icon",
-            attr: { "aria-label": `Remove ${profile.name || profile.id}` },
-        });
-        setIcon(remove, "trash-2");
-        remove.addEventListener("click", async () => {
-            this.plugin.settings.periodicalNotes.profiles.splice(index, 1);
-            await this.plugin.saveSettings();
-            this.display();
-        });
-
-        const fields = card.createDiv({ cls: "fn-periodical-profile-grid" });
-        this.contextTextField(fields, "Name", "Monthly", profile.name, async (value) => {
-            profile.name = value.trim() || profile.id;
-            header.querySelector("strong")?.setText(profile.name);
-            await this.plugin.saveSettings();
-        });
-        const preview = card.createDiv({ cls: "fn-periodical-profile-preview" });
-        const updatePreview = (): void => {
-            const target = new TargetResolver(this.app, this.plugin.settings).getPeriodicalTarget(
-                profile.id,
-                new Date(),
-            );
-            preview.setText(
-                target?.file
-                    ? target.heading
-                        ? `Today: ${target.file} → ## ${target.heading}`
-                        : `Today: ${target.file}`
-                    : "Today: (unresolved — check the folder and file format below)",
-            );
-        };
-        const folderInput = this.contextTextField(
-            fields,
-            "Folder",
-            "Journal/{{date:YYYY}}",
-            profile.folder,
-            async (value) => {
-                profile.folder = value.trim();
-                await this.plugin.saveSettings();
-                updatePreview();
-            },
-        );
-        new FolderSuggest(this.app, folderInput);
-        this.contextTextField(fields, "File format", "YYYY-MM-DD", profile.fileFormat, async (value) => {
-            profile.fileFormat = value.trim() || "YYYY-MM-DD";
-            await this.plugin.saveSettings();
-            updatePreview();
-        });
-        this.contextTextField(
-            fields,
-            "Heading format",
-            "empty = fixed heading per capture kind",
-            profile.headingFormat,
-            async (value) => {
-                profile.headingFormat = value.trim();
-                await this.plugin.saveSettings();
-                updatePreview();
-            },
-        );
-        updatePreview();
-    }
-
     private renderTimelineAlignmentStatus(container: HTMLElement): void {
         const settings = this.plugin.settings;
         const resolver = new TargetResolver(this.app, settings);
@@ -1154,12 +1048,12 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
             await this.saveContextSources();
         };
         const fields = card.createDiv({ cls: "fn-context-source-grid" });
-        this.contextTextField(fields, "Object label", "Books", source.name, async (value) => {
+        contextTextField(fields, "Object label", "Books", source.name, async (value) => {
             source.name = value.trim() || source.id;
             identity.querySelector("strong")?.setText(source.name);
             await this.saveContextSources();
         });
-        this.contextTextField(fields, "Icon", "book-open", source.icon, async (value) => {
+        contextTextField(fields, "Icon", "book-open", source.icon, async (value) => {
             source.icon = value.trim() || "link";
             await this.saveContextSources();
         });
@@ -1183,21 +1077,21 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 await this.saveContextSources();
                 this.display();
             });
-        const propertyField = this.contextTextField(fields, "Property", "type", filterProperty, async (value) => {
+        const propertyField = contextTextField(fields, "Property", "type", filterProperty, async (value) => {
             filterProperty = value;
             await saveFilter();
         });
-        const valueField = this.contextTextField(fields, "Value", "book", filterValue, async (value) => {
+        const valueField = contextTextField(fields, "Value", "book", filterValue, async (value) => {
             filterValue = value;
             await saveFilter();
         });
         propertyField.disabled = !source.matchByProperty;
         valueField.disabled = !source.matchByProperty;
-        this.contextTextField(fields, "Log heading", "Reading log", source.relatedHeading, async (value) => {
+        contextTextField(fields, "Log heading", "Reading log", source.relatedHeading, async (value) => {
             source.relatedHeading = value.replace(/^#+\s*/, "").trim() || "Related log";
             await this.saveContextSources();
         });
-        this.contextSelectField(
+        contextSelectField(
             fields,
             "Log position",
             [
@@ -1210,7 +1104,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 await this.saveContextSources();
             },
         );
-        this.contextSelectField(
+        contextSelectField(
             fields,
             "Default placement",
             [
@@ -1232,7 +1126,7 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
                 source.includeInTimeline = value;
                 await this.saveContextSources();
             });
-        const template = this.contextTextField(
+        const template = contextTextField(
             fields,
             "Template note",
             "Templates/Book.md",
@@ -1316,37 +1210,6 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         };
 
         renderRows();
-    }
-
-    private contextTextField(
-        container: HTMLElement,
-        label: string,
-        placeholder: string,
-        value: string,
-        onChange: (value: string) => Promise<void>,
-    ): HTMLInputElement {
-        const field = container.createEl("label", { cls: "fn-context-source-field" });
-        field.createEl("span", { text: label });
-        const input = field.createEl("input", { type: "text", attr: { placeholder, "aria-label": label } });
-        input.value = value;
-        input.addEventListener("change", () => void onChange(input.value));
-        return input;
-    }
-
-    private contextSelectField(
-        container: HTMLElement,
-        label: string,
-        options: Array<{ value: string; label: string }>,
-        value: string,
-        onChange: (value: string) => Promise<void>,
-    ): HTMLSelectElement {
-        const field = container.createEl("label", { cls: "fn-context-source-field" });
-        field.createEl("span", { text: label });
-        const select = field.createEl("select", { attr: { "aria-label": label } });
-        for (const option of options) select.createEl("option", { value: option.value, text: option.label });
-        select.value = value;
-        select.addEventListener("change", () => void onChange(select.value));
-        return select;
     }
 
     private async saveContextSources(): Promise<void> {
