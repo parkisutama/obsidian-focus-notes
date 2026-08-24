@@ -1,31 +1,24 @@
 import { ItemView, Notice, setIcon, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 import { openEventTaskForm } from "./EventTaskCaptureLauncher";
 import { openScheduledItemEditor } from "./ScheduledItemEditor";
-import { ScheduledItemIndexer } from "./ScheduledItemIndexer";
 import { formatScheduledItemBlockTarget } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
-import { ScheduledItemParser } from "./features/capture/scheduled-item/domain/ScheduledItemParser";
 import { ScheduledItemQuery } from "./ScheduledItemQuery";
 import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import type { TimelineMode, TimelineRange } from "./features/timeline/domain/Timeline";
-import { TargetResolver } from "./TargetResolver";
 import { TimelineGrid } from "./TimelineGrid";
 import { PendingTasksModal, TimelineItemModal } from "./TimelineItemModal";
 import { TimelineLayout } from "./TimelineLayout";
-import { isFileInTimelineSource } from "./TimelineSourceAlignment";
-import { buildTimelineSourceGroups, timelineSourceFolders, timelineSourceHeadings } from "./TimelineSourceGroups";
+import { TimelineIndex, type TimelineIndexResult } from "./features/timeline/ui/TimelineIndex";
 import { buildTimelineSourceSummaries, TimelineSourceSidebar } from "./TimelineSourceSidebar";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import { addDays, formatDayKey, getIsoWeek, startOfDay, startOfWeek } from "./features/timeline/domain/TimelineDate.ts";
 
 export const VIEW_TYPE_FOCUS_TIMELINE = "focus-timeline-view";
 
-const SOURCE_COLORS = ["#4c9aff", "#2fb344", "#f59f00", "#e64980", "#15aabf", "#845ef7", "#f76707", "#40c057"];
-
 export class TimelineView extends ItemView {
     private mode: TimelineMode = "day";
     private anchorDate = startOfDay(new Date());
-    private items: ScheduledItem[] = [];
-    private parser = new ScheduledItemParser();
+    private index: TimelineIndex;
     private query = new ScheduledItemQuery();
     private layout = new TimelineLayout();
     private bodyEl!: HTMLElement;
@@ -36,7 +29,6 @@ export class TimelineView extends ItemView {
     private weeklyOpenButton!: HTMLButtonElement;
     private weekLabel!: HTMLElement;
     private sourceToggleButton!: HTMLButtonElement;
-    private indexRefreshTimer: number | null = null;
 
     constructor(
         leaf: WorkspaceLeaf,
@@ -45,6 +37,7 @@ export class TimelineView extends ItemView {
     ) {
         super(leaf);
         this.mode = this.getSettings().timeline.defaultMode === "multi-day" ? "day" : "day";
+        this.index = new TimelineIndex(this.app, this.getSettings, this.saveSettings);
     }
 
     getViewType(): string {
@@ -90,29 +83,32 @@ export class TimelineView extends ItemView {
         this.renderShell(root);
         this.registerEvent(
             this.app.vault.on("modify", (file) => {
-                if (file instanceof TFile && this.isInSourceScope(file.path)) this.scheduleIndexRefresh();
+                if (file instanceof TFile && this.index.isInSourceScope(file.path)) this.scheduleIndexRefresh();
             }),
         );
         this.registerEvent(
             this.app.vault.on("create", (file) => {
-                if (file instanceof TFile && this.isInSourceScope(file.path)) this.scheduleIndexRefresh();
+                if (file instanceof TFile && this.index.isInSourceScope(file.path)) this.scheduleIndexRefresh();
             }),
         );
         this.registerEvent(
             this.app.vault.on("delete", (file) => {
-                if (file instanceof TFile && this.isInSourceScope(file.path)) this.scheduleIndexRefresh();
+                if (file instanceof TFile && this.index.isInSourceScope(file.path)) this.scheduleIndexRefresh();
             }),
         );
         this.registerEvent(
             this.app.vault.on("rename", (file, oldPath) => {
-                if (file instanceof TFile && (this.isInSourceScope(file.path) || this.isInSourceScope(oldPath))) {
+                if (
+                    file instanceof TFile &&
+                    (this.index.isInSourceScope(file.path) || this.index.isInSourceScope(oldPath))
+                ) {
                     this.scheduleIndexRefresh();
                 }
             }),
         );
         this.registerEvent(
             this.app.metadataCache.on("changed", (file) => {
-                if (this.isInSourceScope(file.path)) this.scheduleIndexRefresh();
+                if (this.index.isInSourceScope(file.path)) this.scheduleIndexRefresh();
             }),
         );
         this.registerEvent(
@@ -120,18 +116,12 @@ export class TimelineView extends ItemView {
                 this.scheduleIndexRefresh();
             }),
         );
-        this.register(() => {
-            if (this.indexRefreshTimer !== null) window.clearTimeout(this.indexRefreshTimer);
-        });
+        this.register(() => this.index.dispose());
         await this.refreshIndex();
     }
 
     private scheduleIndexRefresh(): void {
-        if (this.indexRefreshTimer !== null) window.clearTimeout(this.indexRefreshTimer);
-        this.indexRefreshTimer = window.setTimeout(() => {
-            this.indexRefreshTimer = null;
-            void this.refreshIndex();
-        }, 150);
+        this.index.scheduleIndexRefresh((result) => this.handleIndexResult(result));
     }
 
     private renderShell(root: HTMLElement): void {
@@ -226,30 +216,16 @@ export class TimelineView extends ItemView {
     }
 
     private async refreshIndex(): Promise<void> {
-        const settings = this.getSettings();
-        if (!settings.timeline.enabled) {
-            this.items = [];
+        this.handleIndexResult(await this.index.refreshIndex());
+    }
+
+    private handleIndexResult(result: TimelineIndexResult): void {
+        if (result.status === "error") return;
+        if (result.status === "disabled") {
             this.renderDisabled();
             return;
         }
-
-        const sourceGroups = this.getEffectiveSourceGroups();
-        if (sourceGroups.length === 0) {
-            this.items = [];
-            this.renderContent();
-            return;
-        }
-
-        try {
-            const indexer = new ScheduledItemIndexer(this.app, this.parser);
-            this.items = await indexer.buildIndex(sourceGroups, this.getEffectiveSourceHeadings());
-            this.ensureSourceSettings();
-            await this.saveSettings();
-            this.renderContent();
-        } catch (err) {
-            console.error("[Focus Timeline] Failed to build index", err);
-            new Notice("Focus Timeline failed to build index. See console for details.");
-        }
+        this.renderContent();
     }
 
     private renderDisabled(): void {
@@ -285,12 +261,13 @@ export class TimelineView extends ItemView {
             );
         }
         const range = this.currentRange();
-        const allSourceIds = new Set(this.getEffectiveSourceGroups().map((source) => source.id));
-        const allRangeItems = this.query.getItemsForRange(this.items, range, {
+        const items = this.index.getItems();
+        const allSourceIds = new Set(this.index.getEffectiveSourceGroups().map((source) => source.id));
+        const allRangeItems = this.query.getItemsForRange(items, range, {
             visibleSources: allSourceIds,
             includeCompleted: settings.timeline.showCompletedTasks,
         });
-        const allPendingItems = this.query.getPendingTasks(this.items, this.anchorDate, allSourceIds);
+        const allPendingItems = this.query.getPendingTasks(items, this.anchorDate, allSourceIds);
         const sources = this.buildSourceSummaries([...allRangeItems, ...allPendingItems]);
         const visibleSources = new Set(sources.filter((source) => source.visible).map((source) => source.id));
         const rangeItems = allRangeItems.filter((item) => visibleSources.has(item.source.groupId));
@@ -314,7 +291,7 @@ export class TimelineView extends ItemView {
 
         this.gridEl.toggleClass("focus-timeline-main-expanded", settings.timeline.sourceSidebarCollapsed);
 
-        if (this.getEffectiveSourceFolders().length === 0) {
+        if (this.index.getEffectiveSourceFolders().length === 0) {
             this.gridEl.empty();
             this.gridEl.createDiv({
                 cls: "focus-timeline-empty",
@@ -354,52 +331,12 @@ export class TimelineView extends ItemView {
     private buildSourceSummaries(activeItems: ScheduledItem[]) {
         const settings = this.getSettings();
         return buildTimelineSourceSummaries(
-            this.getEffectiveSourceGroups(),
+            this.index.getEffectiveSourceGroups(),
             activeItems,
             settings.timeline.sourceVisibility,
             settings.timeline.sourceColors,
-            (sourceId) => this.colorFor(sourceId),
+            (sourceId) => this.index.colorFor(sourceId),
         );
-    }
-
-    private ensureSourceSettings(): void {
-        const settings = this.getSettings();
-        for (const source of this.getEffectiveSourceGroups()) {
-            if (settings.timeline.sourceVisibility[source.id] === undefined) {
-                settings.timeline.sourceVisibility[source.id] = true;
-            }
-            if (!settings.timeline.sourceColors[source.id]) {
-                settings.timeline.sourceColors[source.id] = this.colorFor(source.id);
-            }
-        }
-    }
-
-    private colorFor(filePath: string): string {
-        let hash = 0;
-        for (let i = 0; i < filePath.length; i++) hash = (hash + filePath.charCodeAt(i)) % 997;
-        return SOURCE_COLORS[hash % SOURCE_COLORS.length];
-    }
-
-    private isInSourceScope(path: string): boolean {
-        return isFileInTimelineSource(path, this.getEffectiveSourceFolders());
-    }
-
-    private getEffectiveSourceFolders(): string[] {
-        return timelineSourceFolders(this.getEffectiveSourceGroups());
-    }
-
-    private getEffectiveSourceGroups() {
-        const settings = this.getSettings();
-        const dailyFolder = new TargetResolver(this.app, settings).getProfileFolder("daily");
-        return buildTimelineSourceGroups(settings.timeline.sourceFolders, dailyFolder, settings.inbox.contextSources);
-    }
-
-    private getEffectiveSourceHeadings(): string[] {
-        const settings = this.getSettings();
-        return timelineSourceHeadings(settings.timeline.sourceHeadings, [
-            settings.captureEvent.heading,
-            settings.captureTask.heading,
-        ]);
     }
 
     private openItemDetails(item: ScheduledItem): void {
