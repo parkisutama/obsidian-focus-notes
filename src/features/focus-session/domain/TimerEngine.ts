@@ -1,4 +1,4 @@
-import type { EngineMode, TimerStatus } from "./features/focus-session/domain/Timer";
+import type { EngineMode, TimerStatus } from "./Timer";
 
 /**
  * Pure timer state machine. No DOM, no Obsidian APIs.

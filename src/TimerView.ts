@@ -1,7 +1,7 @@
 import { ItemView, Notice, type WorkspaceLeaf, setIcon, debounce, MarkdownRenderer, Menu } from "obsidian";
-import { TimerEngine } from "./TimerEngine";
-import { CircularDisplay } from "./CircularDisplay";
-import { LogModal } from "./LogModal";
+import { TimerEngine } from "./features/focus-session/domain/TimerEngine";
+import { CircularDisplay } from "./features/focus-session/ui/CircularDisplay";
+import { LogModal } from "./features/focus-session/ui/LogModal";
 import type { NoteWriter } from "./NoteWriter";
 import type { TargetResolver } from "./TargetResolver";
 import type { RecentEntriesReader } from "./RecentEntriesReader";

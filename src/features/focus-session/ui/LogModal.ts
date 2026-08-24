@@ -1,11 +1,11 @@
 import { type App, FuzzySuggestModal, Modal, Notice, Setting, type TFile } from "obsidian";
-import type { DisplayMode } from "./features/focus-session/domain/Timer";
-import type { EmotionCategory, StressLevel } from "./features/reflection/domain/Wellbeing";
-import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
-import { EmotionalWellbeingPicker } from "./EmotionalWellbeingPicker";
-import { FileSuggest } from "./infrastructure/obsidian/Suggesters";
-import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
-import { ReflectionFocusModal } from "./ReflectionFocusModal";
+import type { DisplayMode } from "../domain/Timer";
+import type { EmotionCategory, StressLevel } from "../../reflection/domain/Wellbeing";
+import type { FocusTarget } from "../../capture/domain/CaptureTarget";
+import { EmotionalWellbeingPicker } from "../../../EmotionalWellbeingPicker";
+import { FileSuggest } from "../../../infrastructure/obsidian/Suggesters";
+import { isTFile } from "../../../infrastructure/obsidian/ObsidianFileTypes.ts";
+import { ReflectionFocusModal } from "../../../ReflectionFocusModal";
 
 export interface LogModalResult {
     task: string;
