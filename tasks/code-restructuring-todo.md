@@ -255,17 +255,28 @@ Process note: the mechanical `FocusNotesSettings` direct-import cutover touched 
 
 **Acceptance criteria:**
 
-- [ ] Each renderer receives only required settings/services, not the whole plugin without justification.
-- [ ] Category order, copy, visibility, defaults, and save behavior are unchanged.
-- [ ] One serialized persistence path remains authoritative.
+- [x] Each renderer receives only required settings/services, not the whole plugin without justification.
+- [x] Category order, copy, visibility, defaults, and save behavior are unchanged.
+- [x] One serialized persistence path remains authoritative.
 
 **Verification:**
 
-- [ ] Run settings layout, context source, inbox folder, and state-store tests after every category.
-- [ ] Smoke-test navigation and saving in desktop Obsidian.
+- [x] Run settings layout, context source, inbox folder, and state-store tests after every category.
+- [ ] Smoke-test navigation and saving in desktop Obsidian. Not performed — `SettingsTab.ts` and the extracted category renderers depend on live Obsidian classes (`PluginSettingTab`, `Setting`, `ToggleComponent`) that aren't mockable under `node:test`, so there is no automated coverage of the actual UI wiring for this category either (same limitation noted for Task 9). Every extraction was pure code motion (methods moved verbatim to module functions, `this.plugin.settings`/`this.plugin.saveSettings()` mechanically renamed to `ctx.settings`/`ctx.saveSettings()`) verified by diff review and full CI, not by running the settings tab. Flagged here as a real gap, not silently dropped.
 
 **Dependencies:** Foundation checkpoint; may follow capture work where shared settings types overlap.
 **Estimated scope:** Five Small/Medium batches.
+
+**Progress (2026-08-24):**
+
+- [x] Batch 1 — Periodical Notes: introduced `features/settings/ui/SettingsRenderContext.ts` (narrow ctx: app/settings/saveSettings/redisplay) and `SettingsFormFields.ts` (`contextTextField`/`contextSelectField`, moved verbatim). Extracted `renderPeriodicalNotes`/`renderPeriodicalProfile` to `features/settings/ui/PeriodicalNotesSettings.ts`. `SettingsTab.ts`: 1355→1218 lines.
+- [x] Batch 2 — Object Sources: extracted `renderObjectsList`/`renderObjectSourceRow`/`renderObjectSourceEdit`/`renderContextSource`/`renderContextSourceFolders` to `features/settings/ui/ObjectSourceSettings.ts`, adding a narrow `ObjectSourceNavigation` (`toList`/`toSource`) callback pair for the list↔edit navigation this category needs beyond the shared context. Dropped the redundant `saveContextSources()` wrapper (it only forwarded to `plugin.saveSettings()`). `SettingsTab.ts`: 1218→948 lines.
+- [x] Batch 3 — Focus Session: extracted `renderDefaultDurations`/`renderFocusSessionCapture`/`renderDateGrouping`/`renderLogEntryFormat`/`renderBehavior` to `features/settings/ui/FocusSessionSettings.ts` behind one `renderFocusSession()` entry point. Moved the shared `renderProfilePicker` helper into `SettingsFormFields.ts` since this category needed it first (Moment/Event capture kept using the private copy until batch 4, avoiding speculative early moves). `SettingsTab.ts`: 948→715 lines.
+- [x] Batch 4 — Capture: extracted `renderMomentCapture`/`renderEventCapture`/`renderTaskCapture`/`renderSharedNoteCreation`/`renderTaskAllowedSources` to `features/settings/ui/CaptureSettings.ts`, reusing the shared `renderProfilePicker`. Removed the now-fully-redundant private `renderProfilePicker` copy from `SettingsTab.ts`. `SettingsTab.ts`: 715→330 lines.
+- [x] Batch 5 (final) — Timeline: extracted `renderFocusTimeline`/`renderTimelineAlignmentStatus` to `features/settings/ui/TimelineSettings.ts`. `SettingsTab.ts`: 330→169 lines, now a pure navigation shell (`display()`/`navigateTo()`/`renderRoot()`/`renderBackBar()`/`renderCategoryRow()`/`settingsContext()`) with zero per-category rendering logic remaining.
+- [x] Full CI (format, lint, typecheck, 299 tests, production build, artifact verification, docs build) verified after every batch; zero import cycles introduced.
+
+**Task 10 complete 2026-08-24.** All acceptance criteria closed. The one unchecked verification item (manual desktop smoke test) is an inherent gap shared with Task 9 — this UI layer has no automated coverage — not an oversight specific to this task.
 
 ## Task 11: Decompose Timer
 

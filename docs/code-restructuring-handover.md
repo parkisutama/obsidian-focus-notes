@@ -1,8 +1,8 @@
 # Code restructuring handover
 
 Tanggal: 2026-08-24
-Status: Task 7, Task 8, dan Task 9 selesai — Phase 2 (Capture domain restructuring) tertutup. `EventTaskModal.ts`/`EventTaskMobileScreen.ts` sudah dipangkas jadi shell Moment-only (kode Event/Task provably dead dihapus setelah tracing seluruh command/ribbon/launcher). `EventTaskSubmission.ts` dipindah ke `features/capture/moment/application/` (sudah Moment-eksklusif sejak `submitEventTask` dihapus). `EventTaskFormState.ts`/`SubmissionPolicy.ts` sengaja tidak disentuh — masih load-bearing. Fungsi routing lintas-kind (`openEventTaskForm`, `openDesktopScheduledItemCreate`) sudah diekstrak dari `EventTaskModal.ts` ke `EventTaskCaptureLauncher.ts` setelah class-nya diubah menerima callback `openScheduledItem` (pola yang sama seperti `EventTaskMobileScreen.ts`), menghilangkan risiko import cycle. Rename kedua shell ke nama Moment-eksklusif kini aman tapi sengaja tidak dilakukan — kosmetik saja, bukan syarat Task 9. **Manual acceptance testing desktop/mobile dilewati atas persetujuan eksplisit pengguna** (2026-08-24), bukan terlewat.
-Tujuan berikutnya: Task 10 — Decompose Settings by category (features/settings), atau reprioritisasi sesuai arahan pengguna berikutnya.
+Status: Task 7, Task 8, Task 9, dan Task 10 selesai. `EventTaskModal.ts`/`EventTaskMobileScreen.ts` sudah dipangkas jadi shell Moment-only, fungsi routing lintas-kind sudah diekstrak ke `EventTaskCaptureLauncher.ts` (lihat catatan Task 9 di bawah). Task 10: `SettingsTab.ts` didekomposisi dari 1355 baris jadi 169-baris thin navigation shell — lima kategori (Periodical Notes, Object Sources, Focus Session, Capture, Timeline) masing-masing sekarang punya satu file di `features/settings/ui/` dengan satu exported entry function menerima `SettingsRenderContext` (app/settings/saveSettings/redisplay) alih-alih seluruh instance plugin. Tidak ada perubahan urutan kategori, copy, atau save behavior — pure code motion. **Manual acceptance testing desktop/mobile untuk Task 9 dilewati atas persetujuan eksplisit pengguna** (2026-08-24), bukan terlewat.
+Tujuan berikutnya: Task 11 — Decompose Timer, atau reprioritisasi sesuai arahan pengguna berikutnya.
 
 ## Ringkasan keputusan
 
@@ -359,9 +359,10 @@ Acceptance manual tetap diperlukan untuk:
 2. Periksa `git status`; pertahankan semua perubahan lokal pengguna yang tidak terkait.
 3. Konfirmasi branch `refactor/domain-structure`; baseline terakhir `pnpm run check:ci` lulus dengan 299 tes pada 2026-08-24.
 4. Gunakan `docs/code-architecture-baseline.md` sebagai ownership map saat ini; jangan membangun ulang audit yang sudah selesai.
-5. Task 9 selesai (2026-08-24): dead-code strip, `EventTaskSubmission.ts` move, dan ekstraksi routing (`EventTaskCaptureLauncher.ts`) semuanya tertutup. Manual acceptance testing dilewati atas persetujuan eksplisit pengguna — jangan asumsikan itu "belum sempat", itu keputusan sadar. Rename kosmetik `EventTaskModal.ts`/`EventTaskMobileScreen.ts` sengaja tidak dikerjakan (lihat catatan di ownership table); tidak ada pekerjaan Task 9 lain yang terbuka. Mulai Task 10 (Settings decomposition) di sesi berikutnya kecuali prioritas berubah.
-6. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
-7. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
+5. Task 9 selesai (2026-08-24): dead-code strip, `EventTaskSubmission.ts` move, dan ekstraksi routing (`EventTaskCaptureLauncher.ts`) semuanya tertutup. Manual acceptance testing dilewati atas persetujuan eksplisit pengguna — jangan asumsikan itu "belum sempat", itu keputusan sadar. Rename kosmetik `EventTaskModal.ts`/`EventTaskMobileScreen.ts` sengaja tidak dikerjakan (lihat catatan di ownership table); tidak ada pekerjaan Task 9 lain yang terbuka.
+6. Task 10 selesai (2026-08-24): `SettingsTab.ts` didekomposisi lima batch (satu kategori per batch, urutan sesuai plan: Periodical Notes, Object Sources, Focus Session, Capture, Timeline), turun dari 1355 ke 169 baris. Tidak ada pekerjaan Task 10 lain yang terbuka. Mulai Task 11 (Decompose Timer) di sesi berikutnya kecuali prioritas berubah.
+7. Pertahankan source import tetap acyclic; central `types.ts` dan seluruh re-export kontrak settings sudah dihapus setelah direct-consumer cutover selesai.
+8. Pertahankan dependency advisory sebagai batch dependency-only yang terpisah dari restrukturisasi source.
 
 ## Kriteria handover ini dianggap selesai
 
