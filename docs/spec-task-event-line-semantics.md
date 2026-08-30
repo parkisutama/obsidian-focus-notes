@@ -2,6 +2,10 @@
 
 ## Status
 
+> Post-refactor extension approved 2026-08-30: `spec-scheduled-item-timebox-focus-integration.md` introduces multiple
+> child timeboxes, derived Daily references, and owned Focus Sessions. This document remains the implemented runtime
+> contract until Tasks 29–46 migrate it; afterward its single-timebox sections become legacy compatibility rules.
+
 Living contract with three maturity levels:
 
 - **Implemented** describes Markdown currently written and parsed by Focus Notes.

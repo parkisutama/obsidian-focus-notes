@@ -1,5 +1,11 @@
 # Development Status
 
+> Planning update, 2026-08-30: the approved post-refactor Scheduled Item, multi-timebox, Daily projection, and purposeful
+> Focus Session initiative is specified in
+> [spec-scheduled-item-timebox-focus-integration.md](spec-scheduled-item-timebox-focus-integration.md), planned in
+> `tasks/scheduled-item-timebox-focus-plan.md`, and decomposed as Tasks 29–46 in `tasks/todo.md`. Task 28 remains the
+> refactor runtime-acceptance gate; none of the new behavior is implemented yet.
+
 ## Snapshot
 
 - Date: 2026-08-15

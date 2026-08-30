@@ -120,6 +120,16 @@ Detailed acceptance criteria are in `tasks/todo.md`.
 27. Decompose the mobile Scheduled Item form.
 28. Complete final review, docs, audit disposition, and runtime acceptance.
 
+### Phase 7+: Scheduled Item, Timebox, and Focus integration
+
+Tasks 29–46 implement the separately approved behavioral initiative documented in
+`docs/spec-scheduled-item-timebox-focus-integration.md`. Its dependency graph, risk controls, and phase checkpoints live in
+`tasks/scheduled-item-timebox-focus-plan.md`; detailed acceptance criteria remain in this repository's canonical
+`tasks/todo.md`.
+
+Task 28 remains a strict refactor-acceptance boundary. Do not mix the new identity, projection, timebox, or Focus Session
+model into that task.
+
 ## Verification Cadence
 
 Every task:
