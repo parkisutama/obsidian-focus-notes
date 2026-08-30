@@ -1,5 +1,5 @@
 import { type App, type Component, Platform } from "obsidian";
-import { preferActiveNoteTarget } from "./CaptureTarget";
+import { preferActiveNoteTarget } from "./features/capture/domain/ActiveCaptureTarget";
 import { EventTaskModal } from "./EventTaskModal";
 import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
 import type { OpenEventTaskFormOptions } from "./features/capture/domain/CaptureForm";

@@ -1,8 +1,8 @@
 import { type App, Modal, Notice, Platform, Setting } from "obsidian";
-import type { LedgerRecordSnapshot } from "./features/capture/scheduled-item/domain/LedgerRecordSource";
-import { shouldUseMobileForm } from "./MobileFormPolicy";
-import { saveTaskLedgerEdit, type SaveTaskLedgerEditResult } from "./infrastructure/obsidian/TaskLedgerEditor";
-import type { TaskLineEdit } from "./features/capture/scheduled-item/domain/TaskLineEditor";
+import type { LedgerRecordSnapshot } from "../features/capture/scheduled-item/domain/LedgerRecordSource";
+import { shouldUseMobileForm } from "../MobileFormPolicy";
+import { saveTaskLedgerEdit, type SaveTaskLedgerEditResult } from "../infrastructure/obsidian/TaskLedgerEditor";
+import type { TaskLineEdit } from "../features/capture/scheduled-item/domain/TaskLineEditor";
 
 export function openTaskEditForm(
     app: App,

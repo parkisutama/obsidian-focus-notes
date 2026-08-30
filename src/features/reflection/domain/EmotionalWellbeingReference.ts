@@ -1,4 +1,4 @@
-import type { EmotionCategory, StressLevel } from "./features/reflection/domain/Wellbeing";
+import type { EmotionCategory, StressLevel } from "./Wellbeing";
 
 export const STRESS_OPTIONS: Array<{ level: StressLevel; label: string }> = [
     { level: "low", label: "Low" },

@@ -2,7 +2,7 @@ import { type App, Component, Setting, setIcon } from "obsidian";
 import { ContextNotesController } from "./InboxNotesController.ts";
 import { buildMobileScheduledItemFormModel } from "./MobileScheduledItemFormModel.ts";
 import { getMobileViewportMetrics } from "./MobileViewport.ts";
-import { ObjectNoteSuggest } from "./ObjectNoteSuggest.ts";
+import { ObjectNoteSuggest } from "./features/object-notes/ui/ObjectNoteSuggest.ts";
 import { parseObjectReferences } from "./features/capture/domain/ObjectReference.ts";
 import { FileSuggest, FolderSuggest } from "./infrastructure/obsidian/Suggesters.ts";
 import type { ScheduledItemFormData } from "./features/capture/scheduled-item/domain/ScheduledItemFormData.ts";

@@ -1,4 +1,4 @@
-import type { InsertPosition } from "./shared/markdown/InsertPosition";
+import type { InsertPosition } from "./InsertPosition";
 
 /**
  * Pure heading-aware insertion logic shared by EventTaskWriter's write paths.

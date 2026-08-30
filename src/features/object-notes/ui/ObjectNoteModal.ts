@@ -1,7 +1,7 @@
 import { type App, Modal, Notice, Setting, type TFile } from "obsidian";
-import { createObjectNote, getCreatableObjectSources } from "./ObjectNote";
-import { FolderSuggest } from "./infrastructure/obsidian/Suggesters";
-import type { ContextSourceSettings, ObjectNotePlacement } from "./features/object-notes/domain/ContextSourceSettings";
+import { createObjectNote, getCreatableObjectSources } from "../application/ObjectNote";
+import type { ContextSourceSettings, ObjectNotePlacement } from "../domain/ContextSourceSettings";
+import { FolderSuggest } from "../../../infrastructure/obsidian/Suggesters";
 
 export class ObjectNoteModal extends Modal {
     private readonly sources: ContextSourceSettings[];

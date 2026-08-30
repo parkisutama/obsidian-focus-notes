@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { insertUnderHeading } from "../src/HeadingInsertion.ts";
+import { insertUnderHeading } from "../src/shared/markdown/HeadingInsertion.ts";
 
 test("appends without a heading regardless of position", () => {
     assert.equal(insertUnderHeading("Existing\n", "", "- new", "end"), "Existing\n- new\n");

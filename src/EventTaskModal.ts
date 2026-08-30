@@ -1,5 +1,5 @@
 import { type App, Modal, Notice } from "obsidian";
-import { preferActiveNoteTarget } from "./CaptureTarget";
+import { preferActiveNoteTarget } from "./features/capture/domain/ActiveCaptureTarget";
 import { EventTaskFormState } from "./EventTaskFormState";
 import type { EventTaskKind, OpenEventTaskFormOptions } from "./features/capture/domain/CaptureForm";
 import {

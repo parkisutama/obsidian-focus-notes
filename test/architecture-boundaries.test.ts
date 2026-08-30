@@ -48,6 +48,110 @@ function findImportSpecifiers(source: string): string[] {
     return specifiers;
 }
 
+const expectedRootModulesDuringMigration = new Set([
+    "ActiveNoteLedger.ts",
+    "ActiveNoteManagerLauncher.ts",
+    "ActiveNoteManagerModal.ts",
+    "ActiveNoteManagerModel.ts",
+    "ContextSourceSettings.ts",
+    "DesktopScheduledItemForm.ts",
+    "DesktopScheduledItemFormModel.ts",
+    "EventTaskCaptureLauncher.ts",
+    "EventTaskFormState.ts",
+    "EventTaskMobileScreen.ts",
+    "EventTaskModal.ts",
+    "InboxDesktopForm.ts",
+    "InboxFolderSettings.ts",
+    "InboxMarkdown.ts",
+    "InboxMobileForm.ts",
+    "InboxNotesController.ts",
+    "InboxNotesText.ts",
+    "InboxRichText.ts",
+    "InboxSuggestions.ts",
+    "InboxTarget.ts",
+    "MobileFormPolicy.ts",
+    "MobileScheduledItemForm.ts",
+    "MobileScheduledItemFormModel.ts",
+    "MobileViewport.ts",
+    "MoodReference.ts",
+    "NoteWriter.ts",
+    "RecentEntriesReader.ts",
+    "ScheduledItemDesktopCreateModal.ts",
+    "ScheduledItemDesktopEditModal.ts",
+    "ScheduledItemEditor.ts",
+    "ScheduledItemIndexer.ts",
+    "ScheduledItemMentionIndex.ts",
+    "ScheduledItemMobileCreateLauncher.ts",
+    "ScheduledItemMobileCreateScreen.ts",
+    "ScheduledItemMobileEditScreen.ts",
+    "ScheduledItemQuery.ts",
+    "SubmissionPolicy.ts",
+    "SuggestionSelection.ts",
+    "TargetResolver.ts",
+    "TaskFormatPreviewModal.ts",
+    "TimelineGrid.ts",
+    "TimelineItemModal.ts",
+    "TimelineItemModalModel.ts",
+    "TimelineLayout.ts",
+    "TimelineSourceAlignment.ts",
+    "TimelineSourceGroups.ts",
+    "TimelineSourceSidebar.ts",
+    "TimelineView.ts",
+    "TimerView.ts",
+    "main.ts",
+]);
+
+function normalizeArchitecturePath(filePath: string): string {
+    return filePath.replaceAll("\\", "/");
+}
+
+function architectureImportViolation(importer: string, specifier: string): string | null {
+    const normalizedImporter = normalizeArchitecturePath(importer);
+    const resolvedSpecifier = specifier.startsWith(".")
+        ? path.posix.normalize(path.posix.join(path.posix.dirname(normalizedImporter), specifier))
+        : specifier;
+    const importerIsLegacy = normalizedImporter.startsWith("legacy/");
+
+    if (!importerIsLegacy && resolvedSpecifier.startsWith("legacy/")) {
+        return "production modules must not import legacy modules";
+    }
+    if (normalizedImporter.startsWith("shared/") && resolvedSpecifier.startsWith("features/")) {
+        return "shared modules must not import feature modules";
+    }
+    if (normalizedImporter.includes("/domain/")) {
+        if (specifier === "obsidian") return "domain modules must not import Obsidian";
+        if (
+            resolvedSpecifier.startsWith("plugin/") ||
+            resolvedSpecifier.startsWith("infrastructure/") ||
+            /\/(?:ui|application|infrastructure|plugin)(?:\/|$)/.test(resolvedSpecifier)
+        ) {
+            return "domain modules must not import an outer layer";
+        }
+    }
+    return null;
+}
+
+test("root TypeScript modules match the shrinking migration inventory", async () => {
+    const entries = await readdir(sourceRoot, { withFileTypes: true });
+    const actualRootModules = entries
+        .filter((entry) => entry.isFile() && entry.name.endsWith(".ts"))
+        .map((entry) => entry.name)
+        .sort();
+    assert.deepEqual(actualRootModules, [...expectedRootModulesDuringMigration].sort());
+});
+
+test("source imports respect architecture layer boundaries", async () => {
+    const modules = await findTypeScriptModules(sourceRoot);
+    for (const modulePath of modules) {
+        const relativePath = normalizeArchitecturePath(path.relative(sourceRoot, modulePath));
+        const source = await readFile(modulePath, "utf8");
+        for (const specifier of findImportSpecifiers(source)) {
+            const violation = architectureImportViolation(relativePath, specifier);
+            assert.equal(violation, null, `${relativePath} imports ${specifier}: ${violation}`);
+        }
+    }
+});
+
 test("feature domain modules stay independent of Obsidian and outer layers", async () => {
     const domainModules = await findDomainModules(featuresRoot);
     assert.ok(domainModules.length > 0, "expected at least one feature domain module");
@@ -103,4 +207,28 @@ test("source modules contain no circular relative imports", async () => {
     };
 
     for (const modulePath of modules) visit(modulePath);
+});
+
+test("architecture import classifier rejects inward, shared-to-feature, and legacy dependencies", () => {
+    assert.match(
+        architectureImportViolation("features/timeline/domain/Timeline.ts", "obsidian") ?? "",
+        /domain.*Obsidian/,
+    );
+    assert.match(
+        architectureImportViolation("features/timeline/domain/Timeline.ts", "../ui/TimelineView") ?? "",
+        /domain.*outer layer/,
+    );
+    assert.match(
+        architectureImportViolation("shared/markdown/MarkdownLink.ts", "../../features/capture/domain/CaptureTarget") ??
+            "",
+        /shared.*feature/,
+    );
+    assert.match(
+        architectureImportViolation("features/timeline/ui/TimelineView.ts", "../../../legacy/EventEditModal") ?? "",
+        /production.*legacy/,
+    );
+    assert.equal(
+        architectureImportViolation("features/capture/scheduled-item/domain/ScheduledItemParser.ts", "./ScheduledItem"),
+        null,
+    );
 });

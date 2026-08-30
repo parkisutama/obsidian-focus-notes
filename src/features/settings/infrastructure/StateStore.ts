@@ -1,4 +1,4 @@
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
+import type { FocusNotesSettings } from "../domain/FocusNotesSettings";
 
 // Releases before this migration stored settings outside the plugin directory.
 // Keep this path read-only so existing users can move safely to data.json.

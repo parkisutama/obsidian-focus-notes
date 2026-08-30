@@ -1,4 +1,4 @@
-import { isPathInContextSourceFolder, matchesContextFilter } from "../../../ContextSourceScope.ts";
+import { isPathInContextSourceFolder, matchesContextFilter } from "../../object-notes/domain/ContextSourceScope.ts";
 import type { ContextSourceSettings } from "../../object-notes/domain/ContextSourceSettings";
 import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
 

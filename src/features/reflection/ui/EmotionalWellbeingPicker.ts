@@ -1,12 +1,12 @@
 import { setIcon } from "obsidian";
-import { MOODS, type MoodEntry } from "./MoodReference";
-import type { EmotionCategory, StressLevel } from "./features/reflection/domain/Wellbeing";
+import { MOODS, type MoodEntry } from "../../../MoodReference";
+import type { EmotionCategory, StressLevel } from "../domain/Wellbeing";
 import {
     EMOTION_GROUPS,
     getEmotionCategoryLabel,
     getStressLevelLabel,
     STRESS_OPTIONS,
-} from "./EmotionalWellbeingReference";
+} from "../domain/EmotionalWellbeingReference";
 
 export interface EmotionalWellbeingValue {
     stressLevel: StressLevel | null;

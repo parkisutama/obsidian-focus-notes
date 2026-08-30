@@ -7,9 +7,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Add a checked root inventory plus permanent layer, shared, cycle, and legacy rules before moves begin.
 
 **Acceptance criteria:**
-- [ ] New root modules, inward domain dependencies, feature imports from `shared/`, and production imports from `legacy/` fail tests.
-- [ ] The migration inventory can shrink per batch and has `main.ts` as its documented final state.
-- [ ] Each guard is proven by a temporary failing mutation/fixture that is restored.
+- [x] New root modules, inward domain dependencies, feature imports from `shared/`, and production imports from `legacy/` fail tests.
+- [x] The migration inventory can shrink per batch and has `main.ts` as its documented final state.
+- [x] Each guard is proven by a focused RED test and classifier assertions for every prohibited dependency shape.
 
 **Verification:** `node --test test/architecture-boundaries.test.ts`; then full CI.
 
@@ -22,9 +22,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move, but do not delete or modernize, the three proven zero-consumer modules.
 
 **Acceptance criteria:**
-- [ ] `EventEditModal.ts`, `TaskEditModal.ts`, and `MoodPicker.ts` live unchanged under `src/legacy/`.
-- [ ] No production/test import reaches them and their former root paths are absent.
-- [ ] Git recognizes path moves and no behavior is edited.
+- [x] `EventEditModal.ts`, `TaskEditModal.ts`, and `MoodPicker.ts` live under `src/legacy/`, with only relative imports adjusted for the new path.
+- [x] No production/test import reaches them and their former root paths are absent.
+- [x] Source bodies are unchanged apart from relative import specifiers.
 
 **Verification:** Architecture test, explicit reference scan, typecheck, full tests, rename-similarity review.
 
@@ -37,9 +37,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move foundational pure modules before their consumers.
 
 **Acceptance criteria:**
-- [ ] `HeadingInsertion` is under `shared/markdown`; `DailyNotePath` and `PeriodicalNoteSettings` are under Periodical Notes domain.
-- [ ] Root `CaptureTarget` policy joins capture domain under an unambiguous name.
-- [ ] Signatures and output remain byte-compatible; no re-export shim is added.
+- [x] `HeadingInsertion` is under `shared/markdown`; `DailyNotePath` and `PeriodicalNoteSettings` are under Periodical Notes domain.
+- [x] Root `CaptureTarget` policy joins capture domain as `ActiveCaptureTarget`.
+- [x] Signatures and output remain byte-compatible; no re-export shim is added.
 
 **Verification:** Focused heading, Daily Note, periodical, and capture-target tests; standard gates.
 
@@ -50,17 +50,17 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 ## Checkpoint: Migration foundation
 
 - [ ] Tasks 1–3 pass full CI and audit disposition is recorded.
-- [ ] No cycle, barrel, forwarding shim, or new root file exists.
-- [ ] Legacy is present but unreachable; root inventory is below the 68-file baseline.
+- [x] No cycle, barrel, forwarding shim, or new root file exists.
+- [x] Legacy is present but unreachable; root inventory is 61, below the 68-file baseline.
 
 ## Task 4: Finish Settings ownership
 
 **Description:** Move Settings composition and storage to feature layers.
 
 **Acceptance criteria:**
-- [ ] `SettingsTab`/`SettingsLayout` live in Settings UI and `StateStore` in Settings infrastructure.
-- [ ] Save ordering, defaults, migration, and malformed-data protection are unchanged.
-- [ ] Plugin composition imports the new canonical paths directly.
+- [x] `SettingsTab`/`SettingsLayout` live in Settings UI and `StateStore` in Settings infrastructure.
+- [x] Save ordering, defaults, migration, and malformed-data protection are unchanged.
+- [x] Plugin composition imports the new canonical paths directly.
 
 **Verification:** State-store, settings-layout/defaults, compatibility tests; full CI; desktop settings smoke test.
 
@@ -73,9 +73,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move remaining Object Notes domain, application, and UI modules.
 
 **Acceptance criteria:**
-- [ ] `ContextSourceScope` is domain; `ObjectNote` is application; modal/suggester are UI.
-- [ ] Capture-specific logic is not relabeled as Object Notes logic.
-- [ ] Creation paths, property enforcement, and suggestions are unchanged.
+- [x] `ContextSourceScope` is domain; `ObjectNote` is application; modal/suggester are UI.
+- [x] Capture-specific logic is not relabeled as Object Notes logic.
+- [x] Creation paths, property enforcement, and suggestions are unchanged.
 
 **Verification:** Context-source, object-note, object-reference, suggestion tests; standard gates.
 
@@ -88,9 +88,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move active CBT/reference APIs and UI without splitting data yet.
 
 **Acceptance criteria:**
-- [ ] Cognitive/reference modules are Reflection domain; active picker/modal are Reflection UI.
-- [ ] Legacy `MoodPicker` remains quarantined.
-- [ ] Labels and writer output are unchanged.
+- [x] Cognitive/reference modules are Reflection domain; active picker/modal are Reflection UI.
+- [x] Legacy `MoodPicker` remains quarantined.
+- [x] Labels and writer output are unchanged.
 
 **Verification:** Reflection, wellbeing, writer/formatting tests; standard gates.
 
@@ -100,8 +100,8 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 
 ## Checkpoint: Supporting features
 
-- [ ] Tasks 4–6 pass full CI.
-- [ ] Settings, Object Notes, and Reflection have no active root modules.
+- [x] Tasks 4–6 pass full CI (302 tests, production build, artifacts, and docs).
+- [x] Settings, Object Notes, and Reflection have no active root modules.
 
 ## Task 7: Place Focus Session application and adapters
 

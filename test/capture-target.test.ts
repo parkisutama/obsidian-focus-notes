@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { preferActiveNoteTarget } from "../src/CaptureTarget.ts";
+import { preferActiveNoteTarget } from "../src/features/capture/domain/ActiveCaptureTarget.ts";
 
 const configured = { file: "Daily/2026-08-03.md", heading: "Activities & Tasks", position: "end" as const };
 

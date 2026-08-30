@@ -1,4 +1,4 @@
-import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
+import type { FocusTarget } from "./CaptureTarget";
 
 /** Prefer an explicitly active Markdown note while retaining configured placement. */
 export function preferActiveNoteTarget(configured: FocusTarget, activeFilePath: string | null): FocusTarget {

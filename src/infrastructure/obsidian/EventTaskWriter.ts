@@ -8,7 +8,7 @@ import type { EventTaskSettings } from "../../features/capture/scheduled-item/do
 import { createScheduledItemBlockId } from "../../features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 import type { InboxRecord } from "../../features/capture/moment/domain/InboxRecord";
 import type { FocusNotesSettings } from "../../features/settings/domain/FocusNotesSettings";
-import { insertUnderHeading } from "../../HeadingInsertion";
+import { insertUnderHeading } from "../../shared/markdown/HeadingInsertion";
 import { type FormatInboxEntryOptions, formatInboxEntry } from "../../InboxMarkdown";
 import type { InsertPosition } from "../../shared/markdown/InsertPosition";
 import { TargetResolver } from "../../TargetResolver";

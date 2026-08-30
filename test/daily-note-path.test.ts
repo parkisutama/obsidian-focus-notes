@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizeDailyNoteFormat } from "../src/DailyNotePath.ts";
+import { normalizeDailyNoteFormat } from "../src/features/periodical-notes/domain/DailyNotePath.ts";
 
 test("removes trailing separators that otherwise create a /.md target", () => {
     assert.equal(normalizeDailyNoteFormat("YYYY/YYYY-MM/YYYY-MM-DD/", "YYYY-MM-DD"), "YYYY/YYYY-MM/YYYY-MM-DD");

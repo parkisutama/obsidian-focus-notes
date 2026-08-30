@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CAPTURE_CATEGORIES, parentView, ROOT_CATEGORIES } from "../src/SettingsLayout.ts";
+import { CAPTURE_CATEGORIES, parentView, ROOT_CATEGORIES } from "../src/features/settings/ui/SettingsLayout.ts";
 
 test("lists root categories in the confirmed order", () => {
     assert.deepEqual(

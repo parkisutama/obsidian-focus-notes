@@ -4,15 +4,11 @@ import {
     renderMomentCapture,
     renderSharedNoteCreation,
     renderTaskCapture,
-} from "./features/settings/ui/CaptureSettings";
-import { renderFocusSession } from "./features/settings/ui/FocusSessionSettings";
-import {
-    type ObjectSourceNavigation,
-    renderObjectsList,
-    renderObjectSourceEdit,
-} from "./features/settings/ui/ObjectSourceSettings";
-import { renderPeriodicalNotes } from "./features/settings/ui/PeriodicalNotesSettings";
-import type { SettingsRenderContext } from "./features/settings/ui/SettingsRenderContext";
+} from "./CaptureSettings";
+import { renderFocusSession } from "./FocusSessionSettings";
+import { type ObjectSourceNavigation, renderObjectsList, renderObjectSourceEdit } from "./ObjectSourceSettings";
+import { renderPeriodicalNotes } from "./PeriodicalNotesSettings";
+import type { SettingsRenderContext } from "./SettingsRenderContext";
 import {
     CAPTURE_CATEGORIES,
     type FocusNotesSettingsViewId,
@@ -21,8 +17,8 @@ import {
     ROOT_CATEGORIES,
     type SettingsCategory,
 } from "./SettingsLayout";
-import { renderFocusTimeline } from "./features/settings/ui/TimelineSettings";
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
+import { renderFocusTimeline } from "./TimelineSettings";
+import type { FocusNotesSettings } from "../domain/FocusNotesSettings";
 
 type FocusNotesSettingsView = { id: NavigableViewId } | { id: "objects-source"; sourceId: string };
 

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { StateStore } from "../src/StateStore.ts";
+import { StateStore } from "../src/features/settings/infrastructure/StateStore.ts";
 import { DEFAULT_SETTINGS, mergeSettingsWithDefaults } from "../src/features/settings/domain/SettingsDefaults.ts";
 
 test("adds Object Source defaults when loading settings saved before Inbox existed", () => {

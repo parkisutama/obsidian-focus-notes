@@ -6,7 +6,7 @@ import {
     createObjectNote,
     expandObjectNoteTemplate,
     getCreatableObjectSources,
-} from "../src/ObjectNote.ts";
+} from "../src/features/object-notes/application/ObjectNote.ts";
 import type { ContextSourceSettings } from "../src/features/object-notes/domain/ContextSourceSettings.ts";
 
 test("builds a safe Object Note path inside a configured source folder", () => {

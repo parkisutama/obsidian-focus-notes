@@ -5,7 +5,7 @@ import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
 import { ensureFolderPath } from "./infrastructure/obsidian/VaultFolders.ts";
 import { getMood } from "./MoodReference";
-import { getEmotionCategoryLabel, getStressLevelLabel } from "./EmotionalWellbeingReference";
+import { getEmotionCategoryLabel, getStressLevelLabel } from "./features/reflection/domain/EmotionalWellbeingReference";
 
 /**
  * Writes a SessionRecord into the chosen note.

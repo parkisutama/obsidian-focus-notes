@@ -1,8 +1,8 @@
 import { type App, Modal } from "obsidian";
-import { getMood } from "./MoodReference";
-import { CBT_PROMPTS, COGNITIVE_DISTORTIONS } from "./CognitiveDistortions";
-import type { EmotionCategory, StressLevel } from "./features/reflection/domain/Wellbeing";
-import { getEmotionCategoryLabel, getStressLevelLabel } from "./EmotionalWellbeingReference";
+import { getMood } from "../../../MoodReference";
+import { CBT_PROMPTS, COGNITIVE_DISTORTIONS } from "../domain/CognitiveDistortions";
+import { getEmotionCategoryLabel, getStressLevelLabel } from "../domain/EmotionalWellbeingReference";
+import type { EmotionCategory, StressLevel } from "../domain/Wellbeing";
 
 export interface ReflectionWellbeingContext {
     stressLevel: StressLevel | null;

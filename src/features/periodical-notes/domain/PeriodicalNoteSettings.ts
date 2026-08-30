@@ -1,4 +1,4 @@
-import type { PeriodicalNoteProfile } from "./features/periodical-notes/domain/PeriodicalNote";
+import type { PeriodicalNoteProfile } from "./PeriodicalNote";
 
 export function createPeriodicalProfile(existing: readonly PeriodicalNoteProfile[]): PeriodicalNoteProfile {
     const used = new Set(existing.map((profile) => profile.id));

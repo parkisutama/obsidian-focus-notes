@@ -1,5 +1,5 @@
 import type { App } from "obsidian";
-import { preferActiveNoteTarget } from "./CaptureTarget.ts";
+import { preferActiveNoteTarget } from "./features/capture/domain/ActiveCaptureTarget.ts";
 import { EventTaskMobileScreen } from "./EventTaskMobileScreen.ts";
 import { ScheduledItemMobileCreateScreen } from "./ScheduledItemMobileCreateScreen.ts";
 import { TargetResolver } from "./TargetResolver.ts";
