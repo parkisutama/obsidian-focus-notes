@@ -4,6 +4,9 @@ import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSetting
 import { CircularDisplay } from "./CircularDisplay";
 import { type DisplayMode, toEngineMode } from "../domain/Timer";
 import type { TimerEngine } from "../domain/TimerEngine";
+import type { FocusSessionOwner } from "../domain/OwnedFocusSession.ts";
+import { evaluateTimerStartGate } from "../domain/TimerPurposeGate.ts";
+import { TimerPurposeSelector } from "./TimerPurposeSelector.ts";
 
 export interface TimerControlsOptions {
     app: App;
@@ -30,6 +33,8 @@ export class TimerControls {
     private resetBtn!: HTMLButtonElement;
     private primaryBtn!: HTMLButtonElement;
     private stopBtn!: HTMLButtonElement;
+    private purposeSelector!: TimerPurposeSelector;
+    private currentOwner: FocusSessionOwner | null = null;
 
     private currentMode: DisplayMode;
 
@@ -39,12 +44,18 @@ export class TimerControls {
 
     render(parent: HTMLElement): void {
         this.renderModeMenu(parent);
+        this.renderPurposeSelector(parent);
         this.renderFocusInput(parent);
         this.display = new CircularDisplay(parent);
         this.renderDurationRow(parent);
         this.renderActions(parent);
         this.applyMode(this.currentMode); // sets default duration + display
         this.refreshDisplay();
+    }
+
+    /** The resolved Event/Task(+timebox) owner from the last successful start; null once idle again. */
+    getCurrentOwner(): FocusSessionOwner | null {
+        return this.currentOwner;
     }
 
     getCurrentMode(): DisplayMode {
@@ -157,6 +168,24 @@ export class TimerControls {
         });
     }
 
+    /**
+     * Required "what is this session for" picker (Task 42). Kept separate from focusInput below,
+     * which stays exactly as it was: focusInput still drives the legacy free-text {{task}} log
+     * token, so existing users' log templates render unchanged. Selecting a purpose here just
+     * pre-fills that field when it's still empty.
+     */
+    private renderPurposeSelector(parent: HTMLElement): void {
+        this.purposeSelector = new TimerPurposeSelector({
+            app: this.options.app,
+            getSettings: this.options.getSettings,
+            onSelectionChanged: (selection) => {
+                if (selection.status === "none" || this.focusInput?.value.trim()) return;
+                this.focusInput.value = selection.title;
+            },
+        });
+        this.purposeSelector.render(parent);
+    }
+
     private renderFocusInput(parent: HTMLElement): void {
         const row = parent.createDiv({ cls: "focus-notes-focus-row" });
         this.focusInput = row.createEl("input", {
@@ -253,6 +282,15 @@ export class TimerControls {
         const { engine } = this.options;
         const status = engine.getStatus();
         if (status === "idle") {
+            const gate = evaluateTimerStartGate(this.purposeSelector.getSelection());
+            if (gate.status === "blocked") {
+                new Notice(
+                    gate.reason === "no-purpose"
+                        ? "Pick the Task or Event this session is for before starting."
+                        : "Pick a timebox for this Task before starting.",
+                );
+                return;
+            }
             const minutes = this.parseMinutes();
             try {
                 engine.configure(toEngineMode(this.currentMode), minutes);
@@ -260,6 +298,7 @@ export class TimerControls {
                 new Notice(err instanceof Error ? err.message : String(err));
                 return;
             }
+            this.currentOwner = gate.owner;
             engine.start();
         } else if (status === "running") {
             engine.pause();
@@ -274,9 +313,16 @@ export class TimerControls {
     private handleReset(): void {
         if (this.options.engine.getStatus() === "idle") return;
         this.options.engine.reset();
+        this.clearOwner();
         this.refreshActions();
         this.refreshDisplay();
         new Notice("Session discarded.");
+    }
+
+    /** Called by the panel once a completed session has been logged, so the next session starts clean. */
+    clearOwner(): void {
+        this.currentOwner = null;
+        this.purposeSelector.reset();
     }
 
     // ---------------------------------------------------------------------
