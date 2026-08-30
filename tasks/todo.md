@@ -493,9 +493,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Introduce pure identity/reference contracts and an index that resolves Event/Task references to exactly one canonical block while excluding derived references from canonical counts.
 
 **Acceptance criteria:**
-- [ ] Item, timebox, session, and reference block IDs cannot collide by construction.
-- [ ] References resolve by stable identity rather than title or current file path.
-- [ ] Duplicate or missing canonical identities produce explicit ambiguous/orphan results.
+- [x] Item, timebox, session, and reference block IDs cannot collide by construction.
+- [x] References resolve by stable identity rather than title or current file path.
+- [x] Duplicate or missing canonical identities produce explicit ambiguous/orphan results.
 
 **Verification:** RED/GREEN identity and index tests; typecheck; full CI.
 
