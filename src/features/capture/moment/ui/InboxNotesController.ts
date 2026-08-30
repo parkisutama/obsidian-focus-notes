@@ -9,27 +9,34 @@ import {
 } from "../domain/InboxNotesText";
 import {
     formatObjectReferencePart,
-    type InboxRichTextPart,
     isInboxLineBreakInput,
     parseInboxRichText,
     parseContextRichText,
     serializeInboxRichText,
 } from "../domain/InboxRichText";
-import type { ContextSuggestion } from "../application/InboxSuggestions";
-import type { ScheduledItemMentionCandidate } from "../../scheduled-item/application/ScheduledItemMentionIndex.ts";
 import { getCreatableObjectSources } from "../../../object-notes/application/ObjectNote";
 import { ObjectNoteModal } from "../../../object-notes/ui/ObjectNoteModal";
 import { ObsidianInboxSuggestionSource } from "../../../../infrastructure/obsidian/suggestions/ObsidianInboxSuggestionSource";
 import { createObsidianLinkFormatter } from "../../../../infrastructure/obsidian/suggestions/ObsidianLinkResolver.ts";
 import { formatRelativeMarkdownLink } from "../domain/InboxMarkdown.ts";
 import type { ContextSourceSettings } from "../../../object-notes/domain/ContextSourceSettings";
-
-type ContextNotesSuggestion =
-    | { kind: "mention"; value: ContextSuggestion }
-    | { kind: "mention-kind"; value: "task" | "event" }
-    | { kind: "scheduled-item"; value: ScheduledItemMentionCandidate }
-    | { kind: "tag"; value: string }
-    | { kind: "create-object"; value: string };
+import {
+    closestInboxLink,
+    getCaretOffset,
+    getSelectionOffsets,
+    insertAtSelection,
+    placeCaretAtEnd,
+    pointAtOffset,
+    readDomParts,
+    replaceVisibleRange,
+    safeDecodeURIComponent,
+    setSelectionOffsets,
+} from "./InboxNotesDom.ts";
+import {
+    composeMentionSuggestions,
+    type ContextNotesSuggestion,
+    renderContextNotesSuggestion,
+} from "./InboxSuggestionPresentation.ts";
 
 export interface ContextNotesControllerOptions {
     initialValue: string;
@@ -130,19 +137,13 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
 
         if (this.activeTrigger.kind === "mention") {
             const sources = this.options.getContextSources();
-            const matches = this.source
-                .getContextSuggestions(this.activeTrigger.query, sources, this.limit)
-                .map((value) => ({ kind: "mention" as const, value }));
-            const query = this.activeTrigger.query.trim();
-            if (!query) {
-                return [
-                    { kind: "mention-kind", value: "task" },
-                    { kind: "mention-kind", value: "event" },
-                    ...matches.slice(0, Math.max(0, this.limit - 2)),
-                ];
-            }
-            if (getCreatableObjectSources(sources).length === 0) return matches;
-            return [...matches.slice(0, Math.max(0, this.limit - 1)), { kind: "create-object", value: query }];
+            const matches = this.source.getContextSuggestions(this.activeTrigger.query, sources, this.limit);
+            return composeMentionSuggestions(
+                this.activeTrigger.query,
+                matches,
+                getCreatableObjectSources(sources).length > 0,
+                this.limit,
+            );
         }
         if (this.activeTrigger.kind === "scheduled-item" && this.activeTrigger.itemKind) {
             return this.source
@@ -160,34 +161,7 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
     }
 
     renderSuggestion(suggestion: ContextNotesSuggestion, el: HTMLElement): void {
-        if (suggestion.kind === "tag") {
-            el.setText(suggestion.value);
-            return;
-        }
-        if (suggestion.kind === "create-object") {
-            el.createDiv({ text: `Create “${suggestion.value}”…`, cls: "fn-inbox-suggestion-label" });
-            el.createDiv({ text: "New Object Note from a configured template", cls: "fn-inbox-suggestion-context" });
-            return;
-        }
-        if (suggestion.kind === "mention-kind") {
-            el.createDiv({ text: suggestion.value === "task" ? "Task" : "Event", cls: "fn-inbox-suggestion-label" });
-            el.createDiv({ text: "Link an existing scheduled item", cls: "fn-inbox-suggestion-context" });
-            return;
-        }
-        if (suggestion.kind === "scheduled-item") {
-            el.createDiv({ text: suggestion.value.title, cls: "fn-inbox-suggestion-label" });
-            el.createDiv({
-                text: `${suggestion.value.kind === "task" ? "Task" : "Event"} · ${suggestion.value.status} · ${suggestion.value.filePath}`,
-                cls: "fn-inbox-suggestion-context",
-            });
-            return;
-        }
-        const { value } = suggestion;
-        el.createDiv({ text: value.label, cls: "fn-inbox-suggestion-label" });
-        el.createDiv({
-            text: `${value.sourceName} · ${value.filePath}`,
-            cls: "fn-inbox-suggestion-context",
-        });
+        renderContextNotesSuggestion(suggestion, el);
     }
 
     selectSuggestion(suggestion: ContextNotesSuggestion): void {
@@ -403,152 +377,3 @@ export class ContextNotesController extends AbstractInputSuggest<ContextNotesSug
 }
 
 export { ContextNotesController as InboxNotesController };
-
-function readDomParts(root: HTMLElement): InboxRichTextPart[] {
-    const parts: InboxRichTextPart[] = [];
-    const visit = (node: Node): void => {
-        if (node.nodeType === Node.TEXT_NODE) {
-            parts.push({ kind: "text", value: node.textContent ?? "" });
-            return;
-        }
-        if (!(node instanceof HTMLElement)) return;
-        const filePath = node.dataset.inboxFilePath;
-        if (node instanceof HTMLAnchorElement && filePath) {
-            parts.push({
-                kind: "link",
-                label: node.textContent ?? filePath,
-                filePath,
-                ...(node.dataset.inboxSubpath ? { subpath: node.dataset.inboxSubpath } : {}),
-            });
-            return;
-        }
-        if (node instanceof HTMLBRElement) {
-            parts.push({ kind: "text", value: "\n" });
-            return;
-        }
-        node.childNodes.forEach(visit);
-        if ((node instanceof HTMLDivElement || node instanceof HTMLParagraphElement) && node.nextSibling) {
-            parts.push({ kind: "text", value: "\n" });
-        }
-    };
-    root.childNodes.forEach(visit);
-    return parts;
-}
-
-function closestInboxLink(target: EventTarget | null): HTMLAnchorElement | null {
-    return target instanceof Element ? target.closest<HTMLAnchorElement>("a[data-inbox-file-path]") : null;
-}
-
-function getCaretOffset(root: HTMLElement): number {
-    const selection = root.ownerDocument.getSelection();
-    if (!selection?.rangeCount) return root.innerText.length;
-    const range = selection.getRangeAt(0);
-    if (!root.contains(range.endContainer)) return root.innerText.length;
-    const prefix = range.cloneRange();
-    prefix.selectNodeContents(root);
-    prefix.setEnd(range.endContainer, range.endOffset);
-    return prefix.toString().length;
-}
-
-function getSelectionOffsets(root: HTMLElement): { start: number; end: number } {
-    const selection = root.ownerDocument.getSelection();
-    if (!selection?.rangeCount) {
-        const end = root.innerText.length;
-        return { start: end, end };
-    }
-    const range = selection.getRangeAt(0);
-    if (!root.contains(range.startContainer) || !root.contains(range.endContainer)) {
-        const end = root.innerText.length;
-        return { start: end, end };
-    }
-    const offsetOf = (container: Node, offset: number): number => {
-        const prefix = root.ownerDocument.createRange();
-        prefix.selectNodeContents(root);
-        prefix.setEnd(container, offset);
-        return prefix.toString().length;
-    };
-    return {
-        start: offsetOf(range.startContainer, range.startOffset),
-        end: offsetOf(range.endContainer, range.endOffset),
-    };
-}
-
-function setSelectionOffsets(root: HTMLElement, start: number, end: number): void {
-    const document = root.ownerDocument;
-    const startPoint = pointAtOffset(root, start);
-    const endPoint = pointAtOffset(root, end);
-    const range = document.createRange();
-    range.setStart(startPoint.node, startPoint.offset);
-    range.setEnd(endPoint.node, endPoint.offset);
-    const selection = document.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-}
-
-function replaceVisibleRange(root: HTMLElement, start: number, end: number, replacement: Node): void {
-    const startPoint = pointAtOffset(root, start);
-    const endPoint = pointAtOffset(root, end);
-    const range = root.ownerDocument.createRange();
-    range.setStart(startPoint.node, startPoint.offset);
-    range.setEnd(endPoint.node, endPoint.offset);
-    range.deleteContents();
-    range.insertNode(replacement);
-}
-
-function pointAtOffset(root: HTMLElement, offset: number): { node: Node; offset: number } {
-    const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    let remaining = Math.max(0, offset);
-    let node = walker.nextNode();
-    while (node) {
-        const length = node.textContent?.length ?? 0;
-        if (remaining <= length) return { node, offset: remaining };
-        remaining -= length;
-        node = walker.nextNode();
-    }
-    return { node: root, offset: root.childNodes.length };
-}
-
-function placeCaretAtEnd(node: Node): void {
-    const document = node.ownerDocument;
-    if (!document) return;
-    const range = document.createRange();
-    range.setStart(node, node.textContent?.length ?? 0);
-    range.collapse(true);
-    const selection = document.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-    (node.parentElement as HTMLElement | null)?.focus();
-}
-
-function placeCaretAfter(node: Node): void {
-    const document = node.ownerDocument;
-    if (!document) return;
-    const range = document.createRange();
-    range.setStartAfter(node);
-    range.collapse(true);
-    const selection = document.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-    (node.parentElement as HTMLElement | null)?.focus();
-}
-
-function insertAtSelection(root: HTMLElement, node: Node): void {
-    const selection = root.ownerDocument.getSelection();
-    if (!selection?.rangeCount || !root.contains(selection.anchorNode)) {
-        root.appendChild(node);
-        placeCaretAfter(node);
-        return;
-    }
-    const range = selection.getRangeAt(0);
-    range.deleteContents();
-    range.insertNode(node);
-    placeCaretAfter(node);
-}
-
-function safeDecodeURIComponent(value: string): string {
-    try {
-        return decodeURIComponent(value);
-    } catch {
-        return value;
-    }
-}
