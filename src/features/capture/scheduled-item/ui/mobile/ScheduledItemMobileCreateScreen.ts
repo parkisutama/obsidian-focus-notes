@@ -15,12 +15,13 @@ import {
     createObsidianLinkResolver,
 } from "../../../../../infrastructure/obsidian/suggestions/ObsidianLinkResolver.ts";
 import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver.ts";
+import { resolveEventCaptureTarget } from "../../application/ScheduledItemCaptureTarget.ts";
 import {
     retryScheduledItemCreateRelated,
     type ScheduledItemCreateRelatedResult,
     writeScheduledItemCreateRelated,
 } from "../../application/ScheduledItemCreateRelated.ts";
-import { buildScheduledItemRecord } from "../../domain/ScheduledItemFormAdapter.ts";
+import { buildScheduledItemRecord, parseLocalDateTime } from "../../domain/ScheduledItemFormAdapter.ts";
 import {
     type ScheduledItemFormData,
     scheduledItemFormDataFromCreateState,
@@ -67,7 +68,12 @@ export class ScheduledItemMobileCreateScreen extends Component {
         });
         state.kind = kind;
         this.data = scheduledItemFormDataFromCreateState(state);
-        this.context = { targetFile: target.file, targetHeading: target.heading, targetPosition: target.position };
+        this.context = {
+            targetFile: target.file,
+            targetHeading: target.heading,
+            targetPosition: target.position,
+            targetManuallyEdited: false,
+        };
     }
 
     open(): void {
@@ -91,6 +97,7 @@ export class ScheduledItemMobileCreateScreen extends Component {
             onSubmit: () => void this.submit(),
             onCancel: () => this.close(),
             onSwitchKind: (kind) => this.switchKind(kind),
+            onPlannedStartChange: (value) => this.autoSyncEventTargetFile(value),
         });
         this.renderer.open(this);
     }
@@ -99,6 +106,21 @@ export class ScheduledItemMobileCreateScreen extends Component {
         if (kind === this.kind) return;
         this.close();
         this.openKind(kind);
+    }
+
+    /** Keeps "Save to file" following Planned Start until the user edits it directly. */
+    private autoSyncEventTargetFile(plannedStart: string): void {
+        if (this.kind !== "event" || this.context.targetManuallyEdited) return;
+        const start = parseLocalDateTime(plannedStart, true);
+        if (!start) return;
+        const settings = this.getSettings();
+        const resolver = new TargetResolver(this.app, settings);
+        const target = resolveEventCaptureTarget(
+            resolver.getPeriodicalTarget(settings.captureEvent.profileId, start),
+            settings.captureEvent,
+        );
+        this.context.targetFile = target.file;
+        this.setBusy(this.busy);
     }
 
     close(): void {

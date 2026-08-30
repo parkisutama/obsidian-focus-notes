@@ -6,6 +6,8 @@ interface DesktopTemporalSectionOptions {
     data: ScheduledItemFormData;
     update(change: () => void): void;
     changedAndRender(): void;
+    /** Create-mode Event only: notified with the new Planned Start value so the target file can resync. */
+    onEventStartChanged?(value: string): void;
 }
 
 export function renderDesktopTemporalSection(container: HTMLElement, options: DesktopTemporalSectionOptions): void {
@@ -81,6 +83,7 @@ function renderEventSection(container: HTMLElement, options: DesktopTemporalSect
     );
     dateTimeSetting(container, "Planned start", data.start, !data.allDay, options.update, (value) => {
         data.start = value ?? "";
+        options.onEventStartChanged?.(data.start);
     });
     if (!data.allDay) {
         dateTimeSetting(container, "Planned end", data.end, true, options.update, (value) => (data.end = value));

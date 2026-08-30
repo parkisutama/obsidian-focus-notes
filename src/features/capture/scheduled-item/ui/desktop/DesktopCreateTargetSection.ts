@@ -9,6 +9,8 @@ export interface DesktopScheduledItemCreateContext {
     targetFile: string;
     targetHeading: string;
     targetPosition: InsertPosition;
+    /** Event only: once true, Planned Start changes stop recalculating targetFile. */
+    targetManuallyEdited: boolean;
 }
 
 interface DesktopCreateTargetSectionOptions {
@@ -31,6 +33,7 @@ export function renderDesktopCreateTargetSection(
     file.value = options.context.targetFile;
     file.addEventListener("input", () => {
         options.context.targetFile = file.value;
+        options.context.targetManuallyEdited = true;
         options.onTargetFileChange(file.value);
     });
     if (options.data.kind === "task") {

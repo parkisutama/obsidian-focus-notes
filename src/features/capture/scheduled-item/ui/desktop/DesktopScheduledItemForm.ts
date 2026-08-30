@@ -29,6 +29,7 @@ export interface DesktopScheduledItemFormOptions {
     onCancel(): void;
     /** Switch the capture kind without requiring the user to close and reopen the form. Create mode only. */
     onSwitchKind?(kind: "inbox" | "event" | "task"): void;
+    onPlannedStartChange?(value: string): void;
 }
 
 export class DesktopScheduledItemForm {
@@ -67,6 +68,7 @@ export class DesktopScheduledItemForm {
             data: this.options.data,
             update: (change) => this.update(change),
             changedAndRender: () => this.changedAndRender(),
+            onEventStartChanged: (value) => this.options.onPlannedStartChange?.(value),
         });
         this.renderDescription(container);
         renderDesktopDetailSection(container, {

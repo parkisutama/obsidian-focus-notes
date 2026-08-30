@@ -508,9 +508,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Make ordinary desktop/mobile Event Capture honor its configured Periodical profile, heading, and position, and keep Save to file synchronized with Planned Start until manually overridden.
 
 **Acceptance criteria:**
-- [ ] Ambient active note never replaces the configured Event target; explicit contextual target still wins.
-- [ ] Event insert position always comes from Event Capture settings.
-- [ ] Planned Start recalculates automatic target while a manual target remains stable.
+- [x] Ambient active note never replaces the configured Event target; explicit contextual target still wins.
+- [x] Event insert position always comes from Event Capture settings.
+- [x] Planned Start recalculates automatic target while a manual target remains stable.
 
 **Verification:** Focused target/state tests, desktop/mobile form contract tests, full CI, manual target preview check.
 

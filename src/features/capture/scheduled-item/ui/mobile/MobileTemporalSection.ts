@@ -8,6 +8,8 @@ interface MobileTemporalSectionOptions {
     fields: MobileFormFields;
     changed(change: () => void): void;
     rerender(): void;
+    /** Create-mode Event only: notified with the new Planned Start value so the target file can resync. */
+    onEventStartChanged?(value: string): void;
 }
 
 export function renderMobileTemporalSection(body: HTMLElement, options: MobileTemporalSectionOptions): void {
@@ -75,7 +77,10 @@ function renderEvent(body: HTMLElement, options: MobileTemporalSectionOptions): 
         data.end = value ? null : `${data.start.slice(0, 10)} 10:00`;
         options.rerender();
     });
-    options.fields.dateTime(body, "Planned start", data.start, !data.allDay, (value) => (data.start = value ?? ""));
+    options.fields.dateTime(body, "Planned start", data.start, !data.allDay, (value) => {
+        data.start = value ?? "";
+        options.onEventStartChanged?.(data.start);
+    });
     if (!data.allDay) {
         options.fields.dateTime(body, "Planned end", data.end, true, (value) => (data.end = value));
     }

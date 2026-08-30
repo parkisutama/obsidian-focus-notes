@@ -10,6 +10,8 @@ export interface MobileScheduledItemCreateContext {
     targetFile: string;
     targetHeading: string;
     targetPosition: InsertPosition;
+    /** Event only: once true, Planned Start changes stop recalculating targetFile. */
+    targetManuallyEdited: boolean;
 }
 
 interface MobileSectionOptions {
@@ -64,6 +66,7 @@ export function renderMobileTargetSection(
 ): void {
     const file = options.fields.text(body, "Save to file", options.context.targetFile, (value) => {
         options.context.targetFile = value;
+        options.context.targetManuallyEdited = true;
         options.onTargetFileChange(value);
     });
     if (options.data.kind === "task") {
