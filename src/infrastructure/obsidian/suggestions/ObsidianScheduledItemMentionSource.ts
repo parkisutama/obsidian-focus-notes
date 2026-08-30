@@ -44,6 +44,15 @@ export class ObsidianScheduledItemMentionSource {
         return this.index.query(kind, search ? (text) => search(text)?.score ?? null : () => 0, limit);
     }
 
+    /** Ensures the index reflects the current vault before a direct-by-id lookup (see findCandidate). */
+    async sync(): Promise<void> {
+        await this.ensureLoaded();
+    }
+
+    findCandidate(kind: ScheduledItemKind, blockId: string): ScheduledItemMentionCandidate | null {
+        return this.index.findCandidate(kind, blockId);
+    }
+
     invalidate(): void {
         this.generation += 1;
         this.loaded = false;

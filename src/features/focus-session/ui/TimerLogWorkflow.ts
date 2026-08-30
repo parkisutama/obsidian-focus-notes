@@ -1,9 +1,15 @@
-import type { App } from "obsidian";
-import { Notice } from "obsidian";
+import { type App, Notice } from "obsidian";
 import type { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
+import {
+    type WriteCanonicalFocusSessionResult,
+    writeCanonicalFocusSession,
+} from "../../../infrastructure/obsidian/focus-session/CanonicalFocusSessionWriter.ts";
 import type { NoteWriter } from "../../../infrastructure/obsidian/focus-session/NoteWriter";
+import { formatLocalDateTime } from "../../capture/domain/EventTaskFormState.ts";
 import type { FocusTarget } from "../../capture/domain/CaptureTarget";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
+import { createFocusSessionId } from "../domain/FocusSessionLine.ts";
+import type { FocusSessionOwner } from "../domain/OwnedFocusSession.ts";
 import type { TimerEngine } from "../domain/TimerEngine";
 import type { DisplayMode } from "../domain/Timer";
 import type { SessionRecord } from "../domain/SessionRecord";
@@ -19,9 +25,13 @@ export interface TimerLogWorkflowOptions {
     getFocusInput: () => string;
     setFocusInput: (value: string) => void;
     getPlannedMinutes: () => number;
+    /** The resolved Event/Task(+timebox) owner from the last successful start, or null if unassigned/legacy. */
+    getCurrentOwner: () => FocusSessionOwner | null;
     /** Called after any engine state transition so controls/display stay in sync. */
     onSessionStateChanged: () => void;
     onRecentChanged: () => void;
+    /** Called once a stopped session's lifecycle is fully over (logged, cancelled, or too short), so the next session starts with a clean owner/purpose selection. */
+    onSessionEnded: () => void;
 }
 
 /**
@@ -43,9 +53,11 @@ export class TimerLogWorkflow {
         const elapsedSeconds = Math.round(result.elapsedMs / 1000);
         if (elapsedSeconds < 1) {
             new Notice("Session too short to log.");
+            this.options.onSessionEnded();
             return;
         }
         await this.openLogModal(result.startedAt, result.endedAt, elapsedSeconds);
+        this.options.onSessionEnded();
     }
 
     handleComplete(): void {
@@ -80,6 +92,16 @@ export class TimerLogWorkflow {
                         return;
                     }
                     try {
+                        const owner = this.options.getCurrentOwner();
+                        const canonicalLink = owner
+                            ? await this.recordCanonicalFocusSession(
+                                  owner,
+                                  startTime,
+                                  endTime,
+                                  durationSeconds,
+                                  currentMode,
+                              )
+                            : "";
                         const record: SessionRecord = {
                             mode: currentMode,
                             startTime,
@@ -92,6 +114,7 @@ export class TimerLogWorkflow {
                             emotionCategory: result.emotionCategory,
                             moodKey: result.moodKey,
                             links: result.links,
+                            canonicalLink,
                         };
                         await buildWriter().writeSession(record, resolvedTarget);
                         new Notice("Session logged.");
@@ -108,6 +131,55 @@ export class TimerLogWorkflow {
             );
             modal.open();
         });
+    }
+
+    /**
+     * Writes the canonical Focus Session child line before the daily log, so the log's
+     * {{canonicalLink}} token can point at it. `sessionId` is minted once here and reused by the
+     * retry button, so retrying after an orphaned owner (e.g. the Task was renamed mid-session)
+     * never risks a duplicate history entry once the link resolves.
+     */
+    private async recordCanonicalFocusSession(
+        owner: FocusSessionOwner,
+        startTime: Date,
+        endTime: Date,
+        durationSeconds: number,
+        mode: DisplayMode,
+    ): Promise<string> {
+        const sessionId = createFocusSessionId();
+        const fields = {
+            actualStart: formatLocalDateTime(startTime),
+            actualEnd: formatLocalDateTime(endTime),
+            durationSeconds,
+            mode,
+        };
+        const attempt = (): Promise<WriteCanonicalFocusSessionResult> =>
+            writeCanonicalFocusSession(this.options.app, owner, sessionId, fields);
+        const result = await attempt();
+        if (result.status === "orphan") {
+            this.notifyOrphanedCanonicalWrite(attempt);
+            return "";
+        }
+        return `[[${result.filePath}#^${sessionId}]]`;
+    }
+
+    private notifyOrphanedCanonicalWrite(retry: () => Promise<WriteCanonicalFocusSessionResult>): void {
+        const notice = new Notice(
+            createFragment((frag) => {
+                frag.createSpan({
+                    text: "Session logged, but its Task/Event could not be found to link it. ",
+                });
+                const button = frag.createEl("button", { text: "Retry" });
+                button.addEventListener("click", () => {
+                    notice.hide();
+                    void retry().then((result) => {
+                        if (result.status === "orphan") this.notifyOrphanedCanonicalWrite(retry);
+                        else new Notice("Focus Session linked to its Task/Event.");
+                    });
+                });
+            }),
+            0,
+        );
     }
 
     private activeTarget(): FocusTarget {

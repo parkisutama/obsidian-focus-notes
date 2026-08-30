@@ -62,6 +62,38 @@ test("replaces and removes one file bucket without rebuilding unrelated candidat
     );
 });
 
+test("finds a candidate directly by kind and block id", () => {
+    const index = new ScheduledItemMentionIndex();
+    index.replaceFile("Tasks.md", [
+        {
+            blockId: "task-7k3m9x2pqw",
+            kind: "task",
+            title: "Submit invoice",
+            completed: false,
+            status: "open",
+            lineNumber: 2,
+        },
+    ]);
+    assert.equal(index.findCandidate("task", "task-7k3m9x2pqw")?.filePath, "Tasks.md");
+    assert.equal(index.findCandidate("event", "task-7k3m9x2pqw"), null);
+    assert.equal(index.findCandidate("task", "task-missing"), null);
+});
+
+test("findCandidate excludes duplicated block identities instead of linking ambiguously", () => {
+    const index = new ScheduledItemMentionIndex();
+    const duplicate = {
+        blockId: "task-7k3m9x2pqw",
+        kind: "task" as const,
+        title: "Copied task",
+        completed: false,
+        status: "open" as const,
+        lineNumber: 1,
+    };
+    index.replaceFile("A.md", [duplicate]);
+    index.replaceFile("B.md", [duplicate]);
+    assert.equal(index.findCandidate("task", "task-7k3m9x2pqw"), null);
+});
+
 test("excludes duplicated block identities instead of linking ambiguously", () => {
     const index = new ScheduledItemMentionIndex();
     const duplicate = {

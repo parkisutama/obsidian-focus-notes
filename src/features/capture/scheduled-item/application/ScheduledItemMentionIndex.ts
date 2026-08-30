@@ -47,6 +47,16 @@ export class ScheduledItemMentionIndex {
         this.candidates = { task: [], event: [] };
     }
 
+    /**
+     * Direct lookup by identity for callers that already have an itemId (e.g. a Timer's resolved
+     * Focus Session owner) and need its current file/line rather than a text search. Ambiguous
+     * ids are excluded from `candidates` entirely (see rebuildKinds), so this naturally reports
+     * them the same way a search would: not found, never a guess.
+     */
+    findCandidate(kind: ScheduledItemKind, blockId: string): ScheduledItemMentionCandidate | null {
+        return this.candidates[kind].find((candidate) => candidate.blockId === blockId) ?? null;
+    }
+
     query(kind: ScheduledItemKind, matcher: SuggestionMatcher, limit = 20): ScheduledItemMentionCandidate[] {
         const best: Array<{ candidate: ScheduledItemMentionCandidate; score: number; index: number }> = [];
         for (const [index, candidate] of this.candidates[kind].entries()) {

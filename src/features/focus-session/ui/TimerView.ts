@@ -60,11 +60,13 @@ export class TimerView extends ItemView {
             getFocusInput: () => this.controls.getFocusInputValue(),
             setFocusInput: (value) => this.controls.setFocusInputValue(value),
             getPlannedMinutes: () => this.controls.parseMinutes(),
+            getCurrentOwner: () => this.controls.getCurrentOwner(),
             onSessionStateChanged: () => {
                 this.controls.refreshActions();
                 this.controls.refreshDisplay();
             },
             onRecentChanged: () => void this.recentEntries.refresh(),
+            onSessionEnded: () => this.controls.clearOwner(),
         });
         this.engine.onTick(() => this.controls.refreshDisplay());
         this.engine.onComplete(() => this.logWorkflow.handleComplete());

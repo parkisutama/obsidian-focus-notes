@@ -82,6 +82,7 @@ export class NoteWriter {
             "{{moodTag}}": mood ? `#mood/${mood.key}` : "",
             "{{moodKeywords}}": mood ? mood.keywords.map((k) => `#${k}`).join(" ") : "",
             "{{links}}": links,
+            "{{canonicalLink}}": record.canonicalLink,
         };
 
         // Pick template based on grouping. Both share the same token set.

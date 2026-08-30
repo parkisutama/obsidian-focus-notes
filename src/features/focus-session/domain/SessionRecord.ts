@@ -24,4 +24,10 @@ export interface SessionRecord {
      * Stored as the raw string the user typed; rendering joins them with spaces.
      */
     links: string;
+    /**
+     * `[[file#^sessionId]]` back to the canonical Focus Session child line, or "" for an
+     * unowned/legacy session. Available as {{canonicalLink}} in the log templates; not part of
+     * the default templates, so existing users' logs render unchanged unless they opt in.
+     */
+    canonicalLink: string;
 }
