@@ -1,125 +1,465 @@
-# Tasks: Minimal Mobile Event and Task Modal
+# Tasks: Complete Source Organization
 
-## Task 1: Use public mobile detection and a deterministic sheet lifecycle
+Unless narrowed below, every implementation task runs the standard gates from `tasks/plan.md`, updates the shrinking root inventory, and accepts no production-body change beyond import paths.
 
-**Description:** Use `Platform.isMobile` plus a narrow viewport preview fallback. Make opening and closing the custom screen idempotent and ensure registered handlers and DOM are removed.
+## Task 1: Strengthen architecture migration guards
+
+**Description:** Add a checked root inventory plus permanent layer, shared, cycle, and legacy rules before moves begin.
 
 **Acceptance criteria:**
+- [ ] New root modules, inward domain dependencies, feature imports from `shared/`, and production imports from `legacy/` fail tests.
+- [ ] The migration inventory can shrink per batch and has `main.ts` as its documented final state.
+- [ ] Each guard is proven by a temporary failing mutation/fixture that is restored.
 
-- [x] Actual Obsidian mobile uses `Platform.isMobile`.
-- [x] Desktop responsive preview remains possible at widths up to 640px.
-- [x] Closing twice is safe and leaves no sheet class, DOM node, or global handler.
-
-**Verification:**
-
-- [x] Add focused tests for the extracted renderer-selection helper where practical.
-- [x] Run `pnpm test` and `pnpm run typecheck`.
-- [x] Inspect the close path and listener cleanup once after implementation.
+**Verification:** `node --test test/architecture-boundaries.test.ts`; then full CI.
 
 **Dependencies:** None.
-
-**Files likely touched:**
-
-- `src/EventTaskModal.ts`
-- `test/event-task-mobile.test.ts`
-
+**Files likely touched:** `test/architecture-boundaries.test.ts`, optional architecture fixtures.
 **Estimated scope:** Small, 1–2 files.
 
-## Task 2: Build the compact capture-first mobile composition
+## Task 2: Quarantine proven-dead UI
 
-**Description:** Keep persistent actions, title, type, primary scheduling fields, and description in the visible mobile flow. Put Related note, Detail note, and Save to inside one collapsed `More options` container without unmounting their state.
+**Description:** Move, but do not delete or modernize, the three proven zero-consumer modules.
 
 **Acceptance criteria:**
+- [ ] `EventEditModal.ts`, `TaskEditModal.ts`, and `MoodPicker.ts` live unchanged under `src/legacy/`.
+- [ ] No production/test import reaches them and their former root paths are absent.
+- [ ] Git recognizes path moves and no behavior is edited.
 
-- [x] Title, type, primary date/time, description, and Save form the initial visible flow.
-- [x] `More options` is collapsed initially and contains all three existing optional sections.
-- [x] `Save to` exposes a compact resolved-destination summary while collapsed.
-
-**Verification:**
-
-- [x] No additional state helper was needed; disclosure DOM remains mounted natively.
-- [x] Run `pnpm test` and `pnpm run typecheck`.
-- [x] Inspect both Event and Task DOM paths for complete field coverage.
+**Verification:** Architecture test, explicit reference scan, typecheck, full tests, rename-similarity review.
 
 **Dependencies:** Task 1.
+**Files likely touched:** Three legacy modules and `test/architecture-boundaries.test.ts`.
+**Estimated scope:** Medium, 4 files.
 
-**Files likely touched:**
+## Task 3: Place shared and periodical primitives
 
-- `src/EventTaskModal.ts`
-- `test/event-task-mobile.test.ts`
-
-**Estimated scope:** Small, 1–2 files.
-
-## Task 3: Make mobile interaction state accessible
-
-**Description:** Add explicit labels and accessible selected/pressed state to tabs, toggle rows, top-bar actions, and disclosure summaries while retaining native keyboard behavior.
+**Description:** Move foundational pure modules before their consumers.
 
 **Acceptance criteria:**
+- [ ] `HeadingInsertion` is under `shared/markdown`; `DailyNotePath` and `PeriodicalNoteSettings` are under Periodical Notes domain.
+- [ ] Root `CaptureTarget` policy joins capture domain under an unambiguous name.
+- [ ] Signatures and output remain byte-compatible; no re-export shim is added.
 
-- [x] Event/Task controls expose their role and selected state.
-- [x] Toggle rows expose checked state beyond icon and color.
-- [x] Every input has a visible label or explicit accessible name.
+**Verification:** Focused heading, Daily Note, periodical, and capture-target tests; standard gates.
 
-**Verification:**
+**Dependencies:** Task 1.
+**Files likely touched:** Four primary modules, direct consumers, corresponding tests.
+**Estimated scope:** Medium, 4 primary moves.
 
-- [x] Typecheck the resulting DOM attribute usage.
-- [ ] Keyboard-review Tab, Enter, Space, Escape, and disclosure behavior in runtime acceptance.
+## Checkpoint: Migration foundation
+
+- [ ] Tasks 1–3 pass full CI and audit disposition is recorded.
+- [ ] No cycle, barrel, forwarding shim, or new root file exists.
+- [ ] Legacy is present but unreachable; root inventory is below the 68-file baseline.
+
+## Task 4: Finish Settings ownership
+
+**Description:** Move Settings composition and storage to feature layers.
+
+**Acceptance criteria:**
+- [ ] `SettingsTab`/`SettingsLayout` live in Settings UI and `StateStore` in Settings infrastructure.
+- [ ] Save ordering, defaults, migration, and malformed-data protection are unchanged.
+- [ ] Plugin composition imports the new canonical paths directly.
+
+**Verification:** State-store, settings-layout/defaults, compatibility tests; full CI; desktop settings smoke test.
+
+**Dependencies:** Task 3.
+**Files likely touched:** Three primary modules, consumers, tests.
+**Estimated scope:** Medium.
+
+## Task 5: Finish Object Notes ownership
+
+**Description:** Move remaining Object Notes domain, application, and UI modules.
+
+**Acceptance criteria:**
+- [ ] `ContextSourceScope` is domain; `ObjectNote` is application; modal/suggester are UI.
+- [ ] Capture-specific logic is not relabeled as Object Notes logic.
+- [ ] Creation paths, property enforcement, and suggestions are unchanged.
+
+**Verification:** Context-source, object-note, object-reference, suggestion tests; standard gates.
+
+**Dependencies:** Task 3.
+**Files likely touched:** Four primary modules, consumers, tests.
+**Estimated scope:** Medium.
+
+## Task 6: Finish Reflection ownership
+
+**Description:** Move active CBT/reference APIs and UI without splitting data yet.
+
+**Acceptance criteria:**
+- [ ] Cognitive/reference modules are Reflection domain; active picker/modal are Reflection UI.
+- [ ] Legacy `MoodPicker` remains quarantined.
+- [ ] Labels and writer output are unchanged.
+
+**Verification:** Reflection, wellbeing, writer/formatting tests; standard gates.
 
 **Dependencies:** Task 2.
+**Files likely touched:** Four primary modules, consumers, tests.
+**Estimated scope:** Medium.
 
-**Files likely touched:**
+## Checkpoint: Supporting features
 
-- `src/EventTaskModal.ts`
-- `test/event-task-mobile.test.ts`
+- [ ] Tasks 4–6 pass full CI.
+- [ ] Settings, Object Notes, and Reflection have no active root modules.
 
-**Estimated scope:** Small, 1–2 files.
+## Task 7: Place Focus Session application and adapters
 
-## Task 4: Consolidate and refine adaptive mobile styling
-
-**Description:** Keep one scoped editor-sheet source of truth. Implement compact rows, 44px touch targets, workspace/system-bar clearance, safe areas, and visual-viewport scrolling without changing desktop styling.
-
-**Acceptance criteria:**
-
-- [x] All redesigned selectors are scoped below `.fn-mobile-event-screen`.
-- [ ] Controls have at least 44px touch targets and no horizontal overflow at 360px width.
-- [x] The screen remains top-anchored and resizes only its scrollable body when the keyboard opens.
-
-**Verification:**
-
-- [x] Run `pnpm test`, `pnpm run typecheck`, `pnpm run lint`, and `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run build`.
-- [x] Run `git diff --check`.
-- [x] Compare mobile and desktop selector reach before removing duplicated CSS.
-
-**Dependencies:** Tasks 2 and 3.
-
-**Files likely touched:**
-
-- `styles.css`
-- `src/EventTaskModal.ts` only if a layout class is required.
-
-**Estimated scope:** Small, 1–2 files.
-
-## Task 5: Complete real Obsidian mobile acceptance
-
-**Description:** Exercise the final screen in Obsidian at approximately 390x844 and 360x640, including software-keyboard behavior and every optional workflow. Record automated evidence separately from user/operator acceptance.
+**Description:** Give recent-entry reading, note writing, and target resolution evidence-based application/infrastructure owners.
 
 **Acceptance criteria:**
+- [ ] `RecentEntriesReader` is application unless concrete Obsidian access requires infrastructure.
+- [ ] `NoteWriter` is under Obsidian Focus Session infrastructure; `TargetResolver` under shared capture infrastructure.
+- [ ] No vault read/write, scan frequency, or path behavior changes.
 
-- [ ] Event and Task creation succeed at both target sizes.
-- [ ] Focused fields, Save, and Cancel remain reachable with the keyboard open.
-- [ ] No new console errors occur and desktop behavior remains intact.
+**Verification:** Recent-entry, writer, target, related-log tests; standard gates.
 
-**Verification:**
+**Dependencies:** Tasks 3 and 6.
+**Files likely touched:** Three primary modules, consumers, tests.
+**Estimated scope:** Medium.
 
-- [ ] Capture viewport evidence for both sizes.
-- [ ] Verify Related note, Detail note, Save to, suggesters, dismissal, and state retention.
-- [ ] Obtain explicit user acceptance before merging to `main`.
+## Task 8: Place the Focus Session view shell
 
-**Dependencies:** Task 4.
+**Description:** Move the thin Timer ItemView shell beside its UI collaborators.
 
-**Files likely touched:**
+**Acceptance criteria:**
+- [ ] `TimerView` lives in Focus Session UI.
+- [ ] View ID, lifecycle cleanup, engine ownership, and logging remain unchanged.
+- [ ] Only composition code imports the view entry point.
 
-- No production source changes unless acceptance reveals a defect.
-- Optional evidence note under `docs/` if requested.
+**Verification:** Timer/writer/compatibility tests; full CI; open/reopen/completion smoke test.
 
-**Estimated scope:** Small, verification only.
+**Dependencies:** Task 7.
+**Files likely touched:** `TimerView`, `main.ts`, path-sensitive compatibility test.
+**Estimated scope:** Small/Medium.
+
+## Task 9: Place Timeline domain modules
+
+**Description:** Move pure layout, source grouping/alignment, and modal read model into Timeline domain.
+
+**Acceptance criteria:**
+- [ ] Four modules live in Timeline domain and remain Obsidian/DOM-free.
+- [ ] Layout, ranges, classification, and modal models are unchanged.
+- [ ] Scheduled Item rules are consumed, not duplicated.
+
+**Verification:** Timeline layout/source/alignment/modal tests; standard gates.
+
+**Dependencies:** Task 3.
+**Files likely touched:** `TimelineLayout`, `TimelineSourceAlignment`, `TimelineSourceGroups`, `TimelineItemModalModel`, consumers/tests.
+**Estimated scope:** Medium, 4 primary moves.
+
+## Task 10: Place Timeline query and index modules
+
+**Description:** Move query/index orchestration according to actual Obsidian reachability.
+
+**Acceptance criteria:**
+- [ ] `ScheduledItemQuery` is Timeline application.
+- [ ] `ScheduledItemIndexer` is application only behind a narrow port; otherwise Timeline Obsidian infrastructure.
+- [ ] `ScheduledItemMentionIndex` is Scheduled Item application.
+
+**Verification:** Index/query/mention/refresh tests; standard gates; verify frequency and ambiguity behavior.
+
+**Dependencies:** Task 9.
+**Files likely touched:** Three primary modules, consumers, tests.
+**Estimated scope:** Medium.
+
+## Task 11: Place Timeline UI
+
+**Description:** Move the view shell, grid, sidebar, and item modal into Timeline UI.
+
+**Acceptance criteria:**
+- [ ] All four modules live in Timeline UI.
+- [ ] View ID/state, navigation, filters, listeners, refresh, and edit launch remain unchanged.
+- [ ] Existing callback boundaries remain narrow.
+
+**Verification:** All Timeline/compatibility tests; full CI; live navigation/filter/edit smoke test.
+
+**Dependencies:** Task 10.
+**Files likely touched:** Four primary UI modules, consumers, tests.
+**Estimated scope:** Medium.
+
+## Checkpoint: Focus Session and Timeline
+
+- [ ] Tasks 7–11 pass full CI.
+- [ ] Both features have no active root modules.
+- [ ] Runtime view checks pass or have explicit human-approved residual risk.
+
+## Task 12: Place Active Note and formatting modules
+
+**Description:** Move Active Note read models/application and manager/formatting UI to Scheduled Item.
+
+**Acceptance criteria:**
+- [ ] Ledger scan/model are application; manager launcher/modal and format preview are UI.
+- [ ] Scope ordering, formatting, and command behavior remain unchanged.
+- [ ] Feature logic does not return to plugin composition.
+
+**Verification:** Active-note, task-format, parser, compatibility tests; standard gates.
+
+**Dependencies:** Task 10.
+**Files likely touched:** Five primary modules, consumers, tests.
+**Estimated scope:** Medium.
+
+## Task 13: Place Scheduled Item desktop UI
+
+**Description:** Move desktop form/model/create/edit as one renderer slice.
+
+**Acceptance criteria:**
+- [ ] Four modules live under `scheduled-item/ui/desktop`.
+- [ ] Create/edit composition, validation, detail recovery, and no-op behavior remain unchanged.
+- [ ] Desktop does not import mobile UI.
+
+**Verification:** Desktop composition/model/submission/detail/edit tests; standard gates.
+
+**Dependencies:** Task 12.
+**Files likely touched:** Four primary modules, consumers, tests.
+**Estimated scope:** Medium.
+
+## Task 14: Place mobile form foundation
+
+**Description:** Move mobile form/model/policy/viewport helpers together.
+
+**Acceptance criteria:**
+- [ ] Four modules live under `scheduled-item/ui/mobile`.
+- [ ] Mobile lifecycle/viewport stays independent from desktop DOM.
+- [ ] Accessibility, busy, recovery, and keyboard behavior remain covered.
+
+**Verification:** Mobile form/model/viewport/accessibility/composition tests; standard gates.
+
+**Dependencies:** Task 13.
+**Files likely touched:** Four primary modules, consumers, tests.
+**Estimated scope:** Medium.
+
+## Task 15: Place mobile screens and launcher
+
+**Description:** Move create/edit screens and mobile create launcher after their foundation.
+
+**Acceptance criteria:**
+- [ ] Screens and launcher have canonical mobile UI paths.
+- [ ] Create/edit/retry and renderer selection remain unchanged.
+- [ ] No forwarding root module remains.
+
+**Verification:** Mobile create/edit/composition/recovery/lifecycle tests; full CI; real-mobile acceptance.
+
+**Dependencies:** Task 14.
+**Files likely touched:** Three primary modules, consumers, tests.
+**Estimated scope:** Medium.
+
+## Checkpoint: Scheduled Item
+
+- [ ] Tasks 12–15 pass full CI.
+- [ ] Scheduled Item has no active root modules.
+- [ ] Golden/no-op Markdown is byte-identical; desktop/mobile acceptance passes or is explicitly waived.
+
+## Task 16: Place Moment domain text and target modules
+
+**Description:** Move pure Moment text, Markdown, target, and folder normalization.
+
+**Acceptance criteria:**
+- [ ] Four modules live in Moment domain and remain Obsidian/DOM-free.
+- [ ] Timestamps, links, folders, and targets are unchanged.
+- [ ] No cross-feature private import is introduced.
+
+**Verification:** Inbox text/link/folder/target/submission tests; standard gates; output comparison.
+
+**Dependencies:** Tasks 3 and 7.
+**Files likely touched:** Four primary modules, consumers, tests.
+**Estimated scope:** Medium.
+
+## Task 17: Place Moment suggestions and submission policy
+
+**Description:** Move rich-text, suggestion, controller, input-selection, and concurrency policy to correct Moment layers without decomposing them.
+
+**Acceptance criteria:**
+- [ ] Pure rich text is domain; orchestration is application; Obsidian input/controller code is UI.
+- [ ] `SubmissionPolicy` is Moment application.
+- [ ] Caching, mentions, object creation, input events, and idempotency are unchanged.
+
+**Verification:** Rich-text/suggestion/mention/selection/submission tests; standard gates; no extra scan/index rebuild.
+
+**Dependencies:** Tasks 5, 10, 16.
+**Files likely touched:** Five primary modules, consumers, tests.
+**Estimated scope:** Medium.
+
+## Task 18: Place Moment desktop UI
+
+**Description:** Move desktop form and modal shell without renaming `EventTask*` symbols.
+
+**Acceptance criteria:**
+- [ ] Both modules live in Moment desktop UI.
+- [ ] Moment submission and Event/Task tab delegation remain unchanged.
+- [ ] Removed legacy Event/Task form paths stay unreachable.
+
+**Verification:** Inbox/desktop/legacy-retirement/submission tests; full CI; desktop smoke test.
+
+**Dependencies:** Task 17.
+**Files likely touched:** `InboxDesktopForm`, `EventTaskModal`, consumers/tests.
+**Estimated scope:** Small/Medium.
+
+## Task 19: Place Moment mobile UI
+
+**Description:** Move mobile form and screen while retaining independent lifecycle.
+
+**Acceptance criteria:**
+- [ ] Both modules live in Moment mobile UI.
+- [ ] Mount/cleanup, keyboard behavior, and delegation remain unchanged.
+- [ ] Mobile imports no desktop UI.
+
+**Verification:** Mobile Moment/viewport/composition/lifecycle/submission tests; full CI; real-mobile smoke test.
+
+**Dependencies:** Task 18.
+**Files likely touched:** `InboxMobileForm`, `EventTaskMobileScreen`, consumers/tests.
+**Estimated scope:** Small/Medium.
+
+## Task 20: Place shared capture routing and form state
+
+**Description:** Move cross-kind state and launch/editor orchestration after renderer paths stabilize.
+
+**Acceptance criteria:**
+- [ ] `EventTaskFormState` is capture domain.
+- [ ] `EventTaskCaptureLauncher` and `ScheduledItemEditor` have capture UI/orchestration ownership.
+- [ ] No launcher/renderer cycle; every command, Timeline, and Active Note route resolves.
+
+**Verification:** Form-state/launcher/mobile-selection/editor tests; standard gates.
+
+**Dependencies:** Tasks 15 and 19.
+**Files likely touched:** Three primary modules, consumers, tests.
+**Estimated scope:** Medium.
+
+## Checkpoint: Capture ownership
+
+- [ ] Tasks 16–20 pass full CI.
+- [ ] Moment/shared capture has no active root modules.
+- [ ] Renderer lifecycle, primary writes, retries, and Markdown remain unchanged.
+
+## Task 21: Finish remaining Obsidian adapter ownership
+
+**Description:** Place every remaining root adapter under capability-based Obsidian infrastructure in multiple small commits.
+
+**Acceptance criteria:**
+- [ ] All root adapters have explicit capture/focus/suggestion/vault ownership.
+- [ ] Domain/application code reaches concrete Obsidian only through intended boundaries.
+- [ ] No generic `utils`, `services`, or root adapter appears.
+
+**Verification:** Writer/resolver/vault/suggestion tests; standard gates; security review of paths/untrusted input.
+
+**Dependencies:** Tasks 7, 17, 20.
+**Files likely touched:** Migration-inventory adapters, ≤5 primary moves per commit, consumers/tests.
+**Estimated scope:** Multiple Small/Medium commits.
+
+## Task 22: Move plugin composition behind main
+
+**Description:** Leave `main.ts` as stable entry and place plugin class/registration under `plugin/`.
+
+**Acceptance criteria:**
+- [ ] `main.ts` only loads/exports the plugin entry.
+- [ ] Commands, ribbons, views, settings, lifecycle, and IDs are unchanged.
+- [ ] Plugin depends on feature entry points; features never depend on plugin.
+
+**Verification:** Compatibility/architecture tests, full CI, artifact inspection, desktop command/ribbon/view smoke test.
+
+**Dependencies:** Task 21.
+**Files likely touched:** `main.ts`, `plugin/FocusNotesPlugin.ts`, up to two registration modules, compatibility test.
+**Estimated scope:** Medium, 3–5 primary files.
+
+## Task 23: Enforce final root and dependency invariants
+
+**Description:** Close the migration ledger and make temporary rules permanent.
+
+**Acceptance criteria:**
+- [ ] `main.ts` is the only root TypeScript file.
+- [ ] Legacy isolation, domain purity, shared independence, direction, and no-cycle rules pass.
+- [ ] No shim, empty directory, dead production import, or undocumented inter-feature edge remains.
+
+**Verification:** Architecture mutation checks, unused/dead scan, full CI, audit, `git diff --check`.
+
+**Dependencies:** Task 22.
+**Files likely touched:** Architecture test and baseline documentation.
+**Estimated scope:** Small.
+
+## Checkpoint: Physical organization complete
+
+- [ ] Tasks 21–23 pass full CI; root contains only `main.ts`.
+- [ ] Tests enforce the actual tree and human approves the ownership map.
+
+## Task 24: Split Reflection reference data from its API
+
+**Description:** Characterize then split the 1,238-line Mood reference module into cohesive static datasets and a small typed API.
+
+**Acceptance criteria:**
+- [ ] Representative, boundary, and unknown values have characterization coverage first.
+- [ ] Data modules are cohesive; lookup API and serialized labels remain unchanged.
+- [ ] No duplicate dataset, runtime work, or shim remains.
+
+**Verification:** Focused RED/GREEN evidence, Reflection/writer tests, full CI, output comparison.
+
+**Dependencies:** Tasks 6 and 23.
+**Files likely touched:** Mood API, up to three data modules, focused test.
+**Estimated scope:** Medium, 3–5 files.
+
+## Task 25: Decompose the Moment suggestion controller
+
+**Description:** Separate candidate orchestration, rendering, and input lifecycle from the 554-line controller.
+
+**Acceptance criteria:**
+- [ ] Missing boundaries receive failing characterization tests before extraction.
+- [ ] Controller retains only Obsidian lifecycle/composition with narrow collaborators.
+- [ ] Caching, mentions, creation, and input behavior stay unchanged without extra scans.
+
+**Verification:** Suggestion/mention/object/selection tests, full CI, performance inspection.
+
+**Dependencies:** Tasks 17 and 23.
+**Files likely touched:** Controller, up to three collaborators, focused tests.
+**Estimated scope:** Medium batches, each 3–5 files.
+
+## Task 26: Decompose desktop Scheduled Item form
+
+**Description:** Extract cohesive desktop sections behind characterization coverage.
+
+**Acceptance criteria:**
+- [ ] Shell owns composition/state; sections receive narrow inputs/callbacks.
+- [ ] Create/edit parity, disclosure, validation, and accessibility remain unchanged.
+- [ ] No mobile DOM or persistence enters presentation modules.
+
+**Verification:** Focused RED tests, desktop/model/validation/submission tests, full CI, desktop smoke test.
+
+**Dependencies:** Tasks 13 and 23.
+**Files likely touched:** Desktop form, up to three section modules, focused tests.
+**Estimated scope:** Medium batches.
+
+## Task 27: Decompose mobile Scheduled Item form
+
+**Description:** Extract cohesive mobile sections while preserving independent lifecycle and viewport behavior.
+
+**Acceptance criteria:**
+- [ ] Shell owns lifecycle/composition; sections use narrow state/callback contracts.
+- [ ] Busy/recovery/accessibility/suggestions/viewport behavior remains unchanged.
+- [ ] Mobile has no desktop DOM dependency.
+
+**Verification:** Focused RED tests, mobile/lifecycle/viewport/recovery tests, full CI, keyboard-open/closed acceptance.
+
+**Dependencies:** Tasks 15 and 23.
+**Files likely touched:** Mobile form, up to three section modules, focused tests.
+**Estimated scope:** Medium batches.
+
+## Task 28: Final review, documentation, and acceptance
+
+**Description:** Close correctness, readability, architecture, security, performance, documentation, audit, and runtime evidence.
+
+**Acceptance criteria:**
+- [ ] No Critical/Required finding remains; optional findings have owners/disposition.
+- [ ] Architecture, legacy rationale, dependency advisory disposition, and test evidence are current.
+- [ ] Desktop/mobile acceptance covers settings, capture, Timer, Timeline, commands, ribbons, views, and retry.
+
+**Verification:** `$env:OBSIDIAN_VAULT_PLUGIN_PATH=""; pnpm run check:ci`; audit; record artifacts, runtime evidence, and human approval.
+
+**Dependencies:** Tasks 23–27.
+**Files likely touched:** Architecture/status docs, this plan/task list, optional evidence note.
+**Estimated scope:** Medium, documentation/verification.
+
+## Checkpoint: Complete
+
+- [ ] `src/main.ts` is the only root TypeScript module.
+- [ ] Tests pass with none skipped and no unexplained count decrease.
+- [ ] Build, artifacts, docs, advisory disposition, and runtime acceptance are complete.
+- [ ] No unowned shim, dead production import, empty directory, or Required finding remains.
+- [ ] Human approves the final structure.
