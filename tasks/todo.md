@@ -431,9 +431,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Extract cohesive mobile sections while preserving independent lifecycle and viewport behavior.
 
 **Acceptance criteria:**
-- [ ] Shell owns lifecycle/composition; sections use narrow state/callback contracts.
-- [ ] Busy/recovery/accessibility/suggestions/viewport behavior remains unchanged.
-- [ ] Mobile has no desktop DOM dependency.
+- [x] Shell owns lifecycle/composition; sections use narrow state/callback contracts.
+- [x] Busy/recovery/accessibility/suggestions/viewport behavior remains unchanged.
+- [x] Mobile has no desktop DOM dependency.
 
 **Verification:** Focused RED tests, mobile/lifecycle/viewport/recovery tests, full CI, keyboard-open/closed acceptance.
 
@@ -446,8 +446,8 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Close correctness, readability, architecture, security, performance, documentation, audit, and runtime evidence.
 
 **Acceptance criteria:**
-- [ ] No Critical/Required finding remains; optional findings have owners/disposition.
-- [ ] Architecture, legacy rationale, dependency advisory disposition, and test evidence are current.
+- [x] No Critical/Required finding remains; optional findings have owners/disposition.
+- [x] Architecture, legacy rationale, dependency advisory disposition, and test evidence are current.
 - [ ] Desktop/mobile acceptance covers settings, capture, Timer, Timeline, commands, ribbons, views, and retry.
 
 **Verification:** `$env:OBSIDIAN_VAULT_PLUGIN_PATH=""; pnpm run check:ci`; audit; record artifacts, runtime evidence, and human approval.

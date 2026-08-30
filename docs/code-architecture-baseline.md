@@ -16,6 +16,8 @@ Aturan dependensi yang aktif dan diuji:
 
 `MoodReference.ts` sudah berada di Reflection domain, tetapi pemecahan static dataset/API sengaja menjadi Task 24 agar didahului characterization coverage. Bagian ownership/checkpoint lama di bawah dipertahankan sebagai catatan keputusan historis; path canonical terkini mengikuti pohon source dan guard arsitektur.
 
+Quality remediation Tasks 24–27 kemudian selesai dengan characterization-first extraction: Mood API menjadi facade kecil di atas katalog/type terpisah, Moment suggestion controller memisahkan DOM dan presentation, dan form Scheduled Item desktop/mobile memisahkan section melalui callback sempit. Bukti otomatis dan checklist runtime terbaru dicatat di `docs/refactor-acceptance.md`.
+
 ## Tujuan
 
 Baseline ini mencatat entry point, compatibility identifier, jalur capture aktif, dan ownership seluruh source sebelum pemindahan besar. Klasifikasi didasarkan pada consumer dan tanggung jawab runtime, bukan nama file saja.
