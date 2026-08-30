@@ -458,17 +458,18 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 
 ## Checkpoint: Complete
 
-- [ ] `src/main.ts` is the only root TypeScript module.
-- [ ] Tests pass with none skipped and no unexplained count decrease.
-- [ ] Build, artifacts, docs, advisory disposition, and runtime acceptance are complete.
-- [ ] No unowned shim, dead production import, empty directory, or Required finding remains.
+- [x] `src/main.ts` is the only root TypeScript module.
+- [x] Tests pass with none skipped and no unexplained count decrease.
+- [ ] Build, artifacts, docs, advisory disposition, and runtime acceptance are complete (automated evidence is complete;
+      desktop Event target/position and real-mobile acceptance remain open).
+- [x] No unowned shim, dead production import, empty directory, or Required finding remains.
 - [ ] Human approves the final structure.
 
 ## Checkpoint: Before Scheduled Item behavior work
 
 - [ ] Task 28 desktop/mobile runtime acceptance is complete or its waiver and risk are explicitly recorded.
-- [ ] Human approves `docs/spec-scheduled-item-timebox-focus-integration.md` and `tasks/scheduled-item-timebox-focus-plan.md`.
-- [ ] Existing Markdown/settings compatibility fixtures are green before changing any grammar.
+- [x] Human approves `docs/spec-scheduled-item-timebox-focus-integration.md` and `tasks/scheduled-item-timebox-focus-plan.md`.
+- [x] Existing Markdown/settings compatibility fixtures are green before changing any grammar.
 
 ## Task 29: Characterize identity, temporal, and legacy contracts
 

@@ -15,6 +15,9 @@ Updated: 2026-08-30
 - Full CI passes with 309 tests, none skipped: formatting, lint, version metadata, typecheck, production build, artifact verification, and documentation build.
 - `git diff --check` passes.
 
+Evidence refreshed on 2026-08-30 with `OBSIDIAN_VAULT_PLUGIN_PATH` cleared: `pnpm run check:ci` passed all 309 tests,
+production build, artifact verification, and VitePress build.
+
 ## Dependency advisory disposition
 
 `pnpm audit --audit-level=moderate` reports one high and three moderate advisories in documentation development tooling: `vite` and `esbuild`, reached transitively through VitePress. They are not bundled into the Obsidian production artifact. Dependency upgrades remain a separate change because `package.json` and `pnpm-lock.yaml` already contained unrelated user changes before this source refactor. Re-run the audit and upgrade VitePress/tooling in an isolated dependency task.
@@ -32,3 +35,17 @@ Automated CI cannot substitute for a loaded Obsidian desktop and real-mobile ses
 - on real mobile, test keyboard closed/open, scrolling, suggestions, Escape/cancel, submit lock, and retry state.
 
 No source deletion or dependency upgrade is authorized by this evidence note. The three zero-consumer UI modules remain quarantined under `src/legacy/`.
+
+### Desktop runtime evidence and known defect
+
+- The production artifact was deployed to the configured test vault and Obsidian loaded the plugin successfully.
+- Runtime Event Capture testing reached the shared desktop create flow and exposed an existing behavioral defect: ambient
+  active Markdown replaces the configured Event periodical target, and a successfully resolved profile can ignore the
+  configured Event insert position.
+- Source comparison confirmed the behavior existed before the physical reorganization; it is not evidence of a broken
+  import or missing moved module.
+- The approved correction and its Planned Start/manual-target semantics are specified in
+  `spec-scheduled-item-timebox-focus-integration.md` and assigned to Task 31. It is intentionally not mixed into Task 28.
+- Because exact Event target/position acceptance failed, desktop runtime acceptance remains incomplete even though plugin
+  loading and form launch succeeded.
+- Real-mobile acceptance has not been performed and remains required (or must be explicitly waived with recorded risk).
