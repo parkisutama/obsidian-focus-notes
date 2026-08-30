@@ -85,3 +85,17 @@ test("parser keeps final metadata valid and uses the block ID as stable identity
     assert.equal(event?.blockId, "fn-event-d4e5f6");
     assert.equal(event?.id, "fn-event-d4e5f6");
 });
+
+test("Daily reference lines never index as a second canonical item alongside the real one", () => {
+    const parser = new ScheduledItemParser();
+    const eventRef = parser.parseLine(
+        "- 2026-09-02 09:00 - 12:00 Workshop | canonical:[[Projects/Team.md#^event-abc1234567]] ^event-ref-jjjjjjjjjj",
+        source,
+    );
+    const taskRef = parser.parseLine(
+        "- [ ] Menyusun laporan | canonical:[[Projects/Report.md#^task-def4567890]] | due:true ^task-ref-jjjjjjjjjj",
+        source,
+    );
+    assert.equal(eventRef, null);
+    assert.equal(taskRef, null);
+});
