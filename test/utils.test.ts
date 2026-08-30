@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { App } from "obsidian";
-import { isTFolder } from "../src/infrastructure/obsidian/ObsidianFileTypes.ts";
-import { ensureFolderPath } from "../src/infrastructure/obsidian/VaultFolders.ts";
+import { isTFolder } from "../src/infrastructure/obsidian/vault/ObsidianFileTypes.ts";
+import { ensureFolderPath } from "../src/infrastructure/obsidian/vault/VaultFolders.ts";
 
 function createVaultApp(
     entries: Map<string, unknown>,

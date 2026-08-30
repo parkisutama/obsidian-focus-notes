@@ -1,11 +1,11 @@
 import { type App, Notice, Platform } from "obsidian";
-import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
-import { captureEventLedgerEdit } from "./infrastructure/obsidian/EventLedgerEditor";
-import { captureTaskLedgerEdit } from "./infrastructure/obsidian/TaskLedgerEditor";
-import { ScheduledItemDesktopEditModal } from "./features/capture/scheduled-item/ui/desktop/ScheduledItemDesktopEditModal.ts";
-import { ScheduledItemMobileEditScreen } from "./features/capture/scheduled-item/ui/mobile/ScheduledItemMobileEditScreen.ts";
-import { shouldUseMobileForm } from "./features/capture/scheduled-item/ui/mobile/MobileFormPolicy";
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
+import type { ScheduledItem } from "../scheduled-item/domain/ScheduledItem";
+import { captureEventLedgerEdit } from "../../../infrastructure/obsidian/capture/EventLedgerEditor";
+import { captureTaskLedgerEdit } from "../../../infrastructure/obsidian/capture/TaskLedgerEditor";
+import { ScheduledItemDesktopEditModal } from "../scheduled-item/ui/desktop/ScheduledItemDesktopEditModal.ts";
+import { ScheduledItemMobileEditScreen } from "../scheduled-item/ui/mobile/ScheduledItemMobileEditScreen.ts";
+import { shouldUseMobileForm } from "../scheduled-item/ui/mobile/MobileFormPolicy";
+import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
 
 export async function openScheduledItemEditor(
     app: App,
@@ -55,7 +55,7 @@ export async function openScheduledItemEditor(
 function openMobileEditor(
     app: App,
     getSettings: () => FocusNotesSettings,
-    snapshot: import("./features/capture/scheduled-item/domain/LedgerRecordSource").LedgerRecordSnapshot,
+    snapshot: import("../scheduled-item/domain/LedgerRecordSource").LedgerRecordSnapshot,
     kind: "task" | "event",
     title: string,
     onComplete: () => void,
@@ -70,7 +70,7 @@ function openMobileEditor(
 function openDesktopEditor(
     app: App,
     getSettings: () => FocusNotesSettings,
-    snapshot: import("./features/capture/scheduled-item/domain/LedgerRecordSource").LedgerRecordSnapshot,
+    snapshot: import("../scheduled-item/domain/LedgerRecordSource").LedgerRecordSnapshot,
     kind: "task" | "event",
     title: string,
     onComplete: () => void,

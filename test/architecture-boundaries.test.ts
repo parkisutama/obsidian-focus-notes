@@ -48,27 +48,7 @@ function findImportSpecifiers(source: string): string[] {
     return specifiers;
 }
 
-const expectedRootModulesDuringMigration = new Set([
-    "ContextSourceSettings.ts",
-    "EventTaskCaptureLauncher.ts",
-    "EventTaskFormState.ts",
-    "EventTaskMobileScreen.ts",
-    "EventTaskModal.ts",
-    "InboxDesktopForm.ts",
-    "InboxFolderSettings.ts",
-    "InboxMarkdown.ts",
-    "InboxMobileForm.ts",
-    "InboxNotesController.ts",
-    "InboxNotesText.ts",
-    "InboxRichText.ts",
-    "InboxSuggestions.ts",
-    "InboxTarget.ts",
-    "MoodReference.ts",
-    "ScheduledItemEditor.ts",
-    "SubmissionPolicy.ts",
-    "SuggestionSelection.ts",
-    "main.ts",
-]);
+const expectedRootModulesDuringMigration = new Set(["ContextSourceSettings.ts", "MoodReference.ts", "main.ts"]);
 
 function normalizeArchitecturePath(filePath: string): string {
     return filePath.replaceAll("\\", "/");

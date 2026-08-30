@@ -7,8 +7,8 @@ import {
 } from "../../../features/reflection/domain/EmotionalWellbeingReference";
 import type { FocusNotesSettings } from "../../../features/settings/domain/FocusNotesSettings";
 import { getMood } from "../../../MoodReference";
-import { isTFile } from "../ObsidianFileTypes.ts";
-import { ensureFolderPath } from "../VaultFolders.ts";
+import { isTFile } from "../vault/ObsidianFileTypes.ts";
+import { ensureFolderPath } from "../vault/VaultFolders.ts";
 
 /**
  * Writes a SessionRecord into the chosen note.

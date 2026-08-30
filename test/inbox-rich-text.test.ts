@@ -7,8 +7,8 @@ import {
     parseInboxRichText,
     parseObjectReferenceRichText,
     serializeInboxRichText,
-} from "../src/InboxRichText.ts";
-import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
+} from "../src/features/capture/moment/domain/InboxRichText.ts";
+import { formatRelativeMarkdownLink } from "../src/features/capture/moment/domain/InboxMarkdown.ts";
 
 test("parses a Markdown mention into a live-link model and preserves surrounding text", () => {
     assert.deepEqual(

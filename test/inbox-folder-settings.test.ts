@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizeInboxFolders } from "../src/InboxFolderSettings.ts";
+import { normalizeInboxFolders } from "../src/features/capture/moment/domain/InboxFolderSettings.ts";
 
 test("normalizes Inbox source folders without changing their order", () => {
     assert.deepEqual(normalizeInboxFolders([" /People/ ", "People/Clients", "", "  Place  "]), [

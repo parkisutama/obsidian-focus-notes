@@ -1,26 +1,26 @@
 import { type App, Component, Notice, setIcon } from "obsidian";
-import { preferActiveNoteTarget } from "./features/capture/domain/ActiveCaptureTarget";
-import { EventTaskFormState } from "./EventTaskFormState";
-import type { EventTaskKind, OpenEventTaskFormOptions } from "./features/capture/domain/CaptureForm";
+import { preferActiveNoteTarget } from "../../../domain/ActiveCaptureTarget";
+import { EventTaskFormState } from "../../../domain/EventTaskFormState";
+import type { EventTaskKind, OpenEventTaskFormOptions } from "../../../domain/CaptureForm";
 import {
     type EventTaskSubmissionResult,
     type PartialSubmissionResult,
     retryRelatedSubmission,
     submitInbox,
-} from "./features/capture/moment/application/EventTaskSubmission";
-import { EventTaskWriter } from "./infrastructure/obsidian/EventTaskWriter";
+} from "../../application/EventTaskSubmission";
+import { EventTaskWriter } from "../../../../../infrastructure/obsidian/capture/EventTaskWriter";
 import { InboxMobileForm } from "./InboxMobileForm";
-import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
-import { getMobileViewportMetrics } from "./features/capture/scheduled-item/ui/mobile/MobileViewport";
-import { readContextSuggestionNotes } from "./infrastructure/obsidian/ObsidianInboxSuggestionSource";
+import { resolveInboxFormTarget, selectInboxTarget } from "../../domain/InboxTarget";
+import { getMobileViewportMetrics } from "../../../scheduled-item/ui/mobile/MobileViewport";
+import { readContextSuggestionNotes } from "../../../../../infrastructure/obsidian/suggestions/ObsidianInboxSuggestionSource";
 import {
     createObsidianLinkFormatter,
     createObsidianLinkResolver,
-} from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
-import { SubmissionPolicy } from "./SubmissionPolicy";
-import { TargetResolver } from "./infrastructure/obsidian/capture/TargetResolver";
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
-import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
+} from "../../../../../infrastructure/obsidian/suggestions/ObsidianLinkResolver.ts";
+import { SubmissionPolicy } from "../../application/SubmissionPolicy";
+import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver";
+import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings";
+import type { FocusTarget } from "../../../domain/CaptureTarget";
 
 /**
  * Moment (Inbox) capture shell. Event and Task both redirect to

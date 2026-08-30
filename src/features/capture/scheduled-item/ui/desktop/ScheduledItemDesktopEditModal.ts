@@ -5,15 +5,15 @@ import {
     promoteScheduledItemDetail,
     retryDetailNoteAttachment,
 } from "../../application/DetailNotePromotion.ts";
-import { EventTaskWriter } from "../../../../../infrastructure/obsidian/EventTaskWriter";
+import { EventTaskWriter } from "../../../../../infrastructure/obsidian/capture/EventTaskWriter";
 import type { HubNoteRef } from "../../domain/EventTaskRecord";
 import type { LedgerRecordSnapshot } from "../../domain/LedgerRecordSource.ts";
-import { readContextSuggestionNotes } from "../../../../../infrastructure/obsidian/ObsidianInboxSuggestionSource";
+import { readContextSuggestionNotes } from "../../../../../infrastructure/obsidian/suggestions/ObsidianInboxSuggestionSource";
 import {
     createObsidianLinkFormatter,
     createObsidianLinkResolver,
-} from "../../../../../infrastructure/obsidian/ObsidianLinkResolver.ts";
-import { saveScheduledItemBlock } from "../../../../../infrastructure/obsidian/ScheduledItemBlockPersistence.ts";
+} from "../../../../../infrastructure/obsidian/suggestions/ObsidianLinkResolver.ts";
+import { saveScheduledItemBlock } from "../../../../../infrastructure/obsidian/capture/ScheduledItemBlockPersistence.ts";
 import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver.ts";
 import {
     retryScheduledItemEditRelated,
@@ -23,7 +23,7 @@ import {
 import { hydrateScheduledItemFormEdit, parseLocalDateTime } from "../../domain/ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData.ts";
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings";
-import { isTFile } from "../../../../../infrastructure/obsidian/ObsidianFileTypes.ts";
+import { isTFile } from "../../../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
 
 type PartialDetail = Extract<DetailNotePromotionResult, { status: "partial" }>;
 type PartialRelated = Extract<ScheduledItemEditSubmissionResult, { status: "partial" }>;

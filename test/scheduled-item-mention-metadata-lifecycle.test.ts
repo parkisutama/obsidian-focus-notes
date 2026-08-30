@@ -4,7 +4,7 @@ import test from "node:test";
 
 test("scheduled mention index rebuilds after Obsidian resolves block metadata", async () => {
     const source = await readFile(
-        new URL("../src/infrastructure/obsidian/ObsidianInboxSuggestionSource.ts", import.meta.url),
+        new URL("../src/infrastructure/obsidian/suggestions/ObsidianInboxSuggestionSource.ts", import.meta.url),
         "utf8",
     );
 
@@ -15,7 +15,7 @@ test("scheduled mention index rebuilds after Obsidian resolves block metadata", 
 
 test("scheduled mention rebuild ignores an older asynchronous index build", async () => {
     const source = await readFile(
-        new URL("../src/infrastructure/obsidian/ObsidianScheduledItemMentionSource.ts", import.meta.url),
+        new URL("../src/infrastructure/obsidian/suggestions/ObsidianScheduledItemMentionSource.ts", import.meta.url),
         "utf8",
     );
 

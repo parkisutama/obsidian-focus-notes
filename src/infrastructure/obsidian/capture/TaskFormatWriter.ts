@@ -2,8 +2,8 @@ import type { App } from "obsidian";
 import {
     applyTaskFormatChanges,
     type TaskFormatChange,
-} from "../../features/capture/scheduled-item/domain/TaskFormatWriter.ts";
-import { isTFile } from "./ObsidianFileTypes.ts";
+} from "../../../features/capture/scheduled-item/domain/TaskFormatWriter.ts";
+import { isTFile } from "../vault/ObsidianFileTypes.ts";
 
 export type SaveTaskFormatChangesResult =
     | { status: "saved" | "unchanged" }

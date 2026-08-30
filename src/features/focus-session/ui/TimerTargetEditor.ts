@@ -1,6 +1,6 @@
 import { type App, debounce, type EventRef } from "obsidian";
-import { isTFile } from "../../../infrastructure/obsidian/ObsidianFileTypes.ts";
-import { FileSuggest, HeadingSuggest } from "../../../infrastructure/obsidian/Suggesters";
+import { isTFile } from "../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
+import { FileSuggest, HeadingSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
 import type { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
 import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
 import type { FocusTarget } from "../../capture/domain/CaptureTarget";

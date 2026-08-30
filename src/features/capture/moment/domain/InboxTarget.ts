@@ -1,5 +1,5 @@
-import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
-import type { InsertPosition } from "./shared/markdown/InsertPosition";
+import type { FocusTarget } from "../../domain/CaptureTarget";
+import type { InsertPosition } from "../../../../shared/markdown/InsertPosition";
 
 interface InboxTargetResolver {
     resolve(target: FocusTarget, when: Date): FocusTarget;

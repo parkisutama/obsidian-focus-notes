@@ -1,5 +1,5 @@
 import { ItemView, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
-import { openEventTaskForm } from "../../../EventTaskCaptureLauncher";
+import { openEventTaskForm } from "../../capture/ui/EventTaskCaptureLauncher";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
 import type { TimelineMode, TimelineRange } from "../domain/Timeline";
 import { addDays, formatDayKey, startOfDay, startOfWeek } from "../domain/TimelineDate.ts";

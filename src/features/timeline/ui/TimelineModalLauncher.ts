@@ -1,5 +1,5 @@
 import { type App, Notice, TFile } from "obsidian";
-import { openScheduledItemEditor } from "../../../ScheduledItemEditor";
+import { openScheduledItemEditor } from "../../capture/ui/ScheduledItemEditor";
 import { formatScheduledItemBlockTarget } from "../../capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 import type { ScheduledItem } from "../../capture/scheduled-item/domain/ScheduledItem";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";

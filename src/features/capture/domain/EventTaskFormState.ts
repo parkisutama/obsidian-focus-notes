@@ -1,8 +1,8 @@
-import type { InboxRecord } from "./features/capture/moment/domain/InboxRecord";
-import type { EventTaskKind } from "./features/capture/domain/CaptureForm";
-import type { EventTaskRecord, HubNoteRef, TaskRecord } from "./features/capture/scheduled-item/domain/EventTaskRecord";
-import type { InsertPosition } from "./shared/markdown/InsertPosition";
-import type { EventOccurrenceStatus, TaskPriority } from "./features/capture/scheduled-item/domain/ScheduledItem";
+import type { InboxRecord } from "../moment/domain/InboxRecord";
+import type { EventTaskKind } from "./CaptureForm";
+import type { EventTaskRecord, HubNoteRef, TaskRecord } from "../scheduled-item/domain/EventTaskRecord";
+import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
+import type { EventOccurrenceStatus, TaskPriority } from "../scheduled-item/domain/ScheduledItem";
 
 export type HubMode = "none" | "link" | "create";
 

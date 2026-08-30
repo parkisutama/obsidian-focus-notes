@@ -1,7 +1,7 @@
 import type { App } from "obsidian";
-import type { LinkDestinationResolver } from "../../features/capture/application/ContextLinkResolver.ts";
-import { formatRelativeMarkdownLink } from "../../InboxMarkdown.ts";
-import { isTFile } from "./ObsidianFileTypes.ts";
+import type { LinkDestinationResolver } from "../../../features/capture/application/ContextLinkResolver.ts";
+import { formatRelativeMarkdownLink } from "../../../features/capture/moment/domain/InboxMarkdown.ts";
+import { isTFile } from "../vault/ObsidianFileTypes.ts";
 
 /**
  * Resolves link targets the way Obsidian itself would — honoring the user's configured

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { resolveRelativeLinkDestination } from "../src/features/capture/application/ContextLinkResolver.ts";
-import { EventTaskFormState } from "../src/EventTaskFormState.ts";
+import { EventTaskFormState } from "../src/features/capture/domain/EventTaskFormState.ts";
 import { retryRelatedSubmission, submitInbox } from "../src/features/capture/moment/application/EventTaskSubmission.ts";
 
 test("writes Inbox once through a renderer-independent submission", async () => {

@@ -1,4 +1,4 @@
-import { parseObjectReferences, serializeObjectReference } from "./features/capture/domain/ObjectReference.ts";
+import { parseObjectReferences, serializeObjectReference } from "../../domain/ObjectReference.ts";
 
 export type InboxRichTextPart =
     | { kind: "text"; value: string }

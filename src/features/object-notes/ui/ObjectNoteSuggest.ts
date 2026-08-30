@@ -1,7 +1,7 @@
 import { AbstractInputSuggest, type App, prepareFuzzySearch } from "obsidian";
-import { ContextSuggestionIndex, type SuggestionMatcher } from "../../../InboxSuggestions";
-import { applyInputSuggestion } from "../../../SuggestionSelection";
-import { readContextSuggestionNotes } from "../../../infrastructure/obsidian/ObsidianInboxSuggestionSource";
+import { ContextSuggestionIndex, type SuggestionMatcher } from "../../capture/moment/application/InboxSuggestions";
+import { applyInputSuggestion } from "../../capture/moment/ui/SuggestionSelection";
+import { readContextSuggestionNotes } from "../../../infrastructure/obsidian/suggestions/ObsidianInboxSuggestionSource";
 import type { ContextSourceSettings } from "../domain/ContextSourceSettings";
 
 interface ObjectNoteSuggestion {

@@ -6,14 +6,14 @@ import {
     promoteScheduledItemDetail,
     retryDetailNoteAttachment,
 } from "../../application/DetailNotePromotion.ts";
-import { EventTaskFormState } from "../../../../../EventTaskFormState";
-import { EventTaskWriter } from "../../../../../infrastructure/obsidian/EventTaskWriter";
+import { EventTaskFormState } from "../../../domain/EventTaskFormState";
+import { EventTaskWriter } from "../../../../../infrastructure/obsidian/capture/EventTaskWriter";
 import type { HubNoteRef } from "../../domain/EventTaskRecord";
-import { readContextSuggestionNotes } from "../../../../../infrastructure/obsidian/ObsidianInboxSuggestionSource";
+import { readContextSuggestionNotes } from "../../../../../infrastructure/obsidian/suggestions/ObsidianInboxSuggestionSource";
 import {
     createObsidianLinkFormatter,
     createObsidianLinkResolver,
-} from "../../../../../infrastructure/obsidian/ObsidianLinkResolver.ts";
+} from "../../../../../infrastructure/obsidian/suggestions/ObsidianLinkResolver.ts";
 import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver";
 import {
     retryScheduledItemCreateRelated,
@@ -27,7 +27,7 @@ import {
 } from "../../domain/ScheduledItemFormData.ts";
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "../../../domain/CaptureTarget";
-import { isTFile } from "../../../../../infrastructure/obsidian/ObsidianFileTypes.ts";
+import { isTFile } from "../../../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
 
 type PartialDetail = Extract<DetailNotePromotionResult, { status: "partial" }>;
 type PartialRelated = Extract<ScheduledItemCreateRelatedResult, { status: "partial" }>;

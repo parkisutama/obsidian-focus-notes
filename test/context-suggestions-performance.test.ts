@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { performance } from "node:perf_hooks";
-import { ContextSuggestionIndex } from "../src/InboxSuggestions.ts";
+import { ContextSuggestionIndex } from "../src/features/capture/moment/application/InboxSuggestions.ts";
 import { ScheduledItemMentionIndex } from "../src/features/capture/scheduled-item/application/ScheduledItemMentionIndex.ts";
 import type { ContextSourceSettings } from "../src/features/object-notes/domain/ContextSourceSettings.ts";
 

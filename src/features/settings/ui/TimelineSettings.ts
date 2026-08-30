@@ -1,5 +1,5 @@
 import { Setting } from "obsidian";
-import { isTFile } from "../../../infrastructure/obsidian/ObsidianFileTypes.ts";
+import { isTFile } from "../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
 import { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
 import { assessTimelineTargetGroups, buildTimelineSourceGroups } from "../../timeline/domain/TimelineSourceGroups";
 import type { TimelineMode } from "../../timeline/domain/Timeline";

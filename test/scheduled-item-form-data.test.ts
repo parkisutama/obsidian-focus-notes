@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { EventTaskFormState } from "../src/EventTaskFormState.ts";
+import { EventTaskFormState } from "../src/features/capture/domain/EventTaskFormState.ts";
 import {
     scheduledEventFormDataFromLineEdit,
     scheduledItemFormDataFromCreateState,

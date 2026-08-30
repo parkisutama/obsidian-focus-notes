@@ -3,8 +3,8 @@ import type { DisplayMode } from "../domain/Timer";
 import type { EmotionCategory, StressLevel } from "../../reflection/domain/Wellbeing";
 import type { FocusTarget } from "../../capture/domain/CaptureTarget";
 import { EmotionalWellbeingPicker } from "../../reflection/ui/EmotionalWellbeingPicker";
-import { FileSuggest } from "../../../infrastructure/obsidian/Suggesters";
-import { isTFile } from "../../../infrastructure/obsidian/ObsidianFileTypes.ts";
+import { FileSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
+import { isTFile } from "../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
 import { ReflectionFocusModal } from "../../reflection/ui/ReflectionFocusModal";
 
 export interface LogModalResult {

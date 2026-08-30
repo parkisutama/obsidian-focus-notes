@@ -255,9 +255,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move pure Moment text, Markdown, target, and folder normalization.
 
 **Acceptance criteria:**
-- [ ] Four modules live in Moment domain and remain Obsidian/DOM-free.
-- [ ] Timestamps, links, folders, and targets are unchanged.
-- [ ] No cross-feature private import is introduced.
+- [x] Four modules live in Moment domain and remain Obsidian/DOM-free.
+- [x] Timestamps, links, folders, and targets are unchanged.
+- [x] No cross-feature private import is introduced.
 
 **Verification:** Inbox text/link/folder/target/submission tests; standard gates; output comparison.
 
@@ -270,9 +270,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move rich-text, suggestion, controller, input-selection, and concurrency policy to correct Moment layers without decomposing them.
 
 **Acceptance criteria:**
-- [ ] Pure rich text is domain; orchestration is application; Obsidian input/controller code is UI.
-- [ ] `SubmissionPolicy` is Moment application.
-- [ ] Caching, mentions, object creation, input events, and idempotency are unchanged.
+- [x] Pure rich text is domain; orchestration is application; Obsidian input/controller code is UI.
+- [x] `SubmissionPolicy` is Moment application.
+- [x] Caching, mentions, object creation, input events, and idempotency are unchanged.
 
 **Verification:** Rich-text/suggestion/mention/selection/submission tests; standard gates; no extra scan/index rebuild.
 
@@ -285,9 +285,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move desktop form and modal shell without renaming `EventTask*` symbols.
 
 **Acceptance criteria:**
-- [ ] Both modules live in Moment desktop UI.
-- [ ] Moment submission and Event/Task tab delegation remain unchanged.
-- [ ] Removed legacy Event/Task form paths stay unreachable.
+- [x] Both modules live in Moment desktop UI.
+- [x] Moment submission and Event/Task tab delegation remain unchanged.
+- [x] Removed legacy Event/Task form paths stay unreachable.
 
 **Verification:** Inbox/desktop/legacy-retirement/submission tests; full CI; desktop smoke test.
 
@@ -300,9 +300,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move mobile form and screen while retaining independent lifecycle.
 
 **Acceptance criteria:**
-- [ ] Both modules live in Moment mobile UI.
-- [ ] Mount/cleanup, keyboard behavior, and delegation remain unchanged.
-- [ ] Mobile imports no desktop UI.
+- [x] Both modules live in Moment mobile UI.
+- [x] Mount/cleanup, keyboard behavior, and delegation remain unchanged.
+- [x] Mobile imports no desktop UI.
 
 **Verification:** Mobile Moment/viewport/composition/lifecycle/submission tests; full CI; real-mobile smoke test.
 
@@ -315,9 +315,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move cross-kind state and launch/editor orchestration after renderer paths stabilize.
 
 **Acceptance criteria:**
-- [ ] `EventTaskFormState` is capture domain.
-- [ ] `EventTaskCaptureLauncher` and `ScheduledItemEditor` have capture UI/orchestration ownership.
-- [ ] No launcher/renderer cycle; every command, Timeline, and Active Note route resolves.
+- [x] `EventTaskFormState` is capture domain.
+- [x] `EventTaskCaptureLauncher` and `ScheduledItemEditor` have capture UI/orchestration ownership.
+- [x] No launcher/renderer cycle; every command, Timeline, and Active Note route resolves.
 
 **Verification:** Form-state/launcher/mobile-selection/editor tests; standard gates.
 

@@ -1,4 +1,4 @@
-import type { EventTaskSubmissionResult } from "./features/capture/moment/application/EventTaskSubmission";
+import type { EventTaskSubmissionResult } from "./EventTaskSubmission";
 
 export class SubmissionPolicy {
     private inFlight = false;

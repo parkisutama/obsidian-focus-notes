@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { App } from "obsidian";
-import { captureTaskLedgerEdit, saveTaskLedgerEdit } from "../src/infrastructure/obsidian/TaskLedgerEditor.ts";
+import { captureTaskLedgerEdit, saveTaskLedgerEdit } from "../src/infrastructure/obsidian/capture/TaskLedgerEditor.ts";
 
 function fakeApp(initialContent: string): {
     app: App;

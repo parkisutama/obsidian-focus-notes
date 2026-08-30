@@ -1,5 +1,5 @@
 import { Setting } from "obsidian";
-import { FolderSuggest } from "../../../infrastructure/obsidian/Suggesters";
+import { FolderSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
 import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
 import { renderProfilePicker } from "./SettingsFormFields";
 import type { SettingsRenderContext } from "./SettingsRenderContext";

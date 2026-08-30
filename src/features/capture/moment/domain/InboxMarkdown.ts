@@ -1,4 +1,4 @@
-import type { InboxRecord } from "./features/capture/moment/domain/InboxRecord";
+import type { InboxRecord } from "./InboxRecord";
 
 export interface FormatInboxEntryOptions {
     /**

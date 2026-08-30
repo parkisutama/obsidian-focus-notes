@@ -2,19 +2,19 @@ import { type App, type TFile, normalizePath } from "obsidian";
 import {
     formatEventTaskEntry,
     formatTaskPriorityFrontmatter,
-} from "../../features/capture/scheduled-item/domain/EventTaskMarkdown.ts";
-import type { EventTaskRecord, HubNoteRef } from "../../features/capture/scheduled-item/domain/EventTaskRecord";
-import type { EventTaskSettings } from "../../features/capture/scheduled-item/domain/DetailNoteSettings";
-import { createScheduledItemBlockId } from "../../features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
-import type { InboxRecord } from "../../features/capture/moment/domain/InboxRecord";
-import type { FocusNotesSettings } from "../../features/settings/domain/FocusNotesSettings";
-import { insertUnderHeading } from "../../shared/markdown/HeadingInsertion";
-import { type FormatInboxEntryOptions, formatInboxEntry } from "../../InboxMarkdown";
-import type { InsertPosition } from "../../shared/markdown/InsertPosition";
-import { TargetResolver } from "./capture/TargetResolver";
-import { isTFile } from "./ObsidianFileTypes.ts";
-import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
-import { ensureFolderPath } from "./VaultFolders.ts";
+} from "../../../features/capture/scheduled-item/domain/EventTaskMarkdown.ts";
+import type { EventTaskRecord, HubNoteRef } from "../../../features/capture/scheduled-item/domain/EventTaskRecord";
+import type { EventTaskSettings } from "../../../features/capture/scheduled-item/domain/DetailNoteSettings";
+import { createScheduledItemBlockId } from "../../../features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
+import type { InboxRecord } from "../../../features/capture/moment/domain/InboxRecord";
+import type { FocusNotesSettings } from "../../../features/settings/domain/FocusNotesSettings";
+import { insertUnderHeading } from "../../../shared/markdown/HeadingInsertion";
+import { type FormatInboxEntryOptions, formatInboxEntry } from "../../../features/capture/moment/domain/InboxMarkdown";
+import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
+import { TargetResolver } from "./TargetResolver";
+import { isTFile } from "../vault/ObsidianFileTypes.ts";
+import { createObsidianLinkFormatter } from "../suggestions/ObsidianLinkResolver.ts";
+import { ensureFolderPath } from "../vault/VaultFolders.ts";
 
 export class EventTaskWriter {
     constructor(

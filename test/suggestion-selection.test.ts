@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyInputSuggestion } from "../src/SuggestionSelection.ts";
+import { applyInputSuggestion } from "../src/features/capture/moment/ui/SuggestionSelection.ts";
 
 test("suggestion selection notifies both reactive input and persistence listeners", () => {
     const events: string[] = [];

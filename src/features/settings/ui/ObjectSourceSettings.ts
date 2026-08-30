@@ -1,7 +1,7 @@
 import { Setting, setIcon, ToggleComponent } from "obsidian";
 import { createContextSource, findSharedFolderConflicts } from "../../../ContextSourceSettings";
-import { normalizeInboxFolders } from "../../../InboxFolderSettings";
-import { FileSuggest, FolderSuggest } from "../../../infrastructure/obsidian/Suggesters";
+import { normalizeInboxFolders } from "../../capture/moment/domain/InboxFolderSettings";
+import { FileSuggest, FolderSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
 import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
 import type { ContextSourceSettings, ObjectNotePlacement } from "../../object-notes/domain/ContextSourceSettings";
 import { contextSelectField, contextTextField } from "./SettingsFormFields";

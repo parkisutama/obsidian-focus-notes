@@ -1,5 +1,5 @@
-import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
-import { contextSourceMatchesNote } from "./features/object-notes/domain/ContextSourceScope.ts";
+import type { ContextSourceSettings } from "../../../object-notes/domain/ContextSourceSettings";
+import { contextSourceMatchesNote } from "../../../object-notes/domain/ContextSourceScope.ts";
 
 export type MentionMatchSource = "filename" | "alias";
 

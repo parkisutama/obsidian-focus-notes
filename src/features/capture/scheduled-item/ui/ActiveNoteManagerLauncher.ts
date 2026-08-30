@@ -1,8 +1,8 @@
 import { type App, type Component, Notice, type TFile } from "obsidian";
 import { scanActiveNoteChecklistScopes, scanActiveNoteLedger } from "../application/ActiveNoteLedger";
 import { ActiveNoteManagerModal } from "./ActiveNoteManagerModal";
-import { openEventTaskForm } from "../../../../EventTaskCaptureLauncher";
-import { openScheduledItemEditor } from "../../../../ScheduledItemEditor";
+import { openEventTaskForm } from "../../ui/EventTaskCaptureLauncher";
+import { openScheduledItemEditor } from "../../ui/ScheduledItemEditor";
 import type { FocusNotesSettings } from "../../../settings/domain/FocusNotesSettings";
 import { timelineSourceHeadings } from "../../../timeline/domain/TimelineSourceGroups";
 import { ScheduledItemParser } from "../domain/ScheduledItemParser";

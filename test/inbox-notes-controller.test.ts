@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { findInboxTrigger, leadingIndentLength, lineStartOffsets, suggestionSeparator } from "../src/InboxNotesText.ts";
+import {
+    findInboxTrigger,
+    leadingIndentLength,
+    lineStartOffsets,
+    suggestionSeparator,
+} from "../src/features/capture/moment/domain/InboxNotesText.ts";
 
 test("finds mention and tag triggers immediately before the cursor", () => {
     assert.deepEqual(findInboxTrigger("Diskusikan dengan @ndi", 22), {

@@ -1,7 +1,7 @@
 import type { App, TFile } from "obsidian";
 import type { ContextSourceSettings, ObjectNotePlacement } from "../domain/ContextSourceSettings";
-import { isTFile } from "../../../infrastructure/obsidian/ObsidianFileTypes.ts";
-import { ensureFolderPath } from "../../../infrastructure/obsidian/VaultFolders.ts";
+import { isTFile } from "../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
+import { ensureFolderPath } from "../../../infrastructure/obsidian/vault/VaultFolders.ts";
 
 export interface CreateObjectNoteInput {
     name: string;

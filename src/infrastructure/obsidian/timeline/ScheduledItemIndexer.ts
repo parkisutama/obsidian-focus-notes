@@ -3,7 +3,7 @@ import type { ScheduledItem, ScheduledItemSource } from "../../../features/captu
 import type { ScheduledItemParser } from "../../../features/capture/scheduled-item/domain/ScheduledItemParser";
 import type { TimelineSourceGroup } from "../../../features/timeline/domain/Timeline";
 import { matchTimelineSourceGroup } from "../../../features/timeline/domain/TimelineSourceGroups.ts";
-import { isTFile } from "../ObsidianFileTypes.ts";
+import { isTFile } from "../vault/ObsidianFileTypes.ts";
 
 export class ScheduledItemIndexer {
     private readonly app: App;

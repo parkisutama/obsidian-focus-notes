@@ -3,7 +3,10 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("mobile task and event edits route through one shared screen", async () => {
-    const source = await readFile(new URL("../src/ScheduledItemEditor.ts", import.meta.url), "utf8");
+    const source = await readFile(
+        new URL("../src/features/capture/ui/ScheduledItemEditor.ts", import.meta.url),
+        "utf8",
+    );
 
     assert.match(source, /ScheduledItemMobileEditScreen/);
     assert.doesNotMatch(source, /openTaskEditForm/);

@@ -1,5 +1,5 @@
 import { type App, Modal, Notice } from "obsidian";
-import { saveTaskFormatChanges } from "../../../../infrastructure/obsidian/TaskFormatWriter";
+import { saveTaskFormatChanges } from "../../../../infrastructure/obsidian/capture/TaskFormatWriter";
 import type { TaskFormatChange } from "../domain/TaskFormatWriter";
 
 export class TaskFormatPreviewModal extends Modal {

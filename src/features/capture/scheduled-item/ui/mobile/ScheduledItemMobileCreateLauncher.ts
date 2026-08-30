@@ -1,6 +1,6 @@
 import type { App } from "obsidian";
 import { preferActiveNoteTarget } from "../../../domain/ActiveCaptureTarget.ts";
-import { EventTaskMobileScreen } from "../../../../../EventTaskMobileScreen.ts";
+import { EventTaskMobileScreen } from "../../../moment/ui/mobile/EventTaskMobileScreen.ts";
 import { ScheduledItemMobileCreateScreen } from "./ScheduledItemMobileCreateScreen.ts";
 import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver.ts";
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings.ts";

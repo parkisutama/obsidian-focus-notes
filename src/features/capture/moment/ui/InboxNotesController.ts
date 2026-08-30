@@ -6,7 +6,7 @@ import {
     leadingIndentLength,
     lineStartOffsets,
     suggestionSeparator,
-} from "./InboxNotesText";
+} from "../domain/InboxNotesText";
 import {
     formatObjectReferencePart,
     type InboxRichTextPart,
@@ -14,15 +14,15 @@ import {
     parseInboxRichText,
     parseContextRichText,
     serializeInboxRichText,
-} from "./InboxRichText";
-import type { ContextSuggestion } from "./InboxSuggestions";
-import type { ScheduledItemMentionCandidate } from "./features/capture/scheduled-item/application/ScheduledItemMentionIndex.ts";
-import { getCreatableObjectSources } from "./features/object-notes/application/ObjectNote";
-import { ObjectNoteModal } from "./features/object-notes/ui/ObjectNoteModal";
-import { ObsidianInboxSuggestionSource } from "./infrastructure/obsidian/ObsidianInboxSuggestionSource";
-import { createObsidianLinkFormatter } from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
-import { formatRelativeMarkdownLink } from "./InboxMarkdown.ts";
-import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
+} from "../domain/InboxRichText";
+import type { ContextSuggestion } from "../application/InboxSuggestions";
+import type { ScheduledItemMentionCandidate } from "../../scheduled-item/application/ScheduledItemMentionIndex.ts";
+import { getCreatableObjectSources } from "../../../object-notes/application/ObjectNote";
+import { ObjectNoteModal } from "../../../object-notes/ui/ObjectNoteModal";
+import { ObsidianInboxSuggestionSource } from "../../../../infrastructure/obsidian/suggestions/ObsidianInboxSuggestionSource";
+import { createObsidianLinkFormatter } from "../../../../infrastructure/obsidian/suggestions/ObsidianLinkResolver.ts";
+import { formatRelativeMarkdownLink } from "../domain/InboxMarkdown.ts";
+import type { ContextSourceSettings } from "../../../object-notes/domain/ContextSourceSettings";
 
 type ContextNotesSuggestion =
     | { kind: "mention"; value: ContextSuggestion }

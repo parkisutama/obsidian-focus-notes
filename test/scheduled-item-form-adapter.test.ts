@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatRelativeMarkdownLink } from "../src/InboxMarkdown.ts";
+import { formatRelativeMarkdownLink } from "../src/features/capture/moment/domain/InboxMarkdown.ts";
 import { captureLedgerRecord } from "../src/features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import {
     buildScheduledItemFormBlockEdit,

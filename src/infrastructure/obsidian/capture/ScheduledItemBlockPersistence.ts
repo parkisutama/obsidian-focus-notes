@@ -1,10 +1,10 @@
 import type { App } from "obsidian";
-import type { LedgerRecordSnapshot } from "../../features/capture/scheduled-item/domain/LedgerRecordSource.ts";
+import type { LedgerRecordSnapshot } from "../../../features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import {
     replaceScheduledItemBlock,
     type ScheduledItemBlockEdit,
-} from "../../features/capture/scheduled-item/domain/ScheduledItemBlockEditor.ts";
-import { isTFile } from "./ObsidianFileTypes.ts";
+} from "../../../features/capture/scheduled-item/domain/ScheduledItemBlockEditor.ts";
+import { isTFile } from "../vault/ObsidianFileTypes.ts";
 
 export type SaveScheduledItemBlockResult =
     | { status: "saved" | "unchanged" }

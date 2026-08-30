@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveInboxFormTarget, selectInboxTarget } from "../src/InboxTarget.ts";
-import { EventTaskFormState } from "../src/EventTaskFormState.ts";
+import { resolveInboxFormTarget, selectInboxTarget } from "../src/features/capture/moment/domain/InboxTarget.ts";
+import { EventTaskFormState } from "../src/features/capture/domain/EventTaskFormState.ts";
 
 test("useEventCaptureTarget uses the active Event/Task file but replaces its heading and position", () => {
     assert.deepEqual(

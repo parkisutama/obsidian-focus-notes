@@ -1,4 +1,4 @@
-import { formatRelativeMarkdownLink } from "../../../InboxMarkdown.ts";
+import { formatRelativeMarkdownLink } from "../moment/domain/InboxMarkdown.ts";
 
 export interface RelatedLogInput {
     kind: "inbox" | "event" | "task";

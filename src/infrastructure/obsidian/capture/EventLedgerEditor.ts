@@ -5,15 +5,15 @@ import {
     type EventLineInvalidReason,
     parseEventLineEdit,
     type ParseEventLineEditResult,
-} from "../../features/capture/scheduled-item/domain/EventLineEditor.ts";
+} from "../../../features/capture/scheduled-item/domain/EventLineEditor.ts";
 import {
     captureLedgerRecord,
     type LedgerRecordConflictReason,
     type LedgerRecordSnapshot,
     type LedgerRecordSource,
     replaceLedgerRecord,
-} from "../../features/capture/scheduled-item/domain/LedgerRecordSource.ts";
-import { isTFile } from "./ObsidianFileTypes.ts";
+} from "../../../features/capture/scheduled-item/domain/LedgerRecordSource.ts";
+import { isTFile } from "../vault/ObsidianFileTypes.ts";
 
 type FileConflictReason = LedgerRecordConflictReason | "file-missing";
 

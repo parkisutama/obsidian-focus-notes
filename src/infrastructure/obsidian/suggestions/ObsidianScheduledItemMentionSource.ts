@@ -2,13 +2,13 @@ import { type App, prepareFuzzySearch, type TFile } from "obsidian";
 import type {
     ScheduledItemKind,
     ScheduledItemSource,
-} from "../../features/capture/scheduled-item/domain/ScheduledItem.ts";
-import { ScheduledItemParser } from "../../features/capture/scheduled-item/domain/ScheduledItemParser.ts";
+} from "../../../features/capture/scheduled-item/domain/ScheduledItem.ts";
+import { ScheduledItemParser } from "../../../features/capture/scheduled-item/domain/ScheduledItemParser.ts";
 import {
     ScheduledItemMentionIndex,
     type ScheduledItemMentionCandidate,
     type ScheduledItemMentionRecord,
-} from "../../features/capture/scheduled-item/application/ScheduledItemMentionIndex.ts";
+} from "../../../features/capture/scheduled-item/application/ScheduledItemMentionIndex.ts";
 
 interface BlockCacheLike {
     position: { start: { line: number } };

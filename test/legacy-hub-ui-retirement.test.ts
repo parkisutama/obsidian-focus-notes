@@ -10,8 +10,8 @@ import { replaceScheduledItemBlock } from "../src/features/capture/scheduled-ite
 
 test("active desktop and mobile capture shells do not render legacy Related Note controls", async () => {
     const [desktop, mobile] = await Promise.all([
-        readFile(new URL("../src/EventTaskModal.ts", import.meta.url), "utf8"),
-        readFile(new URL("../src/EventTaskMobileScreen.ts", import.meta.url), "utf8"),
+        readFile(new URL("../src/features/capture/moment/ui/desktop/EventTaskModal.ts", import.meta.url), "utf8"),
+        readFile(new URL("../src/features/capture/moment/ui/mobile/EventTaskMobileScreen.ts", import.meta.url), "utf8"),
     ]);
 
     assert.doesNotMatch(desktop, /renderHubNote\(/);

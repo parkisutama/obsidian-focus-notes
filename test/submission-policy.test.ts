@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { EventTaskSubmissionResult } from "../src/features/capture/moment/application/EventTaskSubmission.ts";
-import { SubmissionPolicy } from "../src/SubmissionPolicy.ts";
+import { SubmissionPolicy } from "../src/features/capture/moment/application/SubmissionPolicy.ts";
 
 const success: EventTaskSubmissionResult = {
     status: "success",

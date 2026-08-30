@@ -1,6 +1,6 @@
 import { type App, type EventRef, getAllTags, parseFrontMatterAliases, prepareFuzzySearch } from "obsidian";
-import type { ScheduledItemKind } from "../../features/capture/scheduled-item/domain/ScheduledItem.ts";
-import type { ContextSourceSettings } from "../../features/object-notes/domain/ContextSourceSettings";
+import type { ScheduledItemKind } from "../../../features/capture/scheduled-item/domain/ScheduledItem.ts";
+import type { ContextSourceSettings } from "../../../features/object-notes/domain/ContextSourceSettings";
 import {
     buildTagSuggestions,
     InboxSuggestionSnapshot,
@@ -8,7 +8,7 @@ import {
     type ContextSuggestion,
     type SuggestionMatcher,
     type SuggestionNote,
-} from "../../InboxSuggestions.ts";
+} from "../../../features/capture/moment/application/InboxSuggestions.ts";
 import { getScheduledItemMentionSource } from "./ObsidianScheduledItemMentionSource.ts";
 
 export function readContextSuggestionNotes(app: App): SuggestionNote[] {

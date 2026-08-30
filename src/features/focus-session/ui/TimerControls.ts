@@ -1,5 +1,5 @@
 import { type App, Menu, Notice, setIcon } from "obsidian";
-import { FileSuggest } from "../../../infrastructure/obsidian/Suggesters";
+import { FileSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
 import { CircularDisplay } from "./CircularDisplay";
 import { type DisplayMode, toEngineMode } from "../domain/Timer";

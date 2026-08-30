@@ -1,4 +1,4 @@
-import type { EventTaskFormState } from "../../../../EventTaskFormState";
+import type { EventTaskFormState } from "../../domain/EventTaskFormState";
 import {
     type ContextLinkNote,
     type LinkDestinationResolver,
@@ -15,7 +15,7 @@ import type { FocusTarget } from "../../domain/CaptureTarget";
 import { parseObjectReferences } from "../../domain/ObjectReference.ts";
 import { formatRelatedLog } from "../../domain/RelatedLog.ts";
 import type { InboxRecord } from "../domain/InboxRecord";
-import type { FormatInboxEntryOptions } from "../../../../InboxMarkdown.ts";
+import type { FormatInboxEntryOptions } from "../domain/InboxMarkdown.ts";
 import type { ContextSourceSettings } from "../../../object-notes/domain/ContextSourceSettings";
 import type { InsertPosition } from "../../../../shared/markdown/InsertPosition";
 

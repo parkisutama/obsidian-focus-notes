@@ -1,14 +1,14 @@
 import { type App, type Component, Platform } from "obsidian";
-import { preferActiveNoteTarget } from "./features/capture/domain/ActiveCaptureTarget";
-import { EventTaskModal } from "./EventTaskModal";
-import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
-import type { OpenEventTaskFormOptions } from "./features/capture/domain/CaptureForm";
-import { shouldUseMobileForm } from "./features/capture/scheduled-item/ui/mobile/MobileFormPolicy";
-import { ScheduledItemDesktopCreateModal } from "./features/capture/scheduled-item/ui/desktop/ScheduledItemDesktopCreateModal.ts";
-import { openMobileScheduledItemCreate } from "./features/capture/scheduled-item/ui/mobile/ScheduledItemMobileCreateLauncher.ts";
-import { TargetResolver } from "./infrastructure/obsidian/capture/TargetResolver";
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
-import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
+import { preferActiveNoteTarget } from "../domain/ActiveCaptureTarget";
+import { EventTaskModal } from "../moment/ui/desktop/EventTaskModal";
+import { EventTaskMobileScreen } from "../moment/ui/mobile/EventTaskMobileScreen";
+import type { OpenEventTaskFormOptions } from "../domain/CaptureForm";
+import { shouldUseMobileForm } from "../scheduled-item/ui/mobile/MobileFormPolicy";
+import { ScheduledItemDesktopCreateModal } from "../scheduled-item/ui/desktop/ScheduledItemDesktopCreateModal.ts";
+import { openMobileScheduledItemCreate } from "../scheduled-item/ui/mobile/ScheduledItemMobileCreateLauncher.ts";
+import { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
+import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
+import type { FocusTarget } from "../domain/CaptureTarget";
 
 export function openEventTaskForm(
     app: App,
