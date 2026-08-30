@@ -327,18 +327,18 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 
 ## Checkpoint: Capture ownership
 
-- [ ] Tasks 16–20 pass full CI.
-- [ ] Moment/shared capture has no active root modules.
-- [ ] Renderer lifecycle, primary writes, retries, and Markdown remain unchanged.
+- [x] Tasks 16–20 pass full CI.
+- [x] Moment/shared capture has no active root modules.
+- [x] Renderer lifecycle, primary writes, retries, and Markdown remain unchanged.
 
 ## Task 21: Finish remaining Obsidian adapter ownership
 
 **Description:** Place every remaining root adapter under capability-based Obsidian infrastructure in multiple small commits.
 
 **Acceptance criteria:**
-- [ ] All root adapters have explicit capture/focus/suggestion/vault ownership.
-- [ ] Domain/application code reaches concrete Obsidian only through intended boundaries.
-- [ ] No generic `utils`, `services`, or root adapter appears.
+- [x] All root adapters have explicit capture/focus/suggestion/vault ownership.
+- [x] Domain/application code reaches concrete Obsidian only through intended boundaries.
+- [x] No generic `utils`, `services`, or root adapter appears.
 
 **Verification:** Writer/resolver/vault/suggestion tests; standard gates; security review of paths/untrusted input.
 
@@ -351,9 +351,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Leave `main.ts` as stable entry and place plugin class/registration under `plugin/`.
 
 **Acceptance criteria:**
-- [ ] `main.ts` only loads/exports the plugin entry.
-- [ ] Commands, ribbons, views, settings, lifecycle, and IDs are unchanged.
-- [ ] Plugin depends on feature entry points; features never depend on plugin.
+- [x] `main.ts` only loads/exports the plugin entry.
+- [x] Commands, ribbons, views, settings, lifecycle, and IDs are unchanged.
+- [x] Plugin depends on feature entry points; features never depend on plugin.
 
 **Verification:** Compatibility/architecture tests, full CI, artifact inspection, desktop command/ribbon/view smoke test.
 
@@ -366,9 +366,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Close the migration ledger and make temporary rules permanent.
 
 **Acceptance criteria:**
-- [ ] `main.ts` is the only root TypeScript file.
-- [ ] Legacy isolation, domain purity, shared independence, direction, and no-cycle rules pass.
-- [ ] No shim, empty directory, dead production import, or undocumented inter-feature edge remains.
+- [x] `main.ts` is the only root TypeScript file.
+- [x] Legacy isolation, domain purity, shared independence, direction, and no-cycle rules pass.
+- [x] No shim, empty directory, dead production import, or undocumented inter-feature edge remains.
 
 **Verification:** Architecture mutation checks, unused/dead scan, full CI, audit, `git diff --check`.
 
@@ -378,7 +378,7 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 
 ## Checkpoint: Physical organization complete
 
-- [ ] Tasks 21–23 pass full CI; root contains only `main.ts`.
+- [x] Tasks 21–23 pass full CI; root contains only `main.ts`.
 - [ ] Tests enforce the actual tree and human approves the ownership map.
 
 ## Task 24: Split Reflection reference data from its API
@@ -386,9 +386,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Characterize then split the 1,238-line Mood reference module into cohesive static datasets and a small typed API.
 
 **Acceptance criteria:**
-- [ ] Representative, boundary, and unknown values have characterization coverage first.
-- [ ] Data modules are cohesive; lookup API and serialized labels remain unchanged.
-- [ ] No duplicate dataset, runtime work, or shim remains.
+- [x] Representative, boundary, and unknown values have characterization coverage first.
+- [x] Data modules are cohesive; lookup API and serialized labels remain unchanged.
+- [x] No duplicate dataset, runtime work, or shim remains.
 
 **Verification:** Focused RED/GREEN evidence, Reflection/writer tests, full CI, output comparison.
 
@@ -401,9 +401,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Separate candidate orchestration, rendering, and input lifecycle from the 554-line controller.
 
 **Acceptance criteria:**
-- [ ] Missing boundaries receive failing characterization tests before extraction.
-- [ ] Controller retains only Obsidian lifecycle/composition with narrow collaborators.
-- [ ] Caching, mentions, creation, and input behavior stay unchanged without extra scans.
+- [x] Missing boundaries receive failing characterization tests before extraction.
+- [x] Controller retains only Obsidian lifecycle/composition with narrow collaborators.
+- [x] Caching, mentions, creation, and input behavior stay unchanged without extra scans.
 
 **Verification:** Suggestion/mention/object/selection tests, full CI, performance inspection.
 
@@ -416,9 +416,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Extract cohesive desktop sections behind characterization coverage.
 
 **Acceptance criteria:**
-- [ ] Shell owns composition/state; sections receive narrow inputs/callbacks.
-- [ ] Create/edit parity, disclosure, validation, and accessibility remain unchanged.
-- [ ] No mobile DOM or persistence enters presentation modules.
+- [x] Shell owns composition/state; sections receive narrow inputs/callbacks.
+- [x] Create/edit parity, disclosure, validation, and accessibility remain unchanged.
+- [x] No mobile DOM or persistence enters presentation modules.
 
 **Verification:** Focused RED tests, desktop/model/validation/submission tests, full CI, desktop smoke test.
 

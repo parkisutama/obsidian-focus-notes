@@ -2,6 +2,20 @@
 
 Tanggal audit: 2026-08-22
 
+## Current organization checkpoint (2026-08-30)
+
+Reorganisasi fisik Tasks 1–23 sudah menutup migration inventory. `src/main.ts` adalah satu-satunya TypeScript module di root dan hanya mengekspor `plugin/FocusNotesPlugin.ts`. Implementasi feature sekarang dimiliki oleh `features/<capability>/{domain,application,ui}`, sedangkan adapter konkret berada di `infrastructure/obsidian/{capture,focus-session,timeline,suggestions,vault}`.
+
+Aturan dependensi yang aktif dan diuji:
+
+- plugin boleh merangkai feature dan infrastructure; feature tidak boleh mengimpor plugin;
+- domain tidak boleh mengimpor Obsidian atau outer layer;
+- `shared` tidak boleh mengimpor feature;
+- production tidak boleh mengimpor `legacy`, dan seluruh relative source graph harus acyclic;
+- tiga UI yang tidak lagi memiliki consumer tetap dikarantina di `src/legacy/`, tidak dihapus.
+
+`MoodReference.ts` sudah berada di Reflection domain, tetapi pemecahan static dataset/API sengaja menjadi Task 24 agar didahului characterization coverage. Bagian ownership/checkpoint lama di bawah dipertahankan sebagai catatan keputusan historis; path canonical terkini mengikuti pohon source dan guard arsitektur.
+
 ## Tujuan
 
 Baseline ini mencatat entry point, compatibility identifier, jalur capture aktif, dan ownership seluruh source sebelum pemindahan besar. Klasifikasi didasarkan pada consumer dan tanggung jawab runtime, bukan nama file saja.
