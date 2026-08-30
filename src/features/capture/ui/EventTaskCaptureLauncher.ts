@@ -5,6 +5,7 @@ import { EventTaskMobileScreen } from "../moment/ui/mobile/EventTaskMobileScreen
 import type { OpenEventTaskFormOptions } from "../domain/CaptureForm";
 import { shouldUseMobileForm } from "../scheduled-item/ui/mobile/MobileFormPolicy";
 import { ScheduledItemDesktopCreateModal } from "../scheduled-item/ui/desktop/ScheduledItemDesktopCreateModal.ts";
+import { resolveEventCaptureTarget } from "../scheduled-item/application/ScheduledItemCaptureTarget.ts";
 import { openMobileScheduledItemCreate } from "../scheduled-item/ui/mobile/ScheduledItemMobileCreateLauncher.ts";
 import { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
@@ -69,19 +70,18 @@ export function openDesktopScheduledItemCreate(
     // (typically the project/list note the user is already working in); with
     // nothing active, the target stays empty and submit() blocks until the
     // user picks one, avoiding accidental duplication into Daily Notes.
-    const configured: FocusTarget =
-        kind === "task"
-            ? { file: "", heading: settings.captureTask.heading, position: settings.captureTask.position }
-            : (resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate) ?? {
-                  file: "",
-                  heading: settings.captureEvent.heading,
-                  position: settings.captureEvent.position,
-              });
     const activeFile = app.workspace.getActiveFile();
-    const preferred = preferActiveNoteTarget(
-        configured,
-        targetFile ?? (activeFile?.extension === "md" ? activeFile.path : null),
-    );
+    const preferred: FocusTarget =
+        kind === "task"
+            ? preferActiveNoteTarget(
+                  { file: "", heading: settings.captureTask.heading, position: settings.captureTask.position },
+                  targetFile ?? (activeFile?.extension === "md" ? activeFile.path : null),
+              )
+            : resolveEventCaptureTarget(
+                  resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate),
+                  settings.captureEvent,
+                  targetFile,
+              );
     new ScheduledItemDesktopCreateModal(
         app,
         getSettings,
@@ -89,10 +89,7 @@ export function openDesktopScheduledItemCreate(
         kind,
         {
             ...preferred,
-            heading:
-                kind === "task"
-                    ? settings.captureTask.heading || preferred.heading
-                    : settings.captureEvent.heading || preferred.heading,
+            heading: kind === "task" ? settings.captureTask.heading || preferred.heading : preferred.heading,
         },
         onComplete,
         (nextKind) => {

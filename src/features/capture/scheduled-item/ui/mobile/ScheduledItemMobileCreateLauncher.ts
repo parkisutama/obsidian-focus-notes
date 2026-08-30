@@ -5,6 +5,7 @@ import { ScheduledItemMobileCreateScreen } from "./ScheduledItemMobileCreateScre
 import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver.ts";
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings.ts";
 import type { FocusTarget } from "../../../domain/CaptureTarget";
+import { resolveEventCaptureTarget } from "../../application/ScheduledItemCaptureTarget.ts";
 
 export function openMobileScheduledItemCreate(
     app: App,
@@ -18,19 +19,18 @@ export function openMobileScheduledItemCreate(
     const resolver = new TargetResolver(app, settings);
     // Task never defaults to Daily Notes / the ambient active target — see the
     // matching comment in EventTaskCaptureLauncher.ts's openDesktopScheduledItemCreate().
-    const configured: FocusTarget =
-        kind === "task"
-            ? { file: "", heading: settings.captureTask.heading, position: settings.captureTask.position }
-            : (resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate) ?? {
-                  file: "",
-                  heading: settings.captureEvent.heading,
-                  position: settings.captureEvent.position,
-              });
     const activeFile = app.workspace.getActiveFile();
-    const preferred = preferActiveNoteTarget(
-        configured,
-        targetFile ?? (activeFile?.extension === "md" ? activeFile.path : null),
-    );
+    const preferred: FocusTarget =
+        kind === "task"
+            ? preferActiveNoteTarget(
+                  { file: "", heading: settings.captureTask.heading, position: settings.captureTask.position },
+                  targetFile ?? (activeFile?.extension === "md" ? activeFile.path : null),
+              )
+            : resolveEventCaptureTarget(
+                  resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate),
+                  settings.captureEvent,
+                  targetFile,
+              );
     new ScheduledItemMobileCreateScreen(
         app,
         getSettings,
@@ -38,10 +38,7 @@ export function openMobileScheduledItemCreate(
         kind,
         {
             ...preferred,
-            heading:
-                kind === "task"
-                    ? settings.captureTask.heading || preferred.heading
-                    : settings.captureEvent.heading || preferred.heading,
+            heading: kind === "task" ? settings.captureTask.heading || preferred.heading : preferred.heading,
         },
         onComplete,
         (nextKind) => {
