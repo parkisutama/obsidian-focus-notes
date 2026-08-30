@@ -1,18 +1,17 @@
 import { type App, Setting } from "obsidian";
 import { buildDesktopScheduledItemFormModel } from "./DesktopScheduledItemFormModel.ts";
 import { ContextNotesController } from "../../../moment/ui/InboxNotesController";
-import { ObjectNoteSuggest } from "../../../../object-notes/ui/ObjectNoteSuggest.ts";
 import { parseObjectReferences } from "../../../domain/ObjectReference.ts";
-import { FileSuggest, FolderSuggest } from "../../../../../infrastructure/obsidian/suggestions/Suggesters";
 import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData";
-import type { InsertPosition } from "../../../../../shared/markdown/InsertPosition";
 import type { ContextSourceSettings } from "../../../../object-notes/domain/ContextSourceSettings";
+import {
+    type DesktopScheduledItemCreateContext,
+    renderDesktopCreateTargetSection,
+} from "./DesktopCreateTargetSection.ts";
+import { renderDesktopDetailSection } from "./DesktopDetailSection.ts";
+import { renderDesktopTemporalSection } from "./DesktopTemporalSection.ts";
 
-export interface DesktopScheduledItemCreateContext {
-    targetFile: string;
-    targetHeading: string;
-    targetPosition: InsertPosition;
-}
+export type { DesktopScheduledItemCreateContext } from "./DesktopCreateTargetSection.ts";
 
 export interface DesktopScheduledItemFormOptions {
     app: App;
@@ -63,11 +62,29 @@ export class DesktopScheduledItemForm {
         header.createDiv({ cls: "fn-scheduled-item-form-context", text: model.contextLabel });
         this.renderKindChips(container);
         this.renderIdentity(container);
-        if (this.options.data.kind === "task") this.renderTask(container);
-        else this.renderEvent(container);
+        renderDesktopTemporalSection(container, {
+            mode: this.options.mode,
+            data: this.options.data,
+            update: (change) => this.update(change),
+            changedAndRender: () => this.changedAndRender(),
+        });
         this.renderDescription(container);
-        this.renderDetail(container);
-        if (this.options.mode === "create" && this.options.createContext) this.renderCreateContext(container);
+        renderDesktopDetailSection(container, {
+            app: this.options.app,
+            data: this.options.data,
+            defaultDetailNotesFolder: this.options.defaultDetailNotesFolder,
+            update: (change) => this.update(change),
+            changedAndRender: () => this.changedAndRender(),
+        });
+        if (this.options.mode === "create" && this.options.createContext) {
+            renderDesktopCreateTargetSection(container, {
+                app: this.options.app,
+                data: this.options.data,
+                context: this.options.createContext,
+                getAllowedTaskSources: () => this.options.getAllowedTaskSources?.() ?? [],
+                onTargetFileChange: (value) => this.descriptionController?.setTargetFile(value),
+            });
+        }
         container.createDiv({
             cls: `fn-scheduled-item-form-error${this.errorMessage ? "" : " fn-gcal-hidden"}`,
             text: this.errorMessage,
@@ -135,112 +152,6 @@ export class DesktopScheduledItemForm {
         );
     }
 
-    private renderTask(container: HTMLElement): void {
-        const data = this.options.data;
-        if (data.kind !== "task") return;
-        if (this.options.mode === "edit") {
-            new Setting(container)
-                .setName("Completed")
-                .addToggle((toggle) =>
-                    toggle.setValue(data.completed).onChange((value) => this.update(() => (data.completed = value))),
-                );
-        }
-        new Setting(container).setName("Priority").addDropdown((dropdown) =>
-            dropdown
-                .addOptions({ normal: "Normal", low: "Low", medium: "Medium", high: "High" })
-                .setValue(data.priority)
-                .onChange((value) => this.update(() => (data.priority = value as typeof data.priority))),
-        );
-        this.dateTimeSetting(container, "Due", data.due, false, (value) => (data.due = value));
-        new Setting(container).setName("Timebox").addToggle((toggle) =>
-            toggle.setValue(data.timebox !== null).onChange((enabled) => {
-                data.timebox = enabled
-                    ? { start: data.due?.includes(" ") ? data.due : "", end: data.due?.includes(" ") ? data.due : "" }
-                    : null;
-                this.changedAndRender();
-            }),
-        );
-        if (data.timebox) {
-            this.dateTimeSetting(container, "Timebox start", data.timebox.start, true, (value) => {
-                if (data.timebox) data.timebox.start = value ?? "";
-            });
-            this.dateTimeSetting(container, "Timebox end", data.timebox.end, true, (value) => {
-                if (data.timebox) data.timebox.end = value ?? "";
-            });
-        }
-        new Setting(container).setName("Reminders").addButton((button) =>
-            button.setButtonText("Add reminder").onClick(() => {
-                data.reminders.push(data.due?.includes(" ") ? data.due : "");
-                this.changedAndRender();
-            }),
-        );
-        data.reminders.forEach((reminder, index) => {
-            const row = this.dateTimeSetting(container, `Reminder ${index + 1}`, reminder, true, (value) => {
-                data.reminders[index] = value ?? "";
-            });
-            row.addButton((button) =>
-                button
-                    .setIcon("trash")
-                    .setTooltip(`Remove reminder ${index + 1}`)
-                    .onClick(() => {
-                        data.reminders.splice(index, 1);
-                        this.changedAndRender();
-                    }),
-            );
-        });
-    }
-
-    private renderEvent(container: HTMLElement): void {
-        const data = this.options.data;
-        if (data.kind !== "event") return;
-        new Setting(container).setName("All day").addToggle((toggle) =>
-            toggle.setValue(data.allDay).onChange((value) => {
-                data.allDay = value;
-                data.start = value ? data.start.slice(0, 10) : `${data.start.slice(0, 10)} 09:00`;
-                data.end = value ? null : `${data.start.slice(0, 10)} 10:00`;
-                this.changedAndRender();
-            }),
-        );
-        this.dateTimeSetting(
-            container,
-            "Planned start",
-            data.start,
-            !data.allDay,
-            (value) => (data.start = value ?? ""),
-        );
-        if (!data.allDay) {
-            this.dateTimeSetting(container, "Planned end", data.end, true, (value) => (data.end = value));
-        }
-        new Setting(container).setName("Status").addDropdown((dropdown) =>
-            dropdown
-                .addOptions({ planned: "Planned", completed: "Completed", cancelled: "Cancelled" })
-                .setValue(data.status)
-                .onChange((value) => {
-                    data.status = value as typeof data.status;
-                    if (data.status !== "completed") data.actual = null;
-                    this.changedAndRender();
-                }),
-        );
-        if (data.status === "completed") {
-            new Setting(container).setName("Record actual time").addToggle((toggle) =>
-                toggle.setValue(data.actual !== null).onChange((enabled) => {
-                    data.actual = enabled
-                        ? { start: timedValue(data.start), end: timedValue(data.end ?? data.start) }
-                        : null;
-                    this.changedAndRender();
-                }),
-            );
-            if (data.actual) {
-                this.dateTimeSetting(container, "Actual start", data.actual.start, true, (value) => {
-                    if (data.actual) data.actual.start = value ?? "";
-                });
-                this.dateTimeSetting(container, "Actual end", data.actual.end, true, (value) => {
-                    if (data.actual) data.actual.end = value ?? "";
-                });
-            }
-        }
-    }
-
     private renderDescription(container: HTMLElement): void {
         const setting = new Setting(container)
             .setName("Description")
@@ -263,121 +174,6 @@ export class DesktopScheduledItemForm {
                 this.options.onChange(this.options.data);
             },
         });
-    }
-
-    private renderDetail(container: HTMLElement): void {
-        const data = this.options.data;
-        new Setting(container).setName("Detail Note").addDropdown((dropdown) =>
-            dropdown
-                .addOptions({ none: "None", link: "Link existing", create: "Create new" })
-                .setValue(data.detailNote.mode)
-                .onChange((mode) => {
-                    data.detailNote =
-                        mode === "link"
-                            ? { mode: "link", path: "" }
-                            : mode === "create"
-                              ? {
-                                    mode: "create",
-                                    name: data.title,
-                                    folder: this.options.defaultDetailNotesFolder ?? "",
-                                }
-                              : { mode: "none" };
-                    this.changedAndRender();
-                }),
-        );
-        if (data.detailNote.mode === "link") {
-            const setting = new Setting(container)
-                .setName("Existing note")
-                .setClass("fn-scheduled-item-form-wide-field");
-            const input = setting.controlEl.createEl("input", {
-                type: "text",
-                attr: { "aria-label": "Existing Detail Note" },
-            });
-            input.value = data.detailNote.path;
-            input.addEventListener("input", () =>
-                this.update(() => {
-                    if (data.detailNote.mode === "link") data.detailNote.path = input.value;
-                }),
-            );
-            new FileSuggest(this.options.app, input);
-        }
-        if (data.detailNote.mode === "create") {
-            new Setting(container)
-                .setName("Note name")
-                .setClass("fn-scheduled-item-form-wide-field")
-                .addText((text) =>
-                    text.setValue(data.detailNote.mode === "create" ? data.detailNote.name : "").onChange((value) =>
-                        this.update(() => {
-                            if (data.detailNote.mode === "create") data.detailNote.name = value;
-                        }),
-                    ),
-                );
-            const setting = new Setting(container).setName("Folder").setClass("fn-scheduled-item-form-wide-field");
-            const input = setting.controlEl.createEl("input", {
-                type: "text",
-                attr: { "aria-label": "Detail Note folder" },
-            });
-            input.value = data.detailNote.folder;
-            input.addEventListener("input", () =>
-                this.update(() => {
-                    if (data.detailNote.mode === "create") data.detailNote.folder = input.value;
-                }),
-            );
-            new FolderSuggest(this.options.app, input);
-        }
-    }
-
-    private renderCreateContext(container: HTMLElement): void {
-        const context = this.options.createContext;
-        if (!context) return;
-        const fileSetting = new Setting(container).setName("Save to file");
-        const file = fileSetting.controlEl.createEl("input", {
-            type: "text",
-            attr: { "aria-label": "Save to file", placeholder: "Daily/2026-08-28.md" },
-        });
-        file.value = context.targetFile;
-        file.addEventListener("input", () => {
-            context.targetFile = file.value;
-            this.descriptionController?.setTargetFile(file.value);
-        });
-        if (this.options.data.kind === "task") {
-            new ObjectNoteSuggest(this.options.app, file, () => this.options.getAllowedTaskSources?.() ?? []);
-        } else {
-            new FileSuggest(this.options.app, file);
-        }
-        new Setting(container).setName("Heading").addText((text) =>
-            text.setValue(context.targetHeading).onChange((value) => {
-                context.targetHeading = value;
-            }),
-        );
-        new Setting(container).setName("Insert at top").addToggle((toggle) =>
-            toggle.setValue(context.targetPosition === "start").onChange((enabled) => {
-                context.targetPosition = enabled ? "start" : "end";
-            }),
-        );
-    }
-
-    private dateTimeSetting(
-        container: HTMLElement,
-        label: string,
-        value: string | null,
-        requireTime: boolean,
-        onChange: (value: string | null) => void,
-    ): Setting {
-        const [dateValue = "", timeValue = ""] = value?.split(" ") ?? [];
-        const setting = new Setting(container).setName(label);
-        const date = setting.controlEl.createEl("input", { type: "date", attr: { "aria-label": `${label} date` } });
-        date.value = dateValue;
-        let time: HTMLInputElement | null = null;
-        if (requireTime || timeValue) {
-            time = setting.controlEl.createEl("input", { type: "time", attr: { "aria-label": `${label} time` } });
-            time.value = timeValue;
-        }
-        const emit = (): void =>
-            this.update(() => onChange(date.value ? `${date.value}${time?.value ? ` ${time.value}` : ""}` : null));
-        date.addEventListener("change", emit);
-        time?.addEventListener("change", emit);
-        return setting;
     }
 
     private update(change: () => void): void {
@@ -406,8 +202,4 @@ export class DesktopScheduledItemForm {
             editor.setAttribute("aria-disabled", "true");
         });
     }
-}
-
-function timedValue(value: string): string {
-    return value.includes(" ") ? value : `${value} 09:00`;
 }
