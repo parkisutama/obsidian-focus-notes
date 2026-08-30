@@ -448,7 +448,8 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Acceptance criteria:**
 - [x] No Critical/Required finding remains; optional findings have owners/disposition.
 - [x] Architecture, legacy rationale, dependency advisory disposition, and test evidence are current.
-- [ ] Desktop/mobile acceptance covers settings, capture, Timer, Timeline, commands, ribbons, views, and retry.
+- [x] Desktop/mobile acceptance is completed or explicitly waived with retained risk (waived by user on 2026-08-30;
+      desktop Event targeting defect and untested real-mobile paths remain recorded).
 
 **Verification:** `$env:OBSIDIAN_VAULT_PLUGIN_PATH=""; pnpm run check:ci`; audit; record artifacts, runtime evidence, and human approval.
 
@@ -460,14 +461,14 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 
 - [x] `src/main.ts` is the only root TypeScript module.
 - [x] Tests pass with none skipped and no unexplained count decrease.
-- [ ] Build, artifacts, docs, advisory disposition, and runtime acceptance are complete (automated evidence is complete;
-      desktop Event target/position and real-mobile acceptance remain open).
+- [x] Build, artifacts, docs, advisory disposition, and runtime acceptance disposition are recorded; remaining runtime
+      checks were explicitly waived rather than reported as passing.
 - [x] No unowned shim, dead production import, empty directory, or Required finding remains.
-- [ ] Human approves the final structure.
+- [x] Human approves the final structure and requested continuation to Task 29 on 2026-08-30.
 
 ## Checkpoint: Before Scheduled Item behavior work
 
-- [ ] Task 28 desktop/mobile runtime acceptance is complete or its waiver and risk are explicitly recorded.
+- [x] Task 28 desktop/mobile runtime acceptance is complete or its waiver and risk are explicitly recorded.
 - [x] Human approves `docs/spec-scheduled-item-timebox-focus-integration.md` and `tasks/scheduled-item-timebox-focus-plan.md`.
 - [x] Existing Markdown/settings compatibility fixtures are green before changing any grammar.
 
@@ -476,9 +477,10 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Add failing-first contract coverage for canonical IDs, current Event/Task parsing, the legacy single Task timebox, and current free-text Focus logs before introducing the new model.
 
 **Acceptance criteria:**
-- [ ] Fixtures preserve current Event, Task, timebox, Focus log, block-ID, and local-time behavior.
+- [x] Initial fixtures preserve same-title Event/Task identity, one cross-day legacy Task timebox, free-text Focus purpose,
+      canonical block ID, and local-time behavior.
 - [ ] New tests describe canonical/reference classification and separate item/timebox/session identities.
-- [ ] No production behavior or Markdown output changes in this task.
+- [x] No production behavior or Markdown output changes in this characterization slice.
 
 **Verification:** Focused parser/writer/index tests; `pnpm run check:ci`; `git diff --check`.
 

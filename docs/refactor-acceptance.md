@@ -49,3 +49,10 @@ No source deletion or dependency upgrade is authorized by this evidence note. Th
 - Because exact Event target/position acceptance failed, desktop runtime acceptance remains incomplete even though plugin
   loading and form launch succeeded.
 - Real-mobile acceptance has not been performed and remains required (or must be explicitly waived with recorded risk).
+
+### Runtime acceptance disposition
+
+On 2026-08-30 the user explicitly chose to defer the remaining desktop and real-mobile acceptance and proceed to Task 29.
+This is a waiver of the refactor gate, not a passing runtime result. The retained risks are undiscovered mobile lifecycle or
+keyboard regressions and incomplete desktop paths beyond the already observed Event target/position defect. Re-run the
+checklist before release and after the behavioral initiative reaches its final acceptance task.
