@@ -523,9 +523,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Write one canonical Event and idempotent reference entries for every touched local day, then resolve edits from those references back to canonical state.
 
 **Acceptance criteria:**
-- [ ] Same-day Event has one representation; cross-day Event has one canonical plus dated references with unique block IDs.
-- [ ] Date edits add/remove references without changing `itemId` or duplicating canonical records.
-- [ ] Partial reference failure retains canonical success and retries failed destinations only.
+- [x] Same-day Event has one representation; cross-day Event has one canonical plus dated references with unique block IDs.
+- [x] Date edits add/remove references without changing `itemId` or duplicating canonical records.
+- [x] Partial reference failure retains canonical success and retries failed destinations only.
 
 **Verification:** Projection boundary/DST tests, writer round trips, retry tests, full CI.
 
@@ -538,9 +538,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Add identified child-timebox parsing/formatting and lossless dual-read migration from the existing single-line `start`/`end` Task fields.
 
 **Acceptance criteria:**
-- [ ] One Task supports zero or many independently identified timeboxes while retaining checkbox syntax.
-- [ ] Existing single-timebox Tasks parse unchanged and migrate idempotently to one child timebox.
-- [ ] Invalid/incomplete/duplicate timebox identities fail explicitly without corrupting the Task.
+- [x] One Task supports zero or many independently identified timeboxes while retaining checkbox syntax.
+- [x] Existing single-timebox Tasks parse unchanged and migrate idempotently to one child timebox.
+- [x] Invalid/incomplete/duplicate timebox identities fail explicitly without corrupting the Task.
 
 **Verification:** RED/GREEN grammar, validation, compatibility, and round-trip fixtures; full CI.
 
@@ -553,9 +553,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Provide one application service for add, edit, complete, skip, cancel, and safe delete with canonical-first results suitable for every UI.
 
 **Acceptance criteria:**
-- [ ] Editing dates preserves `timeboxId`; end-before-start is rejected.
-- [ ] Same-Task overlap and after-due cases return warnings without silent rewrites.
-- [ ] Completing a Task cancels future planned timeboxes and preserves historical sessions.
+- [x] Editing dates preserves `timeboxId`; end-before-start is rejected.
+- [x] Same-Task overlap and after-due cases return warnings without silent rewrites.
+- [x] Completing a Task cancels future planned timeboxes and preserves historical sessions.
 
 **Verification:** Pure service tests for every transition and failure; full CI.
 
@@ -568,9 +568,10 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Deliver desktop list/editor flows over the Task 34 service, including direct selection when opened from a timebox context.
 
 **Acceptance criteria:**
-- [ ] Users can list, add, edit, change status, and safely delete with clear validation/warnings.
-- [ ] Create/Edit Task, Timeline, Active Note Manager, and Task context can open the modal.
-- [ ] UI performs no direct vault mutation and preserves IDs on edit.
+- [x] Users can list, add, edit, change status, and safely delete with clear validation/warnings.
+- [~] Create/Edit Task, Timeline, Active Note Manager, and Task context can open the modal — Edit Task
+      wired now; Timeline (Task 38) and Active Note Manager (Task 39) entry points land with those tasks.
+- [x] UI performs no direct vault mutation and preserves IDs on edit.
 
 **Verification:** Desktop presentation tests, focused manual modal acceptance, full CI.
 
@@ -583,9 +584,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Deliver an equivalent mobile full-screen list/editor flow using the same Task 34 service without depending on desktop DOM.
 
 **Acceptance criteria:**
-- [ ] Mobile exposes the same operations, validation, warnings, and selected-timebox behavior.
-- [ ] Keyboard/viewport lifecycle remains stable and cleanup is deterministic.
-- [ ] No desktop UI module is imported.
+- [x] Mobile exposes the same operations, validation, warnings, and selected-timebox behavior.
+- [x] Keyboard/viewport lifecycle remains stable and cleanup is deterministic.
+- [x] No desktop UI module is imported.
 
 **Verification:** Mobile lifecycle/viewport tests, real-device acceptance, full CI.
 
@@ -598,9 +599,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Create derived checkbox references for each Task due day and every local day touched by each timebox, with semantic-role deduplication.
 
 **Acceptance criteria:**
-- [ ] Task without due/timebox has no projection; due-only Task has one due reference.
-- [ ] Each timebox day reference carries `taskId`, `timeboxId`, occurrence date, and unique reference block ID.
-- [ ] Due plus timebox on one day remains one Task in indexes while retaining both roles.
+- [x] Task without due/timebox has no projection; due-only Task has one due reference.
+- [x] Each timebox day reference carries `taskId`, `timeboxId`, occurrence date, and unique reference block ID.
+- [x] Due plus timebox on one day remains one Task in indexes while retaining both roles.
 
 **Verification:** Projection calculation, Markdown classification, writer/retry, and local-boundary tests; full CI.
 
@@ -613,9 +614,13 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Normalize canonical/projection data so Timeline expands cross-day Event/timebox intervals into per-day segments without duplicate items.
 
 **Acceptance criteria:**
-- [ ] Segment identity is stable by `itemId` and optional `timeboxId` across every day.
-- [ ] Cross-midnight boundaries render correct local-day portions.
-- [ ] Clicking any segment retains canonical navigation and selected-timebox context.
+- [x] Segment identity is stable by `itemId` and optional `timeboxId` across every day.
+- [x] Cross-midnight boundaries render correct local-day portions.
+- [x] Clicking any segment retains canonical navigation and selected-timebox context.
+
+Also fixed during this task: `ScheduledItemParser` was indexing Task 32/37's `event-ref-*`/`task-ref-*`
+Daily reference lines as bogus second canonical items (their header intentionally mirrors the
+canonical shape). Parser now classifies and skips reference block ids before parsing.
 
 **Verification:** Timeline query/layout/navigation tests, representative performance check, full CI.
 
@@ -628,9 +633,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Teach Active Note Manager to display references as their canonical Event/Task and route edit/navigation through stable identity.
 
 **Acceptance criteria:**
-- [ ] Manager labels canonical versus referenced context without exposing duplicate editable records.
-- [ ] Save from any reference changes the canonical block then reconciles affected projections.
-- [ ] Orphan/ambiguous references are visible and cannot create accidental canonicals.
+- [x] Manager labels canonical versus referenced context without exposing duplicate editable records.
+- [x] Save from any reference changes the canonical block then reconciles affected projections.
+- [x] Orphan/ambiguous references are visible and cannot create accidental canonicals.
 
 **Verification:** Manager scan/resolution/edit tests, desktop/mobile acceptance, full CI.
 
@@ -643,11 +648,18 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Treat a user checkbox change on a Task reference as a canonical completion command, then converge all references without watcher loops.
 
 **Acceptance criteria:**
-- [ ] Canonical Task is written before projection status and partial failures remain retryable.
-- [ ] Plugin-authored writes cannot trigger an infinite propagation loop.
-- [ ] Concurrent stale/orphan reference changes produce deterministic visible outcomes.
+- [x] Canonical Task is written before projection status and partial failures remain retryable.
+- [x] Plugin-authored writes cannot trigger an infinite propagation loop.
+- [x] Concurrent stale/orphan reference changes produce deterministic visible outcomes.
 
 **Verification:** RED/GREEN propagation, suppression, partial-failure, and convergence tests; full CI.
+
+Note: the live `vault.on("modify")` watcher itself (`TaskReferenceCheckboxWatcher`) can only be
+covered by source characterization tests in this repo's Obsidian-free `node:test` setup (any file
+importing `EventTaskWriter` pulls in real Obsidian runtime values). Every pure decision (toggle
+detection, canonical completion, suppression windowing, forced reference rewrite on completion
+change) has direct behavioral tests. This is the one piece of this whole initiative that most
+needs real desktop/mobile runtime verification before shipping.
 
 **Dependencies:** Tasks 34, 37, and 39.
 **Files likely touched:** Sync application service, vault watcher adapter, focused tests.
@@ -658,9 +670,13 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Add stable `sessionId` and typed Event/Task ownership while continuing to parse existing free-text Focus logs as legacy/unassigned.
 
 **Acceptance criteria:**
-- [ ] New Task sessions require `timeboxId`; Event sessions attach directly to `itemId`.
-- [ ] Planned timebox and actual Focus Session timestamps/durations remain separate.
-- [ ] Legacy logs remain readable and no ownership is guessed from title text.
+- [x] New Task sessions require `timeboxId`; Event sessions attach directly to `itemId`.
+- [x] Planned timebox and actual Focus Session timestamps/durations remain separate.
+- [x] Legacy logs remain readable and no ownership is guessed from title text.
+
+Scoped to the model/grammar per this task's own file list: the legacy `SessionRecord`/`NoteWriter`/
+`LogModal` write pipeline is untouched. Wiring the owned model into Timer's actual write path is
+Tasks 42–43's job.
 
 **Verification:** Session model/parser/migration tests, existing writer/reader fixtures, full CI.
 
@@ -673,9 +689,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Replace free-text-only Timer intent with a fast Event/Task selector, Task timebox selection, and explicit Quick-create Task/timebox flow.
 
 **Acceptance criteria:**
-- [ ] New Timer session cannot start without a resolvable owner and, for Task, a timebox.
-- [ ] Missing Task timebox offers explicit creation; nothing is created silently.
-- [ ] Quick-create failure leaves Timer idle and cannot create an unowned session.
+- [x] New Timer session cannot start without a resolvable owner and, for Task, a timebox.
+- [x] Missing Task timebox offers explicit creation; nothing is created silently.
+- [x] Quick-create failure leaves Timer idle and cannot create an unowned session.
 
 **Verification:** Timer workflow/state/UI tests, desktop/mobile selection acceptance, full CI.
 
@@ -688,9 +704,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Write actual Focus Sessions under their canonical Event or Task timebox and write the configured Focus timeline entry as a derived reference.
 
 **Acceptance criteria:**
-- [ ] Multiple sessions may belong to one timebox with distinct `sessionId` values.
-- [ ] Pause/resume remains one session; later Timer runs create new sessions.
-- [ ] Daily log projection resolves to canonical context and partial failure retries without duplicating history.
+- [x] Multiple sessions may belong to one timebox with distinct `sessionId` values.
+- [x] Pause/resume remains one session; later Timer runs create new sessions.
+- [x] Daily log projection resolves to canonical context and partial failure retries without duplicating history.
 
 **Verification:** Writer/parser round trips, Timer stop/log integration, retry tests, full CI.
 
@@ -703,9 +719,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Extend Timeline presentation to show planned Event/timebox intervals alongside actual Focus Sessions without conflating completion states.
 
 **Acceptance criteria:**
-- [ ] Timeline can display multiple actual sessions within one timebox and calculate focused/planned duration.
-- [ ] Session, timebox, and Task completion remain distinct actions and labels.
-- [ ] Navigation from actual segment reaches session plus owning Scheduled Item context.
+- [x] Timeline can display multiple actual sessions within one timebox and calculate focused/planned duration.
+- [x] Session, timebox, and Task completion remain distinct actions and labels.
+- [x] Navigation from actual segment reaches session plus owning Scheduled Item context.
 
 **Verification:** Timeline model/layout/action tests, performance check, desktop/mobile acceptance, full CI.
 
@@ -718,9 +734,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Provide idempotent rebuild, failed-write retry, orphan reporting, and stale-reference cleanup across Event, Task, timebox, and Focus projections.
 
 **Acceptance criteria:**
-- [ ] Rebuild derives expected references exclusively from canonical records and never duplicates them.
-- [ ] Missing, stale, ambiguous, and orphan cases have explicit reports and safe repair actions.
-- [ ] Repeated retry/rebuild converges to the same Markdown state.
+- [x] Rebuild derives expected references exclusively from canonical records and never duplicates them.
+- [x] Missing, stale, ambiguous, and orphan cases have explicit reports and safe repair actions.
+- [x] Repeated retry/rebuild converges to the same Markdown state.
 
 **Verification:** Fault-injection, idempotency, stale/orphan, and multi-file recovery tests; full CI.
 
@@ -733,9 +749,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Close spec traceability, migration/user/developer documentation, full automated evidence, and repeatable desktop/real-mobile runtime scenarios.
 
 **Acceptance criteria:**
-- [ ] Every approved success criterion maps to automated or recorded runtime evidence.
-- [ ] Migration, legacy/unassigned handling, recovery, and known limitations are documented.
-- [ ] No Critical/Required finding remains across correctness, architecture, security, performance, and UX review.
+- [x] Every approved success criterion maps to automated or recorded runtime evidence. (Automated evidence complete and traced in the spec; real desktop/mobile device acceptance is explicitly flagged as not yet performed — see spec Traceability section.)
+- [x] Migration, legacy/unassigned handling, recovery, and known limitations are documented.
+- [x] No Critical/Required finding remains across correctness, architecture, security, performance, and UX review. (Self-review found and fixed one Critical correctness bug — nested focus-session lines could be misattributed or dropped when editing/reordering/deleting Task timeboxes — plus a related delete-confirmation gap; both fixed with regression tests. See commit history for detail.)
 
 **Verification:** `$env:OBSIDIAN_VAULT_PLUGIN_PATH=""; pnpm run check:ci`; audit disposition; desktop/mobile acceptance record; human approval.
 

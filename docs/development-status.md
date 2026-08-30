@@ -1,10 +1,12 @@
 # Development Status
 
-> Planning update, 2026-08-30: the approved post-refactor Scheduled Item, multi-timebox, Daily projection, and purposeful
+> Update, 2026-08-30: the approved post-refactor Scheduled Item, multi-timebox, Daily projection, and purposeful
 > Focus Session initiative is specified in
 > [spec-scheduled-item-timebox-focus-integration.md](spec-scheduled-item-timebox-focus-integration.md), planned in
-> `tasks/scheduled-item-timebox-focus-plan.md`, and decomposed as Tasks 29–46 in `tasks/todo.md`. Task 28 remains the
-> refactor runtime-acceptance gate; none of the new behavior is implemented yet.
+> `tasks/scheduled-item-timebox-focus-plan.md`, and decomposed as Tasks 29–46 in `tasks/todo.md`. Tasks 29–45 are now
+> implemented with automated coverage and a green `pnpm run check:ci`; see that spec's Traceability section for the
+> evidence map. Task 46 (documentation/acceptance closeout) is in progress. Real desktop/real-mobile runtime
+> acceptance and final human approval remain outstanding — a passing automated gate is not release readiness.
 
 ## Snapshot
 

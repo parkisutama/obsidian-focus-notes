@@ -3,8 +3,9 @@
 ## Status
 
 - Specification approved in conversation on 2026-08-30.
-- Planning only; implementation starts after refactor Task 28 is closed.
-- This spec supersedes the single-timebox portion of `spec-task-event-line-semantics.md` once its migration task ships. Existing Task/Event syntax remains compatible until then.
+- Tasks 29–45 are implemented and covered by automated tests; `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` is green (format, lint, typecheck, full test suite, production build, artifact verification, documentation build).
+- Task 46 (this closeout) records spec traceability, migration/legacy documentation, and known limitations. Repeatable real desktop/mobile runtime acceptance and final human approval remain outside what an automated gate can certify — see [Traceability and acceptance evidence](#traceability-and-acceptance-evidence-task-46).
+- This spec supersedes the single-timebox portion of `spec-task-event-line-semantics.md`; Task 33's migration made that transition lossless and idempotent (see Migration below). Existing Task/Event syntax remains compatible.
 
 ## Objective
 
@@ -103,6 +104,17 @@ The existing single-line `start`/`end` Task syntax remains readable and migrates
 
 Task references remain visually recognizable as checkbox Tasks and carry `task-ref`. Event references carry `event-ref` and do not use Task checkbox syntax. Parsers classify references before canonical entries.
 
+### Event day reference grammar (decided during Task 32 implementation)
+
+A reference mirrors the canonical Event line's date/title shape so it reads the same in a Daily Note, but carries an `event-ref-*` block id (never `event-*`) plus a `canonical:` field linking back to the source block. The `event-ref`/`task-ref` block-id namespace — not a different line shape — is what lets parsers classify a reference before a canonical entry:
+
+```markdown
+- 2026-09-02 09:00 - 12:00 Workshop | canonical:[[Projects/Team.md#^event-abc123]] ^event-ref-xxxxxxxxxx
+- 2026-09-02 Conference | canonical:[[Projects/Team.md#^event-abc123]] ^event-ref-xxxxxxxxxx
+```
+
+The reference stores the Event's full start/end, not a per-day clipped interval; splitting a cross-midnight interval into the visible portion for one day is a Timeline rendering concern (Task 38), not a Markdown storage concern. Removal is self-describing: a reference is found by scanning for the line whose `canonical:` target matches, so no separate day→blockId index is required to keep it in sync. Task references (`task-ref`) will follow the same shape when Task 37 introduces Task due/timebox projections, preserving checkbox syntax per the rule above.
+
 ## Management and synchronization
 
 - Active Note Manager resolves a reference to its canonical block and edits only the canonical record.
@@ -111,6 +123,16 @@ Task references remain visually recognizable as checkbox Tasks and carry `task-r
 - Plugin-authored propagation must suppress watcher loops.
 - Failed secondary writes produce a partial result and an idempotent retry receipt; they never roll back or duplicate a valid canonical write.
 - Orphan references are reported and repairable, not silently promoted to new canonical items.
+
+### Vault-wide rebuild and recovery (decided during Task 45 implementation)
+
+Two commands cover full-vault recovery: **Rebuild Task/Event Daily projections** and **Repair orphaned Daily projection references**. Rebuild scans every canonical Task/Event block and every existing `task-ref`/`event-ref` line in the vault (via `scanVaultForProjectionReconciliation`, matched to Obsidian's block-id metadata cache the same way the mention index already does), then reconciles each *non-ambiguous* canonical item by calling the exact same `runTaskDayProjection`/`runEventDayProjection` functions an incremental edit uses — so a full rebuild and a single edit can never diverge in how they touch a Daily Note, and running rebuild twice in a row makes zero further changes (idempotent convergence).
+
+A day-reference line doesn't encode its own day (a Task reference's grammar carries `due`/`timebox` roles but no date field); rather, the day is implicit in which dated Daily Note file the line lives in. `TargetResolver.resolveDailyFileDate` reverses the "daily" Periodical profile's folder/format to recover that day from the file path, so a reference found during a scan can still be compared against canonical truth.
+
+Two vault-wide conditions an incremental edit never has to consider are classified separately:
+- **Orphan** — an existing reference's `canonical:` target no longer matches any canonical block in the vault. Never auto-removed during rebuild; reported, then removed only by the explicit repair command, which deletes exactly the reported lines and nothing else.
+- **Ambiguous** — the same canonical block id appears more than once in the vault. That target is skipped entirely (neither its creates nor its removes are applied) rather than guessing which copy is authoritative, mirroring how editing an ambiguous block is already refused elsewhere.
 
 ## Timebox Manager
 
@@ -155,6 +177,12 @@ The canonical Focus Session is a child of its Task timebox or Event. The configu
 
 Legacy free-text Focus Session logs remain readable as `legacy/unassigned`. Migration never guesses ownership from a title; users may attach them manually.
 
+### Canonical write and daily log resolution (decided during Task 43 implementation)
+
+The canonical `focus-session` child line is appended — never replacing existing children — via a generic "insert as last child of an anchor block id" primitive shared with future nesting needs, so it works identically whether the anchor is an Event's own line or one of its Task's `timebox` lines. The write is idempotent by `sessionId`: retrying with the same id is a no-op rather than a duplicate, which is what makes automatic retry safe.
+
+The existing free-text daily log template gains one new opt-in token, `{{canonicalLink}}` (`[[file#^sessionId]]`), left out of the default templates so existing users' logs render unchanged unless they add it themselves. If the canonical write fails because the owner's Task/Event can't currently be resolved (`orphan`), the daily log is still written with an empty `{{canonicalLink}}`, and a persistent Notice with a Retry button re-attempts only the canonical write, reusing the same `sessionId` minted for the first attempt.
+
 ## Timeline semantics
 
 - Events render their planned interval and attached actual Focus Sessions.
@@ -163,6 +191,12 @@ Legacy free-text Focus Session logs remain readable as `legacy/unassigned`. Migr
 - Timeline may show planned and actual layers together and calculate utilization.
 - Clicking a projection or actual session navigates through stable IDs to canonical context.
 - Completing a session, timebox, and Task remain three distinct actions.
+
+### Utilization presentation (decided during Task 44 implementation)
+
+`ScheduledItemIndexer` scans each Event's own line and each Task timebox's own line for nested `focus-session` children (via the Task 43 tree-walk in `scanFocusSessionsInBlock`) and attaches them to the matching `ScheduledItem`. `TimelineLayout` aggregates them into one `utilization: { plannedSeconds, focusedSeconds, sessionCount }` per block segment — `plannedSeconds` from the item's full interval, `focusedSeconds` the sum of every attached session's duration, so a timebox holding several sessions reports one combined total rather than requiring the caller to re-sum.
+
+Timeline renders this as a thin actual/planned fill bar on the block (only once at least one session exists) plus a tooltip line ("Xm focused of Ym planned"); it never replaces the existing planned block or its click target. Clicking a Task-timebox segment still opens the Timebox Manager (Task 38's existing route), which now lists that timebox's actual Focus Sessions read-only beneath its controls — reaching both the session history and the owning Task/timebox context from one place, without adding session-level complete/edit actions that could be confused with timebox or Task completion.
 
 ## Commands
 
@@ -241,6 +275,36 @@ Domain modules remain free of Obsidian and DOM imports. UI delegates mutation to
 - Legacy Scheduled Items and Focus logs remain readable and migrate without data loss.
 - Retry/rebuild repairs partial or orphaned projections idempotently.
 - Full automated and recorded desktop/mobile acceptance gates pass.
+
+## Traceability and acceptance evidence (Task 46)
+
+Each success criterion above maps to automated coverage; the last one is intentionally split, since a local gate cannot certify real-device runtime behavior.
+
+| Success criterion | Automated evidence |
+| --- | --- |
+| Settings-driven Event capture, manual override, and position work identically on desktop/mobile | `desktop-scheduled-item-form-structure.test.ts`, `mobile-scheduled-item-form-structure.test.ts`, `mobile-scheduled-item-form-composition.test.ts`, `scheduled-item-event-target-auto-sync.test.ts` |
+| Canonical Event/Task records are manageable from every derived Daily reference | `active-note-manager-reference-wiring.test.ts`, `canonical-scheduled-item-resolver.test.ts`, `scheduled-item-editor-timebox-navigation.test.ts` |
+| Multi-day Event/timebox segments appear on every relevant Timeline day without duplicate identity | `event-day-projection-edit-wiring.test.ts`, `timeline-layout.test.ts`, `timeline-capture-integration.test.ts` |
+| A Task supports multiple independently identified timeboxes and multiple actual sessions per timebox | `task-timebox-line.test.ts`, `task-timebox-operations.test.ts`, `canonical-focus-session-append.test.ts`, `focus-session-block-scan.test.ts`, `scheduled-item-block-editor.test.ts` |
+| Task reference completion updates canonical first and converges all projections without loops | `task-reference-completion-sync.test.ts`, `task-reference-checkbox-watcher-wiring.test.ts`, `write-suppression-tracker.test.ts` |
+| Timer requires purpose, supports explicit quick planning, and records actual sessions under canonical context | `timer-purpose-gate.test.ts`, `timer-purpose-selection-wiring.test.ts`, `timer-canonical-focus-session-wiring.test.ts`, `canonical-focus-session-writer.test.ts` |
+| Legacy Scheduled Items and Focus logs remain readable and migrate without data loss | `task-timebox-migration.test.ts`, `scheduled-item-migration-contract.test.ts`, `scheduled-item-identity-migration.test.ts`, `event-task-markdown-compatibility.test.ts`, `compatibility-identifiers.test.ts` |
+| Retry/rebuild repairs partial or orphaned projections idempotently | `task-day-reference-reconciliation.test.ts`, `event-day-reference-reconciliation.test.ts`, `projection-reconciliation-scan.test.ts`, `projection-reconciliation-runner-wiring.test.ts` |
+| Full automated and recorded desktop/mobile acceptance gates pass | Automated: `pnpm run check:ci` (all suites, build, docs). Recorded real-device desktop/mobile acceptance: **not yet performed** — this session has no live Obsidian environment; treat runtime behavior as code-reviewed and unit-tested, not device-verified, until a human runs `pnpm run deploy:vault` against a real vault on desktop and mobile. |
+
+## Migration and legacy handling
+
+- **Legacy single-line Task timebox → child timebox (Task 33).** The old inline `start`/`end` fields on a Task line migrate losslessly to one `planned` child timebox the first time the Task is touched; `migrateLegacyTaskTimebox` is idempotent, so re-running it against an already-migrated Task is a no-op (`task-timebox-migration.test.ts`).
+- **Legacy free-text Focus Session logs.** Sessions logged before Task 41–43 (or any session started with no Task/Event purpose selected) stay exactly as `legacy/unassigned`: the daily log entry renders with today's templates, and `{{canonicalLink}}` is simply empty. Nothing retroactively guesses ownership from a title.
+- **Daily projections.** `task-ref-*`/`event-ref-*` lines are always derived; deleting or hand-editing one is safe because the "Rebuild Task/Event Daily projections" command (Task 45) regenerates the expected set from canonical truth on demand.
+
+## Known limitations
+
+- **Ambiguous canonical block ids are skipped, not resolved.** If the same `task-*`/`event-*` block id exists more than once in the vault (hand-copied text, a merge artifact), every projection/reconciliation path refuses to touch that identity rather than guessing which copy is authoritative. The duplicate must be fixed manually (rename one block id) before its projections converge again.
+- **Orphan reference repair is a manual two-step command.** "Rebuild Task/Event Daily projections" only reports orphaned references (a `canonical:` target that no longer resolves); "Repair orphaned Daily projection references" must be run afterward to actually delete them. This is deliberate — see Management and synchronization above — but means a rebuild alone does not shrink a vault with stale references.
+- **Deleting a timebox deletes its Focus Session history.** A timebox and everything nested under it (its actual Focus Sessions, any notes) are one unit; deleting the timebox removes all of it. Confirmation is required whenever the timebox is historical *or* already has a logged Focus Session, specifically to guard against losing that history by accident (Task 46 hardening, `task-timebox-operations.test.ts`).
+- **Event-owned Focus Sessions have no dedicated history list yet.** Timebox Manager lists a Task timebox's actual sessions read-only; the Event Edit form does not yet show the equivalent list for an Event-owned session. Timeline's tooltip and fill bar still show planned-vs-actual utilization for both kinds.
+- **Rebuild scans the whole vault.** "Rebuild Task/Event Daily projections" reads every Markdown file's cached blocks with no batching or progress indicator; on very large vaults this may take a moment. It is a manual, on-demand command, never triggered automatically.
 
 ## Deferred scope
 
