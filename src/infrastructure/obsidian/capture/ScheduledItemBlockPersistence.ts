@@ -9,7 +9,10 @@ import { isTFile } from "../vault/ObsidianFileTypes.ts";
 export type SaveScheduledItemBlockResult =
     | { status: "saved" | "unchanged" }
     | { status: "conflict"; reason: "file-missing" | "line-missing" | "line-changed" | "block-changed" | "ambiguous" }
-    | { status: "invalid"; reason: "empty-block" | "duplicate-detail" };
+    | {
+          status: "invalid";
+          reason: "empty-block" | "duplicate-detail" | "duplicate-timebox-id" | "invalid-timebox-line";
+      };
 
 export async function saveScheduledItemBlock(
     app: App,
