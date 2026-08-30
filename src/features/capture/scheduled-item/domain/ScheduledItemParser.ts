@@ -1,18 +1,88 @@
 import { unwrapMarkdownLinkLabel } from "../../../../shared/markdown/MarkdownLink.ts";
-import { extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
+import { classifyScheduledItemBlockId, extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
+import { parseEventDayReferenceLine } from "./EventDayReference.ts";
+import { parseTaskDayReferenceLine } from "./TaskDayReference.ts";
 import type { EventOccurrenceStatus, ScheduledItem, ScheduledItemSource, TaskPriority } from "./ScheduledItem";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DATETIME_RE = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/;
 const TIME_RE = /^\d{2}:\d{2}$/;
 
+const REFERENCE_KINDS = new Set(["task-reference", "event-reference", "focus-reference"]);
+
 export class ScheduledItemParser {
     parseLine(line: string, ctx: ScheduledItemSource): ScheduledItem | null {
         const { semanticLine, blockId } = extractScheduledItemBlockId(line);
+        // Derived Daily references (event-ref-*/task-ref-*/focus-ref-*) carry a canonical-looking
+        // header by design (see EventDayReference/TaskDayReference) so they read naturally in a
+        // Daily Note, but they must never be indexed as a second canonical item alongside the
+        // real one. Parsers classify references before canonical entries per the spec.
+        if (blockId && REFERENCE_KINDS.has(classifyScheduledItemBlockId(blockId))) return null;
         return (
             this.parseEventLine(semanticLine, ctx, line, blockId) ??
             this.parseTaskLine(semanticLine, ctx, line, blockId)
         );
+    }
+
+    /**
+     * Parses a line as a Daily reference for display in reference-aware surfaces (e.g. the
+     * Active Note Manager). Returns null for anything that isn't an event-ref/task-ref line —
+     * callers pair this with parseLine() to cover both canonical entries and references.
+     */
+    parseReferenceLine(line: string, ctx: ScheduledItemSource): ScheduledItem | null {
+        const { blockId } = extractScheduledItemBlockId(line);
+        if (!blockId) return null;
+        const kind = classifyScheduledItemBlockId(blockId);
+        if (kind === "event-reference") {
+            const ref = parseEventDayReferenceLine(line);
+            if (!ref) return null;
+            return {
+                id: ref.referenceBlockId,
+                blockId: ref.referenceBlockId,
+                referenceTarget: ref.canonicalTarget,
+                kind: "event",
+                title: ref.title,
+                start: null,
+                end: null,
+                due: null,
+                dueHasTime: false,
+                remind: null,
+                priority: null,
+                eventStatus: null,
+                actualStart: null,
+                actualEnd: null,
+                allDay: ref.allDay,
+                isCompleted: false,
+                source: ctx,
+                rawLine: line,
+            };
+        }
+        if (kind === "task-reference") {
+            const ref = parseTaskDayReferenceLine(line);
+            if (!ref) return null;
+            return {
+                id: ref.referenceBlockId,
+                blockId: ref.referenceBlockId,
+                timeboxId: ref.timeboxId,
+                referenceTarget: ref.canonicalTarget,
+                kind: "task",
+                title: ref.title,
+                start: null,
+                end: null,
+                due: null,
+                dueHasTime: false,
+                remind: null,
+                priority: null,
+                eventStatus: null,
+                actualStart: null,
+                actualEnd: null,
+                allDay: false,
+                isCompleted: ref.completed,
+                source: ctx,
+                rawLine: line,
+            };
+        }
+        return null;
     }
 
     private parseEventLine(
