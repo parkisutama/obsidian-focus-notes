@@ -6,7 +6,7 @@ import {
     getStressLevelLabel,
 } from "../../../features/reflection/domain/EmotionalWellbeingReference";
 import type { FocusNotesSettings } from "../../../features/settings/domain/FocusNotesSettings";
-import { getMood } from "../../../MoodReference";
+import { getMood } from "../../../features/reflection/domain/MoodReference";
 import { isTFile } from "../vault/ObsidianFileTypes.ts";
 import { ensureFolderPath } from "../vault/VaultFolders.ts";
 

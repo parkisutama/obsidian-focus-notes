@@ -1,5 +1,5 @@
 import { type App, Modal } from "obsidian";
-import { getMood } from "../../../MoodReference";
+import { getMood } from "../domain/MoodReference";
 import { CBT_PROMPTS, COGNITIVE_DISTORTIONS } from "../domain/CognitiveDistortions";
 import { getEmotionCategoryLabel, getStressLevelLabel } from "../domain/EmotionalWellbeingReference";
 import type { EmotionCategory, StressLevel } from "../domain/Wellbeing";

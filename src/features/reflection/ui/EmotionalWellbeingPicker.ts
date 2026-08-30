@@ -1,5 +1,5 @@
 import { setIcon } from "obsidian";
-import { MOODS, type MoodEntry } from "../../../MoodReference";
+import { MOODS, type MoodEntry } from "../domain/MoodReference";
 import type { EmotionCategory, StressLevel } from "../domain/Wellbeing";
 import {
     EMOTION_GROUPS,

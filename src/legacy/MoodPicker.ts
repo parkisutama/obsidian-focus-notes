@@ -8,7 +8,7 @@ import {
     type Quadrant,
     type SensationRow,
     moodsInQuadrant,
-} from "../MoodReference";
+} from "../features/reflection/domain/MoodReference";
 
 /**
  * Mood selection component used inside LogModal.
