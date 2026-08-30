@@ -36,5 +36,125 @@ test("explicit all-day Events render in the all-day row instead of the hourly ca
     });
 
     assert.equal(layout.blocks.length, 0);
-    assert.deepEqual(layout.dues, [{ itemId: "holiday", dayKey: "2026-08-10" }]);
+    assert.deepEqual(layout.dues, [{ itemId: "holiday", timeboxId: null, dayKey: "2026-08-10" }]);
+});
+
+function baseTaskItem(overrides: Partial<ScheduledItem>): ScheduledItem {
+    return {
+        id: "task-abc1234567",
+        kind: "task",
+        title: "Menyusun laporan",
+        start: null,
+        end: null,
+        due: null,
+        dueHasTime: false,
+        remind: null,
+        priority: null,
+        eventStatus: null,
+        actualStart: null,
+        actualEnd: null,
+        allDay: false,
+        isCompleted: false,
+        source: {
+            groupId: "daily-notes",
+            groupName: "Daily Notes",
+            filePath: "Tasks/Report.md",
+            fileName: "Report.md",
+            lineNumber: 3,
+            headingPath: [],
+        },
+        rawLine: "- [ ] Menyusun laporan ^task-abc1234567",
+        ...overrides,
+    };
+}
+
+test("two timeboxes on one Task keep distinct, stable segment identity by itemId plus timeboxId", () => {
+    const items: ScheduledItem[] = [
+        baseTaskItem({
+            timeboxId: "timebox-aaaaaaaaaa",
+            start: new Date(2026, 8, 1, 9, 0),
+            end: new Date(2026, 8, 1, 10, 0),
+        }),
+        baseTaskItem({
+            timeboxId: "timebox-bbbbbbbbbb",
+            start: new Date(2026, 8, 1, 14, 0),
+            end: new Date(2026, 8, 1, 15, 0),
+        }),
+    ];
+
+    const layout = new TimelineLayout().build(items, {
+        start: new Date(2026, 8, 1),
+        end: new Date(2026, 8, 2),
+    });
+
+    assert.equal(layout.blocks.length, 2);
+    const timeboxIds = layout.blocks.map((block) => block.timeboxId).sort();
+    assert.deepEqual(timeboxIds, ["timebox-aaaaaaaaaa", "timebox-bbbbbbbbbb"]);
+    assert.ok(layout.blocks.every((block) => block.itemId === "task-abc1234567"));
+});
+
+test("computes focus utilization for a timebox with logged actual sessions", () => {
+    const item = baseTaskItem({
+        timeboxId: "timebox-aaaaaaaaaa",
+        start: new Date(2026, 8, 1, 9, 0),
+        end: new Date(2026, 8, 1, 11, 0),
+        focusSessions: [
+            {
+                sessionId: "focus-aaaaaaaaaa",
+                start: new Date(2026, 8, 1, 9, 5),
+                end: new Date(2026, 8, 1, 9, 30),
+                durationSeconds: 1500,
+                mode: "pomodoro",
+            },
+        ],
+    });
+
+    const layout = new TimelineLayout().build([item], {
+        start: new Date(2026, 8, 1),
+        end: new Date(2026, 8, 2),
+    });
+
+    assert.equal(layout.blocks.length, 1);
+    assert.deepEqual(layout.blocks[0].utilization, {
+        plannedSeconds: 7200,
+        focusedSeconds: 1500,
+        sessionCount: 1,
+    });
+});
+
+test("reports zero-session utilization for a planned interval with no actual Focus Sessions yet", () => {
+    const item = baseTaskItem({
+        timeboxId: "timebox-aaaaaaaaaa",
+        start: new Date(2026, 8, 1, 9, 0),
+        end: new Date(2026, 8, 1, 11, 0),
+    });
+
+    const layout = new TimelineLayout().build([item], {
+        start: new Date(2026, 8, 1),
+        end: new Date(2026, 8, 2),
+    });
+
+    assert.deepEqual(layout.blocks[0].utilization, { plannedSeconds: 7200, focusedSeconds: 0, sessionCount: 0 });
+});
+
+test("a cross-midnight timebox splits into per-day segments that all keep the same timeboxId", () => {
+    const item = baseTaskItem({
+        timeboxId: "timebox-cccccccccc",
+        start: new Date(2026, 8, 30, 22, 0),
+        end: new Date(2026, 9, 1, 6, 0),
+    });
+
+    const layout = new TimelineLayout().build([item], {
+        start: new Date(2026, 8, 30),
+        end: new Date(2026, 9, 2),
+    });
+
+    assert.equal(layout.blocks.length, 2);
+    assert.deepEqual(
+        layout.blocks.map((block) => ({ dayKey: block.dayKey, timeboxId: block.timeboxId, itemId: block.itemId })),
+        [
+            { dayKey: "2026-09-30", timeboxId: "timebox-cccccccccc", itemId: "task-abc1234567" },
+            { dayKey: "2026-10-01", timeboxId: "timebox-cccccccccc", itemId: "task-abc1234567" },
+        ],
+    );
 });

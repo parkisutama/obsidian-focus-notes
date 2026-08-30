@@ -1,4 +1,5 @@
 import type { ScheduledItem } from "../../capture/scheduled-item/domain/ScheduledItem";
+import type { FocusUtilizationSummary } from "../../focus-session/domain/FocusUtilization.ts";
 import type { TimelineMode, TimelineRange } from "../domain/Timeline";
 import { addDays, formatDayKey, formatTime, startOfDay } from "../domain/TimelineDate.ts";
 import type { TimelineLayoutResult } from "../domain/TimelineLayout";
@@ -22,7 +23,9 @@ export class TimelineGrid {
             onOpenItem: (item: ScheduledItem) => void;
         },
     ) {
-        this.itemById = new Map(opts.items.concat(opts.pendingItems).map((item) => [item.id, item]));
+        this.itemById = new Map(
+            opts.items.concat(opts.pendingItems).map((item) => [itemKey(item.id, item.timeboxId ?? null), item]),
+        );
     }
 
     render(): void {
@@ -87,7 +90,7 @@ export class TimelineGrid {
             }
 
             for (const due of this.opts.layout.dues.filter((d) => d.dayKey === dayKey)) {
-                const item = this.itemById.get(due.itemId);
+                const item = this.itemById.get(itemKey(due.itemId, due.timeboxId));
                 if (item) this.renderDueChip(col, item);
             }
         }
@@ -139,12 +142,13 @@ export class TimelineGrid {
         }
 
         for (const block of this.opts.layout.blocks.filter((b) => b.dayKey === dayKey)) {
-            const item = this.itemById.get(block.itemId);
-            if (item) this.renderBlock(col, item, block.start, block.end, block.column, block.columnCount);
+            const item = this.itemById.get(itemKey(block.itemId, block.timeboxId));
+            if (item)
+                this.renderBlock(col, item, block.start, block.end, block.column, block.columnCount, block.utilization);
         }
 
         for (const point of this.opts.layout.points.filter((p) => formatDayKey(p.at) === dayKey)) {
-            const item = this.itemById.get(point.itemId);
+            const item = this.itemById.get(itemKey(point.itemId, point.timeboxId));
             if (item) this.renderPoint(col, item, point.at);
         }
     }
@@ -156,6 +160,7 @@ export class TimelineGrid {
         end: Date,
         column: number,
         columnCount: number,
+        utilization: FocusUtilizationSummary,
     ): void {
         const topPx = this.toPx(start);
         const heightPx = Math.max(20, this.toPx(end) - this.toPx(start));
@@ -170,7 +175,7 @@ export class TimelineGrid {
         block.style.left = `calc(${column * widthPct}% + ${gap}px)`;
         block.style.width = `calc(${widthPct}% - ${gap * 2}px)`;
         block.style.setProperty("--ftl-color", this.colorFor(item));
-        block.title = this.tooltip(item);
+        block.title = this.tooltip(item, utilization);
         block.toggleClass("ftl-block--compact", heightPx < 34);
         block.toggleClass("ftl-block--medium", heightPx >= 34 && heightPx < 56);
         block.toggleClass("ftl-block--roomy", heightPx >= 56);
@@ -189,6 +194,15 @@ export class TimelineGrid {
 
         if (heightPx > 72) {
             content.createDiv({ cls: "ftl-block-source", text: item.source.fileName });
+        }
+
+        // Actual-versus-planned fill only makes sense once something's been logged, and needs
+        // enough height to read as a bar rather than noise on a compact block.
+        if (utilization.sessionCount > 0 && heightPx >= 34) {
+            const pct =
+                utilization.plannedSeconds > 0 ? (utilization.focusedSeconds / utilization.plannedSeconds) * 100 : 0;
+            const fill = body.createDiv({ cls: "ftl-block-focus-fill" });
+            fill.style.height = `${Math.max(0, Math.min(100, pct))}%`;
         }
 
         block.addEventListener("click", () => this.opts.onOpenItem(item));
@@ -274,8 +288,21 @@ export class TimelineGrid {
         return item.isCompleted ? " ftl-completed" : "";
     }
 
-    private tooltip(item: ScheduledItem): string {
+    private tooltip(item: ScheduledItem, utilization?: FocusUtilizationSummary): string {
         const heading = item.source.headingPath.length ? `\n${item.source.headingPath.join(" > ")}` : "";
-        return `${item.title}\n${item.source.filePath}:${item.source.lineNumber}${heading}`;
+        const focus =
+            utilization && utilization.sessionCount > 0
+                ? `\n${formatMinutes(utilization.focusedSeconds)} focused of ${formatMinutes(utilization.plannedSeconds)} planned`
+                : "";
+        return `${item.title}\n${item.source.filePath}:${item.source.lineNumber}${heading}${focus}`;
     }
+}
+
+/** One Task can own several timeboxes sharing one itemId; the pair is the real segment identity. */
+function itemKey(itemId: string, timeboxId: string | null): string {
+    return `${itemId}::${timeboxId ?? ""}`;
+}
+
+function formatMinutes(seconds: number): string {
+    return `${Math.round(seconds / 60)}m`;
 }

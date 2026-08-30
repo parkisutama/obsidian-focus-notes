@@ -1,23 +1,33 @@
 import type { ScheduledItem } from "../../capture/scheduled-item/domain/ScheduledItem";
+import {
+    type FocusUtilizationSummary,
+    summarizeFocusUtilization,
+} from "../../focus-session/domain/FocusUtilization.ts";
 import type { TimelineRange } from "./Timeline";
 import { addDays, endOfDay, formatDayKey, startOfDay } from "./TimelineDate.ts";
 
 export interface TimelineBlockSegment {
     itemId: string;
+    /** Null for an Event or a Task's own due; set when this segment is one Task timebox occurrence. */
+    timeboxId: string | null;
     dayKey: string;
     start: Date;
     end: Date;
     column: number;
     columnCount: number;
+    /** Planned-versus-actual Focus Session totals for the item's full interval (Task 44). */
+    utilization: FocusUtilizationSummary;
 }
 
 export interface TimelinePointItem {
     itemId: string;
+    timeboxId: string | null;
     at: Date;
 }
 
 export interface TimelineDueItem {
     itemId: string;
+    timeboxId: string | null;
     dayKey: string;
 }
 
@@ -34,17 +44,18 @@ export class TimelineLayout {
         const dues: TimelineDueItem[] = [];
 
         for (const item of items) {
+            const timeboxId = item.timeboxId ?? null;
             if (item.allDay && item.start) {
-                dues.push({ itemId: item.id, dayKey: formatDayKey(item.start) });
+                dues.push({ itemId: item.id, timeboxId, dayKey: formatDayKey(item.start) });
                 continue;
             }
             if (item.start && item.end && item.end > item.start) {
                 blocks.push(...this.splitBlock(item, range));
                 continue;
             }
-            if (item.start) points.push({ itemId: item.id, at: item.start });
-            else if (item.remind) points.push({ itemId: item.id, at: item.remind });
-            else if (item.due) dues.push({ itemId: item.id, dayKey: formatDayKey(item.due) });
+            if (item.start) points.push({ itemId: item.id, timeboxId, at: item.start });
+            else if (item.remind) points.push({ itemId: item.id, timeboxId, at: item.remind });
+            else if (item.due) dues.push({ itemId: item.id, timeboxId, dayKey: formatDayKey(item.due) });
         }
 
         this.assignColumns(blocks);
@@ -56,6 +67,8 @@ export class TimelineLayout {
         const segments: TimelineBlockSegment[] = [];
         let cursor = startOfDay(item.start);
         const lastDay = startOfDay(item.end);
+        const plannedSeconds = (item.end.getTime() - item.start.getTime()) / 1000;
+        const utilization = summarizeFocusUtilization(plannedSeconds, item.focusSessions ?? []);
 
         while (cursor <= lastDay) {
             const dayStart = startOfDay(cursor);
@@ -65,11 +78,13 @@ export class TimelineLayout {
             if (start < end) {
                 segments.push({
                     itemId: item.id,
+                    timeboxId: item.timeboxId ?? null,
                     dayKey: formatDayKey(dayStart),
                     start,
                     end,
                     column: 0,
                     columnCount: 1,
+                    utilization,
                 });
             }
             cursor = addDays(cursor, 1);

@@ -1,6 +1,20 @@
 import type { App, TFile } from "obsidian";
-import type { ScheduledItem, ScheduledItemSource } from "../../../features/capture/scheduled-item/domain/ScheduledItem";
+import type {
+    ScheduledItem,
+    ScheduledItemFocusSession,
+    ScheduledItemSource,
+} from "../../../features/capture/scheduled-item/domain/ScheduledItem";
 import type { ScheduledItemParser } from "../../../features/capture/scheduled-item/domain/ScheduledItemParser";
+import {
+    captureLedgerRecord,
+    type CaptureLedgerRecordResult,
+} from "../../../features/capture/scheduled-item/domain/LedgerRecordSource.ts";
+import { parseScheduledItemBlock } from "../../../features/capture/scheduled-item/domain/ScheduledItemBlockEditor.ts";
+import { parseLocalDateTime } from "../../../features/capture/scheduled-item/domain/ScheduledItemFormAdapter.ts";
+import {
+    type ScannedFocusSession,
+    scanFocusSessionsInBlock,
+} from "../../../features/focus-session/domain/FocusSessionBlockScan.ts";
 import type { TimelineSourceGroup } from "../../../features/timeline/domain/Timeline";
 import { matchTimelineSourceGroup } from "../../../features/timeline/domain/TimelineSourceGroups.ts";
 import { isTFile } from "../vault/ObsidianFileTypes.ts";
@@ -49,10 +63,72 @@ export class ScheduledItemIndexer {
             };
             if (!this.isAcceptedHeading(headingPath, acceptedHeadings)) return;
             const item = this.parser.parseLine(line, source);
-            if (item && this.isTimelineEligible(item)) items.push(item);
+            if (!item || !this.isTimelineEligible(item)) return;
+
+            const captured = captureLedgerRecord(content, {
+                filePath: source.filePath,
+                lineNumber: source.lineNumber,
+                rawLine: line,
+            });
+            const scanned = captured.status === "captured" ? scanFocusSessionsInBlock(captured.snapshot.rawBlock) : [];
+
+            if (item.kind === "task") {
+                items.push({ ...item, focusSessions: [] });
+                items.push(...this.expandTaskTimeboxes(item, captured, scanned));
+            } else {
+                items.push({
+                    ...item,
+                    focusSessions: this.toItemFocusSessions(
+                        scanned.filter((session) => session.ownerTimeboxId === null),
+                    ),
+                });
+            }
         });
 
         return items;
+    }
+
+    /**
+     * A Task's own line stays one item for its due chip; each child timebox (Task 33's grammar)
+     * becomes an additional item sharing the Task's itemId but carrying a distinct timeboxId, so
+     * every planned occurrence gets its own stable Timeline segment identity. Actual Focus
+     * Sessions (Task 43's grammar) attach to whichever timebox they're nested under.
+     */
+    private expandTaskTimeboxes(
+        taskItem: ScheduledItem,
+        captured: CaptureLedgerRecordResult,
+        scanned: ScannedFocusSession[],
+    ): ScheduledItem[] {
+        if (captured.status !== "captured") return [];
+        const parsed = parseScheduledItemBlock(captured.snapshot.rawBlock);
+        if (parsed.status !== "parsed") return [];
+
+        return parsed.block.timeboxes.flatMap((timebox) => {
+            const start = parseLocalDateTime(timebox.start, false);
+            const end = parseLocalDateTime(timebox.end, false);
+            if (!start || !end) return [];
+            const focusSessions = this.toItemFocusSessions(
+                scanned.filter((session) => session.ownerTimeboxId === timebox.timeboxId),
+            );
+            return [{ ...taskItem, timeboxId: timebox.timeboxId, start, end, allDay: false, focusSessions }];
+        });
+    }
+
+    private toItemFocusSessions(scanned: ScannedFocusSession[]): ScheduledItemFocusSession[] {
+        return scanned.flatMap((session) => {
+            const start = parseLocalDateTime(session.start, false);
+            const end = parseLocalDateTime(session.end, false);
+            if (!start || !end) return [];
+            return [
+                {
+                    sessionId: session.sessionId,
+                    start,
+                    end,
+                    durationSeconds: session.durationSeconds,
+                    mode: session.mode,
+                },
+            ];
+        });
     }
 
     private updateHeadingPath(line: string, headingPath: string[]): void {
