@@ -1831,6 +1831,7 @@ body.fn-mobile-event-screen-open .suggestion-container {
 }
 
 .ftl-block-body {
+    position: relative;
     display: flex;
     align-items: flex-start;
     gap: 5px;
@@ -1838,6 +1839,18 @@ body.fn-mobile-event-screen-open .suggestion-container {
     width: 100%;
     line-height: 1.18;
     height: 100%;
+}
+
+/* Actual-versus-planned Focus Session fill (Task 44): a thin bar on the block's trailing edge,
+   growing from the bottom, sized to logged focused seconds over the item's planned duration. */
+.ftl-block-focus-fill {
+    position: absolute;
+    right: 2px;
+    bottom: 0;
+    width: 4px;
+    background: var(--ftl-color);
+    border-radius: 2px;
+    opacity: 0.85;
 }
 
 .ftl-block-content {
@@ -3927,6 +3940,16 @@ body.fn-mobile-event-screen-open .suggestion-container {
     justify-content: flex-end;
     gap: var(--size-4-2);
     margin-top: var(--size-4-4);
+}
+
+/* Read-only actual Focus Session history under a Timebox Manager row (Task 44). */
+.fn-timebox-focus-sessions {
+    margin: 0 0 var(--size-4-2) var(--size-4-4);
+}
+
+.fn-timebox-focus-session {
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
 }
 
 /* ---- Mobile modal layout ------------------------------------------------ */
