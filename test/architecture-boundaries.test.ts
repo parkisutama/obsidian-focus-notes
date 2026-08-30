@@ -49,13 +49,7 @@ function findImportSpecifiers(source: string): string[] {
 }
 
 const expectedRootModulesDuringMigration = new Set([
-    "ActiveNoteLedger.ts",
-    "ActiveNoteManagerLauncher.ts",
-    "ActiveNoteManagerModal.ts",
-    "ActiveNoteManagerModel.ts",
     "ContextSourceSettings.ts",
-    "DesktopScheduledItemForm.ts",
-    "DesktopScheduledItemFormModel.ts",
     "EventTaskCaptureLauncher.ts",
     "EventTaskFormState.ts",
     "EventTaskMobileScreen.ts",
@@ -69,20 +63,10 @@ const expectedRootModulesDuringMigration = new Set([
     "InboxRichText.ts",
     "InboxSuggestions.ts",
     "InboxTarget.ts",
-    "MobileFormPolicy.ts",
-    "MobileScheduledItemForm.ts",
-    "MobileScheduledItemFormModel.ts",
-    "MobileViewport.ts",
     "MoodReference.ts",
-    "ScheduledItemDesktopCreateModal.ts",
-    "ScheduledItemDesktopEditModal.ts",
     "ScheduledItemEditor.ts",
-    "ScheduledItemMobileCreateLauncher.ts",
-    "ScheduledItemMobileCreateScreen.ts",
-    "ScheduledItemMobileEditScreen.ts",
     "SubmissionPolicy.ts",
     "SuggestionSelection.ts",
-    "TaskFormatPreviewModal.ts",
     "main.ts",
 ]);
 

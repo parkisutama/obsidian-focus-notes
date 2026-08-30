@@ -1,12 +1,12 @@
 import { type App, Setting } from "obsidian";
 import { buildDesktopScheduledItemFormModel } from "./DesktopScheduledItemFormModel.ts";
-import { ContextNotesController } from "./InboxNotesController";
-import { ObjectNoteSuggest } from "./features/object-notes/ui/ObjectNoteSuggest.ts";
-import { parseObjectReferences } from "./features/capture/domain/ObjectReference.ts";
-import { FileSuggest, FolderSuggest } from "./infrastructure/obsidian/Suggesters";
-import type { ScheduledItemFormData } from "./features/capture/scheduled-item/domain/ScheduledItemFormData";
-import type { InsertPosition } from "./shared/markdown/InsertPosition";
-import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
+import { ContextNotesController } from "../../../../../InboxNotesController";
+import { ObjectNoteSuggest } from "../../../../object-notes/ui/ObjectNoteSuggest.ts";
+import { parseObjectReferences } from "../../../domain/ObjectReference.ts";
+import { FileSuggest, FolderSuggest } from "../../../../../infrastructure/obsidian/Suggesters";
+import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData";
+import type { InsertPosition } from "../../../../../shared/markdown/InsertPosition";
+import type { ContextSourceSettings } from "../../../../object-notes/domain/ContextSourceSettings";
 
 export interface DesktopScheduledItemCreateContext {
     targetFile: string;

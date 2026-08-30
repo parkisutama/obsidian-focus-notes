@@ -1,11 +1,11 @@
 import { type App, type Component, Notice, type TFile } from "obsidian";
-import { scanActiveNoteChecklistScopes, scanActiveNoteLedger } from "./ActiveNoteLedger";
+import { scanActiveNoteChecklistScopes, scanActiveNoteLedger } from "../application/ActiveNoteLedger";
 import { ActiveNoteManagerModal } from "./ActiveNoteManagerModal";
-import { openEventTaskForm } from "./EventTaskCaptureLauncher";
-import { openScheduledItemEditor } from "./ScheduledItemEditor";
-import { timelineSourceHeadings } from "./features/timeline/domain/TimelineSourceGroups";
-import { ScheduledItemParser } from "./features/capture/scheduled-item/domain/ScheduledItemParser";
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
+import { openEventTaskForm } from "../../../../EventTaskCaptureLauncher";
+import { openScheduledItemEditor } from "../../../../ScheduledItemEditor";
+import type { FocusNotesSettings } from "../../../settings/domain/FocusNotesSettings";
+import { timelineSourceHeadings } from "../../../timeline/domain/TimelineSourceGroups";
+import { ScheduledItemParser } from "../domain/ScheduledItemParser";
 
 /** Scans the active note's Scheduled Item ledger and opens the management modal for it. */
 export async function openActiveNoteManager(

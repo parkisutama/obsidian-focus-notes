@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildDesktopScheduledItemFormModel } from "../src/DesktopScheduledItemFormModel.ts";
+import { buildDesktopScheduledItemFormModel } from "../src/features/capture/scheduled-item/ui/desktop/DesktopScheduledItemFormModel.ts";
 import type { ScheduledItemFormData } from "../src/features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 
 const task: ScheduledItemFormData = {

@@ -11,7 +11,7 @@ import {
 import { EventTaskWriter } from "./infrastructure/obsidian/EventTaskWriter";
 import { InboxMobileForm } from "./InboxMobileForm";
 import { resolveInboxFormTarget, selectInboxTarget } from "./InboxTarget";
-import { getMobileViewportMetrics } from "./MobileViewport";
+import { getMobileViewportMetrics } from "./features/capture/scheduled-item/ui/mobile/MobileViewport";
 import { readContextSuggestionNotes } from "./infrastructure/obsidian/ObsidianInboxSuggestionSource";
 import {
     createObsidianLinkFormatter,

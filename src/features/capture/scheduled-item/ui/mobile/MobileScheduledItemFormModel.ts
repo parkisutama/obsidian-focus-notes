@@ -1,4 +1,4 @@
-import type { ScheduledItemFormData } from "./features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
+import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData.ts";
 
 export interface MobileScheduledItemFormModelInput {
     mode: "create" | "edit";

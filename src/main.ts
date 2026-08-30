@@ -1,5 +1,5 @@
 import { Plugin, TFile, type WorkspaceLeaf } from "obsidian";
-import { openActiveNoteManager } from "./ActiveNoteManagerLauncher";
+import { openActiveNoteManager } from "./features/capture/scheduled-item/ui/ActiveNoteManagerLauncher";
 import { openEventTaskForm } from "./EventTaskCaptureLauncher";
 import { StateStore } from "./features/settings/infrastructure/StateStore";
 import { FocusNotesSettingsTab } from "./features/settings/ui/SettingsTab";

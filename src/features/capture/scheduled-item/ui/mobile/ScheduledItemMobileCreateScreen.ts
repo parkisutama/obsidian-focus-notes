@@ -1,33 +1,33 @@
 import { type App, Component, Notice } from "obsidian";
-import { resolveAllowedTaskSources } from "./ContextSourceSettings.ts";
+import { resolveAllowedTaskSources } from "../../../../../ContextSourceSettings.ts";
 import {
     type DetailNotePromotionResult,
     promoteScheduledItemDetail,
     retryDetailNoteAttachment,
-} from "./features/capture/scheduled-item/application/DetailNotePromotion.ts";
-import { EventTaskFormState } from "./EventTaskFormState.ts";
-import { EventTaskWriter } from "./infrastructure/obsidian/EventTaskWriter.ts";
-import type { HubNoteRef } from "./features/capture/scheduled-item/domain/EventTaskRecord";
+} from "../../application/DetailNotePromotion.ts";
+import { EventTaskFormState } from "../../../../../EventTaskFormState.ts";
+import { EventTaskWriter } from "../../../../../infrastructure/obsidian/EventTaskWriter.ts";
+import type { HubNoteRef } from "../../domain/EventTaskRecord";
 import { type MobileScheduledItemCreateContext, MobileScheduledItemForm } from "./MobileScheduledItemForm.ts";
-import { readContextSuggestionNotes } from "./infrastructure/obsidian/ObsidianInboxSuggestionSource.ts";
+import { readContextSuggestionNotes } from "../../../../../infrastructure/obsidian/ObsidianInboxSuggestionSource.ts";
 import {
     createObsidianLinkFormatter,
     createObsidianLinkResolver,
-} from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
-import { TargetResolver } from "./infrastructure/obsidian/capture/TargetResolver.ts";
+} from "../../../../../infrastructure/obsidian/ObsidianLinkResolver.ts";
+import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver.ts";
 import {
     retryScheduledItemCreateRelated,
     type ScheduledItemCreateRelatedResult,
     writeScheduledItemCreateRelated,
-} from "./features/capture/scheduled-item/application/ScheduledItemCreateRelated.ts";
-import { buildScheduledItemRecord } from "./features/capture/scheduled-item/domain/ScheduledItemFormAdapter.ts";
+} from "../../application/ScheduledItemCreateRelated.ts";
+import { buildScheduledItemRecord } from "../../domain/ScheduledItemFormAdapter.ts";
 import {
     type ScheduledItemFormData,
     scheduledItemFormDataFromCreateState,
-} from "./features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings.ts";
-import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
-import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
+} from "../../domain/ScheduledItemFormData.ts";
+import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings.ts";
+import type { FocusTarget } from "../../../domain/CaptureTarget";
+import { isTFile } from "../../../../../infrastructure/obsidian/ObsidianFileTypes.ts";
 
 type PartialDetail = Extract<DetailNotePromotionResult, { status: "partial" }>;
 type PartialRelated = Extract<ScheduledItemCreateRelatedResult, { status: "partial" }>;

@@ -1,10 +1,10 @@
 import type { App } from "obsidian";
-import { preferActiveNoteTarget } from "./features/capture/domain/ActiveCaptureTarget.ts";
-import { EventTaskMobileScreen } from "./EventTaskMobileScreen.ts";
+import { preferActiveNoteTarget } from "../../../domain/ActiveCaptureTarget.ts";
+import { EventTaskMobileScreen } from "../../../../../EventTaskMobileScreen.ts";
 import { ScheduledItemMobileCreateScreen } from "./ScheduledItemMobileCreateScreen.ts";
-import { TargetResolver } from "./infrastructure/obsidian/capture/TargetResolver.ts";
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings.ts";
-import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
+import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver.ts";
+import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings.ts";
+import type { FocusTarget } from "../../../domain/CaptureTarget";
 
 export function openMobileScheduledItemCreate(
     app: App,

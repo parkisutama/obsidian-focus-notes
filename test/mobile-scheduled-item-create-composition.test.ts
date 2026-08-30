@@ -9,7 +9,10 @@ test("mobile Task and Event creates route through the shared create screen", asy
 });
 
 test("mobile create screen preserves detail and related-write recovery", async () => {
-    const source = await readFile(new URL("../src/ScheduledItemMobileCreateScreen.ts", import.meta.url), "utf8");
+    const source = await readFile(
+        new URL("../src/features/capture/scheduled-item/ui/mobile/ScheduledItemMobileCreateScreen.ts", import.meta.url),
+        "utf8",
+    );
     assert.match(source, /MobileScheduledItemForm/);
     assert.match(source, /promoteScheduledItemDetail/);
     assert.match(source, /retryDetailNoteAttachment/);
@@ -26,11 +29,35 @@ test("Inbox mobile screen hands Task and Event choices to the shared create scre
 
 test("Task/Event create screens let the user switch kind without closing and reopening manually", async () => {
     const [desktopModal, mobileScreen, mobileLauncher, desktopForm, mobileForm] = await Promise.all([
-        readFile(new URL("../src/ScheduledItemDesktopCreateModal.ts", import.meta.url), "utf8"),
-        readFile(new URL("../src/ScheduledItemMobileCreateScreen.ts", import.meta.url), "utf8"),
-        readFile(new URL("../src/ScheduledItemMobileCreateLauncher.ts", import.meta.url), "utf8"),
-        readFile(new URL("../src/DesktopScheduledItemForm.ts", import.meta.url), "utf8"),
-        readFile(new URL("../src/MobileScheduledItemForm.ts", import.meta.url), "utf8"),
+        readFile(
+            new URL(
+                "../src/features/capture/scheduled-item/ui/desktop/ScheduledItemDesktopCreateModal.ts",
+                import.meta.url,
+            ),
+            "utf8",
+        ),
+        readFile(
+            new URL(
+                "../src/features/capture/scheduled-item/ui/mobile/ScheduledItemMobileCreateScreen.ts",
+                import.meta.url,
+            ),
+            "utf8",
+        ),
+        readFile(
+            new URL(
+                "../src/features/capture/scheduled-item/ui/mobile/ScheduledItemMobileCreateLauncher.ts",
+                import.meta.url,
+            ),
+            "utf8",
+        ),
+        readFile(
+            new URL("../src/features/capture/scheduled-item/ui/desktop/DesktopScheduledItemForm.ts", import.meta.url),
+            "utf8",
+        ),
+        readFile(
+            new URL("../src/features/capture/scheduled-item/ui/mobile/MobileScheduledItemForm.ts", import.meta.url),
+            "utf8",
+        ),
     ]);
 
     assert.match(desktopModal, /onSwitchKind:/);

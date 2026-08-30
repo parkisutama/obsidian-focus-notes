@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { scanActiveNoteChecklistScopes, scanActiveNoteLedger } from "../src/ActiveNoteLedger.ts";
+import {
+    scanActiveNoteChecklistScopes,
+    scanActiveNoteLedger,
+} from "../src/features/capture/scheduled-item/application/ActiveNoteLedger.ts";
 import { ScheduledItemParser } from "../src/features/capture/scheduled-item/domain/ScheduledItemParser.ts";
 
 test("finds scheduled and unscheduled ledger records only under accepted headings", () => {

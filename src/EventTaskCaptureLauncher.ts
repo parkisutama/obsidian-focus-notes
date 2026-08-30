@@ -3,9 +3,9 @@ import { preferActiveNoteTarget } from "./features/capture/domain/ActiveCaptureT
 import { EventTaskModal } from "./EventTaskModal";
 import { EventTaskMobileScreen } from "./EventTaskMobileScreen";
 import type { OpenEventTaskFormOptions } from "./features/capture/domain/CaptureForm";
-import { shouldUseMobileForm } from "./MobileFormPolicy";
-import { ScheduledItemDesktopCreateModal } from "./ScheduledItemDesktopCreateModal.ts";
-import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
+import { shouldUseMobileForm } from "./features/capture/scheduled-item/ui/mobile/MobileFormPolicy";
+import { ScheduledItemDesktopCreateModal } from "./features/capture/scheduled-item/ui/desktop/ScheduledItemDesktopCreateModal.ts";
+import { openMobileScheduledItemCreate } from "./features/capture/scheduled-item/ui/mobile/ScheduledItemMobileCreateLauncher.ts";
 import { TargetResolver } from "./infrastructure/obsidian/capture/TargetResolver";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";

@@ -2,9 +2,9 @@ import { type App, Notice, Platform } from "obsidian";
 import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
 import { captureEventLedgerEdit } from "./infrastructure/obsidian/EventLedgerEditor";
 import { captureTaskLedgerEdit } from "./infrastructure/obsidian/TaskLedgerEditor";
-import { ScheduledItemDesktopEditModal } from "./ScheduledItemDesktopEditModal.ts";
-import { ScheduledItemMobileEditScreen } from "./ScheduledItemMobileEditScreen.ts";
-import { shouldUseMobileForm } from "./MobileFormPolicy";
+import { ScheduledItemDesktopEditModal } from "./features/capture/scheduled-item/ui/desktop/ScheduledItemDesktopEditModal.ts";
+import { ScheduledItemMobileEditScreen } from "./features/capture/scheduled-item/ui/mobile/ScheduledItemMobileEditScreen.ts";
+import { shouldUseMobileForm } from "./features/capture/scheduled-item/ui/mobile/MobileFormPolicy";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 
 export async function openScheduledItemEditor(

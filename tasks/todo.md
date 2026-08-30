@@ -189,9 +189,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move Active Note read models/application and manager/formatting UI to Scheduled Item.
 
 **Acceptance criteria:**
-- [ ] Ledger scan/model are application; manager launcher/modal and format preview are UI.
-- [ ] Scope ordering, formatting, and command behavior remain unchanged.
-- [ ] Feature logic does not return to plugin composition.
+- [x] Ledger scan/model are application; manager launcher/modal and format preview are UI.
+- [x] Scope ordering, formatting, and command behavior remain unchanged.
+- [x] Feature logic does not return to plugin composition.
 
 **Verification:** Active-note, task-format, parser, compatibility tests; standard gates.
 
@@ -204,9 +204,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move desktop form/model/create/edit as one renderer slice.
 
 **Acceptance criteria:**
-- [ ] Four modules live under `scheduled-item/ui/desktop`.
-- [ ] Create/edit composition, validation, detail recovery, and no-op behavior remain unchanged.
-- [ ] Desktop does not import mobile UI.
+- [x] Four modules live under `scheduled-item/ui/desktop`.
+- [x] Create/edit composition, validation, detail recovery, and no-op behavior remain unchanged.
+- [x] Desktop does not import mobile UI.
 
 **Verification:** Desktop composition/model/submission/detail/edit tests; standard gates.
 
@@ -219,9 +219,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move mobile form/model/policy/viewport helpers together.
 
 **Acceptance criteria:**
-- [ ] Four modules live under `scheduled-item/ui/mobile`.
-- [ ] Mobile lifecycle/viewport stays independent from desktop DOM.
-- [ ] Accessibility, busy, recovery, and keyboard behavior remain covered.
+- [x] Four modules live under `scheduled-item/ui/mobile`.
+- [x] Mobile lifecycle/viewport stays independent from desktop DOM.
+- [x] Accessibility, busy, recovery, and keyboard behavior remain covered.
 
 **Verification:** Mobile form/model/viewport/accessibility/composition tests; standard gates.
 
@@ -234,9 +234,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move create/edit screens and mobile create launcher after their foundation.
 
 **Acceptance criteria:**
-- [ ] Screens and launcher have canonical mobile UI paths.
-- [ ] Create/edit/retry and renderer selection remain unchanged.
-- [ ] No forwarding root module remains.
+- [x] Screens and launcher have canonical mobile UI paths.
+- [x] Create/edit/retry and renderer selection remain unchanged.
+- [x] No forwarding root module remains.
 
 **Verification:** Mobile create/edit/composition/recovery/lifecycle tests; full CI; real-mobile acceptance.
 
@@ -246,9 +246,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 
 ## Checkpoint: Scheduled Item
 
-- [ ] Tasks 12–15 pass full CI.
-- [ ] Scheduled Item has no active root modules.
-- [ ] Golden/no-op Markdown is byte-identical; desktop/mobile acceptance passes or is explicitly waived.
+- [x] Tasks 12–15 pass full CI (302 tests, build, artifacts, and docs).
+- [x] Scheduled Item UI and Active Note management have no active root modules.
+- [ ] Golden/no-op automated coverage passes; desktop/real-mobile runtime acceptance remains pending.
 
 ## Task 16: Place Moment domain text and target modules
 

@@ -1,5 +1,5 @@
+import type { ScheduledItem } from "../domain/ScheduledItem";
 import type { ActiveNoteChecklistScopes } from "./ActiveNoteLedger";
-import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
 
 export interface ActiveNoteManagerScopeOption {
     id: string;

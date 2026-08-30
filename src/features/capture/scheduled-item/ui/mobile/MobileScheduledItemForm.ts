@@ -1,13 +1,13 @@
 import { type App, Component, Setting, setIcon } from "obsidian";
-import { ContextNotesController } from "./InboxNotesController.ts";
+import { ContextNotesController } from "../../../../../InboxNotesController.ts";
 import { buildMobileScheduledItemFormModel } from "./MobileScheduledItemFormModel.ts";
 import { getMobileViewportMetrics } from "./MobileViewport.ts";
-import { ObjectNoteSuggest } from "./features/object-notes/ui/ObjectNoteSuggest.ts";
-import { parseObjectReferences } from "./features/capture/domain/ObjectReference.ts";
-import { FileSuggest, FolderSuggest } from "./infrastructure/obsidian/Suggesters.ts";
-import type { ScheduledItemFormData } from "./features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
-import type { InsertPosition } from "./shared/markdown/InsertPosition";
-import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
+import { ObjectNoteSuggest } from "../../../../object-notes/ui/ObjectNoteSuggest.ts";
+import { parseObjectReferences } from "../../../domain/ObjectReference.ts";
+import { FileSuggest, FolderSuggest } from "../../../../../infrastructure/obsidian/Suggesters.ts";
+import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData.ts";
+import type { InsertPosition } from "../../../../../shared/markdown/InsertPosition";
+import type { ContextSourceSettings } from "../../../../object-notes/domain/ContextSourceSettings";
 
 export interface MobileScheduledItemCreateContext {
     targetFile: string;

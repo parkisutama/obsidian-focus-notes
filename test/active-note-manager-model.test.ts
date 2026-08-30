@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { ActiveNoteChecklistScopes } from "../src/ActiveNoteLedger.ts";
+import type { ActiveNoteChecklistScopes } from "../src/features/capture/scheduled-item/application/ActiveNoteLedger.ts";
 import {
     activeNoteItemMeta,
     buildActiveNoteManagerModel,
     buildActiveNoteManagerScopeOptions,
-} from "../src/ActiveNoteManagerModel.ts";
+} from "../src/features/capture/scheduled-item/application/ActiveNoteManagerModel.ts";
 import type { ScheduledItem } from "../src/features/capture/scheduled-item/domain/ScheduledItem.ts";
 
 function item(title: string, headingPath: string[], lineNumber: number, kind: "event" | "task"): ScheduledItem {

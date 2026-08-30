@@ -11,7 +11,10 @@ test("mobile task and event edits route through one shared screen", async () => 
 });
 
 test("mobile edit screen preserves detail and related-write recovery contracts", async () => {
-    const source = await readFile(new URL("../src/ScheduledItemMobileEditScreen.ts", import.meta.url), "utf8");
+    const source = await readFile(
+        new URL("../src/features/capture/scheduled-item/ui/mobile/ScheduledItemMobileEditScreen.ts", import.meta.url),
+        "utf8",
+    );
 
     assert.match(source, /MobileScheduledItemForm/);
     assert.match(source, /promoteScheduledItemDetail/);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getMobileViewportMetrics } from "../src/MobileViewport.ts";
+import { getMobileViewportMetrics } from "../src/features/capture/scheduled-item/ui/mobile/MobileViewport.ts";
 
 test("fits the mobile sheet below the workspace top when the keyboard opens", () => {
     assert.deepEqual(getMobileViewportMetrics(844, { height: 476, offsetTop: 0 }, 48, 8), {

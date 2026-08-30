@@ -1,17 +1,17 @@
 import { type App, Modal, setIcon } from "obsidian";
-import type { ActiveNoteChecklistScopes } from "./ActiveNoteLedger";
+import type { ActiveNoteChecklistScopes } from "../application/ActiveNoteLedger";
 import {
     type ActiveNoteManagerScopeOption,
     activeNoteItemMeta,
     buildActiveNoteManagerModel,
     buildActiveNoteManagerScopeOptions,
-} from "./ActiveNoteManagerModel";
-import type { ScheduledItem, ScheduledItemKind } from "./features/capture/scheduled-item/domain/ScheduledItem";
+} from "../application/ActiveNoteManagerModel";
+import type { ScheduledItem, ScheduledItemKind } from "../domain/ScheduledItem";
 import { TaskFormatPreviewModal } from "./TaskFormatPreviewModal";
-import { createScheduledItemBlockId } from "./features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
-import { buildScheduledItemIdentityChange } from "./features/capture/scheduled-item/domain/ScheduledItemIdentityMigration.ts";
-import type { TaskFormatChange } from "./features/capture/scheduled-item/domain/TaskFormatWriter";
-import { inspectTaskLine, taskLineLintLabel } from "./features/capture/scheduled-item/domain/TaskLineLint.ts";
+import { createScheduledItemBlockId } from "../domain/ScheduledItemBlockId.ts";
+import { buildScheduledItemIdentityChange } from "../domain/ScheduledItemIdentityMigration.ts";
+import type { TaskFormatChange } from "../domain/TaskFormatWriter";
+import { inspectTaskLine, taskLineLintLabel } from "../domain/TaskLineLint.ts";
 
 export class ActiveNoteManagerModal extends Modal {
     constructor(
