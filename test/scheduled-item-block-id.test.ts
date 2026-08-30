@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
     appendScheduledItemBlockId,
+    classifyScheduledItemBlockId,
+    createDerivedBlockId,
     createScheduledItemBlockId,
     extractScheduledItemBlockId,
     formatScheduledItemBlockTarget,
@@ -47,6 +49,26 @@ test("generates concise kind-prefixed IDs with 50 bits of Base32 entropy", () =>
     assert.ok(taskIds.every((id) => /^task-[0123456789abcdefghjkmnpqrstvwxyz]{10}$/.test(id)));
     assert.match(eventId, /^event-[0123456789abcdefghjkmnpqrstvwxyz]{10}$/);
     assert.equal(new Set(taskIds).size, taskIds.length);
+});
+
+test("reserves distinct canonical child and derived-reference identity namespaces", () => {
+    const timeboxId = createDerivedBlockId("timebox");
+    const sessionId = createDerivedBlockId("focus");
+    const taskReferenceId = createDerivedBlockId("task-ref");
+    const eventReferenceId = createDerivedBlockId("event-ref");
+    const focusReferenceId = createDerivedBlockId("focus-ref");
+
+    assert.match(timeboxId, /^timebox-[0123456789abcdefghjkmnpqrstvwxyz]{10}$/);
+    assert.match(sessionId, /^focus-[0123456789abcdefghjkmnpqrstvwxyz]{10}$/);
+    assert.equal(classifyScheduledItemBlockId("task-0123456789"), "task");
+    assert.equal(classifyScheduledItemBlockId("event-0123456789"), "event");
+    assert.equal(classifyScheduledItemBlockId(timeboxId), "timebox");
+    assert.equal(classifyScheduledItemBlockId(sessionId), "focus-session");
+    assert.equal(classifyScheduledItemBlockId(taskReferenceId), "task-reference");
+    assert.equal(classifyScheduledItemBlockId(eventReferenceId), "event-reference");
+    assert.equal(classifyScheduledItemBlockId(focusReferenceId), "focus-reference");
+    assert.equal(classifyScheduledItemBlockId("fn-task-a1b2c3"), "unknown");
+    assert.equal(new Set([timeboxId, sessionId, taskReferenceId, eventReferenceId, focusReferenceId]).size, 5);
 });
 
 test("parser keeps final metadata valid and uses the block ID as stable identity", () => {

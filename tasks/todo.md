@@ -479,7 +479,7 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Acceptance criteria:**
 - [x] Initial fixtures preserve same-title Event/Task identity, one cross-day legacy Task timebox, free-text Focus purpose,
       canonical block ID, and local-time behavior.
-- [ ] New tests describe canonical/reference classification and separate item/timebox/session identities.
+- [x] New tests describe canonical/reference classification and separate item/timebox/session identities.
 - [x] No production behavior or Markdown output changes in this characterization slice.
 
 **Verification:** Focused parser/writer/index tests; `pnpm run check:ci`; `git diff --check`.
