@@ -16,10 +16,12 @@ test("shared mobile renderer owns mobile lifecycle without importing desktop DOM
 });
 
 test("shared mobile renderer exposes the complete portable form contract", async () => {
-    const source = await readFile(
-        new URL("../src/features/capture/scheduled-item/ui/mobile/MobileScheduledItemForm.ts", import.meta.url),
-        "utf8",
+    const sources = await Promise.all(
+        ["MobileScheduledItemForm.ts", "MobileTemporalSection.ts", "MobileSupplementalSections.ts"].map((file) =>
+            readFile(new URL(`../src/features/capture/scheduled-item/ui/mobile/${file}`, import.meta.url), "utf8"),
+        ),
     );
+    const source = sources.join("\n");
 
     for (const label of ["Title", "Priority", "Due", "Timebox", "Reminders", "Status", "Description", "Detail Note"])
         assert.match(source, new RegExp(`\\b${label}\\b`));
