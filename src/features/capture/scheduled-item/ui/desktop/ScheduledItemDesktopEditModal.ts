@@ -16,10 +16,25 @@ import {
 import { saveScheduledItemBlock } from "../../../../../infrastructure/obsidian/capture/ScheduledItemBlockPersistence.ts";
 import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver.ts";
 import {
+    runEventDayProjection,
+    retryEventDayProjectionRuntime,
+} from "../../../../../infrastructure/obsidian/capture/EventDayProjectionRuntime.ts";
+import {
+    runTaskDayProjection,
+    retryTaskDayProjectionRuntime,
+} from "../../../../../infrastructure/obsidian/capture/TaskDayProjectionRuntime.ts";
+import { TimeboxManagerModal } from "./TimeboxManagerModal.ts";
+import {
     retryScheduledItemEditRelated,
     type ScheduledItemEditSubmissionResult,
     submitScheduledItemEdit,
 } from "../../application/ScheduledItemEditSubmission.ts";
+import type { EventDayProjectionResult } from "../../application/EventDayProjection.ts";
+import { touchedDayKeysFromEventFormFields } from "../../application/EventDayProjection.ts";
+import type { TaskDayProjectionResult } from "../../application/TaskDayProjection.ts";
+import { planTaskDayReferences, type TaskDayReferenceTimebox } from "../../domain/TaskDayReferencePlan.ts";
+import { extractScheduledItemBlockId } from "../../domain/ScheduledItemBlockId.ts";
+import { parseScheduledItemBlock } from "../../domain/ScheduledItemBlockEditor.ts";
 import { hydrateScheduledItemFormEdit, parseLocalDateTime } from "../../domain/ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData.ts";
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings";
@@ -27,12 +42,16 @@ import { isTFile } from "../../../../../infrastructure/obsidian/vault/ObsidianFi
 
 type PartialDetail = Extract<DetailNotePromotionResult, { status: "partial" }>;
 type PartialRelated = Extract<ScheduledItemEditSubmissionResult, { status: "partial" }>;
+type PartialDayProjection = Extract<EventDayProjectionResult, { status: "partial" }>;
+type PartialTaskDayProjection = Extract<TaskDayProjectionResult, { status: "partial" }>;
 
 export class ScheduledItemDesktopEditModal extends Modal {
     private readonly original: ScheduledItemFormData;
     private readonly data: ScheduledItemFormData;
     private renderer: DesktopScheduledItemForm | null = null;
     private pendingDetail: PartialDetail | null = null;
+    private pendingDayProjection: PartialDayProjection | null = null;
+    private pendingTaskDayProjection: PartialTaskDayProjection | null = null;
     private pendingRelated: PartialRelated | null = null;
     private latestEditResult: ScheduledItemEditSubmissionResult | null = null;
     private busy = false;
@@ -79,8 +98,27 @@ export class ScheduledItemDesktopEditModal extends Modal {
             onChange: () => undefined,
             onSubmit: () => void this.submit(),
             onCancel: () => this.close(),
+            onManageTimeboxes: this.data.kind === "task" ? () => this.openTimeboxManager() : undefined,
         });
         this.renderer.render(this.contentEl);
+    }
+
+    /**
+     * Timeboxes persist directly to the vault from their own modal (Task 34's service), so this
+     * Edit modal closes first rather than risk overwriting that change with its own stale state.
+     */
+    private openTimeboxManager(): void {
+        if (this.data.kind !== "task") return;
+        const due = this.data.due ? { date: this.data.due, hasTime: this.data.due.includes(" ") } : null;
+        const { title, completed } = this.data;
+        const onComplete = this.onComplete;
+        this.close();
+        new TimeboxManagerModal(
+            this.app,
+            this.getSettings,
+            { snapshot: this.snapshot, title, completed, due },
+            onComplete,
+        ).open();
     }
 
     private async submit(): Promise<void> {
@@ -89,6 +127,14 @@ export class ScheduledItemDesktopEditModal extends Modal {
         try {
             if (this.pendingRelated) {
                 await this.retryRelated();
+                return;
+            }
+            if (this.pendingDayProjection) {
+                await this.retryDayProjection();
+                return;
+            }
+            if (this.pendingTaskDayProjection) {
+                await this.retryTaskDayProjection();
                 return;
             }
             if (this.pendingDetail) {
@@ -148,6 +194,102 @@ export class ScheduledItemDesktopEditModal extends Modal {
         });
         this.latestEditResult = result;
         if (result.status === "failure") throw new Error(result.message);
+        await this.writeEventDayProjection(writer);
+        await this.writeTaskDayProjection(writer);
+    }
+
+    /** Reconciles due/timebox Task references against the due date this edit just saved. */
+    private async writeTaskDayProjection(writer: EventTaskWriter): Promise<void> {
+        if (this.data.kind !== "task" || this.original.kind !== "task") return;
+        const canonicalBlockId = extractScheduledItemBlockId(this.snapshot.rawLine).blockId;
+        if (!canonicalBlockId) return;
+        const timeboxes = this.currentTaskTimeboxes();
+        const settings = this.getSettings();
+        const previousDueDayKey = this.original.due ? this.original.due.slice(0, 10) : null;
+        const result = await runTaskDayProjection(
+            this.app,
+            settings,
+            {
+                title: this.data.title,
+                completed: this.data.completed,
+                dueDayKey: this.data.due ? this.data.due.slice(0, 10) : null,
+                timeboxes,
+                canonicalFilePath: this.snapshot.filePath,
+                canonicalBlockId,
+                heading: settings.captureTask.heading,
+                position: settings.captureTask.position,
+            },
+            planTaskDayReferences(previousDueDayKey, timeboxes),
+            writer,
+            this.original.completed,
+        );
+        if (result.status === "partial") this.pendingTaskDayProjection = result;
+    }
+
+    /** Reads the Task's current child timeboxes straight from the not-yet-modified snapshot. */
+    private currentTaskTimeboxes(): TaskDayReferenceTimebox[] {
+        const parsed = parseScheduledItemBlock(this.snapshot.rawBlock);
+        if (parsed.status !== "parsed") return [];
+        return parsed.block.timeboxes.flatMap((timebox) => {
+            const start = parseLocalDateTime(timebox.start, false);
+            const end = parseLocalDateTime(timebox.end, false);
+            return start && end ? [{ timeboxId: timebox.timeboxId, start, end }] : [];
+        });
+    }
+
+    private async retryTaskDayProjection(): Promise<void> {
+        const pending = this.pendingTaskDayProjection;
+        if (!pending) return;
+        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask, () => this.getSettings());
+        const result = await retryTaskDayProjectionRuntime(this.app, this.getSettings(), pending, writer);
+        this.pendingTaskDayProjection = result.status === "partial" ? result : null;
+        this.showResult(
+            result.status === "partial" ? result.message : "Scheduled Item updated.",
+            result.status !== "partial",
+        );
+    }
+
+    /** Reconciles multi-day Event references against the dates this edit just saved. */
+    private async writeEventDayProjection(writer: EventTaskWriter): Promise<void> {
+        if (this.data.kind !== "event") return;
+        const canonicalBlockId = extractScheduledItemBlockId(this.snapshot.rawLine).blockId;
+        const start = parseLocalDateTime(this.data.start, this.data.allDay);
+        if (!canonicalBlockId || !start) return;
+        const end = !this.data.allDay && this.data.end ? parseLocalDateTime(this.data.end, false) : null;
+        const settings = this.getSettings();
+        const previousTouchedDayKeys =
+            this.original.kind === "event"
+                ? touchedDayKeysFromEventFormFields(this.original.start, this.original.end, this.original.allDay)
+                : [];
+        const result = await runEventDayProjection(
+            this.app,
+            settings,
+            {
+                title: this.data.title,
+                start,
+                end,
+                allDay: this.data.allDay,
+                canonicalFilePath: this.snapshot.filePath,
+                canonicalBlockId,
+                heading: settings.captureEvent.heading,
+                position: settings.captureEvent.position,
+            },
+            previousTouchedDayKeys,
+            writer,
+        );
+        if (result.status === "partial") this.pendingDayProjection = result;
+    }
+
+    private async retryDayProjection(): Promise<void> {
+        const pending = this.pendingDayProjection;
+        if (!pending) return;
+        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask, () => this.getSettings());
+        const result = await retryEventDayProjectionRuntime(this.app, this.getSettings(), pending, writer);
+        this.pendingDayProjection = result.status === "partial" ? result : null;
+        this.showResult(
+            result.status === "partial" ? result.message : "Scheduled Item updated.",
+            result.status !== "partial",
+        );
     }
 
     private async retryDetail(): Promise<void> {
@@ -185,21 +327,27 @@ export class ScheduledItemDesktopEditModal extends Modal {
 
     private finishLatestEdit(): void {
         const result = this.latestEditResult;
-        if (!result) {
-            this.showResult("Scheduled Item updated.", true);
-            return;
-        }
-        if (result.status === "partial") {
+        if (result?.status === "partial") {
             this.pendingRelated = result;
             this.notifyCompletion();
             this.showResult(result.message, false);
             return;
         }
-        if (result.status === "failure") {
+        if (result?.status === "failure") {
             this.showResult(result.message, false);
             return;
         }
-        this.showResult(result.message, true);
+        if (this.pendingDayProjection) {
+            this.notifyCompletion();
+            this.showResult(this.pendingDayProjection.message, false);
+            return;
+        }
+        if (this.pendingTaskDayProjection) {
+            this.notifyCompletion();
+            this.showResult(this.pendingTaskDayProjection.message, false);
+            return;
+        }
+        this.showResult(result?.message ?? "Scheduled Item updated.", true);
     }
 
     private showResult(message: string, complete: boolean): void {
@@ -207,7 +355,7 @@ export class ScheduledItemDesktopEditModal extends Modal {
         if (!complete) {
             this.renderer?.setSubmissionState({
                 busy: false,
-                recovery: this.pendingDetail !== null || this.pendingRelated !== null,
+                recovery: this.hasPendingRecovery(),
                 errorMessage: message,
             });
             return;
@@ -222,11 +370,20 @@ export class ScheduledItemDesktopEditModal extends Modal {
         this.onComplete();
     }
 
+    private hasPendingRecovery(): boolean {
+        return (
+            this.pendingDetail !== null ||
+            this.pendingDayProjection !== null ||
+            this.pendingTaskDayProjection !== null ||
+            this.pendingRelated !== null
+        );
+    }
+
     private setBusy(busy: boolean): void {
         this.busy = busy;
         this.renderer?.setSubmissionState({
             busy,
-            recovery: this.pendingDetail !== null || this.pendingRelated !== null,
+            recovery: this.hasPendingRecovery(),
         });
     }
 }

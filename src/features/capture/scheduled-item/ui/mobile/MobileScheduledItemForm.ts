@@ -32,6 +32,7 @@ export interface MobileScheduledItemFormOptions {
     /** Switch the capture kind without requiring the user to close and reopen the form. Create mode only. */
     onSwitchKind?(kind: "inbox" | "event" | "task"): void;
     onPlannedStartChange?(value: string): void;
+    onManageTimeboxes?(): void;
 }
 
 export class MobileScheduledItemForm extends Component {
@@ -120,6 +121,7 @@ export class MobileScheduledItemForm extends Component {
             changed: (change) => this.changed(change),
             rerender: () => this.rerender(),
             onEventStartChanged: (value) => this.options.onPlannedStartChange?.(value),
+            onManageTimeboxes: () => this.options.onManageTimeboxes?.(),
         });
         this.renderDescription(body);
         renderMobileDetailSection(body, {

@@ -8,6 +8,8 @@ interface DesktopTemporalSectionOptions {
     changedAndRender(): void;
     /** Create-mode Event only: notified with the new Planned Start value so the target file can resync. */
     onEventStartChanged?(value: string): void;
+    /** Edit-mode Task only: opens the Timebox Manager for this Task's saved canonical block. */
+    onManageTimeboxes?(): void;
 }
 
 export function renderDesktopTemporalSection(container: HTMLElement, options: DesktopTemporalSectionOptions): void {
@@ -47,6 +49,14 @@ function renderTaskSection(container: HTMLElement, options: DesktopTemporalSecti
         dateTimeSetting(container, "Timebox end", data.timebox.end, true, options.update, (value) => {
             if (data.timebox) data.timebox.end = value ?? "";
         });
+    }
+    if (options.mode === "edit" && options.onManageTimeboxes) {
+        new Setting(container)
+            .setName("Timeboxes")
+            .setDesc("Manage multiple planned work sessions for this Task.")
+            .addButton((button) =>
+                button.setButtonText("Manage timeboxes").onClick(() => options.onManageTimeboxes?.()),
+            );
     }
     new Setting(container).setName("Reminders").addButton((button) =>
         button.setButtonText("Add reminder").onClick(() => {

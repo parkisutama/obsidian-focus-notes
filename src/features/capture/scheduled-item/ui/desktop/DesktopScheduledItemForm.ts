@@ -30,6 +30,8 @@ export interface DesktopScheduledItemFormOptions {
     /** Switch the capture kind without requiring the user to close and reopen the form. Create mode only. */
     onSwitchKind?(kind: "inbox" | "event" | "task"): void;
     onPlannedStartChange?(value: string): void;
+    /** Edit-mode Task only: opens the Timebox Manager for this Task's saved canonical block. */
+    onManageTimeboxes?(): void;
 }
 
 export class DesktopScheduledItemForm {
@@ -69,6 +71,7 @@ export class DesktopScheduledItemForm {
             update: (change) => this.update(change),
             changedAndRender: () => this.changedAndRender(),
             onEventStartChanged: (value) => this.options.onPlannedStartChange?.(value),
+            onManageTimeboxes: this.options.onManageTimeboxes,
         });
         this.renderDescription(container);
         renderDesktopDetailSection(container, {

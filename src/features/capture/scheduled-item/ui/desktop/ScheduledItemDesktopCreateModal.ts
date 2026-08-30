@@ -15,7 +15,17 @@ import {
     createObsidianLinkResolver,
 } from "../../../../../infrastructure/obsidian/suggestions/ObsidianLinkResolver.ts";
 import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver";
+import {
+    runEventDayProjection,
+    retryEventDayProjectionRuntime,
+} from "../../../../../infrastructure/obsidian/capture/EventDayProjectionRuntime.ts";
+import {
+    runTaskDayProjection,
+    retryTaskDayProjectionRuntime,
+} from "../../../../../infrastructure/obsidian/capture/TaskDayProjectionRuntime.ts";
 import { resolveEventCaptureTarget } from "../../application/ScheduledItemCaptureTarget.ts";
+import type { EventDayProjectionResult } from "../../application/EventDayProjection.ts";
+import type { TaskDayProjectionResult } from "../../application/TaskDayProjection.ts";
 import {
     retryScheduledItemCreateRelated,
     type ScheduledItemCreateRelatedResult,
@@ -32,14 +42,19 @@ import { isTFile } from "../../../../../infrastructure/obsidian/vault/ObsidianFi
 
 type PartialDetail = Extract<DetailNotePromotionResult, { status: "partial" }>;
 type PartialRelated = Extract<ScheduledItemCreateRelatedResult, { status: "partial" }>;
+type PartialDayProjection = Extract<EventDayProjectionResult, { status: "partial" }>;
+type PartialTaskDayProjection = Extract<TaskDayProjectionResult, { status: "partial" }>;
 
 export class ScheduledItemDesktopCreateModal extends Modal {
     private readonly data: ScheduledItemFormData;
     private readonly context: DesktopScheduledItemCreateContext;
     private renderer: DesktopScheduledItemForm | null = null;
     private pendingDetail: PartialDetail | null = null;
+    private pendingDayProjection: PartialDayProjection | null = null;
+    private pendingTaskDayProjection: PartialTaskDayProjection | null = null;
     private pendingRelated: PartialRelated | null = null;
     private primaryPath: string | null = null;
+    private primaryBlockId: string | null = null;
     private busy = false;
     private completionNotified = false;
 
@@ -136,6 +151,14 @@ export class ScheduledItemDesktopCreateModal extends Modal {
                 await this.retryRelated();
                 return;
             }
+            if (this.pendingDayProjection) {
+                await this.retryDayProjection();
+                return;
+            }
+            if (this.pendingTaskDayProjection) {
+                await this.retryTaskDayProjection();
+                return;
+            }
             if (this.pendingDetail) {
                 await this.retryDetail();
                 return;
@@ -176,6 +199,8 @@ export class ScheduledItemDesktopCreateModal extends Modal {
             this.showResult(result.message, false);
             return;
         }
+        if (!(await this.writeEventDayProjection(writer))) return;
+        if (!(await this.writeTaskDayProjection(writer))) return;
         await this.writeRelated(writer);
     }
 
@@ -184,7 +209,7 @@ export class ScheduledItemDesktopCreateModal extends Modal {
         if (built.status === "invalid") throw new Error(built.message);
         const targetPath = this.resolvePrimaryTarget();
         if (!targetPath) throw new Error("Scheduled Item fields are invalid.");
-        await writer.write(
+        this.primaryBlockId = await writer.write(
             built.record,
             targetPath,
             this.context.targetHeading.trim(),
@@ -192,6 +217,96 @@ export class ScheduledItemDesktopCreateModal extends Modal {
             attachment,
         );
         this.primaryPath = targetPath;
+    }
+
+    /** Writes multi-day Event references for every touched day beyond the canonical start day. */
+    private async writeEventDayProjection(writer: EventTaskWriter): Promise<boolean> {
+        if (this.data.kind !== "event" || !this.primaryPath || !this.primaryBlockId) return true;
+        const start = parseLocalDateTime(this.data.start, this.data.allDay);
+        if (!start) return true;
+        const end = !this.data.allDay && this.data.end ? parseLocalDateTime(this.data.end, false) : null;
+        const settings = this.getSettings();
+        const result = await runEventDayProjection(
+            this.app,
+            settings,
+            {
+                title: this.data.title,
+                start,
+                end,
+                allDay: this.data.allDay,
+                canonicalFilePath: this.primaryPath,
+                canonicalBlockId: this.primaryBlockId,
+                heading: settings.captureEvent.heading,
+                position: settings.captureEvent.position,
+            },
+            [],
+            writer,
+        );
+        if (result.status === "partial") {
+            this.pendingDayProjection = result;
+            this.showResult(result.message, false);
+            return false;
+        }
+        return true;
+    }
+
+    private async retryDayProjection(): Promise<void> {
+        const pending = this.pendingDayProjection;
+        if (!pending) return;
+        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask, () => this.getSettings());
+        const result = await retryEventDayProjectionRuntime(this.app, this.getSettings(), pending, writer);
+        if (result.status === "partial") {
+            this.pendingDayProjection = result;
+            this.showResult(result.message, false);
+            return;
+        }
+        this.pendingDayProjection = null;
+        if (!(await this.writeTaskDayProjection(writer))) return;
+        await this.writeRelated(writer);
+    }
+
+    /** Writes a due-date reference for a brand-new Task; new Tasks start with no timeboxes yet. */
+    private async writeTaskDayProjection(writer: EventTaskWriter): Promise<boolean> {
+        if (this.data.kind !== "task" || !this.primaryPath || !this.primaryBlockId) return true;
+        const dueDayKey = this.data.due ? this.data.due.slice(0, 10) : null;
+        if (!dueDayKey) return true;
+        const settings = this.getSettings();
+        const result = await runTaskDayProjection(
+            this.app,
+            settings,
+            {
+                title: this.data.title,
+                completed: false,
+                dueDayKey,
+                timeboxes: [],
+                canonicalFilePath: this.primaryPath,
+                canonicalBlockId: this.primaryBlockId,
+                heading: settings.captureTask.heading,
+                position: settings.captureTask.position,
+            },
+            [],
+            writer,
+        );
+        if (result.status === "partial") {
+            this.pendingTaskDayProjection = result;
+            this.showResult(result.message, false);
+            return false;
+        }
+        return true;
+    }
+
+    private async retryTaskDayProjection(): Promise<void> {
+        const pending = this.pendingTaskDayProjection;
+        if (!pending) return;
+        const writer = new EventTaskWriter(this.app, this.getSettings().eventTask, () => this.getSettings());
+        const result = await retryTaskDayProjectionRuntime(this.app, this.getSettings(), pending, writer);
+        if (result.status === "partial") {
+            this.pendingTaskDayProjection = result;
+            this.showResult(result.message, false);
+            return;
+        }
+        this.pendingTaskDayProjection = null;
+        await this.writeRelated(writer);
     }
 
     private resolvePrimaryTarget(): string | null {
@@ -222,6 +337,8 @@ export class ScheduledItemDesktopCreateModal extends Modal {
             return;
         }
         this.pendingDetail = null;
+        if (!(await this.writeEventDayProjection(writer))) return;
+        if (!(await this.writeTaskDayProjection(writer))) return;
         await this.writeRelated(writer);
     }
 
@@ -269,7 +386,7 @@ export class ScheduledItemDesktopCreateModal extends Modal {
         if (!complete) {
             this.renderer?.setSubmissionState({
                 busy: false,
-                recovery: this.pendingDetail !== null || this.pendingRelated !== null,
+                recovery: this.hasPendingRecovery(),
                 errorMessage: message,
             });
             return;
@@ -286,9 +403,15 @@ export class ScheduledItemDesktopCreateModal extends Modal {
 
     private setBusy(busy: boolean): void {
         this.busy = busy;
-        this.renderer?.setSubmissionState({
-            busy,
-            recovery: this.pendingDetail !== null || this.pendingRelated !== null,
-        });
+        this.renderer?.setSubmissionState({ busy, recovery: this.hasPendingRecovery() });
+    }
+
+    private hasPendingRecovery(): boolean {
+        return (
+            this.pendingDetail !== null ||
+            this.pendingDayProjection !== null ||
+            this.pendingTaskDayProjection !== null ||
+            this.pendingRelated !== null
+        );
     }
 }
