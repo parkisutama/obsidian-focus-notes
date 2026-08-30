@@ -14,7 +14,7 @@ import {
     createObsidianLinkResolver,
 } from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
 import { saveScheduledItemBlock } from "./infrastructure/obsidian/ScheduledItemBlockPersistence.ts";
-import { TargetResolver } from "./TargetResolver.ts";
+import { TargetResolver } from "./infrastructure/obsidian/capture/TargetResolver.ts";
 import {
     retryScheduledItemEditRelated,
     type ScheduledItemEditSubmissionResult,

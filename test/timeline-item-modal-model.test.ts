@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ScheduledItem } from "../src/features/capture/scheduled-item/domain/ScheduledItem.ts";
-import { buildPendingTaskModalModel, buildTimelineItemModalModel } from "../src/TimelineItemModalModel.ts";
+import {
+    buildPendingTaskModalModel,
+    buildTimelineItemModalModel,
+} from "../src/features/timeline/domain/TimelineItemModalModel.ts";
 
 const baseItem: ScheduledItem = {
     id: "daily-12",

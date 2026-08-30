@@ -8,7 +8,7 @@ import {
     ScheduledItemMentionIndex,
     type ScheduledItemMentionCandidate,
     type ScheduledItemMentionRecord,
-} from "../../ScheduledItemMentionIndex.ts";
+} from "../../features/capture/scheduled-item/application/ScheduledItemMentionIndex.ts";
 
 interface BlockCacheLike {
     position: { start: { line: number } };

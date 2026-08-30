@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { App } from "obsidian";
-import { ScheduledItemIndexer } from "../src/ScheduledItemIndexer.ts";
+import { ScheduledItemIndexer } from "../src/infrastructure/obsidian/timeline/ScheduledItemIndexer.ts";
 import { ScheduledItemParser } from "../src/features/capture/scheduled-item/domain/ScheduledItemParser.ts";
 
 test("indexes only scheduled records under an accepted ledger heading", async () => {

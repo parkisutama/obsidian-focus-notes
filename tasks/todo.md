@@ -108,9 +108,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Give recent-entry reading, note writing, and target resolution evidence-based application/infrastructure owners.
 
 **Acceptance criteria:**
-- [ ] `RecentEntriesReader` is application unless concrete Obsidian access requires infrastructure.
-- [ ] `NoteWriter` is under Obsidian Focus Session infrastructure; `TargetResolver` under shared capture infrastructure.
-- [ ] No vault read/write, scan frequency, or path behavior changes.
+- [x] Consumer/import evidence placed `RecentEntriesReader` in Obsidian Focus Session infrastructure.
+- [x] `NoteWriter` is under Obsidian Focus Session infrastructure; `TargetResolver` under shared capture infrastructure.
+- [x] No vault read/write, scan frequency, or path behavior changes.
 
 **Verification:** Recent-entry, writer, target, related-log tests; standard gates.
 
@@ -123,9 +123,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move the thin Timer ItemView shell beside its UI collaborators.
 
 **Acceptance criteria:**
-- [ ] `TimerView` lives in Focus Session UI.
-- [ ] View ID, lifecycle cleanup, engine ownership, and logging remain unchanged.
-- [ ] Only composition code imports the view entry point.
+- [x] `TimerView` lives in Focus Session UI.
+- [x] View ID, lifecycle cleanup, engine ownership, and logging remain unchanged.
+- [x] Only composition code imports the view entry point.
 
 **Verification:** Timer/writer/compatibility tests; full CI; open/reopen/completion smoke test.
 
@@ -138,9 +138,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move pure layout, source grouping/alignment, and modal read model into Timeline domain.
 
 **Acceptance criteria:**
-- [ ] Four modules live in Timeline domain and remain Obsidian/DOM-free.
-- [ ] Layout, ranges, classification, and modal models are unchanged.
-- [ ] Scheduled Item rules are consumed, not duplicated.
+- [x] Four modules live in Timeline domain and remain Obsidian/DOM-free.
+- [x] Layout, ranges, classification, and modal models are unchanged.
+- [x] Scheduled Item rules are consumed, not duplicated.
 
 **Verification:** Timeline layout/source/alignment/modal tests; standard gates.
 
@@ -153,9 +153,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move query/index orchestration according to actual Obsidian reachability.
 
 **Acceptance criteria:**
-- [ ] `ScheduledItemQuery` is Timeline application.
-- [ ] `ScheduledItemIndexer` is application only behind a narrow port; otherwise Timeline Obsidian infrastructure.
-- [ ] `ScheduledItemMentionIndex` is Scheduled Item application.
+- [x] `ScheduledItemQuery` is Timeline application.
+- [x] Concrete `ScheduledItemIndexer` is Timeline Obsidian infrastructure.
+- [x] `ScheduledItemMentionIndex` is Scheduled Item application.
 
 **Verification:** Index/query/mention/refresh tests; standard gates; verify frequency and ambiguity behavior.
 
@@ -168,9 +168,9 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 **Description:** Move the view shell, grid, sidebar, and item modal into Timeline UI.
 
 **Acceptance criteria:**
-- [ ] All four modules live in Timeline UI.
-- [ ] View ID/state, navigation, filters, listeners, refresh, and edit launch remain unchanged.
-- [ ] Existing callback boundaries remain narrow.
+- [x] All four modules live in Timeline UI.
+- [x] View ID/state, navigation, filters, listeners, refresh, and edit launch remain unchanged.
+- [x] Existing callback boundaries remain narrow.
 
 **Verification:** All Timeline/compatibility tests; full CI; live navigation/filter/edit smoke test.
 
@@ -180,8 +180,8 @@ Unless narrowed below, every implementation task runs the standard gates from `t
 
 ## Checkpoint: Focus Session and Timeline
 
-- [ ] Tasks 7–11 pass full CI.
-- [ ] Both features have no active root modules.
+- [x] Tasks 7–11 pass full CI (302 tests, build, artifacts, and docs).
+- [x] Both features have no active root modules.
 - [ ] Runtime view checks pass or have explicit human-approved residual risk.
 
 ## Task 12: Place Active Note and formatting modules

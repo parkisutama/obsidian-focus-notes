@@ -1,13 +1,13 @@
 import type { App } from "obsidian";
 import { Notice } from "obsidian";
-import { ScheduledItemIndexer } from "../../../ScheduledItemIndexer";
-import { isFileInTimelineSource } from "../../../TimelineSourceAlignment";
+import { ScheduledItemIndexer } from "../../../infrastructure/obsidian/timeline/ScheduledItemIndexer";
+import { isFileInTimelineSource } from "../domain/TimelineSourceAlignment";
 import {
     buildTimelineSourceGroups,
     timelineSourceFolders,
     timelineSourceHeadings,
-} from "../../../TimelineSourceGroups";
-import { TargetResolver } from "../../../TargetResolver";
+} from "../domain/TimelineSourceGroups";
+import { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
 import { ScheduledItemParser } from "../../capture/scheduled-item/domain/ScheduledItemParser";
 import type { ScheduledItem } from "../../capture/scheduled-item/domain/ScheduledItem";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";

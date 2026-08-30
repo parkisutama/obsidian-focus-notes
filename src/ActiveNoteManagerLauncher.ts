@@ -3,7 +3,7 @@ import { scanActiveNoteChecklistScopes, scanActiveNoteLedger } from "./ActiveNot
 import { ActiveNoteManagerModal } from "./ActiveNoteManagerModal";
 import { openEventTaskForm } from "./EventTaskCaptureLauncher";
 import { openScheduledItemEditor } from "./ScheduledItemEditor";
-import { timelineSourceHeadings } from "./TimelineSourceGroups";
+import { timelineSourceHeadings } from "./features/timeline/domain/TimelineSourceGroups";
 import { ScheduledItemParser } from "./features/capture/scheduled-item/domain/ScheduledItemParser";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 

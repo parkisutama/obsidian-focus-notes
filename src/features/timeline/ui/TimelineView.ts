@@ -1,12 +1,12 @@
 import { ItemView, TFile, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
-import { openEventTaskForm } from "./EventTaskCaptureLauncher";
-import type { TimelineMode, TimelineRange } from "./features/timeline/domain/Timeline";
-import { TimelineHeader } from "./features/timeline/ui/TimelineHeader";
-import { TimelineIndex, type TimelineIndexResult } from "./features/timeline/ui/TimelineIndex";
-import { TimelineContentRenderer } from "./features/timeline/ui/TimelineContentRenderer";
-import { TimelineModalLauncher } from "./features/timeline/ui/TimelineModalLauncher";
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
-import { addDays, formatDayKey, startOfDay, startOfWeek } from "./features/timeline/domain/TimelineDate.ts";
+import { openEventTaskForm } from "../../../EventTaskCaptureLauncher";
+import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
+import type { TimelineMode, TimelineRange } from "../domain/Timeline";
+import { addDays, formatDayKey, startOfDay, startOfWeek } from "../domain/TimelineDate.ts";
+import { TimelineContentRenderer } from "./TimelineContentRenderer";
+import { TimelineHeader } from "./TimelineHeader";
+import { TimelineIndex, type TimelineIndexResult } from "./TimelineIndex";
+import { TimelineModalLauncher } from "./TimelineModalLauncher";
 
 export const VIEW_TYPE_FOCUS_TIMELINE = "focus-timeline-view";
 

@@ -1,11 +1,14 @@
 import { type App, type TFile, moment, normalizePath } from "obsidian";
-import type { SessionRecord } from "./features/focus-session/domain/SessionRecord";
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
-import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
-import { isTFile } from "./infrastructure/obsidian/ObsidianFileTypes.ts";
-import { ensureFolderPath } from "./infrastructure/obsidian/VaultFolders.ts";
-import { getMood } from "./MoodReference";
-import { getEmotionCategoryLabel, getStressLevelLabel } from "./features/reflection/domain/EmotionalWellbeingReference";
+import type { FocusTarget } from "../../../features/capture/domain/CaptureTarget";
+import type { SessionRecord } from "../../../features/focus-session/domain/SessionRecord";
+import {
+    getEmotionCategoryLabel,
+    getStressLevelLabel,
+} from "../../../features/reflection/domain/EmotionalWellbeingReference";
+import type { FocusNotesSettings } from "../../../features/settings/domain/FocusNotesSettings";
+import { getMood } from "../../../MoodReference";
+import { isTFile } from "../ObsidianFileTypes.ts";
+import { ensureFolderPath } from "../VaultFolders.ts";
 
 /**
  * Writes a SessionRecord into the chosen note.

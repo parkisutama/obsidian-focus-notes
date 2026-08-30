@@ -6,7 +6,7 @@ import type { OpenEventTaskFormOptions } from "./features/capture/domain/Capture
 import { shouldUseMobileForm } from "./MobileFormPolicy";
 import { ScheduledItemDesktopCreateModal } from "./ScheduledItemDesktopCreateModal.ts";
 import { openMobileScheduledItemCreate } from "./ScheduledItemMobileCreateLauncher.ts";
-import { TargetResolver } from "./TargetResolver";
+import { TargetResolver } from "./infrastructure/obsidian/capture/TargetResolver";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
 

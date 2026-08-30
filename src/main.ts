@@ -1,13 +1,13 @@
 import { Plugin, TFile, type WorkspaceLeaf } from "obsidian";
 import { openActiveNoteManager } from "./ActiveNoteManagerLauncher";
 import { openEventTaskForm } from "./EventTaskCaptureLauncher";
-import { NoteWriter } from "./NoteWriter";
-import { RecentEntriesReader } from "./RecentEntriesReader";
 import { StateStore } from "./features/settings/infrastructure/StateStore";
 import { FocusNotesSettingsTab } from "./features/settings/ui/SettingsTab";
-import { TargetResolver } from "./TargetResolver";
-import { TimelineView, VIEW_TYPE_FOCUS_TIMELINE } from "./TimelineView";
-import { TimerView, VIEW_TYPE_FOCUS_NOTES } from "./TimerView";
+import { TargetResolver } from "./infrastructure/obsidian/capture/TargetResolver";
+import { NoteWriter } from "./infrastructure/obsidian/focus-session/NoteWriter";
+import { RecentEntriesReader } from "./infrastructure/obsidian/focus-session/RecentEntriesReader";
+import { TimelineView, VIEW_TYPE_FOCUS_TIMELINE } from "./features/timeline/ui/TimelineView";
+import { TimerView, VIEW_TYPE_FOCUS_NOTES } from "./features/focus-session/ui/TimerView";
 import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
 import { mergeSettingsWithDefaults } from "./features/settings/domain/SettingsDefaults";
 

@@ -1,13 +1,13 @@
 import { ItemView, type WorkspaceLeaf } from "obsidian";
-import { TimerEngine } from "./features/focus-session/domain/TimerEngine";
-import { TimerControls } from "./features/focus-session/ui/TimerControls";
-import { TimerLogWorkflow } from "./features/focus-session/ui/TimerLogWorkflow";
-import { TimerRecentEntries } from "./features/focus-session/ui/TimerRecentEntries";
-import { TimerTargetEditor } from "./features/focus-session/ui/TimerTargetEditor";
-import type { NoteWriter } from "./NoteWriter";
-import type { TargetResolver } from "./TargetResolver";
-import type { RecentEntriesReader } from "./RecentEntriesReader";
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
+import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
+import type { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
+import type { NoteWriter } from "../../../infrastructure/obsidian/focus-session/NoteWriter";
+import type { RecentEntriesReader } from "../../../infrastructure/obsidian/focus-session/RecentEntriesReader";
+import { TimerEngine } from "../domain/TimerEngine";
+import { TimerControls } from "./TimerControls";
+import { TimerLogWorkflow } from "./TimerLogWorkflow";
+import { TimerRecentEntries } from "./TimerRecentEntries";
+import { TimerTargetEditor } from "./TimerTargetEditor";
 
 export const VIEW_TYPE_FOCUS_NOTES = "focus-notes-view";
 

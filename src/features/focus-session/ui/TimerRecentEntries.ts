@@ -1,7 +1,7 @@
 import { type App, type Component, MarkdownRenderer, setIcon } from "obsidian";
 import { isTFile } from "../../../infrastructure/obsidian/ObsidianFileTypes.ts";
-import type { TargetResolver } from "../../../TargetResolver";
-import type { RecentEntriesReader } from "../../../RecentEntriesReader";
+import type { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
+import type { RecentEntriesReader } from "../../../infrastructure/obsidian/focus-session/RecentEntriesReader";
 import type { FocusTarget } from "../../capture/domain/CaptureTarget";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
 

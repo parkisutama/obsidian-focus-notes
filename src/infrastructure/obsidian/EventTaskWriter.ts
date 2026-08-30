@@ -11,7 +11,7 @@ import type { FocusNotesSettings } from "../../features/settings/domain/FocusNot
 import { insertUnderHeading } from "../../shared/markdown/HeadingInsertion";
 import { type FormatInboxEntryOptions, formatInboxEntry } from "../../InboxMarkdown";
 import type { InsertPosition } from "../../shared/markdown/InsertPosition";
-import { TargetResolver } from "../../TargetResolver";
+import { TargetResolver } from "./capture/TargetResolver";
 import { isTFile } from "./ObsidianFileTypes.ts";
 import { createObsidianLinkFormatter } from "./ObsidianLinkResolver.ts";
 import { ensureFolderPath } from "./VaultFolders.ts";

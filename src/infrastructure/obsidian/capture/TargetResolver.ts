@@ -1,8 +1,8 @@
 import { type App, moment } from "obsidian";
-import { normalizeDailyNoteFormat } from "./features/periodical-notes/domain/DailyNotePath";
-import type { PeriodicalNoteProfile } from "./features/periodical-notes/domain/PeriodicalNote";
-import type { FocusNotesSettings } from "./features/settings/domain/FocusNotesSettings";
-import type { FocusTarget } from "./features/capture/domain/CaptureTarget";
+import type { FocusTarget } from "../../../features/capture/domain/CaptureTarget";
+import { normalizeDailyNoteFormat } from "../../../features/periodical-notes/domain/DailyNotePath";
+import type { PeriodicalNoteProfile } from "../../../features/periodical-notes/domain/PeriodicalNote";
+import type { FocusNotesSettings } from "../../../features/settings/domain/FocusNotesSettings";
 
 /**
  * Resolves abstract targets (which may contain template tokens or be empty)

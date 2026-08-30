@@ -1,7 +1,7 @@
 import { Setting, setIcon } from "obsidian";
 import { createPeriodicalProfile } from "../../periodical-notes/domain/PeriodicalNoteSettings";
 import { FolderSuggest } from "../../../infrastructure/obsidian/Suggesters";
-import { TargetResolver } from "../../../TargetResolver";
+import { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
 import type { PeriodicalNoteProfile } from "../../periodical-notes/domain/PeriodicalNote";
 import { contextTextField } from "./SettingsFormFields";
 import type { SettingsRenderContext } from "./SettingsRenderContext";

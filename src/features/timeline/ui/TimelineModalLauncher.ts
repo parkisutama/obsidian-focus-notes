@@ -3,7 +3,7 @@ import { openScheduledItemEditor } from "../../../ScheduledItemEditor";
 import { formatScheduledItemBlockTarget } from "../../capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 import type { ScheduledItem } from "../../capture/scheduled-item/domain/ScheduledItem";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
-import { PendingTasksModal, TimelineItemModal } from "../../../TimelineItemModal";
+import { PendingTasksModal, TimelineItemModal } from "./TimelineItemModal";
 
 export interface TimelineModalLauncherOptions {
     app: App;

@@ -6,8 +6,8 @@ test("persistent plugin and Obsidian registration identifiers remain stable", as
     const [manifestSource, pluginSource, timerViewSource, timelineViewSource] = await Promise.all([
         readFile(new URL("../manifest.json", import.meta.url), "utf8"),
         readFile(new URL("../src/main.ts", import.meta.url), "utf8"),
-        readFile(new URL("../src/TimerView.ts", import.meta.url), "utf8"),
-        readFile(new URL("../src/TimelineView.ts", import.meta.url), "utf8"),
+        readFile(new URL("../src/features/focus-session/ui/TimerView.ts", import.meta.url), "utf8"),
+        readFile(new URL("../src/features/timeline/ui/TimelineView.ts", import.meta.url), "utf8"),
     ]);
     const manifest = JSON.parse(manifestSource) as { id?: unknown };
 

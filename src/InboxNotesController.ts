@@ -16,7 +16,7 @@ import {
     serializeInboxRichText,
 } from "./InboxRichText";
 import type { ContextSuggestion } from "./InboxSuggestions";
-import type { ScheduledItemMentionCandidate } from "./ScheduledItemMentionIndex.ts";
+import type { ScheduledItemMentionCandidate } from "./features/capture/scheduled-item/application/ScheduledItemMentionIndex.ts";
 import { getCreatableObjectSources } from "./features/object-notes/application/ObjectNote";
 import { ObjectNoteModal } from "./features/object-notes/ui/ObjectNoteModal";
 import { ObsidianInboxSuggestionSource } from "./infrastructure/obsidian/ObsidianInboxSuggestionSource";

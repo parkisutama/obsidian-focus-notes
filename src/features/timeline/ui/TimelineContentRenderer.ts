@@ -1,7 +1,7 @@
-import { ScheduledItemQuery } from "../../../ScheduledItemQuery";
-import { TimelineGrid } from "../../../TimelineGrid";
-import { TimelineLayout } from "../../../TimelineLayout";
-import { buildTimelineSourceSummaries, TimelineSourceSidebar } from "../../../TimelineSourceSidebar";
+import { ScheduledItemQuery } from "../application/ScheduledItemQuery";
+import { TimelineGrid } from "./TimelineGrid";
+import { TimelineLayout } from "../domain/TimelineLayout";
+import { buildTimelineSourceSummaries, TimelineSourceSidebar } from "./TimelineSourceSidebar";
 import type { ScheduledItem } from "../../capture/scheduled-item/domain/ScheduledItem";
 import type { TimelineMode, TimelineRange } from "../domain/Timeline";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";

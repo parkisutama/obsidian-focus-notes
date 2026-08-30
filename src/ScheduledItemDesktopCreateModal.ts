@@ -14,7 +14,7 @@ import {
     createObsidianLinkFormatter,
     createObsidianLinkResolver,
 } from "./infrastructure/obsidian/ObsidianLinkResolver.ts";
-import { TargetResolver } from "./TargetResolver";
+import { TargetResolver } from "./infrastructure/obsidian/capture/TargetResolver";
 import {
     retryScheduledItemCreateRelated,
     type ScheduledItemCreateRelatedResult,

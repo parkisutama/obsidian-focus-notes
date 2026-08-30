@@ -5,8 +5,8 @@ import {
     assessTimelineTargetGroups,
     buildTimelineSourceGroups,
     timelineSourceHeadings,
-} from "../src/TimelineSourceGroups.ts";
-import { buildTimelineSourceSummaries } from "../src/TimelineSourceSidebar.ts";
+} from "../src/features/timeline/domain/TimelineSourceGroups.ts";
+import { buildTimelineSourceSummaries } from "../src/features/timeline/ui/TimelineSourceSidebar.ts";
 
 test("groups every Daily Note under one stable Daily Notes source", () => {
     assert.deepEqual(buildTimelineSourceGroups(["Projects", "calendar"], "calendar", []), [

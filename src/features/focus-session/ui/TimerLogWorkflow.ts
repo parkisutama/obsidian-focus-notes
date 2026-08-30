@@ -1,7 +1,7 @@
 import type { App } from "obsidian";
 import { Notice } from "obsidian";
-import type { NoteWriter } from "../../../NoteWriter";
-import type { TargetResolver } from "../../../TargetResolver";
+import type { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
+import type { NoteWriter } from "../../../infrastructure/obsidian/focus-session/NoteWriter";
 import type { FocusTarget } from "../../capture/domain/CaptureTarget";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
 import type { TimerEngine } from "../domain/TimerEngine";

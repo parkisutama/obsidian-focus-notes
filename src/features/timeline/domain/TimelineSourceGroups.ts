@@ -1,6 +1,6 @@
-import type { TimelineSourceGroup } from "./features/timeline/domain/Timeline";
+import type { TimelineSourceGroup } from "./Timeline";
 import { isFileInTimelineSource, type TimelineTargetAlignment } from "./TimelineSourceAlignment.ts";
-import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
+import type { ContextSourceSettings } from "../../object-notes/domain/ContextSourceSettings";
 
 export function buildTimelineSourceGroups(
     configuredFolders: readonly string[],

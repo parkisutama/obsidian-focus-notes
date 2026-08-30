@@ -1,6 +1,6 @@
-import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
-import type { TimelineRange } from "./features/timeline/domain/Timeline";
-import { addDays, endOfDay, formatDayKey, startOfDay } from "./features/timeline/domain/TimelineDate.ts";
+import type { ScheduledItem } from "../../capture/scheduled-item/domain/ScheduledItem";
+import type { TimelineRange } from "./Timeline";
+import { addDays, endOfDay, formatDayKey, startOfDay } from "./TimelineDate.ts";
 
 export interface TimelineBlockSegment {
     itemId: string;

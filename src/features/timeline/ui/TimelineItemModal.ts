@@ -1,6 +1,6 @@
 import { type App, Modal, setIcon } from "obsidian";
-import type { ScheduledItem } from "./features/capture/scheduled-item/domain/ScheduledItem";
-import { buildPendingTaskModalModel, buildTimelineItemModalModel } from "./TimelineItemModalModel";
+import type { ScheduledItem } from "../../capture/scheduled-item/domain/ScheduledItem";
+import { buildPendingTaskModalModel, buildTimelineItemModalModel } from "../domain/TimelineItemModalModel";
 
 export class TimelineItemModal extends Modal {
     constructor(

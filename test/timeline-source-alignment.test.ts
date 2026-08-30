@@ -4,7 +4,7 @@ import {
     assessTimelineTarget,
     effectiveTimelineSourceFolders,
     isFileInTimelineSource,
-} from "../src/TimelineSourceAlignment.ts";
+} from "../src/features/timeline/domain/TimelineSourceAlignment.ts";
 
 test("automatically adds the Daily Notes folder without duplicating configured sources", () => {
     assert.deepEqual(effectiveTimelineSourceFolders(["Projects", "calendar"], "calendar"), ["Projects", "calendar"]);

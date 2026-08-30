@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { TimelineLayout } from "../src/TimelineLayout.ts";
+import { TimelineLayout } from "../src/features/timeline/domain/TimelineLayout.ts";
 import type { ScheduledItem } from "../src/features/capture/scheduled-item/domain/ScheduledItem.ts";
 
 test("explicit all-day Events render in the all-day row instead of the hourly canvas", () => {

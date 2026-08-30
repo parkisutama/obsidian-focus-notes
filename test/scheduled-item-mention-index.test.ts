@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ScheduledItemMentionIndex } from "../src/ScheduledItemMentionIndex.ts";
+import { ScheduledItemMentionIndex } from "../src/features/capture/scheduled-item/application/ScheduledItemMentionIndex.ts";
 
 test("indexes only stable Task/Event blocks and queries within the selected kind", () => {
     const index = new ScheduledItemMentionIndex();

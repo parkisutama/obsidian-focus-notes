@@ -1,5 +1,5 @@
-import type { ScheduledItemKind } from "./features/capture/scheduled-item/domain/ScheduledItem.ts";
-import type { SuggestionMatcher } from "./InboxSuggestions.ts";
+import type { SuggestionMatcher } from "../../../../InboxSuggestions.ts";
+import type { ScheduledItemKind } from "../domain/ScheduledItem.ts";
 
 export interface ScheduledItemMentionRecord {
     blockId: string;
