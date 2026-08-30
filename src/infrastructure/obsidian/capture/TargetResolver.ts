@@ -117,6 +117,25 @@ export class TargetResolver {
         return normalized || null;
     }
 
+    /**
+     * Reverse of getPeriodicalTarget("daily", ...): given a file path, returns the calendar date
+     * it represents, or null when the path doesn't fall under the "daily" profile's configured
+     * folder/format. Used by projection reconciliation (Task 45) to recover which day an existing
+     * Task/Event day reference belongs to — that's implicit in which dated file it lives in, not
+     * encoded in the reference line itself.
+     */
+    public resolveDailyFileDate(filePath: string): Date | null {
+        const profile = this.findProfile("daily");
+        if (!profile) return null;
+        const { folder, fileFormat } = this.resolveProfileFolderAndFormat(profile);
+        const folderPrefix = folder ? `${folder.replace(/\/+$/, "")}/` : "";
+        if (!filePath.startsWith(folderPrefix)) return null;
+        const format = normalizeDailyNoteFormat(fileFormat, "YYYY-MM-DD");
+        const basename = filePath.slice(folderPrefix.length).replace(/\.md$/, "");
+        const parsed = moment(basename, format, true);
+        return parsed.isValid() ? parsed.toDate() : null;
+    }
+
     private findProfile(profileId: string): PeriodicalNoteProfile | null {
         return this.settings.periodicalNotes.profiles.find((profile) => profile.id === profileId) ?? null;
     }

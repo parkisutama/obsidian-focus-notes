@@ -1,4 +1,4 @@
-import { Plugin, TFile, type WorkspaceLeaf } from "obsidian";
+import { Notice, Plugin, TFile, type WorkspaceLeaf } from "obsidian";
 import { openActiveNoteManager } from "../features/capture/scheduled-item/ui/ActiveNoteManagerLauncher";
 import { openEventTaskForm } from "../features/capture/ui/EventTaskCaptureLauncher";
 import { StateStore } from "../features/settings/infrastructure/StateStore";
@@ -10,6 +10,12 @@ import { TimelineView, VIEW_TYPE_FOCUS_TIMELINE } from "../features/timeline/ui/
 import { TimerView, VIEW_TYPE_FOCUS_NOTES } from "../features/focus-session/ui/TimerView";
 import type { FocusNotesSettings } from "../features/settings/domain/FocusNotesSettings";
 import { mergeSettingsWithDefaults } from "../features/settings/domain/SettingsDefaults";
+import { TaskReferenceCheckboxWatcher } from "../infrastructure/obsidian/capture/TaskReferenceCheckboxWatcher.ts";
+import {
+    type ProjectionReconciliationSummary,
+    repairOrphanProjectionReferences,
+    runProjectionReconciliation,
+} from "../infrastructure/obsidian/capture/ProjectionReconciliationRunner.ts";
 
 /**
  * Plugin shell.
@@ -24,6 +30,7 @@ import { mergeSettingsWithDefaults } from "../features/settings/domain/SettingsD
 export default class FocusNotesPlugin extends Plugin {
     public settings!: FocusNotesSettings;
     private stateStore!: StateStore;
+    private lastReconciliationSummary: ProjectionReconciliationSummary | null = null;
 
     async onload(): Promise<void> {
         await this.loadSettings();
@@ -32,6 +39,13 @@ export default class FocusNotesPlugin extends Plugin {
             display: "Focus Notes",
             defaultMod: false,
         });
+
+        const taskReferenceCheckboxWatcher = new TaskReferenceCheckboxWatcher(this.app, () => this.settings);
+        this.registerEvent(
+            this.app.vault.on("modify", (file) => {
+                if (file instanceof TFile) void taskReferenceCheckboxWatcher.handleModify(file);
+            }),
+        );
 
         this.registerView(
             VIEW_TYPE_FOCUS_NOTES,
@@ -99,6 +113,27 @@ export default class FocusNotesPlugin extends Plugin {
             },
         });
 
+        this.addCommand({
+            id: "rebuild-scheduled-item-projections",
+            name: "Rebuild Task/Event Daily projections",
+            callback: () => {
+                void this.rebuildProjections();
+            },
+        });
+
+        this.addCommand({
+            id: "repair-orphan-projection-references",
+            name: "Repair orphaned Daily projection references",
+            checkCallback: (checking) => {
+                const summary = this.lastReconciliationSummary;
+                const available = Boolean(
+                    summary && (summary.orphanTaskReferences.length > 0 || summary.orphanEventReferences.length > 0),
+                );
+                if (available && !checking) void this.repairOrphanReferences();
+                return available;
+            },
+        });
+
         this.addSettingTab(new FocusNotesSettingsTab(this.app, this));
     }
 
@@ -143,5 +178,46 @@ export default class FocusNotesPlugin extends Plugin {
             }
         }
         if (leaf) workspace.revealLeaf(leaf);
+    }
+
+    /**
+     * Task 45: recomputes every Task/Event's expected Daily references from canonical truth and
+     * reconciles the vault to match, reusing the same write path as every incremental edit. Caches
+     * the summary so "Repair orphaned Daily projection references" has something to act on.
+     */
+    private async rebuildProjections(): Promise<void> {
+        new Notice("Rebuilding Task/Event Daily projections…");
+        const summary = await runProjectionReconciliation(this.app, this.settings);
+        this.lastReconciliationSummary = summary;
+        const orphanCount = summary.orphanTaskReferences.length + summary.orphanEventReferences.length;
+        const parts = [
+            `${summary.tasksReconciled} Task(s) and ${summary.eventsReconciled} Event(s) checked`,
+            `${summary.referencesCreated} created, ${summary.referencesRemoved} removed`,
+        ];
+        if (summary.failedWrites || summary.failedRemovals) {
+            parts.push(`${summary.failedWrites + summary.failedRemovals} write(s) failed — rerun to retry`);
+        }
+        if (orphanCount > 0) parts.push(`${orphanCount} orphaned reference(s) found — run the repair command`);
+        if (summary.ambiguousTaskTargets.length + summary.ambiguousEventTargets.length > 0) {
+            parts.push(
+                `${summary.ambiguousTaskTargets.length + summary.ambiguousEventTargets.length} ambiguous block id(s) skipped`,
+            );
+        }
+        new Notice(parts.join(". "));
+        console.info("[Focus Notes] Projection reconciliation summary", summary);
+    }
+
+    private async repairOrphanReferences(): Promise<void> {
+        const summary = this.lastReconciliationSummary;
+        if (!summary) return;
+        await repairOrphanProjectionReferences(
+            this.app,
+            this.settings,
+            summary.orphanTaskReferences,
+            summary.orphanEventReferences,
+        );
+        const count = summary.orphanTaskReferences.length + summary.orphanEventReferences.length;
+        this.lastReconciliationSummary = null;
+        new Notice(`Removed ${count} orphaned Daily projection reference(s).`);
     }
 }
