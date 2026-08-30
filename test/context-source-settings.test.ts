@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createContextSource, findSharedFolderConflicts } from "../src/ContextSourceSettings.ts";
+import {
+    createContextSource,
+    findSharedFolderConflicts,
+} from "../src/features/object-notes/application/ContextSourceSettings.ts";
 import { DEFAULT_SETTINGS, mergeSettingsWithDefaults } from "../src/features/settings/domain/SettingsDefaults.ts";
 
 test("migrates legacy People and Place folders and adds Activities", () => {

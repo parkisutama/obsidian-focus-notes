@@ -1,5 +1,5 @@
 import { type App, Modal, Notice } from "obsidian";
-import { resolveAllowedTaskSources } from "../../../../../ContextSourceSettings.ts";
+import { resolveAllowedTaskSources } from "../../../../object-notes/application/ContextSourceSettings.ts";
 import { type DesktopScheduledItemCreateContext, DesktopScheduledItemForm } from "./DesktopScheduledItemForm.ts";
 import {
     type DetailNotePromotionResult,

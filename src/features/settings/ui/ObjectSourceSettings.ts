@@ -1,5 +1,5 @@
 import { Setting, setIcon, ToggleComponent } from "obsidian";
-import { createContextSource, findSharedFolderConflicts } from "../../../ContextSourceSettings";
+import { createContextSource, findSharedFolderConflicts } from "../../object-notes/application/ContextSourceSettings";
 import { normalizeInboxFolders } from "../../capture/moment/domain/InboxFolderSettings";
 import { FileSuggest, FolderSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
 import type { InsertPosition } from "../../../shared/markdown/InsertPosition";

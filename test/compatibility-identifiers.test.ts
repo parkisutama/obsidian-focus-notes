@@ -3,15 +3,17 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("persistent plugin and Obsidian registration identifiers remain stable", async () => {
-    const [manifestSource, pluginSource, timerViewSource, timelineViewSource] = await Promise.all([
+    const [manifestSource, mainSource, pluginSource, timerViewSource, timelineViewSource] = await Promise.all([
         readFile(new URL("../manifest.json", import.meta.url), "utf8"),
         readFile(new URL("../src/main.ts", import.meta.url), "utf8"),
+        readFile(new URL("../src/plugin/FocusNotesPlugin.ts", import.meta.url), "utf8"),
         readFile(new URL("../src/features/focus-session/ui/TimerView.ts", import.meta.url), "utf8"),
         readFile(new URL("../src/features/timeline/ui/TimelineView.ts", import.meta.url), "utf8"),
     ]);
     const manifest = JSON.parse(manifestSource) as { id?: unknown };
 
     assert.equal(manifest.id, "focus-notes");
+    assert.match(mainSource, /^export \{ default \} from ["']\.\/plugin\/FocusNotesPlugin["'];\s*$/);
     assert.match(timerViewSource, /VIEW_TYPE_FOCUS_NOTES\s*=\s*["']focus-notes-view["']/);
     assert.match(timelineViewSource, /VIEW_TYPE_FOCUS_TIMELINE\s*=\s*["']focus-timeline-view["']/);
     assert.match(pluginSource, /registerHoverLinkSource\(["']focus-notes-inbox["']/);

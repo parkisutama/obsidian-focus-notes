@@ -1,5 +1,5 @@
 import { type App, Component, Notice } from "obsidian";
-import { resolveAllowedTaskSources } from "../../../../../ContextSourceSettings.ts";
+import { resolveAllowedTaskSources } from "../../../../object-notes/application/ContextSourceSettings.ts";
 import {
     type DetailNotePromotionResult,
     promoteScheduledItemDetail,

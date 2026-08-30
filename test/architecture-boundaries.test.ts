@@ -48,7 +48,7 @@ function findImportSpecifiers(source: string): string[] {
     return specifiers;
 }
 
-const expectedRootModulesDuringMigration = new Set(["ContextSourceSettings.ts", "MoodReference.ts", "main.ts"]);
+const expectedRootModules = new Set(["main.ts"]);
 
 function normalizeArchitecturePath(filePath: string): string {
     return filePath.replaceAll("\\", "/");
@@ -63,6 +63,9 @@ function architectureImportViolation(importer: string, specifier: string): strin
 
     if (!importerIsLegacy && resolvedSpecifier.startsWith("legacy/")) {
         return "production modules must not import legacy modules";
+    }
+    if (normalizedImporter.startsWith("features/") && resolvedSpecifier.startsWith("plugin/")) {
+        return "feature modules must not import plugin composition";
     }
     if (normalizedImporter.startsWith("shared/") && resolvedSpecifier.startsWith("features/")) {
         return "shared modules must not import feature modules";
@@ -80,13 +83,13 @@ function architectureImportViolation(importer: string, specifier: string): strin
     return null;
 }
 
-test("root TypeScript modules match the shrinking migration inventory", async () => {
+test("main.ts is the only root TypeScript module", async () => {
     const entries = await readdir(sourceRoot, { withFileTypes: true });
     const actualRootModules = entries
         .filter((entry) => entry.isFile() && entry.name.endsWith(".ts"))
         .map((entry) => entry.name)
         .sort();
-    assert.deepEqual(actualRootModules, [...expectedRootModulesDuringMigration].sort());
+    assert.deepEqual(actualRootModules, [...expectedRootModules].sort());
 });
 
 test("source imports respect architecture layer boundaries", async () => {
@@ -175,6 +178,10 @@ test("architecture import classifier rejects inward, shared-to-feature, and lega
     assert.match(
         architectureImportViolation("features/timeline/ui/TimelineView.ts", "../../../legacy/EventEditModal") ?? "",
         /production.*legacy/,
+    );
+    assert.match(
+        architectureImportViolation("features/timeline/ui/TimelineView.ts", "../../../plugin/FocusNotesPlugin") ?? "",
+        /feature.*plugin/,
     );
     assert.equal(
         architectureImportViolation("features/capture/scheduled-item/domain/ScheduledItemParser.ts", "./ScheduledItem"),

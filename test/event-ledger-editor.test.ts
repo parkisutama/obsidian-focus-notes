@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { App } from "obsidian";
-import { captureEventLedgerEdit, saveEventLedgerEdit } from "../src/infrastructure/obsidian/capture/EventLedgerEditor.ts";
+import {
+    captureEventLedgerEdit,
+    saveEventLedgerEdit,
+} from "../src/infrastructure/obsidian/capture/EventLedgerEditor.ts";
 
 function fakeApp(initial: string) {
     const path = "Daily/2026-08-20.md";

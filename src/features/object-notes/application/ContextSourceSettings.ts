@@ -1,4 +1,4 @@
-import type { ContextSourceSettings } from "./features/object-notes/domain/ContextSourceSettings";
+import type { ContextSourceSettings } from "../domain/ContextSourceSettings";
 
 export function createContextSource(existing: readonly ContextSourceSettings[]): ContextSourceSettings {
     const used = new Set(existing.map((source) => source.id));
