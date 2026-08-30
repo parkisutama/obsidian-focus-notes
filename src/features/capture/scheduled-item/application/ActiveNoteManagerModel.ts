@@ -50,5 +50,6 @@ export function buildActiveNoteManagerModel(fileName: string, items: ScheduledIt
 export function activeNoteItemMeta(item: ScheduledItem): string {
     const kind = item.kind === "event" ? "Event" : "Task";
     const state = item.kind === "event" ? (item.eventStatus ?? "planned") : item.isCompleted ? "completed" : "open";
-    return `${kind} · ${state} · line ${item.source.lineNumber}`;
+    const context = item.referenceTarget ? " · reference" : "";
+    return `${kind} · ${state}${context} · line ${item.source.lineNumber}`;
 }

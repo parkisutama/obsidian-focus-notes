@@ -44,6 +44,32 @@ test("finds scheduled and unscheduled ledger records only under accepted heading
     assert.equal(items[0]?.rawLine, "- [ ] Unscheduled ledger task");
 });
 
+test("includes Event and Task Daily references, labeled distinctly from canonical entries", () => {
+    const content = [
+        "## Activities & Tasks",
+        "- [ ] Real Task | due:2026-09-03 ^task-abc1234567",
+        "- 2026-09-02 09:00 - 12:00 Workshop | canonical:[[Projects/Team.md#^event-def4567890]] ^event-ref-jjjjjjjjjj",
+        "- [ ] Menyusun laporan | canonical:[[Projects/Report.md#^task-ghi7890123]] | due:true ^task-ref-kkkkkkkkkk",
+    ].join("\n");
+
+    const items = scanActiveNoteLedger(
+        "Daily/2026-09-02.md",
+        "2026-09-02.md",
+        content,
+        ["Activities & Tasks"],
+        new ScheduledItemParser(),
+    );
+
+    assert.deepEqual(
+        items.map((item) => ({ kind: item.kind, title: item.title, referenceTarget: item.referenceTarget ?? null })),
+        [
+            { kind: "task", title: "Real Task", referenceTarget: null },
+            { kind: "event", title: "Workshop", referenceTarget: "Projects/Team.md#^event-def4567890" },
+            { kind: "task", title: "Menyusun laporan", referenceTarget: "Projects/Report.md#^task-ghi7890123" },
+        ],
+    );
+});
+
 test("matches headings case-insensitively and returns no records without an accepted heading", () => {
     const parser = new ScheduledItemParser();
     assert.equal(

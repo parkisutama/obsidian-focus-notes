@@ -36,7 +36,7 @@ export function scanActiveNoteLedger(
             lineNumber: index + 1,
             headingPath: [...headingPath],
         };
-        const item = parser.parseLine(line, source);
+        const item = parser.parseLine(line, source) ?? parser.parseReferenceLine(line, source);
         if (item) items.push(item);
     }
     return items;
@@ -76,7 +76,7 @@ export function scanActiveNoteChecklistScopes(
             index + 1,
             activeHeadings.map(({ scope }) => scope.headingPath.at(-1) ?? ""),
         );
-        const item = parser.parseLine(line, source);
+        const item = parser.parseLine(line, source) ?? parser.parseReferenceLine(line, source);
         if (item?.kind !== "task") continue;
         allItems.push(item);
         for (const { scope } of activeHeadings) scope.items.push(item);

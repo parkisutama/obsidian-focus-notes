@@ -67,6 +67,10 @@ export class ActiveNoteManagerModal extends Modal {
     private formatChanges(): TaskFormatChange[] {
         const scope = this.scopes.find((candidate) => candidate.id === this.selectedScopeId) ?? this.scopes[0];
         return (scope?.items ?? []).flatMap((item) => {
+            // References are rebuildable derived lines, not user-maintained Task text; the format
+            // fixer's Task-line normalization doesn't understand canonical:/due:/timebox: fields
+            // and must never rewrite them.
+            if (item.referenceTarget) return [];
             let normalizedLine = item.rawLine;
             if (item.kind === "task") {
                 const inspection = inspectTaskLine(item.rawLine);
@@ -135,7 +139,12 @@ export class ActiveNoteManagerModal extends Modal {
                 const body = row.createSpan({ cls: "fn-active-note-manager-body" });
                 const titleRow = body.createSpan({ cls: "fn-active-note-manager-title-row" });
                 titleRow.createSpan({ cls: "fn-active-note-manager-name", text: item.title });
-                if (item.kind === "task") {
+                if (item.referenceTarget) {
+                    titleRow.createSpan({
+                        cls: "fn-active-note-manager-lint fn-active-note-manager-lint-reference",
+                        text: "Reference",
+                    });
+                } else if (item.kind === "task") {
                     const lint = inspectTaskLine(item.rawLine);
                     titleRow.createSpan({
                         cls: `fn-active-note-manager-lint fn-active-note-manager-lint-${lint.status}`,
