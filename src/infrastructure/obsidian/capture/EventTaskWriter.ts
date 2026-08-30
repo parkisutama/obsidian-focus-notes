@@ -6,6 +6,8 @@ import {
 import type { EventTaskRecord, HubNoteRef } from "../../../features/capture/scheduled-item/domain/EventTaskRecord";
 import type { EventTaskSettings } from "../../../features/capture/scheduled-item/domain/DetailNoteSettings";
 import { createScheduledItemBlockId } from "../../../features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
+import { removeEventDayReferenceForCanonical } from "../../../features/capture/scheduled-item/domain/EventDayReference.ts";
+import { removeTaskDayReference } from "../../../features/capture/scheduled-item/domain/TaskDayReference.ts";
 import type { InboxRecord } from "../../../features/capture/moment/domain/InboxRecord";
 import type { FocusNotesSettings } from "../../../features/settings/domain/FocusNotesSettings";
 import { insertUnderHeading } from "../../../shared/markdown/HeadingInsertion";
@@ -23,24 +25,22 @@ export class EventTaskWriter {
         private getFocusSettings?: () => FocusNotesSettings,
     ) {}
 
+    /** Returns the freshly minted canonical block id so callers can project derived references from it. */
     async write(
         record: EventTaskRecord,
         targetFilePath: string,
         targetHeading: string,
         position: InsertPosition,
         detailNoteRef?: HubNoteRef | null,
-    ): Promise<void> {
+    ): Promise<string> {
         const file = await this.resolveOrCreateFile(targetFilePath);
         const formatDateLink = this.getFocusSettings
             ? (when: Date, label: string) => this.formatDailyLink(when, targetFilePath, label)
             : undefined;
-        const content = formatEventTaskEntry(
-            record,
-            detailNoteRef,
-            formatDateLink,
-            createScheduledItemBlockId(record.kind),
-        );
+        const blockId = createScheduledItemBlockId(record.kind);
+        const content = formatEventTaskEntry(record, detailNoteRef, formatDateLink, blockId);
         await this.insertIntoFile(file, targetHeading, content, position);
+        return blockId;
     }
 
     /**
@@ -76,6 +76,28 @@ export class EventTaskWriter {
     ): Promise<void> {
         const file = await this.resolveOrCreateFile(targetFilePath);
         await this.insertIntoFile(file, targetHeading, markdown, position);
+    }
+
+    /** Idempotent: a no-op when the target file is missing or holds no matching reference. */
+    async removeEventDayReference(targetFilePath: string, canonicalTarget: string): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(normalizePath(targetFilePath));
+        if (!isTFile(file)) return;
+        const original = await this.app.vault.read(file);
+        const updated = removeEventDayReferenceForCanonical(original, canonicalTarget);
+        if (updated !== original) await this.app.vault.modify(file, updated);
+    }
+
+    /** Idempotent: a no-op when the target file is missing or holds no matching reference. */
+    async removeTaskDayReference(
+        targetFilePath: string,
+        canonicalTarget: string,
+        timeboxId: string | null,
+    ): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(normalizePath(targetFilePath));
+        if (!isTFile(file)) return;
+        const original = await this.app.vault.read(file);
+        const updated = removeTaskDayReference(original, canonicalTarget, timeboxId);
+        if (updated !== original) await this.app.vault.modify(file, updated);
     }
 
     async createHubNote(title: string, record: EventTaskRecord, folder: string): Promise<TFile> {
