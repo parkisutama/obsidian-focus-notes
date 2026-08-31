@@ -189,6 +189,17 @@ function inspectOwnedChildren(lines: string[]): OwnedChildren {
                 stack.push({ indentLength, excluded: true });
                 continue;
             }
+            if (/^focus-session\b/i.test(payload)) {
+                // An Event's own Focus Session history nests directly under the Event's line
+                // (unlike a Task's, which nests under a timebox and is already protected by
+                // activeTimeboxId/timeboxDescendants above). Exclude it and its own descendants
+                // (e.g. a "- notes: ..." child) from description entirely — they're managed by
+                // FocusSessionEditModal/CanonicalFocusSessionWriter, never through this form, so
+                // leaving their indexes untracked here means replaceScheduledItemBlock's rebuild
+                // naturally preserves them verbatim instead of folding them into free text.
+                stack.push({ indentLength, excluded: true });
+                continue;
+            }
             if (/^detail\s*:/i.test(payload) || /^\[(?: |x|X)\]\s/.test(payload)) {
                 stack.push({ indentLength, excluded: true });
                 continue;

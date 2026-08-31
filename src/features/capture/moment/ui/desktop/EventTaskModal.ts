@@ -196,8 +196,22 @@ export class EventTaskModal extends Modal {
 
     // ---- Inbox section -----------------------------------------------------
 
+    /**
+     * The written heading is the plain per-day text (e.g. "2026-08-30") wrapped as a link back to
+     * that day's Daily Note whenever the resolved target uses a dated per-period heading — the
+     * Weekly-note counterpart to Group by Date's `dateSubHeadingTemplate` link, but going through
+     * Obsidian's own link formatter so it follows the user's configured New Link Format (Shortest
+     * path / Relative / Absolute) instead of a hardcoded style. Only the value handed to the
+     * writer/preview is wrapped; `this.form.inboxHeading` (what the editable Heading field shows)
+     * is set once at construction and never touched here, so the field stays plain, editable text.
+     */
     private resolveInboxTarget(): FocusTarget | null {
-        return resolveInboxFormTarget(new TargetResolver(this.app, this.getSettings()), this.form);
+        const settings = this.getSettings();
+        const target = resolveInboxFormTarget(new TargetResolver(this.app, settings), this.form);
+        if (!target || !this.momentUsesDatedHeading()) return target;
+        const writer = new EventTaskWriter(this.app, settings.eventTask, () => settings);
+        const linkedHeading = writer.formatDailyLink(this.form.inboxCapturedAt, target.file, target.heading);
+        return { ...target, heading: linkedHeading };
     }
 
     private resolveMomentBacklinkTarget(record: { capturedAt: Date }): FocusTarget | null {

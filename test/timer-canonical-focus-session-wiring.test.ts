@@ -15,7 +15,14 @@ test("Timer's log workflow writes the canonical Focus Session before the daily l
     assert.match(source, /const owner = this\.options\.getCurrentOwner\(\);/);
     assert.match(source, /const canonicalLink = owner\s*\n\s*\? await this\.recordCanonicalFocusSession\(/);
     assert.match(source, /const sessionId = createFocusSessionId\(\);/);
-    assert.match(source, /if \(result\.status === "orphan"\) \{\s*this\.notifyOrphanedCanonicalWrite\(attempt\);/);
+    assert.match(
+        source,
+        /if \(result\.status === "orphan"\) \{\s*this\.notifyOrphanedCanonicalWrite\(attempt, owner, startTime, endTime\);/,
+    );
+    assert.match(
+        source,
+        /if \(result\.status === "written"\) this\.projectOwnedSessionWeekly\(owner, startTime, endTime\);/,
+    );
     assert.match(source, /canonicalLink,\s*\n\s*\};/);
 });
 

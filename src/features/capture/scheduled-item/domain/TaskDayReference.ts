@@ -24,22 +24,33 @@ export interface ParsedTaskDayReference {
     referenceBlockId: string;
 }
 
+// The bracket capture stops at `|` or `]` so an optional `|Label` alias never leaks into
+// canonicalTarget — the dedup/removal key stays exactly `file#^blockId` regardless of alias.
 const TASK_REF_RE =
-    /^-\s+\[( |x|X)\]\s+(.+?)\s+\|\s+canonical:\[\[(.+?)\]\](?:\s+\|\s+due:true)?(?:\s+\|\s+timebox:(\S+))?$/;
+    /^-\s+\[( |x|X)\]\s+(.+?)\s+\|\s+canonical:\[\[([^\]|]+)(?:\|[^\]]*)?\]\](?:\s+\|\s+due:true)?(?:\s+\|\s+timebox:(\S+))?$/;
 
 /**
  * Renders a derived, non-canonical Task day reference. Keeps checkbox syntax (per the spec's
  * rule that Task references stay visually recognizable as Tasks) but carries a `task-ref-*`
  * block id — never `task-*` — plus a `canonical:` link back to the source block, mirroring
  * EventDayReference's classify-by-namespace approach.
+ *
+ * The canonical link carries the title as a `|Label` alias — see EventDayReference's identical
+ * treatment for the rationale (stable absolute path, friendly in reading view).
  */
 export function formatTaskDayReferenceLine(fields: TaskDayReferenceFields): string {
     const target = formatScheduledItemBlockTarget(fields.canonicalFilePath, fields.canonicalBlockId);
+    const alias = stripLinkSyntax(fields.title) || "Task";
     const checkbox = fields.completed ? "x" : " ";
-    const segments = [`- [${checkbox}] ${fields.title} | canonical:[[${target}]]`];
+    const segments = [`- [${checkbox}] ${fields.title} | canonical:[[${target}|${alias}]]`];
     if (fields.due) segments.push("due:true");
     if (fields.timeboxId) segments.push(`timebox:${fields.timeboxId}`);
     return `${segments.join(" | ")} ^${fields.referenceBlockId}`;
+}
+
+/** Wikilink aliases can't contain `[`, `]`, or `|` — strip them defensively from user-authored text. */
+function stripLinkSyntax(text: string): string {
+    return text.replace(/[[\]|]/g, "").trim();
 }
 
 export function parseTaskDayReferenceLine(line: string): ParsedTaskDayReference | null {

@@ -25,8 +25,49 @@ test("formats and parses a focus-session line round trip", () => {
             durationSeconds: 1500,
             mode: "pomodoro",
             sessionId: "focus-abc1234567",
+            stressLevel: null,
+            emotionCategory: null,
+            emotionKey: null,
         },
     });
+});
+
+test("formats and parses a focus-session line carrying reflection fields", () => {
+    const line = formatFocusSessionLine({
+        start: "2026-08-31 09:12",
+        end: "2026-08-31 09:37",
+        durationSeconds: 1500,
+        mode: "pomodoro",
+        sessionId: "focus-abc1234567",
+        stressLevel: "medium",
+        emotionCategory: "pleasant",
+        emotionKey: "calm",
+    });
+    assert.equal(
+        line,
+        "    - focus-session | start:2026-08-31 09:12 | end:2026-08-31 09:37 | duration:25m | mode:pomodoro | stress:medium | emotion:pleasant | mood:calm ^focus-abc1234567",
+    );
+    assert.deepEqual(parseFocusSessionLine(line), {
+        status: "parsed",
+        session: {
+            start: "2026-08-31 09:12",
+            end: "2026-08-31 09:37",
+            durationSeconds: 1500,
+            mode: "pomodoro",
+            sessionId: "focus-abc1234567",
+            stressLevel: "medium",
+            emotionCategory: "pleasant",
+            emotionKey: "calm",
+        },
+    });
+});
+
+test("an unrecognized reflection field value degrades to absent instead of invalidating the line", () => {
+    const result = parseFocusSessionLine(
+        "    - focus-session | start:2026-08-31 09:12 | end:2026-08-31 09:37 | duration:25m | mode:pomodoro | stress:extreme ^focus-abc1234567",
+    );
+    assert.equal(result.status, "parsed");
+    assert.equal(result.status === "parsed" ? result.session.stressLevel : undefined, null);
 });
 
 test("formats and parses durations with hours, minutes, and seconds", () => {

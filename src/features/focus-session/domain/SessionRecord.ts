@@ -20,8 +20,10 @@ export interface SessionRecord {
     /** Specific emotion state from MoodReference, or null if user skipped. */
     moodKey: string | null;
     /**
-     * Comma-separated wikilinks added in the modal's Related field.
-     * Stored as the raw string the user typed; rendering joins them with spaces.
+     * Always empty now — LogModal no longer has a dedicated "Related links" field; a link
+     * relevant to the session goes inline in `notes` instead (see ContextNotesController on the
+     * Reflection and notes field). Kept only so the `{{links}}` template token stays valid for
+     * existing user templates rather than becoming an unknown placeholder.
      */
     links: string;
     /**

@@ -1,20 +1,20 @@
-import { type App, FuzzySuggestModal, Modal, Notice, Setting, type TFile } from "obsidian";
+import { type App, Modal, Setting } from "obsidian";
 import type { DisplayMode } from "../domain/Timer";
 import type { EmotionCategory, StressLevel } from "../../reflection/domain/Wellbeing";
 import type { FocusTarget } from "../../capture/domain/CaptureTarget";
 import { EmotionalWellbeingPicker } from "../../reflection/ui/EmotionalWellbeingPicker";
 import { FileSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
-import { isTFile } from "../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
+import { ContextNotesController } from "../../capture/moment/ui/InboxNotesController";
+import type { ContextSourceSettings } from "../../object-notes/domain/ContextSourceSettings";
 import { ReflectionFocusModal } from "../../reflection/ui/ReflectionFocusModal";
 
 export interface LogModalResult {
     task: string;
+    /** May contain inline [[links]]/[links](...) the user typed via @ mention — see ContextNotesController. */
     notes: string;
     stressLevel: StressLevel | null;
     emotionCategory: EmotionCategory | null;
     moodKey: string | null;
-    /** Comma-or-space-separated wikilinks. Stored as the user typed it. */
-    links: string;
 }
 
 export interface LogModalContext {
@@ -24,23 +24,23 @@ export interface LogModalContext {
     durationSeconds: number;
     initialTask: string;
     resolvedTarget: FocusTarget;
+    getContextSources: () => ContextSourceSettings[];
 }
 
 /**
- * Log modal with four input groups, top-to-bottom:
+ * Log modal with three input groups, top-to-bottom:
  *
  *   1. What are you doing      — single line, FileSuggest. If the user picks
  *                                a file, the value becomes [[FileName]] so it
  *                                renders as a link in the bullet.
  *   2. Emotional Wellbeing     — stress level + simple emotion category/state.
- *   3. Reflection and notes    — single textarea. The "head/heart/hand" prompt
- *                                lives in the placeholder as a reminder, not as
- *                                separate fields, so day-to-day logging stays
- *                                fast.
- *   4. Related links           — text input with a "+ Add note" button that
- *                                opens a fuzzy file picker; chosen files
- *                                append [[Name]] to the field. Free-form
- *                                editing also works.
+ *   3. Reflection and notes    — ContextNotesController (the same rich
+ *                                contenteditable Event/Task's Description field
+ *                                uses): type @ to link an Object Note, Task, or
+ *                                Event inline, alongside free-text reflection.
+ *                                No separate "Related links" field — a link
+ *                                relevant to the session belongs in the
+ *                                reflection itself, not a second place to fill in.
  *
  * Result delivery contract: onSubmit fires exactly once with either the
  * filled record or null (Discard / Esc / overlay close).
@@ -51,7 +51,8 @@ export class LogModal extends Modal {
     private stressLevel: StressLevel | null = null;
     private emotionCategory: EmotionCategory | null = null;
     private moodKey: string | null = null;
-    private links = "";
+    private notesController: ContextNotesController | null = null;
+    private notesEditorEl: HTMLDivElement | null = null;
     private resolved = false;
 
     constructor(
@@ -132,9 +133,9 @@ export class LogModal extends Modal {
 
         // ---- 3. Reflection and notes ---------------------------------------
         // Rendered as a full-width section (not an Obsidian Setting row),
-        // because the Setting layout puts the textarea in a 20%-wide column
+        // because the Setting layout puts the editor in a 20%-wide column
         // alongside the description — too cramped for actual reflective
-        // writing. Same shape as the Wellbeing and Related-links sections below.
+        // writing. Same shape as the Wellbeing section above.
         const reflectionSection = contentEl.createDiv({ cls: "focus-notes-modal-section" });
         const reflectionHead = reflectionSection.createDiv({ cls: "fn-reflection-head" });
         reflectionHead.createDiv({
@@ -143,7 +144,7 @@ export class LogModal extends Modal {
         });
         // "Open expanded" button — opens ReflectionFocusModal with wellbeing
         // reminder + CBT guidance for users who want the scaffolding while
-        // writing. The inline textarea below is preserved so quick logging
+        // writing. The inline editor below is preserved so quick logging
         // stays one click away.
         const expandBtn = reflectionHead.createEl("button", {
             cls: "fn-reflection-expand",
@@ -152,18 +153,26 @@ export class LogModal extends Modal {
         reflectionSection.createDiv({
             cls: "focus-notes-modal-desc",
             text:
-                "Anything — task progress, ideas, blockers, or what affected your wellbeing. " +
-                "Open expanded for CBT prompts and a thought-record view.",
+                "Anything — task progress, ideas, blockers, or what affected your wellbeing. Type @ to " +
+                "link an Object Note, Task, or Event. Open expanded for CBT prompts and a thought-record view.",
         });
-        const reflectionTextarea = reflectionSection.createEl("textarea", {
-            cls: "fn-reflection-inline-textarea",
+        this.notesEditorEl = reflectionSection.createDiv({
+            cls: "fn-gcal-desc-input fn-reflection-inline-editor",
             attr: {
-                placeholder: "What happened? What shifted your stress or emotion? What did you produce?",
+                role: "textbox",
+                "aria-label": "Reflection and notes",
+                "aria-multiline": "true",
+                "data-placeholder": "What happened? What shifted your stress or emotion? What did you produce?",
             },
         });
-        reflectionTextarea.rows = 6;
-        reflectionTextarea.addEventListener("input", () => {
-            this.notes = reflectionTextarea.value;
+        this.notesController = new ContextNotesController(this.app, this.notesEditorEl, {
+            initialValue: this.notes,
+            targetFile: this.context.resolvedTarget.file,
+            getContextSources: this.context.getContextSources,
+            referenceFormat: "markdown-link",
+            onChange: (value) => {
+                this.notes = value;
+            },
         });
         expandBtn.addEventListener("click", (evt) => {
             evt.preventDefault();
@@ -175,48 +184,14 @@ export class LogModal extends Modal {
                     emotionCategory: this.emotionCategory,
                     emotionKey: this.moodKey,
                 },
+                {
+                    targetFile: this.context.resolvedTarget.file,
+                    getContextSources: this.context.getContextSources,
+                },
                 (result) => {
-                    if (result !== null) {
-                        this.notes = result;
-                        reflectionTextarea.value = result;
-                    }
+                    if (result !== null) this.replaceNotesContent(result);
                 },
             ).open();
-        });
-
-        // ---- 4. Related links ----------------------------------------------
-        const linksSection = contentEl.createDiv({ cls: "focus-notes-modal-section" });
-        linksSection.createEl("div", {
-            cls: "focus-notes-modal-label",
-            text: "Related links",
-        });
-        linksSection.createEl("div", {
-            cls: "focus-notes-modal-desc",
-            text: "Notes you referenced or want to remember next session.",
-        });
-        const linksRow = linksSection.createDiv({ cls: "focus-notes-links-row" });
-        const linksInput = linksRow.createEl("input", {
-            type: "text",
-            cls: "focus-notes-links-input",
-            attr: {
-                placeholder: "[[Project X]] [[Performance notes]] — type or click + to pick",
-            },
-        });
-        linksInput.addEventListener("input", () => (this.links = linksInput.value));
-        const addBtn = linksRow.createEl("button", {
-            cls: "focus-notes-links-add",
-            text: "+ Add note",
-        });
-        addBtn.addEventListener("click", (evt) => {
-            // Prevent the default form-submit behavior of <button> inside a modal.
-            evt.preventDefault();
-            new FilePickerSuggester(this.app, (file) => {
-                const stem = file.basename;
-                const link = `[[${stem}]]`;
-                const trimmed = linksInput.value.trim();
-                linksInput.value = trimmed ? `${trimmed} ${link}` : link;
-                this.links = linksInput.value;
-            }).open();
         });
 
         // ---- Action buttons ------------------------------------------------
@@ -228,6 +203,9 @@ export class LogModal extends Modal {
     }
 
     onClose(): void {
+        this.notesController?.destroy();
+        this.notesController = null;
+        this.notesEditorEl = null;
         this.contentEl.empty();
         if (!this.resolved) {
             this.resolved = true;
@@ -251,9 +229,31 @@ export class LogModal extends Modal {
             stressLevel: this.stressLevel,
             emotionCategory: this.emotionCategory,
             moodKey: this.moodKey,
-            links: this.links,
         });
         this.close();
+    }
+
+    /**
+     * ContextNotesController has no public "replace the whole value" API (only the private
+     * constructor-time renderInitialValue does the markdown→rich-DOM parse), so ReflectionFocusModal's
+     * returned text is applied by tearing down and rebuilding the controller against the same
+     * container element rather than trying to diff/patch its contenteditable DOM by hand.
+     */
+    private replaceNotesContent(value: string): void {
+        this.notes = value;
+        const container = this.notesEditorEl;
+        if (!container) return;
+        this.notesController?.destroy();
+        container.empty();
+        this.notesController = new ContextNotesController(this.app, container, {
+            initialValue: value,
+            targetFile: this.context.resolvedTarget.file,
+            getContextSources: this.context.getContextSources,
+            referenceFormat: "markdown-link",
+            onChange: (next) => {
+                this.notes = next;
+            },
+        });
     }
 
     private summarizeContext(): string {
@@ -273,39 +273,3 @@ export class LogModal extends Modal {
         return `→ ${t.file}${heading} (${pos})`;
     }
 }
-
-/**
- * Tiny fuzzy file picker for the "+ Add note" button. Uses Obsidian's native
- * FuzzySuggestModal so it feels identical to the link-completer in the editor.
- */
-class FilePickerSuggester extends FuzzySuggestModal<TFile> {
-    constructor(
-        app: App,
-        private onPick: (file: TFile) => void,
-    ) {
-        super(app);
-        this.setPlaceholder("Pick a note to link…");
-    }
-
-    getItems(): TFile[] {
-        return this.app.vault
-            .getMarkdownFiles()
-            .filter(isTFile)
-            .sort((a, b) => a.path.localeCompare(b.path));
-    }
-
-    getItemText(file: TFile): string {
-        return file.path;
-    }
-
-    onChooseItem(file: TFile): void {
-        this.onPick(file);
-    }
-}
-
-/**
- * No-op reference to silence linters when Notice isn't used directly here yet.
- * If we add inline validation later (e.g. "you typed a non-existent link"),
- * Notice is the right surface.
- */
-void Notice;

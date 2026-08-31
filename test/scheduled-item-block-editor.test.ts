@@ -242,6 +242,48 @@ test("deleting a timebox cleanly removes its nested focus-session line instead o
     );
 });
 
+test("an Event's own direct-child focus-session line is excluded from description, not swallowed into it", () => {
+    const sourceLine = "- Workshop | start:2026-09-01 09:00 | end:2026-09-01 12:00 ^event-abc1234567";
+    const content = [
+        sourceLine,
+        "    - Bring the slides",
+        "    - focus-session | start:2026-09-01 09:08 | end:2026-09-01 10:02 | duration:54m | mode:stopwatch ^focus-aaaaaaaaaa",
+        "      - notes: Good energy today.",
+    ].join("\n");
+
+    const parsed = parseScheduledItemBlock(content);
+    assert.equal(parsed.status, "parsed");
+    if (parsed.status !== "parsed") return;
+    assert.equal(parsed.block.description, "Bring the slides");
+});
+
+test("editing an Event's description leaves its own focus-session history and notes untouched on disk", () => {
+    const sourceLine = "- Workshop | start:2026-09-01 09:00 | end:2026-09-01 12:00 ^event-abc1234567";
+    const content = [
+        sourceLine,
+        "    - Bring the slides",
+        "    - focus-session | start:2026-09-01 09:08 | end:2026-09-01 10:02 | duration:54m | mode:stopwatch ^focus-aaaaaaaaaa",
+        "      - notes: Good energy today.",
+    ].join("\n");
+    const captured = captureLedgerRecord(content, { filePath: "Events.md", lineNumber: 1, rawLine: sourceLine });
+    assert.equal(captured.status, "captured");
+    if (captured.status !== "captured") return;
+
+    const result = replaceScheduledItemBlock(content, captured.snapshot, {
+        firstLine: sourceLine,
+        description: "Bring the slides and handouts",
+        detailNote: { mode: "none" },
+    });
+    assert.equal(result.status, "ready");
+    if (result.status !== "ready") return;
+    assert.match(
+        result.content,
+        /focus-session \| start:2026-09-01 09:08 \| end:2026-09-01 10:02 \| duration:54m \| mode:stopwatch \^focus-aaaaaaaaaa/,
+    );
+    assert.match(result.content, /- notes: Good energy today\./);
+    assert.match(result.content, /Bring the slides and handouts/);
+});
+
 test("rejects a malformed timebox line and duplicate timebox identities", () => {
     const sourceLine = "- [ ] Task";
     const malformed = `${sourceLine}\n    - timebox | start:2026-08-31 09:00 | end:2026-08-31 11:00`;

@@ -829,11 +829,6 @@ body.fn-mobile-event-screen-open .suggestion-container {
     background: var(--background-primary);
     color: var(--text-normal);
 }
-.focus-notes-target-resolved {
-    color: var(--text-muted);
-    font-size: var(--font-ui-smaller);
-    overflow-wrap: anywhere;
-}
 .focus-notes-target-reset {
     align-self: flex-end;
     color: var(--text-muted);
@@ -954,34 +949,6 @@ body.fn-mobile-event-screen-open .suggestion-container {
     color: var(--text-muted);
     font-size: var(--font-ui-smaller);
     margin-bottom: 8px;
-}
-
-/* ---- Related links row ----------------------------------------------------- */
-.focus-notes-links-row {
-    display: flex;
-    gap: 8px;
-    align-items: stretch;
-}
-.focus-notes-links-input {
-    flex: 1;
-    min-width: 0;
-    padding: 6px 8px;
-    background: var(--background-modifier-form-field);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    color: var(--text-normal);
-}
-.focus-notes-links-add {
-    flex-shrink: 0;
-    padding: 6px 12px;
-    background: var(--interactive-normal);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    cursor: pointer;
-    color: var(--text-normal);
-}
-.focus-notes-links-add:hover {
-    background: var(--interactive-hover);
 }
 
 /* ---- Group-by-date controls in the live target panel ---------------------- */
@@ -2802,19 +2769,11 @@ body.fn-mobile-event-screen-open .suggestion-container {
     border-color: var(--interactive-accent);
     background: var(--background-modifier-hover);
 }
-.fn-reflection-inline-textarea {
-    width: 100%;
-    min-height: 96px;
-    padding: 8px;
-    background: var(--background-modifier-form-field);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    color: var(--text-normal);
-    font-family: inherit;
-    font-size: var(--font-text);
+/* Reflection and notes reuses the Description editor's look (.fn-gcal-desc-input); this just
+   grows its min-height since reflective writing needs more room than a links list. */
+.fn-reflection-inline-editor {
+    min-height: 120px;
     line-height: 1.5;
-    resize: vertical;
-    box-sizing: border-box;
 }
 
 /* ---- Expanded reflection modal -------------------------------------------- */
@@ -2905,22 +2864,12 @@ body.fn-mobile-event-screen-open .suggestion-container {
     font-size: var(--font-ui-smaller);
     margin-bottom: 6px;
 }
+/* Reflection's big write-in editor reuses .fn-gcal-desc-input's look (border, padding,
+   background); this only adds what's specific to the larger expanded-modal editor. */
 .fn-reflection-textarea {
-    width: 100%;
-    padding: 12px;
-    background: var(--background-modifier-form-field);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
-    color: var(--text-normal);
-    font-family: inherit;
+    min-height: 280px;
     font-size: var(--font-text);
     line-height: 1.55;
-    resize: vertical;
-    box-sizing: border-box;
-}
-.fn-reflection-textarea:focus {
-    border-color: var(--interactive-accent);
-    outline: none;
 }
 
 /* ---- Collapsible CBT panels ----------------------------------------------- */
@@ -3952,6 +3901,29 @@ body.fn-mobile-event-screen-open .suggestion-container {
     color: var(--text-muted);
 }
 
+/* Native datetime-local picker fields for Add/Edit timebox. */
+.fn-timebox-datetime-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-2-1);
+    margin-right: var(--size-4-2);
+}
+
+.fn-timebox-datetime-label {
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+}
+
+.fn-timebox-datetime-input {
+    font-family: inherit;
+    font-size: var(--font-ui-small);
+    padding: var(--size-2-1) var(--size-2-2);
+    border-radius: var(--input-radius);
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+}
+
 /* ---- Mobile modal layout ------------------------------------------------ */
 
 @media (max-width: 640px) {
@@ -3998,14 +3970,12 @@ body.fn-mobile-event-screen-open .suggestion-container {
         margin: 0;
     }
 
-    .focus-notes-links-row,
     .fn-reflection-head,
     .focus-notes-modal-buttons {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .focus-notes-links-add,
     .focus-notes-modal-buttons button,
     .fn-reflection-expand {
         width: 100%;

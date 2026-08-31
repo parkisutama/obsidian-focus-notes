@@ -1,18 +1,21 @@
 import { type App, Notice } from "obsidian";
+import { EventTaskWriter } from "../../../infrastructure/obsidian/capture/EventTaskWriter.ts";
 import type { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
 import {
     type WriteCanonicalFocusSessionResult,
     writeCanonicalFocusSession,
 } from "../../../infrastructure/obsidian/focus-session/CanonicalFocusSessionWriter.ts";
+import { runFocusSessionWeekProjection } from "../../../infrastructure/obsidian/focus-session/FocusSessionWeekProjectionRuntime.ts";
 import type { NoteWriter } from "../../../infrastructure/obsidian/focus-session/NoteWriter";
-import { formatLocalDateTime } from "../../capture/domain/EventTaskFormState.ts";
 import type { FocusTarget } from "../../capture/domain/CaptureTarget";
+import { formatLocalDateTime } from "../../capture/domain/EventTaskFormState.ts";
+import type { EmotionCategory, StressLevel } from "../../reflection/domain/Wellbeing.ts";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
 import { createFocusSessionId } from "../domain/FocusSessionLine.ts";
 import type { FocusSessionOwner } from "../domain/OwnedFocusSession.ts";
-import type { TimerEngine } from "../domain/TimerEngine";
-import type { DisplayMode } from "../domain/Timer";
 import type { SessionRecord } from "../domain/SessionRecord";
+import type { DisplayMode } from "../domain/Timer";
+import type { TimerEngine } from "../domain/TimerEngine";
 import { LogModal } from "./LogModal";
 
 export interface TimerLogWorkflowOptions {
@@ -70,8 +73,16 @@ export class TimerLogWorkflow {
     }
 
     private async openLogModal(startTime: Date, endTime: Date, durationSeconds: number): Promise<void> {
-        const { app, buildResolver, buildWriter, getCurrentMode, getFocusInput, setFocusInput, getPlannedMinutes } =
-            this.options;
+        const {
+            app,
+            buildResolver,
+            buildWriter,
+            getCurrentMode,
+            getFocusInput,
+            setFocusInput,
+            getPlannedMinutes,
+            getSettings,
+        } = this.options;
         const resolver = buildResolver();
         const resolvedTarget = resolver.resolve(this.activeTarget(), endTime);
         const currentMode = getCurrentMode();
@@ -85,6 +96,7 @@ export class TimerLogWorkflow {
                     durationSeconds,
                     initialTask: getFocusInput(),
                     resolvedTarget,
+                    getContextSources: () => getSettings().inbox.contextSources,
                 },
                 async (result) => {
                     if (!result) {
@@ -100,6 +112,12 @@ export class TimerLogWorkflow {
                                   endTime,
                                   durationSeconds,
                                   currentMode,
+                                  {
+                                      stressLevel: result.stressLevel,
+                                      emotionCategory: result.emotionCategory,
+                                      emotionKey: result.moodKey,
+                                      notes: result.notes,
+                                  },
                               )
                             : "";
                         const record: SessionRecord = {
@@ -113,7 +131,7 @@ export class TimerLogWorkflow {
                             stressLevel: result.stressLevel,
                             emotionCategory: result.emotionCategory,
                             moodKey: result.moodKey,
-                            links: result.links,
+                            links: "",
                             canonicalLink,
                         };
                         await buildWriter().writeSession(record, resolvedTarget);
@@ -145,6 +163,12 @@ export class TimerLogWorkflow {
         endTime: Date,
         durationSeconds: number,
         mode: DisplayMode,
+        reflection: {
+            stressLevel: StressLevel | null;
+            emotionCategory: EmotionCategory | null;
+            emotionKey: string | null;
+            notes: string;
+        },
     ): Promise<string> {
         const sessionId = createFocusSessionId();
         const fields = {
@@ -152,18 +176,28 @@ export class TimerLogWorkflow {
             actualEnd: formatLocalDateTime(endTime),
             durationSeconds,
             mode,
+            stressLevel: reflection.stressLevel,
+            emotionCategory: reflection.emotionCategory,
+            emotionKey: reflection.emotionKey,
+            notes: reflection.notes,
         };
         const attempt = (): Promise<WriteCanonicalFocusSessionResult> =>
             writeCanonicalFocusSession(this.options.app, owner, sessionId, fields);
         const result = await attempt();
         if (result.status === "orphan") {
-            this.notifyOrphanedCanonicalWrite(attempt);
+            this.notifyOrphanedCanonicalWrite(attempt, owner, startTime, endTime);
             return "";
         }
+        if (result.status === "written") this.projectOwnedSessionWeekly(owner, startTime, endTime);
         return `[[${result.filePath}#^${sessionId}]]`;
     }
 
-    private notifyOrphanedCanonicalWrite(retry: () => Promise<WriteCanonicalFocusSessionResult>): void {
+    private notifyOrphanedCanonicalWrite(
+        retry: () => Promise<WriteCanonicalFocusSessionResult>,
+        owner: FocusSessionOwner,
+        startTime: Date,
+        endTime: Date,
+    ): void {
         const notice = new Notice(
             createFragment((frag) => {
                 frag.createSpan({
@@ -173,13 +207,32 @@ export class TimerLogWorkflow {
                 button.addEventListener("click", () => {
                     notice.hide();
                     void retry().then((result) => {
-                        if (result.status === "orphan") this.notifyOrphanedCanonicalWrite(retry);
-                        else new Notice("Focus Session linked to its Task/Event.");
+                        if (result.status === "orphan") {
+                            this.notifyOrphanedCanonicalWrite(retry, owner, startTime, endTime);
+                            return;
+                        }
+                        new Notice("Focus Session linked to its Task/Event.");
+                        if (result.status === "written") this.projectOwnedSessionWeekly(owner, startTime, endTime);
                     });
                 });
             }),
             0,
         );
+    }
+
+    /**
+     * Fire-and-forget: a failed Weekly cross-reference is logged, not surfaced, since the
+     * canonical Focus Session record (the source of truth) is already safely written by the
+     * time this runs. See FocusSessionWeekProjectionRuntime for the write-only rationale.
+     */
+    private projectOwnedSessionWeekly(owner: FocusSessionOwner, startTime: Date, endTime: Date): void {
+        const settings = this.options.getSettings();
+        const writer = new EventTaskWriter(this.options.app, settings.eventTask, () => settings);
+        void runFocusSessionWeekProjection(this.options.app, settings, writer, {
+            owner,
+            start: startTime,
+            end: endTime,
+        });
     }
 
     private activeTarget(): FocusTarget {

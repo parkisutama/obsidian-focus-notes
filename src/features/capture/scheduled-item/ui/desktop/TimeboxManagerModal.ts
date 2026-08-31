@@ -13,7 +13,11 @@ import {
 import { captureLedgerRecord, type LedgerRecordSnapshot } from "../../domain/LedgerRecordSource.ts";
 import { extractScheduledItemBlockId } from "../../domain/ScheduledItemBlockId.ts";
 import { type ScheduledItemBlock, parseScheduledItemBlock } from "../../domain/ScheduledItemBlockEditor.ts";
-import { parseLocalDateTime } from "../../domain/ScheduledItemFormAdapter.ts";
+import {
+    fromDateTimeLocalValue,
+    parseLocalDateTime,
+    toDateTimeLocalValue,
+} from "../../domain/ScheduledItemFormAdapter.ts";
 import type { TaskTimebox, TaskTimeboxStatus } from "../../domain/TaskTimebox.ts";
 import { planTaskDayReferences, type TaskDayReferenceTimebox } from "../../domain/TaskDayReferencePlan.ts";
 import { describeTaskTimeboxWarnings } from "../../domain/TaskTimeboxWarningLabel.ts";
@@ -166,16 +170,12 @@ export class TimeboxManagerModal extends Modal {
         let start = timebox.start;
         let end = timebox.end;
         const setting = new Setting(container).setName("Edit timebox");
-        setting.addText((text) =>
-            text.setValue(timebox.start).onChange((value) => {
-                start = value;
-            }),
-        );
-        setting.addText((text) =>
-            text.setValue(timebox.end).onChange((value) => {
-                end = value;
-            }),
-        );
+        this.renderDateTimeField(setting.controlEl, "Start", timebox.start, (value) => {
+            start = value;
+        });
+        this.renderDateTimeField(setting.controlEl, "End", timebox.end, (value) => {
+            end = value;
+        });
         setting.addButton((button) =>
             button
                 .setCta()
@@ -190,20 +190,34 @@ export class TimeboxManagerModal extends Modal {
         );
     }
 
+    /** Native browser date/time picker instead of a free-typed "YYYY-MM-DD HH:mm" string. */
+    private renderDateTimeField(
+        container: HTMLElement,
+        label: string,
+        value: string,
+        onChange: (value: string) => void,
+    ): void {
+        const field = container.createDiv({ cls: "fn-timebox-datetime-field" });
+        field.createSpan({ cls: "fn-timebox-datetime-label", text: label });
+        const input = field.createEl("input", {
+            type: "datetime-local",
+            cls: "fn-timebox-datetime-input",
+            attr: { "aria-label": `Timebox ${label.toLowerCase()}` },
+        });
+        input.value = toDateTimeLocalValue(value);
+        input.addEventListener("change", () => onChange(fromDateTimeLocalValue(input.value)));
+    }
+
     private renderAddForm(container: HTMLElement): void {
         let start = "";
         let end = "";
-        const setting = new Setting(container).setName("Add timebox").setDesc("YYYY-MM-DD HH:mm");
-        setting.addText((text) =>
-            text.setPlaceholder("Start").onChange((value) => {
-                start = value;
-            }),
-        );
-        setting.addText((text) =>
-            text.setPlaceholder("End").onChange((value) => {
-                end = value;
-            }),
-        );
+        const setting = new Setting(container).setName("Add timebox");
+        this.renderDateTimeField(setting.controlEl, "Start", "", (value) => {
+            start = value;
+        });
+        this.renderDateTimeField(setting.controlEl, "End", "", (value) => {
+            end = value;
+        });
         setting.addButton((button) =>
             button
                 .setCta()

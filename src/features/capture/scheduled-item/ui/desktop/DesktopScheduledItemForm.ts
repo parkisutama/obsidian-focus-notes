@@ -4,11 +4,13 @@ import { ContextNotesController } from "../../../moment/ui/InboxNotesController"
 import { parseObjectReferences } from "../../../domain/ObjectReference.ts";
 import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData";
 import type { ContextSourceSettings } from "../../../../object-notes/domain/ContextSourceSettings";
+import type { ScannedFocusSession } from "../../../../focus-session/domain/FocusSessionBlockScan.ts";
 import {
     type DesktopScheduledItemCreateContext,
     renderDesktopCreateTargetSection,
 } from "./DesktopCreateTargetSection.ts";
 import { renderDesktopDetailSection } from "./DesktopDetailSection.ts";
+import { renderDesktopFocusSessionsSection } from "./DesktopFocusSessionsSection.ts";
 import { renderDesktopTemporalSection } from "./DesktopTemporalSection.ts";
 
 export type { DesktopScheduledItemCreateContext } from "./DesktopCreateTargetSection.ts";
@@ -32,6 +34,9 @@ export interface DesktopScheduledItemFormOptions {
     onPlannedStartChange?(value: string): void;
     /** Edit-mode Task only: opens the Timebox Manager for this Task's saved canonical block. */
     onManageTimeboxes?(): void;
+    /** Edit mode only: Focus Sessions already logged against this Event/Task's canonical block. */
+    focusSessions?: ScannedFocusSession[];
+    onEditFocusSession?(session: ScannedFocusSession): void;
 }
 
 export class DesktopScheduledItemForm {
@@ -73,6 +78,12 @@ export class DesktopScheduledItemForm {
             onEventStartChanged: (value) => this.options.onPlannedStartChange?.(value),
             onManageTimeboxes: this.options.onManageTimeboxes,
         });
+        if (this.options.focusSessions && this.options.onEditFocusSession) {
+            renderDesktopFocusSessionsSection(container, {
+                sessions: this.options.focusSessions,
+                onEdit: this.options.onEditFocusSession,
+            });
+        }
         this.renderDescription(container);
         renderDesktopDetailSection(container, {
             app: this.options.app,

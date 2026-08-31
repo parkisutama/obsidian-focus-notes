@@ -1,5 +1,7 @@
 import { Setting } from "obsidian";
 import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
+import { HeadingSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters.ts";
+import { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver.ts";
 import { renderProfilePicker } from "./SettingsFormFields";
 import type { SettingsRenderContext } from "./SettingsRenderContext";
 
@@ -64,16 +66,25 @@ function renderFocusSessionCapture(containerEl: HTMLElement, ctx: SettingsRender
             "Heading text (no #) under which entries land. Used when the chosen profile has no dated " +
                 "per-period heading. Empty = append to end of file. Created at level ## if missing.",
         )
-        .addText((text) =>
-            text
-                .setPlaceholder("Focus timeline")
+        .addText((text) => {
+            text.setPlaceholder("Focus timeline")
                 .setValue(ctx.settings.captureFocusSession.heading)
                 .onChange(async (v) => {
                     ctx.settings.captureFocusSession.heading = v.trim();
                     ctx.settings.liveTarget.heading = "";
                     await ctx.saveSettings();
-                }),
-        );
+                });
+            // Scoped to the profile's today-resolved file so suggestions reflect whatever
+            // note the chosen Periodical Notes profile currently points at.
+            new HeadingSuggest(
+                ctx.app,
+                text.inputEl,
+                () =>
+                    new TargetResolver(ctx.app, ctx.settings).getPeriodicalTarget(
+                        ctx.settings.captureFocusSession.profileId,
+                    )?.file ?? "",
+            );
+        });
 
     new Setting(containerEl).setName("Insert position").addDropdown((drop) =>
         drop
@@ -200,7 +211,7 @@ function renderLogEntryFormat(containerEl: HTMLElement, ctx: SettingsRenderConte
         ["{{moodEmoji}}", "Compatibility alias for {{emotionEmoji}}"],
         ["{{moodTag}}", "Compatibility alias for #mood/<emotionKey>"],
         ["{{moodKeywords}}", "Compatibility mood keywords as space-separated #tags"],
-        ["{{links}}", "Related links from the modal"],
+        ["{{links}}", "Always empty — kept for older templates; add links inline in {{notes}} instead"],
     ];
     for (const [token, desc] of placeholders) {
         const li = ul.createEl("li");

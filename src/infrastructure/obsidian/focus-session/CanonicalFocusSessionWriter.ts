@@ -1,10 +1,13 @@
 import type { App } from "obsidian";
+import type { LedgerRecordSnapshot } from "../../../features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import {
     captureLedgerRecord,
     replaceLedgerRecordBlock,
 } from "../../../features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import {
     type CanonicalFocusSessionFields,
+    type EditFocusSessionFields,
+    editFocusSessionInBlock,
     recordFocusSessionInBlock,
 } from "../../../features/focus-session/domain/CanonicalFocusSessionAppend.ts";
 import type { FocusSessionOwner } from "../../../features/focus-session/domain/OwnedFocusSession.ts";
@@ -56,4 +59,34 @@ export async function writeCanonicalFocusSession(
 
     await app.vault.modify(file, replaced.content);
     return { status: "written", filePath: candidate.filePath };
+}
+
+export type EditCanonicalFocusSessionResult = { status: "saved" } | { status: "not-found" } | { status: "conflict" };
+
+/**
+ * Rewrites one already-recorded Focus Session's reflection fields (stress/emotion/mood/notes) in
+ * place, from a `LedgerRecordSnapshot` the caller already holds (e.g. the owner's Manage modal,
+ * which loaded it to render the session list in the first place) — no separate owner→file
+ * resolution needed, unlike `writeCanonicalFocusSession`. Conflict-safe via the same
+ * `replaceLedgerRecordBlock` staleness check every other canonical-block editor in this codebase
+ * uses.
+ */
+export async function editCanonicalFocusSession(
+    app: App,
+    snapshot: LedgerRecordSnapshot,
+    sessionId: string,
+    fields: EditFocusSessionFields,
+): Promise<EditCanonicalFocusSessionResult> {
+    const file = app.vault.getAbstractFileByPath(snapshot.filePath);
+    if (!isTFile(file)) return { status: "conflict" };
+
+    const edited = editFocusSessionInBlock(snapshot.rawBlock, sessionId, fields);
+    if (edited.status === "not-found") return { status: "not-found" };
+
+    const content = await app.vault.read(file);
+    const replaced = replaceLedgerRecordBlock(content, snapshot, edited.block);
+    if (replaced.status !== "ready") return { status: "conflict" };
+
+    await app.vault.modify(file, replaced.content);
+    return { status: "saved" };
 }

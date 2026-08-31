@@ -52,8 +52,11 @@ export interface ParsedEventDayReference {
     referenceBlockId: string;
 }
 
-const TIMED_RE = /^-\s+(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\s+-\s+(\d{2}:\d{2})\s+(.+?)\s+\|\s+canonical:\[\[(.+?)\]\]$/;
-const ALL_DAY_RE = /^-\s+(\d{4}-\d{2}-\d{2})\s+(.+?)\s+\|\s+canonical:\[\[(.+?)\]\]$/;
+// The bracket capture stops at `|` or `]` so an optional `|Label` alias never leaks into
+// canonicalTarget — the dedup/removal key stays exactly `file#^blockId` regardless of alias.
+const TIMED_RE =
+    /^-\s+(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\s+-\s+(\d{2}:\d{2})\s+(.+?)\s+\|\s+canonical:\[\[([^\]|]+)(?:\|[^\]]*)?\]\]$/;
+const ALL_DAY_RE = /^-\s+(\d{4}-\d{2}-\d{2})\s+(.+?)\s+\|\s+canonical:\[\[([^\]|]+)(?:\|[^\]]*)?\]\]$/;
 
 /**
  * Renders a derived, non-canonical Event day reference. Mirrors the canonical Event line's
@@ -61,13 +64,19 @@ const ALL_DAY_RE = /^-\s+(\d{4}-\d{2}-\d{2})\s+(.+?)\s+\|\s+canonical:\[\[(.+?)\
  * `event-ref-*` block id (never `event-*`) plus a `canonical:` link back to the source block —
  * that block-id namespace is what lets parsers classify it as a reference before a canonical
  * entry, per the spec's Daily projection rules.
+ *
+ * The canonical link carries the title as a `|Label` alias — same stable absolute `file#^blockId`
+ * target as always (matching how `detail:` links already use a plain, portable vault path rather
+ * than following Obsidian's live link-format setting), but Obsidian renders an aliased link as
+ * just the label in reading view, so the line doesn't read as a raw wikilink.
  */
 export function formatEventDayReferenceLine(fields: EventDayReferenceFields): string {
     const target = formatScheduledItemBlockTarget(fields.canonicalFilePath, fields.canonicalBlockId);
+    const alias = stripLinkSyntax(fields.title) || "Event";
     const header = fields.allDay
         ? `- ${fmtDate(fields.start)} ${fields.title}`
         : `- ${fmtDate(fields.start)} ${fmtTime(fields.start)} - ${fmtTime(fields.end ?? fields.start)} ${fields.title}`;
-    return `${header} | canonical:[[${target}]] ^${fields.referenceBlockId}`;
+    return `${header} | canonical:[[${target}|${alias}]] ^${fields.referenceBlockId}`;
 }
 
 export function parseEventDayReferenceLine(line: string): ParsedEventDayReference | null {
@@ -82,6 +91,11 @@ export function parseEventDayReferenceLine(line: string): ParsedEventDayReferenc
     if (!allDay) return null;
     const [, start, title, canonicalTarget] = allDay;
     return { title, start, end: null, allDay: true, canonicalTarget, referenceBlockId: blockId };
+}
+
+/** Wikilink aliases can't contain `[`, `]`, or `|` — strip them defensively from user-authored text. */
+function stripLinkSyntax(text: string): string {
+    return text.replace(/[[\]|]/g, "").trim();
 }
 
 /**

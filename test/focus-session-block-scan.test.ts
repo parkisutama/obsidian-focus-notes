@@ -14,6 +14,10 @@ test("attributes a focus-session directly under an Event's own line to no timebo
             durationSeconds: 3240,
             mode: "stopwatch",
             ownerTimeboxId: null,
+            stressLevel: null,
+            emotionCategory: null,
+            emotionKey: null,
+            notes: null,
         },
     ]);
 });
@@ -32,6 +36,10 @@ test("attributes a focus-session nested under a Task timebox to that timebox's i
             durationSeconds: 1500,
             mode: "pomodoro",
             ownerTimeboxId: "timebox-aaaaaaaaaa",
+            stressLevel: null,
+            emotionCategory: null,
+            emotionKey: null,
+            notes: "Menyelesaikan bagian kesimpulan",
         },
     ]);
 });

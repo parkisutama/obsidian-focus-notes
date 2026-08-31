@@ -11,7 +11,7 @@ export type InsertScheduledItemChildResult = { status: "inserted"; content: stri
 export function insertScheduledItemChildLine(
     content: string,
     anchorBlockId: string,
-    buildLine: (indent: string) => string,
+    buildLine: (indent: string, lineEnding: "\r\n" | "\n") => string,
 ): InsertScheduledItemChildResult {
     const trailing = new RegExp(`\\^${anchorBlockId}\\s*$`);
     const lineEnding = content.includes("\r\n") ? "\r\n" : "\n";
@@ -41,7 +41,7 @@ export function insertScheduledItemChildLine(
                 scanFrom = insertAt;
             }
 
-            const childLine = buildLine(`${" ".repeat(anchorIndent + 2)}`);
+            const childLine = buildLine(`${" ".repeat(anchorIndent + 2)}`, lineEnding);
             const needsLeadingNewline =
                 insertAt === content.length && content.length > 0 && !content.endsWith(lineEnding);
             const insertion = needsLeadingNewline

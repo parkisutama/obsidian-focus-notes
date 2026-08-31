@@ -25,6 +25,11 @@ import {
 } from "../../../../../infrastructure/obsidian/capture/TaskDayProjectionRuntime.ts";
 import { TimeboxManagerModal } from "./TimeboxManagerModal.ts";
 import {
+    scanFocusSessionsInBlock,
+    type ScannedFocusSession,
+} from "../../../../focus-session/domain/FocusSessionBlockScan.ts";
+import { FocusSessionEditModal } from "../../../../focus-session/ui/FocusSessionEditModal.ts";
+import {
     retryScheduledItemEditRelated,
     type ScheduledItemEditSubmissionResult,
     submitScheduledItemEdit,
@@ -99,8 +104,29 @@ export class ScheduledItemDesktopEditModal extends Modal {
             onSubmit: () => void this.submit(),
             onCancel: () => this.close(),
             onManageTimeboxes: this.data.kind === "task" ? () => this.openTimeboxManager() : undefined,
+            focusSessions: scanFocusSessionsInBlock(this.snapshot.rawBlock),
+            onEditFocusSession: (session) => this.openFocusSessionEdit(session),
         });
         this.renderer.render(this.contentEl);
+    }
+
+    /**
+     * Focus Sessions persist directly to the vault from their own modal, same rationale as
+     * openTimeboxManager: close this Edit modal first rather than risk a later "Save" here
+     * overwriting the session edit with stale in-memory state.
+     */
+    private openFocusSessionEdit(session: ScannedFocusSession): void {
+        const onComplete = this.onComplete;
+        const snapshot = this.snapshot;
+        const getSettings = this.getSettings;
+        this.close();
+        new FocusSessionEditModal(
+            this.app,
+            snapshot,
+            session,
+            () => getSettings().inbox.contextSources,
+            onComplete,
+        ).open();
     }
 
     /**

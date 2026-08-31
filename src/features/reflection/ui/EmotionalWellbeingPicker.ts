@@ -27,12 +27,18 @@ export class EmotionalWellbeingPicker {
     constructor(
         parent: HTMLElement,
         private onChange: (value: EmotionalWellbeingValue) => void,
+        initial?: EmotionalWellbeingValue,
     ) {
+        this.stressLevel = initial?.stressLevel ?? null;
+        this.emotionCategory = initial?.emotionCategory ?? null;
+        this.emotionKey = initial?.emotionKey ?? null;
         this.container = parent.createDiv({ cls: "fn-wellbeing-picker" });
         this.renderStress();
         this.renderEmotionCategories();
         this.emotionStatesEl = this.container.createDiv({ cls: "fn-wellbeing-states" });
         this.summaryEl = this.container.createDiv({ cls: "fn-mood-summary" });
+        this.refreshStressButtons();
+        this.refreshCategoryButtons();
         this.renderEmotionStates();
         this.refreshSummary();
     }

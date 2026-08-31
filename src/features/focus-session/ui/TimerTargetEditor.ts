@@ -7,14 +7,13 @@ import type { FocusTarget } from "../../capture/domain/CaptureTarget";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
 
 /**
- * The Timer sidebar's collapsible "Log target" section: file/heading/position
- * and group-by-date inputs, plus the resolved-target preview. Live edits here
- * write to settings.liveTarget, which TargetResolver prefers over the
- * configured Focus session capture target.
+ * The Timer sidebar's collapsible "More options" section — Save to / Heading / Insert position
+ * and group-by-date inputs, matching the label conventions of Event/Task/Moment's own capture
+ * forms (see InboxDesktopForm.ts). Live edits here write to settings.liveTarget, which
+ * TargetResolver prefers over the configured Focus session capture target.
  */
 export class TimerTargetEditor {
     private targetFileInput!: HTMLInputElement;
-    private targetResolvedPreviewEl!: HTMLElement;
     private targetHeadingInput!: HTMLInputElement;
     private targetPositionSelect!: HTMLSelectElement;
     private targetGroupToggle!: HTMLInputElement;
@@ -33,7 +32,7 @@ export class TimerTargetEditor {
         const details = parent.createEl("details", { cls: "focus-notes-section" });
         details.setAttribute("open", "");
         const summary = details.createEl("summary");
-        summary.createEl("span", { text: "Log target", cls: "focus-notes-section-title" });
+        summary.createEl("span", { text: "More options", cls: "focus-notes-section-title" });
 
         const body = details.createDiv({ cls: "focus-notes-section-body" });
 
@@ -53,23 +52,22 @@ export class TimerTargetEditor {
             true,
         );
 
-        // File row
+        // File row — shows the resolved concrete path (e.g. "Daily/2026-08-30.md"), the same
+        // way Event/Task's "Save to file" field shows a plain path rather than a template.
+        // liveTarget.file itself can still hold a {{date:FORMAT}} token (advanced/typed-by-hand
+        // use), but the field never leads with that syntax by default.
         const fileRow = body.createDiv({ cls: "focus-notes-target-row" });
-        fileRow.createEl("label", { text: "File", cls: "focus-notes-target-label" });
+        fileRow.createEl("label", { text: "Save to", cls: "focus-notes-target-label" });
         const fileCell = fileRow.createDiv({ cls: "focus-notes-target-cell" });
         this.targetFileInput = fileCell.createEl("input", {
             type: "text",
             cls: "focus-notes-target-input",
-            attr: { placeholder: "Path or template, e.g. Daily/{{date:YYYY-MM-DD}}.md" },
+            attr: { placeholder: "e.g. Daily/2026-08-30.md" },
         });
         new FileSuggest(this.app, this.targetFileInput);
         this.targetFileInput.addEventListener("input", () => {
             this.getSettings().liveTarget.file = this.targetFileInput.value.trim();
-            this.updateTargetResolvedPreview();
             persistTargetEdit();
-        });
-        this.targetResolvedPreviewEl = fileCell.createDiv({
-            cls: "focus-notes-target-resolved",
         });
 
         // Heading row — uses the file-aware HeadingSuggest so it autocompletes
@@ -97,7 +95,7 @@ export class TimerTargetEditor {
         // Position row — a <select> only fires "change" (no per-character
         // editing to debounce), so the simpler immediate save is fine here.
         const posRow = body.createDiv({ cls: "focus-notes-target-row" });
-        posRow.createEl("label", { text: "Position", cls: "focus-notes-target-label" });
+        posRow.createEl("label", { text: "Insert position", cls: "focus-notes-target-label" });
         this.targetPositionSelect = posRow.createEl("select", {
             cls: "focus-notes-target-input",
         });
@@ -181,21 +179,20 @@ export class TimerTargetEditor {
         return this.buildResolver().getActiveTarget();
     }
 
+    /**
+     * Populates the File field with the resolved concrete path (today's actual file), not the
+     * unresolved `{{date:FORMAT}}` template — matching how Event/Task's "Save to file" always
+     * shows a plain path. Untouched (empty liveTarget.file), this is display-only: it doesn't
+     * persist, so the field still shows tomorrow's file correctly next time this re-syncs.
+     */
     private syncTargetInputs(): void {
         const active = this.activeTarget();
-        this.targetFileInput.value = active.file;
+        this.targetFileInput.value = this.buildResolver().resolve(active).file;
         this.targetHeadingInput.value = active.heading;
         this.targetPositionSelect.value = active.position;
         const s = this.getSettings();
         this.targetGroupToggle.checked = s.groupByDate;
         this.targetGroupLevelSelect.value = String(s.dateSubHeadingLevel);
         this.targetGroupLevelSelect.disabled = !s.groupByDate;
-        this.updateTargetResolvedPreview();
-    }
-
-    private updateTargetResolvedPreview(): void {
-        if (!this.targetResolvedPreviewEl) return;
-        const resolved = this.buildResolver().resolve(this.activeTarget());
-        this.targetResolvedPreviewEl.setText(resolved.file ? `Today: ${resolved.file}` : "");
     }
 }

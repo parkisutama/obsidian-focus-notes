@@ -181,13 +181,12 @@ export class TimeboxManagerMobileScreen extends Component {
     private renderEditRow(container: HTMLElement, timebox: TaskTimebox): void {
         let start = timebox.start;
         let end = timebox.end;
-        const startInput = container.createEl("input", { type: "text", value: timebox.start });
-        startInput.addEventListener("change", () => {
-            start = startInput.value;
+        const fields = new MobileFormFields((change) => change());
+        fields.dateTime(container, "Start", timebox.start, true, (value) => {
+            start = value ?? "";
         });
-        const endInput = container.createEl("input", { type: "text", value: timebox.end });
-        endInput.addEventListener("change", () => {
-            end = endInput.value;
+        fields.dateTime(container, "End", timebox.end, true, (value) => {
+            end = value ?? "";
         });
         const save = container.createEl("button", { text: "Save", attr: { type: "button" } });
         save.addEventListener("click", () => this.applyEdit(timebox.timeboxId, { start, end }));
@@ -201,11 +200,11 @@ export class TimeboxManagerMobileScreen extends Component {
     private renderAddForm(container: HTMLElement, fields: MobileFormFields): void {
         let start = "";
         let end = "";
-        fields.text(container, "New timebox start", start, (value) => {
-            start = value;
+        fields.dateTime(container, "New timebox start", null, true, (value) => {
+            start = value ?? "";
         });
-        fields.text(container, "New timebox end", end, (value) => {
-            end = value;
+        fields.dateTime(container, "New timebox end", null, true, (value) => {
+            end = value ?? "";
         });
         const add = container.createEl("button", { text: "Add timebox", cls: "mod-cta", attr: { type: "button" } });
         add.addEventListener("click", () => this.applyAdd({ start, end }));

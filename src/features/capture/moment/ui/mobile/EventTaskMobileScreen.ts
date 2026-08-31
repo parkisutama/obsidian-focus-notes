@@ -342,8 +342,20 @@ export class EventTaskMobileScreen extends Component {
         }
     }
 
+    /**
+     * See the desktop EventTaskModal's identical method for the full rationale: the written
+     * heading is the plain per-day text wrapped as a link to that day's Daily Note (via
+     * Obsidian's own link formatter, respecting the user's New Link Format setting) whenever the
+     * resolved target uses a dated per-period heading. `this.form.inboxHeading` — what the
+     * editable Heading field shows — is never touched here.
+     */
     private resolveInboxTarget(): FocusTarget | null {
-        return resolveInboxFormTarget(new TargetResolver(this.app, this.getSettings()), this.form);
+        const settings = this.getSettings();
+        const target = resolveInboxFormTarget(new TargetResolver(this.app, settings), this.form);
+        if (!target || !this.momentUsesDatedHeading()) return target;
+        const writer = new EventTaskWriter(this.app, settings.eventTask, () => settings);
+        const linkedHeading = writer.formatDailyLink(this.form.inboxCapturedAt, target.file, target.heading);
+        return { ...target, heading: linkedHeading };
     }
 
     private resolveMomentBacklinkTarget(record: { capturedAt: Date }): FocusTarget | null {

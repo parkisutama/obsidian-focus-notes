@@ -287,6 +287,20 @@ function invalid(field: ScheduledItemFormField, message: string) {
     return { valid: false as const, field, message };
 }
 
+/**
+ * Converts this app's "YYYY-MM-DD HH:mm" string convention to/from the native
+ * `<input type="datetime-local">` value format ("YYYY-MM-DDTHH:mm") — the two differ only in
+ * separator, so a plain character swap round-trips losslessly. Empty strings pass through
+ * unchanged (an unset field stays unset either way).
+ */
+export function toDateTimeLocalValue(value: string): string {
+    return value.replace(" ", "T");
+}
+
+export function fromDateTimeLocalValue(value: string): string {
+    return value.replace("T", " ");
+}
+
 function buildInvalid(
     field: ScheduledItemFormField,
     message: string,

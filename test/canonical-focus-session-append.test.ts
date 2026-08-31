@@ -88,6 +88,80 @@ test("retrying with the same sessionId is a no-op instead of duplicating history
     assert.equal(occurrences, 1);
 });
 
+test("carries reflection fields captured in LogModal straight into the initial append, not just via later edit", () => {
+    const rawBlock = "- Workshop | start:2026-09-01 09:00 | end:2026-09-01 12:00 ^event-abc123\n";
+    const result = recordFocusSessionInBlock(
+        rawBlock,
+        { kind: "event", itemId: "event-abc123", timeboxId: null },
+        {
+            actualStart: "2026-09-01 09:08",
+            actualEnd: "2026-09-01 10:02",
+            durationSeconds: 3240,
+            mode: "stopwatch",
+            stressLevel: "low",
+            emotionCategory: "pleasant",
+            emotionKey: "calm",
+            notes: "Good deep-work block.",
+        },
+        "focus-abc123-s1",
+    );
+    assert.equal(result.status, "recorded");
+    assert.equal(
+        result.status === "recorded" ? result.block : "",
+        "- Workshop | start:2026-09-01 09:00 | end:2026-09-01 12:00 ^event-abc123\n" +
+            "  - focus-session | start:2026-09-01 09:08 | end:2026-09-01 10:02 | duration:54m | mode:stopwatch | stress:low | emotion:pleasant | mood:calm ^focus-abc123-s1\n" +
+            "    - notes: Good deep-work block.\n",
+    );
+});
+
+test("appends without reflection fields exactly as before when LogModal fields are left unset", () => {
+    const rawBlock = "- Workshop | start:2026-09-01 09:00 | end:2026-09-01 12:00 ^event-abc123\n";
+    const result = recordFocusSessionInBlock(
+        rawBlock,
+        { kind: "event", itemId: "event-abc123", timeboxId: null },
+        {
+            actualStart: "2026-09-01 09:08",
+            actualEnd: "2026-09-01 10:02",
+            durationSeconds: 3240,
+            mode: "stopwatch",
+            stressLevel: null,
+            emotionCategory: null,
+            emotionKey: null,
+            notes: "",
+        },
+        "focus-abc123-s1",
+    );
+    assert.equal(result.status, "recorded");
+    assert.equal(
+        result.status === "recorded" ? result.block : "",
+        "- Workshop | start:2026-09-01 09:00 | end:2026-09-01 12:00 ^event-abc123\n" +
+            "  - focus-session | start:2026-09-01 09:08 | end:2026-09-01 10:02 | duration:54m | mode:stopwatch ^focus-abc123-s1\n",
+    );
+});
+
+test("appends a notes child line using the block's own CRLF convention", () => {
+    const rawBlock = "- Workshop | start:2026-09-01 09:00 | end:2026-09-01 12:00 ^event-abc123\r\n";
+    const result = recordFocusSessionInBlock(
+        rawBlock,
+        { kind: "event", itemId: "event-abc123", timeboxId: null },
+        {
+            actualStart: "2026-09-01 09:08",
+            actualEnd: "2026-09-01 10:02",
+            durationSeconds: 3240,
+            mode: "stopwatch",
+            notes: "Good session.",
+        },
+        "focus-abc123-s1",
+    );
+    assert.equal(result.status, "recorded");
+    assert.equal(
+        result.status === "recorded" ? result.block : "",
+        "- Workshop | start:2026-09-01 09:00 | end:2026-09-01 12:00 ^event-abc123\r\n" +
+            "  - focus-session | start:2026-09-01 09:08 | end:2026-09-01 10:02 | duration:54m | mode:stopwatch ^focus-abc123-s1\r\n" +
+            "    - notes: Good session.\r\n",
+    );
+});
+
 test("reports anchor-not-found when the owner's timebox or Event line is missing from the block", () => {
     const rawBlock = "- [ ] Menyusun laporan | due:2026-09-03 ^task-def456\n";
     const result = recordFocusSessionInBlock(
