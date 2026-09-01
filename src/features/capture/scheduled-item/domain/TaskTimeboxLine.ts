@@ -30,11 +30,11 @@ export type ParseTaskTimeboxLineResult =
     | { status: "invalid"; reason: TaskTimeboxLineInvalidReason }
     | { status: "not-timebox" };
 
-const TIMEBOX_RE = /^-\s+timebox\s*\|\s*start:(.+?)\s*\|\s*end:(.+?)\s*\|\s*status:(.+?)$/;
+const TIMEBOX_RE = /^-\s+timebox:\s*start:(.+?)\s*\|\s*end:(.+?)\s*\|\s*status:(.+?)$/;
 
 /** Renders a Task's planned work interval as an identified child line, per the spec's timebox grammar. */
-export function formatTaskTimeboxLine(timebox: TaskTimebox, indent = "  "): string {
-    return `${indent}- timebox | start:${timebox.start} | end:${timebox.end} | status:${timebox.status} ^${timebox.timeboxId}`;
+export function formatTaskTimeboxLine(timebox: TaskTimebox, indent = "    "): string {
+    return `${indent}- timebox: start:${timebox.start} | end:${timebox.end} | status:${timebox.status} ^${timebox.timeboxId}`;
 }
 
 export function parseTaskTimeboxLine(line: string): ParseTaskTimeboxLineResult {

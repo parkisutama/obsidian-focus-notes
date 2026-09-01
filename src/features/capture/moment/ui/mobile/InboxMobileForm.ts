@@ -5,6 +5,7 @@ import { FileSuggest } from "../../../../../infrastructure/obsidian/suggestions/
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "../../../domain/CaptureTarget";
 import type { InsertPosition } from "../../../../../shared/markdown/InsertPosition";
+import { EmotionalWellbeingPicker } from "../../../../reflection/ui/EmotionalWellbeingPicker.ts";
 
 interface InboxMobileFormOptions {
     app: App;
@@ -17,6 +18,7 @@ interface InboxMobileFormOptions {
 /** Compact Inbox fields for the independent mobile full-screen editor. */
 export class InboxMobileForm {
     private notesController: InboxNotesController | null = null;
+    private reflectionNotesController: InboxNotesController | null = null;
     private targetSummaryEl: HTMLElement | null = null;
 
     constructor(private readonly options: InboxMobileFormOptions) {}
@@ -38,6 +40,8 @@ export class InboxMobileForm {
         });
         this.options.registerCleanup(() => this.destroy());
 
+        this.renderReflection(container);
+
         const advanced = container.createEl("details", { cls: "fn-mobile-event-disclosure fn-mobile-inbox-advanced" });
         const summary = advanced.createEl("summary", { cls: "fn-mobile-event-summary" });
         const icon = summary.createSpan({ cls: "fn-mobile-event-summary-icon" });
@@ -53,7 +57,37 @@ export class InboxMobileForm {
     destroy(): void {
         this.notesController?.destroy();
         this.notesController = null;
+        this.reflectionNotesController?.destroy();
+        this.reflectionNotesController = null;
         this.targetSummaryEl = null;
+    }
+
+    private renderReflection(container: HTMLElement): void {
+        const section = container.createDiv({ cls: "fn-mobile-event-disclosure-content fn-mobile-moment-reflection" });
+        section.createDiv({ cls: "fn-mobile-event-label", text: "Reflection" });
+        new EmotionalWellbeingPicker(
+            section,
+            (value) => {
+                this.options.form.inboxStressLevel = value.stressLevel;
+                this.options.form.inboxEmotionCategory = value.emotionCategory;
+                this.options.form.inboxEmotionKey = value.emotionKey;
+            },
+            {
+                stressLevel: this.options.form.inboxStressLevel,
+                emotionCategory: this.options.form.inboxEmotionCategory,
+                emotionKey: this.options.form.inboxEmotionKey,
+            },
+        );
+        const editor = section.createDiv({
+            cls: "fn-mobile-inbox-notes",
+            attr: { role: "textbox", "aria-label": "Moment reflection notes", "data-placeholder": "What stood out?" },
+        });
+        this.reflectionNotesController = new InboxNotesController(this.options.app, editor, {
+            initialValue: this.options.form.inboxReflectionNotes ?? "",
+            targetFile: this.options.resolveTarget()?.file ?? "",
+            getContextSources: () => this.options.getSettings().inbox.contextSources,
+            onChange: (value) => (this.options.form.inboxReflectionNotes = value),
+        });
     }
 
     private renderAdvanced(container: HTMLElement): void {
@@ -131,6 +165,9 @@ export class InboxMobileForm {
         this.targetSummaryEl?.setText(
             target ? `${target.file} · ${target.heading || "No heading"}` : "Selected destination is unavailable",
         );
-        if (updateNotes && target) this.notesController?.setTargetFile(target.file);
+        if (updateNotes && target) {
+            this.notesController?.setTargetFile(target.file);
+            this.reflectionNotesController?.setTargetFile(target.file);
+        }
     }
 }

@@ -41,7 +41,7 @@ export function insertScheduledItemChildLine(
                 scanFrom = insertAt;
             }
 
-            const childLine = buildLine(`${" ".repeat(anchorIndent + 2)}`, lineEnding);
+            const childLine = buildLine(`${" ".repeat(anchorIndent + 4)}`, lineEnding);
             const needsLeadingNewline =
                 insertAt === content.length && content.length > 0 && !content.endsWith(lineEnding);
             const insertion = needsLeadingNewline

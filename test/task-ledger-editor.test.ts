@@ -47,6 +47,9 @@ test("captures then atomically saves only the owned Task fields", async () => {
         due: "2026-08-16",
         timebox: null,
         reminders: [],
+        stressLevel: null,
+        emotionCategory: null,
+        emotionKey: null,
     });
 
     const saved = await saveTaskLedgerEdit(app, captured.snapshot, {

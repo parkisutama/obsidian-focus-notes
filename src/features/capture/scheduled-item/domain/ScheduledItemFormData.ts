@@ -1,6 +1,7 @@
 import type { EventTaskFormState } from "../../domain/EventTaskFormState";
 import { parseObjectReferences, type ObjectReference } from "../../domain/ObjectReference.ts";
 import type { InsertPosition } from "../../../../shared/markdown/InsertPosition";
+import type { EmotionCategory, StressLevel } from "../../../reflection/domain/Wellbeing.ts";
 import type { EventLineEdit } from "./EventLineEditor";
 import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItem";
 import type { TaskLineEdit } from "./TaskLineEditor";
@@ -15,6 +16,10 @@ interface ScheduledItemFormBase {
     description: string;
     objectReferences: ObjectReference[];
     detailNote: DetailNoteSelection;
+    stressLevel: StressLevel | null;
+    emotionCategory: EmotionCategory | null;
+    emotionKey: string | null;
+    reflectionNotes: string | null;
 }
 
 export interface ScheduledTaskFormData extends ScheduledItemFormBase {
@@ -55,6 +60,12 @@ interface LineEditAdapterInput<TEdit> {
     title: string;
     description: string;
     detailNote: DetailNoteSelection;
+    reflection?: {
+        stressLevel: StressLevel | null;
+        emotionCategory: EmotionCategory | null;
+        emotionKey: string | null;
+    };
+    reflectionNotes?: string | null;
     edit: TEdit;
 }
 
@@ -104,11 +115,23 @@ export function scheduledItemFormDataFromCreateState(state: EventTaskFormState):
 }
 
 export function scheduledTaskFormDataFromLineEdit(input: LineEditAdapterInput<TaskLineEdit>): ScheduledTaskFormData {
-    return { kind: "task", ...commonFields(input.title, input.description, input.detailNote), ...input.edit };
+    return {
+        kind: "task",
+        ...commonFields(input.title, input.description, input.detailNote),
+        ...(input.reflection ?? {}),
+        reflectionNotes: input.reflectionNotes ?? null,
+        ...input.edit,
+    };
 }
 
 export function scheduledEventFormDataFromLineEdit(input: LineEditAdapterInput<EventLineEdit>): ScheduledEventFormData {
-    return { kind: "event", ...commonFields(input.title, input.description, input.detailNote), ...input.edit };
+    return {
+        kind: "event",
+        ...commonFields(input.title, input.description, input.detailNote),
+        ...(input.reflection ?? {}),
+        reflectionNotes: input.reflectionNotes ?? null,
+        ...input.edit,
+    };
 }
 
 function commonFields(title: string, description: string, detailNote: DetailNoteSelection): ScheduledItemFormBase {
@@ -117,6 +140,10 @@ function commonFields(title: string, description: string, detailNote: DetailNote
         description,
         objectReferences: parseObjectReferences(description).map((occurrence) => occurrence.reference),
         detailNote,
+        stressLevel: null,
+        emotionCategory: null,
+        emotionKey: null,
+        reflectionNotes: null,
     };
 }
 

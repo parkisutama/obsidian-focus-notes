@@ -19,7 +19,7 @@ function fakeApp(initial: string): { app: App; read: () => string } {
 
 test("atomically saves a full Scheduled Item block while preserving unknown children", async () => {
     const rawLine = "- [ ] Task | owner:Ana";
-    const initial = `${rawLine}\r\n    - Old description\r\n    - [ ] Keep child`;
+    const initial = `${rawLine}\r\n    - description: Old description\r\n    - [ ] Keep child`;
     const captured = captureLedgerRecord(initial, { filePath: "Tasks.md", lineNumber: 1, rawLine });
     assert.equal(captured.status, "captured");
     if (captured.status !== "captured") return;
@@ -36,7 +36,7 @@ test("atomically saves a full Scheduled Item block while preserving unknown chil
     assert.equal(
         read(),
         "- [x] Task | owner:Ana | priority:high\r\n" +
-            "    - New description\r\n    - detail: [Task](Details/Task.md)\r\n    - [ ] Keep child",
+            "    - description: New description\r\n    - detail: [Task](Details/Task.md)\r\n    - [ ] Keep child",
     );
 });
 

@@ -1,185 +1,152 @@
-# Implementation Plan: Complete Source Organization
+# Implementation Plan: Flat Capture, Focus, and Reflection
 
 ## Overview
 
-Complete the physical reorganization left after the domain-structure refactor. Move every root source module to an explicit feature/layer, Obsidian adapter, shared primitive, or quarantined legacy owner while preserving behavior, persistent identifiers, settings, Markdown bytes, and desktop/mobile lifecycle contracts.
+Implement the approved capability map and module specs at the repository root. Moment, Event, and Task gain deterministic
+flat keyed child blocks. Timeboxes remain planned Task children; Focus Sessions become actual sibling children owned
+directly by Event or Task. Optional Reflection wellbeing and notes attach to Moment/Event/Task/Focus Session. Timeline then
+renders planned and actual intervals independently and derives owner-level summaries without persisting them.
 
-The final invariant is: `src/main.ts` is the only TypeScript file directly under `src/`. Path moves happen before renames or behavioral cleanup. Oversized modules are decomposed only after the tree is stable and characterization coverage exists.
+The existing uncommitted Task Reflection work is treated as work-in-progress input, not as an accepted grammar. It must be
+reconciled into the approved `reflection:`/`reflection-notes:` sibling contract rather than discarded or layered over.
 
-This supersedes the completed mobile-modal plan formerly stored here. Historical evidence remains in `tasks/code-restructuring-*` and `docs/code-architecture-baseline.md`.
+## Approved sources
 
-## Definition of Done
+- `CAPABILITY-MAP-capture-focus-reflection.md`
+- `SPEC-flat-block-grammar.md`
+- `SPEC-focus-owner-model.md`
+- `SPEC-reflection-capture.md`
+- `SPEC-capture-management.md`
+- `SPEC-timeline-actual-time.md`
 
-- `src/main.ts` is the only root TypeScript module.
-- Every module has a visible feature and layer owner.
-- Domain code imports no Obsidian, DOM, UI, plugin, infrastructure, or private cross-feature module.
-- `shared/` contains only proven cross-feature primitives and imports no feature.
-- `src/legacy/` contains only quarantined zero-consumer modules; production cannot import it.
-- No barrel, forwarding shim, cycle, empty speculative directory, or undocumented dependency remains.
-- Persistent IDs, settings schema, Markdown output, view state, and renderer selection are unchanged.
-- Full CI, artifact verification, advisory disposition, runtime acceptance, and five-axis review pass.
+## Architecture decisions
 
-## Architecture Decisions
+1. One canonical item block remains the source of truth; Daily/weekly entries remain derived references.
+2. Four spaces represent one canonical ownership level.
+3. Recognized child lines use lowercase keyed prefixes: `description:`, `timebox:`, `focus-session:`, `reflection:`, `reflection-notes:`, `detail:`.
+4. Task Timeboxes and Focus Sessions are siblings. Temporal overlap never creates a relationship.
+5. Focus owner identity is `{ kind, itemId }`; Task ownership has no `timeboxId`.
+6. Reflection wellbeing and notes are independently optional singleton siblings under their owner.
+7. Moment gains stable identity and canonical block management.
+8. Explicit preview/apply formatting converts unreleased development syntax; no startup migration or permanent dual-read layer is added.
+9. Timeline and Manage consume one derived time-summary read model; Markdown stores no summary.
+10. Desktop and mobile share domain/application contracts, never DOM components.
 
-1. Organize by feature ownership: Capture, Timeline, Focus Session, Object Notes, Reflection, Settings, and Periodical Notes.
-2. Keep one root entry point. Plugin composition goes under `plugin/`; feature logic never does.
-3. Move `EventEditModal.ts`, `TaskEditModal.ts`, and `MoodPicker.ts` unchanged to `src/legacy/`; do not delete them.
-4. Separate path moves, renames, behavior changes, dependency upgrades, and formatting sweeps.
-5. Do not add permanent barrels or compatibility re-exports. Update direct consumers atomically.
-6. Move at most about five primary modules per task. Mechanical consumer import updates may be wider but contain no logic edits.
-7. Add architecture guards first. A checked root inventory shrinks after every batch and ends with only `main.ts`.
-8. Treat Obsidian as an outer boundary: imports belong in feature UI, plugin composition, or `infrastructure/obsidian`.
-
-## Target Structure
-
-```text
-src/
-├── main.ts
-├── plugin/
-├── features/
-│   ├── capture/
-│   │   ├── {domain,application,ui}/
-│   │   ├── moment/{domain,application,ui/{desktop,mobile}}/
-│   │   └── scheduled-item/{domain,application,ui/{desktop,mobile}}/
-│   ├── focus-session/{domain,application,ui}/
-│   ├── timeline/{domain,application,ui}/
-│   ├── object-notes/{domain,application,ui}/
-│   ├── reflection/{domain,ui}/
-│   ├── settings/{domain,infrastructure,ui}/
-│   └── periodical-notes/{domain,application}/
-├── infrastructure/obsidian/{capture,focus-session,suggestions,vault}/
-├── shared/{markdown,ui}/
-└── legacy/{EventEditModal,TaskEditModal,MoodPicker}.ts
-```
-
-Create directories only when a real module first moves into them.
-
-## Dependency Order
+## Dependency graph
 
 ```text
-architecture guard
-  -> legacy + shared/periodical foundations
-  -> settings/object-notes/reflection
-  -> focus-session -> timeline
-  -> scheduled-item -> moment/shared capture
-  -> infrastructure -> plugin composition
-  -> root-only-main gate
-  -> hotspot decomposition -> runtime acceptance
+approved characterization
+  → flat child-line primitives
+    → timebox/focus keyed grammar
+      → whole-block parser/editor ordering
+        ├─ Moment canonical identity/block
+        ├─ direct Focus owner model and append
+        └─ Reflection semantic form contract
+             → desktop/mobile capture management
+             → explicit formatter
+             → Timeline canonical read model
+                  → actual segment layout
+                  → tooltip/item-modal summary
+                  → Manage summary reuse
+                       → documentation and runtime acceptance
 ```
 
-## Ordered Task Index
+## Vertical phases
 
-Detailed acceptance criteria are in `tasks/todo.md`.
+### Phase A: Freeze and build the canonical grammar
 
-### Phase 0: Safety and foundations
+- Task 47 adds failing characterization for the approved examples and current WIP conflict points.
+- Tasks 48–50 implement keyed line primitives, prefix changes, whole-block ownership, ordering, and no-op preservation.
 
-1. Strengthen architecture migration guards.
-2. Quarantine proven-dead UI under `legacy/`.
-3. Place shared Markdown, capture-target, and periodical primitives.
+Checkpoint: pure parsers and writers round-trip canonical Event/Task blocks; Focus Sessions are parsed as direct item
+children; no UI or vault mutation is required yet.
 
-### Phase 1: Supporting features
+### Phase B: Establish canonical Moment and Focus ownership
 
-4. Finish Settings ownership.
-5. Finish Object Notes ownership.
-6. Finish Reflection ownership.
-7. Place Focus Session application and adapters.
-8. Place the Focus Session view shell.
+- Task 51 gives Moment stable identity and a managed flat block.
+- Task 52 removes the Task-timebox purpose gate from the owner model and Timer selector.
+- Task 53 appends/scans/edits Focus Sessions directly under Event/Task while retaining idempotent canonical-first writes.
 
-### Phase 2: Timeline
+Checkpoint: a selected Event or Task can own multiple actual sessions independent of every Timebox; Moment has a stable
+canonical block contract.
 
-9. Place Timeline domain modules.
-10. Place Timeline query/index modules.
-11. Place Timeline UI modules.
+### Phase C: Deliver Reflection capture and management
 
-### Phase 3: Scheduled Item
+- Task 54 defines one shared Reflection semantic form contract.
+- Tasks 55–56 deliver Event/Task desktop and mobile Reflection plus sibling Timebox/Focus Session management.
+- Tasks 57–59 deliver Moment persistence and desktop/mobile Reflection management.
 
-12. Place Active Note and formatting modules.
-13. Place desktop Scheduled Item UI.
-14. Place mobile form foundation.
-15. Place mobile screens and launcher.
+Checkpoint: Moment/Event/Task/Focus Session support none, wellbeing-only, notes-only, or both Reflection forms on desktop
+and mobile without description contamination.
 
-### Phase 4: Moment and capture composition
+### Phase D: Explicit formatting and Timeline actual-time UX
 
-16. Place Moment domain text/target modules.
-17. Place Moment suggestions and submission policy.
-18. Place Moment desktop UI.
-19. Place Moment mobile UI.
-20. Place shared capture routing and form state.
+- Task 60 extends preview/apply formatting for current development data and canonical order.
+- Task 61 indexes sibling actual sessions and produces one owner summary read model.
+- Task 62 renders planned and actual segments independently.
+- Task 63 adds compact tooltips and selected-segment Timeline Item Modal summaries.
+- Task 64 reuses the summary in Event/Task Manage.
 
-### Phase 5: Boundaries and completion
+Checkpoint: actual intervals are visible even outside planned intervals; all summary consumers agree; no derived value is
+written to Markdown.
 
-21. Finish remaining Obsidian adapter ownership.
-22. Move plugin composition behind `main.ts`.
-23. Enforce final root and dependency invariants.
+### Phase E: Closeout
 
-### Phase 6: Quality remediation
+- Task 65 updates public/developer documentation and records automated plus real desktop/mobile acceptance.
 
-24. Split Reflection reference data from its API.
-25. Decompose the Moment suggestion controller.
-26. Decompose the desktop Scheduled Item form.
-27. Decompose the mobile Scheduled Item form.
-28. Complete final review, docs, audit disposition, and runtime acceptance.
+## Verification cadence
 
-### Phase 7+: Scheduled Item, Timebox, and Focus integration
-
-Tasks 29–46 implement the separately approved behavioral initiative documented in
-`docs/spec-scheduled-item-timebox-focus-integration.md`. Its dependency graph, risk controls, and phase checkpoints live in
-`tasks/scheduled-item-timebox-focus-plan.md`; detailed acceptance criteria remain in this repository's canonical
-`tasks/todo.md`.
-
-Task 28 remains a strict refactor-acceptance boundary. Do not mix the new identity, projection, timebox, or Focus Session
-model into that task.
-
-## Verification Cadence
-
-Every task:
+Each task runs its focused tests plus:
 
 ```powershell
 pnpm run format:check
 pnpm run lint
 pnpm run typecheck
-pnpm test
 git diff --check
 ```
 
-Every phase checkpoint:
+Every phase checkpoint runs:
 
 ```powershell
 $env:OBSIDIAN_VAULT_PLUGIN_PATH = ""
 pnpm run check:ci
-pnpm audit --audit-level=moderate
 ```
 
-For path-only tasks, inspect `git diff --summary` and `git diff --find-renames`; production bodies may not change apart from import specifiers. Test count may not decrease. A discovered defect becomes a separate RED-GREEN-REFACTOR task.
+Runtime deployment requires an explicitly verified vault target. Formatting current development notes requires a visible
+preview and user-triggered apply action.
 
-## Quality Gates
-
-- **Correctness:** compatibility, settings, Markdown/no-op, desktop/mobile, error and retry behavior stay covered.
-- **Readability:** no dumping grounds or pass-through wrappers; files above ~400 lines require a decomposition decision; files above 1,000 lines block approval unless isolated static data.
-- **Architecture:** automate root allowlist, cycles, domain purity, shared independence, legacy isolation, and dependency direction.
-- **Security:** preserve validation of vault content, paths, frontmatter, settings, and user text; dependency changes stay separate.
-- **Performance:** no extra vault scan/write, listener, index rebuild, debounce, or render loop from a path move.
-
-## Commit Strategy
-
-- Prefer one task per commit with an ownership-specific imperative subject.
-- Never mix moves with dependency upgrades, renames, behavior fixes, or formatting sweeps.
-- Resolve or isolate the existing `package.json`/`pnpm-lock.yaml` changes before implementation begins.
-
-## Risks and Mitigations
+## Risks and mitigations
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| Import-only diff hides logic edits | High | ≤5 primary moves, rename-similarity inspection, full tests |
-| Temporary root state becomes permanent | High | Shrinking checked inventory; final allowlist is `main.ts` |
-| Cross-feature cycles | High | Cycle and layer tests after every task |
-| Legacy becomes reachable | Medium | Production-import prohibition plus zero-consumer check |
-| Live Obsidian UI regresses | High | Desktop and real-mobile final acceptance |
-| `shared/` becomes a monolith | Medium | Require two feature consumers and forbid feature imports |
-| Current dependency diff contaminates commits | High | Resolve it separately before moves |
+| Current uncommitted Task Reflection implementation is accidentally lost | High | Reconcile field/UI intent into approved grammar; inspect diff before every grammar task |
+| Reordering owned children moves unknown Markdown | High | Characterize unknown subtrees and preserve them byte-for-byte |
+| Focus Session is left nested under a Timebox in one writer/scanner | High | Change owner type first; exhaustive search plus append/scan/index fixtures |
+| Stable links break while formatting development data | High | Preserve every existing block ID and prove idempotency before UI apply |
+| Description or reflection notes containing Markdown parse incorrectly | Medium | Prefix consumes remainder; one-line normalization; round-trip links/tags fixtures |
+| Timeline double-counts or implies a false pairing | High | Aggregate by owner only; segment identities stay `timeboxId`/`sessionId`; no overlap inference |
+| Desktop and mobile semantic behavior diverge | High | Shared form contract plus separate presentation-contract tests |
+| Whole-owner summary becomes expensive | Medium | Parse once into indexed owner read model; benchmark representative weekly data |
 
-## Human Decisions
+## Parallelization
 
-- Approve `src/legacy/` as unreachable quarantine rather than deletion.
-- Decide after relocation whether legacy `EventTask*` names get an isolated rename.
-- This plan recommends making desktop and real-mobile acceptance mandatory for final approval.
+Implementation is dependency-sensitive through Task 54. After the Reflection form contract stabilizes, desktop Task 55 and
+mobile Task 56 are independent presentation slices. Moment desktop Task 58 and mobile Task 59 may proceed independently
+after Task 57. Timeline presentation Tasks 62–63 remain sequential because they share layout and selected-segment contracts.
+
+## Change boundaries
+
+- No new dependency, settings schema, recurring scheduling, Timeline drag/resize, or Moment-owned Focus Session.
+- No automatic background migration and no permanent compatibility reader for unreleased block shapes.
+- Quick-create Task remains explicit and does not create a Timebox.
+- Focus Session actual timestamps and duration remain immutable through Reflection editing.
+- Summary does not imply completion and is never persisted.
+
+## Task list
+
+Detailed Tasks 47–65 and checkpoints are tracked in `tasks/todo.md`.
+
+## Human review gate
+
+Implementation begins only after this plan and Tasks 47–65 are approved. Runtime acceptance remains a separate final gate;
+a green automated suite is not device acceptance.

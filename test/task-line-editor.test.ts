@@ -17,12 +17,88 @@ test("parses every editable Task field including multiple reminders", () => {
             due: "2026-08-17 17:00",
             timebox: { start: "2026-08-17 09:00", end: "2026-08-17 11:00" },
             reminders: ["2026-08-17 08:30", "2026-08-17 16:30"],
+            stressLevel: null,
+            emotionCategory: null,
+            emotionKey: null,
         },
     });
     assert.deepEqual(parseTaskLineEdit("- [ ] Task | owner:Ana"), {
         status: "parsed",
-        edit: { completed: false, priority: "normal", due: null, timebox: null, reminders: [] },
+        edit: {
+            completed: false,
+            priority: "normal",
+            due: null,
+            timebox: null,
+            reminders: [],
+            stressLevel: null,
+            emotionCategory: null,
+            emotionKey: null,
+        },
     });
+});
+
+test("parses reflection fields added any time via Edit Task", () => {
+    const line = "- [x] Write the report | priority:normal | stress:low | emotion:pleasant | mood:calm";
+    assert.deepEqual(parseTaskLineEdit(line), {
+        status: "parsed",
+        edit: {
+            completed: true,
+            priority: "normal",
+            due: null,
+            timebox: null,
+            reminders: [],
+            stressLevel: "low",
+            emotionCategory: "pleasant",
+            emotionKey: "calm",
+        },
+    });
+});
+
+test("a Task line with no reflection fields still parses, reporting them absent", () => {
+    const result = parseTaskLineEdit("- [ ] Task | owner:Ana");
+    assert.equal(result.status, "parsed");
+    if (result.status !== "parsed") return;
+    assert.equal(result.edit.stressLevel, null);
+    assert.equal(result.edit.emotionCategory, null);
+    assert.equal(result.edit.emotionKey, null);
+});
+
+test("an unrecognized reflection value degrades to absent instead of invalidating the line", () => {
+    const result = parseTaskLineEdit("- [ ] Task | stress:extreme | emotion:bogus");
+    assert.equal(result.status, "parsed");
+    if (result.status !== "parsed") return;
+    assert.equal(result.edit.stressLevel, null);
+    assert.equal(result.edit.emotionCategory, null);
+});
+
+test("writes and later removes reflection fields without disturbing other metadata", () => {
+    const line = "- [ ] Task | owner:Ana | priority:high";
+    const withReflection = editTaskLine(line, {
+        completed: false,
+        priority: "high",
+        due: null,
+        timebox: null,
+        reminders: [],
+        stressLevel: "medium",
+        emotionCategory: "unpleasant",
+        emotionKey: "anxious",
+    });
+    assert.deepEqual(withReflection, {
+        status: "ready",
+        line: "- [ ] Task | owner:Ana | priority:high | stress:medium | emotion:unpleasant | mood:anxious",
+    });
+
+    const cleared = editTaskLine(withReflection.status === "ready" ? withReflection.line : "", {
+        completed: false,
+        priority: "high",
+        due: null,
+        timebox: null,
+        reminders: [],
+        stressLevel: null,
+        emotionCategory: null,
+        emotionKey: null,
+    });
+    assert.deepEqual(cleared, { status: "ready", line: "- [ ] Task | owner:Ana | priority:high" });
 });
 
 test("refuses ambiguous or malformed owned Task fields", () => {
@@ -135,7 +211,16 @@ test("parses a link-wrapped due date back to its plain edit value", () => {
 
     assert.deepEqual(parseTaskLineEdit(line), {
         status: "parsed",
-        edit: { completed: false, priority: "normal", due: "2026-08-16", timebox: null, reminders: [] },
+        edit: {
+            completed: false,
+            priority: "normal",
+            due: "2026-08-16",
+            timebox: null,
+            reminders: [],
+            stressLevel: null,
+            emotionCategory: null,
+            emotionKey: null,
+        },
     });
 });
 

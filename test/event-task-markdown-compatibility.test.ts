@@ -7,6 +7,8 @@ import {
 import type { EventRecord, TaskRecord } from "../src/features/capture/scheduled-item/domain/EventTaskRecord.ts";
 import { formatRelativeMarkdownLink } from "../src/features/capture/moment/domain/InboxMarkdown.ts";
 import { ScheduledItemParser } from "../src/features/capture/scheduled-item/domain/ScheduledItemParser.ts";
+import { buildScheduledItemRecord } from "../src/features/capture/scheduled-item/domain/ScheduledItemFormAdapter.ts";
+import type { ScheduledItemFormData } from "../src/features/capture/scheduled-item/domain/ScheduledItemFormData.ts";
 
 const source = {
     groupId: "daily-notes",
@@ -40,7 +42,7 @@ test("writer Event Markdown is consumed as a timed Timeline Event", () => {
     assert.equal(
         markdown,
         "- 2026-08-01 09:00 - 10:30 [Review proposal](Projects/Client%20Alpha.md)\n" +
-            "    - First line\n    - Second line\n" +
+            "    - description: First line Second line\n" +
             "    - detail: [Review details](Details/Review%20proposal.md)",
     );
     assert.equal(item?.kind, "event");
@@ -65,14 +67,18 @@ test("writer timeboxed Task Markdown preserves schedule metadata and linked titl
         hubNoteRef: { title: "Prepare report", path: "Persona/Work/Projects/Report.md" },
     };
 
-    const markdown = formatEventTaskEntry(record);
+    const markdown = formatEventTaskEntry(record, null, undefined, "task-test", "timebox-test");
     const item = new ScheduledItemParser().parseLine(markdown.split("\n")[0] ?? "", source);
 
     assert.equal(item?.kind, "task");
     assert.equal(item?.priority, "high");
     assert.equal(item?.title, "Prepare report");
-    assert.equal(item?.start?.getTime(), record.timebox?.start.getTime());
-    assert.equal(item?.end?.getTime(), record.timebox?.end.getTime());
+    assert.equal(item?.start, null);
+    assert.equal(item?.end, null);
+    assert.match(
+        markdown,
+        / {4}- timebox: start:2026-08-01 13:00 \| end:2026-08-01 15:00 \| status:planned \^timebox-test/,
+    );
     assert.equal(item?.due?.getTime(), record.due?.getTime());
     assert.equal(item?.dueHasTime, true);
     assert.equal(item?.remind?.getTime(), record.reminders[0]?.getTime());
@@ -122,21 +128,20 @@ test("Task date fields become links when a formatDateLink resolver is supplied",
     const formatDateLink = (when: Date, label: string) =>
         formatRelativeMarkdownLink("Persona/Report.md", `Journal/${when.getFullYear()}-08-01.md`, label);
 
-    const markdown = formatEventTaskEntry(record, null, formatDateLink);
+    const markdown = formatEventTaskEntry(record, null, formatDateLink, "task-test", "timebox-test");
 
     assert.equal(
         markdown,
         "- [ ] Prepare report" +
             " | due:[2026-08-01 17:00](../Journal/2026-08-01.md)" +
-            " | start:[2026-08-01 13:00](../Journal/2026-08-01.md)" +
-            " | end:[2026-08-01 15:00](../Journal/2026-08-01.md)" +
-            " | remind:[2026-08-01 12:45](../Journal/2026-08-01.md)",
+            " | remind:[2026-08-01 12:45](../Journal/2026-08-01.md) ^task-test\n" +
+            "    - timebox: start:2026-08-01 13:00 | end:2026-08-01 15:00 | status:planned ^timebox-test",
     );
 
-    const item = new ScheduledItemParser().parseLine(markdown, source);
+    const item = new ScheduledItemParser().parseLine(markdown.split("\n")[0] ?? "", source);
     assert.equal(item?.due?.getTime(), record.due?.getTime());
-    assert.equal(item?.start?.getTime(), record.timebox?.start.getTime());
-    assert.equal(item?.end?.getTime(), record.timebox?.end.getTime());
+    assert.equal(item?.start, null);
+    assert.equal(item?.end, null);
     assert.equal(item?.remind?.getTime(), record.reminders[0]?.getTime());
 });
 
@@ -174,6 +179,37 @@ test("canonical writer appends a supplied block ID after all Task metadata", () 
     assert.equal(
         formatEventTaskEntry(record, null, undefined, "fn-task-a1b2c3"),
         "- [ ] Submit invoice | due:2026-08-02 ^fn-task-a1b2c3",
+    );
+});
+
+test("Create Task carries form reflection into canonical keyed children", () => {
+    const data: ScheduledItemFormData = {
+        kind: "task",
+        title: "Review proposal",
+        description: "Compare\nall options",
+        objectReferences: [],
+        detailNote: { mode: "none" },
+        completed: false,
+        priority: "normal",
+        due: null,
+        timebox: { start: "2026-08-01 13:00", end: "2026-08-01 14:00" },
+        reminders: [],
+        stressLevel: "medium",
+        emotionCategory: "pleasant",
+        emotionKey: "hopeful",
+        reflectionNotes: "A clear next step emerged.",
+    };
+    const built = buildScheduledItemRecord(data);
+    assert.equal(built.status, "ready");
+    if (built.status !== "ready") return;
+
+    assert.equal(
+        formatEventTaskEntry(built.record, null, undefined, "task-test", "timebox-test"),
+        "- [ ] Review proposal ^task-test\n" +
+            "    - description: Compare all options\n" +
+            "    - timebox: start:2026-08-01 13:00 | end:2026-08-01 14:00 | status:planned ^timebox-test\n" +
+            "    - reflection: stress:medium | emotion:pleasant | mood:hopeful\n" +
+            "    - reflection-notes: A clear next step emerged.",
     );
 });
 

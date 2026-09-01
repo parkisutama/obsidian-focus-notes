@@ -81,6 +81,10 @@ test("builds canonical create output and lossless edit output from the same data
         due: "2026-08-22 17:00",
         timebox: null,
         reminders: [],
+        stressLevel: null,
+        emotionCategory: null,
+        emotionKey: null,
+        reflectionNotes: null,
     };
 
     assert.deepEqual(buildScheduledItemFormBlockEdit(data), {
@@ -93,6 +97,8 @@ test("builds canonical create output and lossless edit output from the same data
                 title: "Revised proposal",
                 path: "Details/Revised proposal.md",
             },
+            reflection: { stressLevel: null, emotionCategory: null, emotionKey: null },
+            reflectionNotes: null,
         },
     });
 
@@ -112,6 +118,8 @@ test("builds canonical create output and lossless edit output from the same data
                 title: "Custom detail title",
                 path: "Details/Revised proposal.md",
             },
+            reflection: { stressLevel: null, emotionCategory: null, emotionKey: null },
+            reflectionNotes: null,
         },
     });
 });
@@ -128,6 +136,10 @@ test("wraps the Task due date in a link when a formatDateValue resolver is suppl
         due: "2026-08-22",
         timebox: null,
         reminders: [],
+        stressLevel: null,
+        emotionCategory: null,
+        emotionKey: null,
+        reflectionNotes: null,
     };
     const formatDateValue = (value: string) =>
         formatRelativeMarkdownLink("Persona/Report.md", "Journal/2026-08-22.md", value);
@@ -138,6 +150,8 @@ test("wraps the Task due date in a link when a formatDateValue resolver is suppl
             firstLine: `- [ ] Revised proposal | due:${formatDateValue("2026-08-22")}`,
             description: "",
             detailNote: { mode: "none" },
+            reflection: { stressLevel: null, emotionCategory: null, emotionKey: null },
+            reflectionNotes: null,
         },
     });
 });
@@ -154,6 +168,10 @@ test("updates Event title and lifecycle while preserving a legacy Wikilink and u
         end: "2026-08-23 11:00",
         status: "cancelled",
         actual: null,
+        stressLevel: null,
+        emotionCategory: null,
+        emotionKey: null,
+        reflectionNotes: null,
     };
     const snapshot = capture("- 2026-08-23 09:00 - 10:00 [[Meetings/Planning|Planning]] | owner:Ana");
 
@@ -164,6 +182,8 @@ test("updates Event title and lifecycle while preserving a legacy Wikilink and u
                 "- 2026-08-23 09:30 - 11:00 [[Meetings/Planning|Revised planning]] | owner:Ana | status:cancelled",
             description: "",
             detailNote: { mode: "none" },
+            reflection: { stressLevel: null, emotionCategory: null, emotionKey: null },
+            reflectionNotes: null,
         },
     });
 });

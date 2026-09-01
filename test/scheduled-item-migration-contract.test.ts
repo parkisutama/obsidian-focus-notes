@@ -26,6 +26,9 @@ test("legacy Task keeps one cross-day timebox and its canonical block identity b
             due: null,
             timebox: { start: "2026-08-30 22:00", end: "2026-08-31 01:00" },
             reminders: ["2026-08-30 21:45"],
+            stressLevel: null,
+            emotionCategory: null,
+            emotionKey: null,
         },
     });
     assert.deepEqual(

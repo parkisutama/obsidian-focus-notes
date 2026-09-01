@@ -47,6 +47,10 @@ test("adapts create Task state into the shared semantic contract", () => {
         due: "2026-08-15 10:30",
         timebox: { start: "2026-08-15 09:00", end: "2026-08-15 10:00" },
         reminders: ["2026-08-15 08:30"],
+        stressLevel: null,
+        emotionCategory: null,
+        emotionKey: null,
+        reflectionNotes: null,
     });
 });
 
@@ -62,6 +66,9 @@ test("adapts Task line-edit fields without changing semantic values", () => {
                 due: "2026-08-20",
                 timebox: null,
                 reminders: ["2026-08-20 08:00"],
+                stressLevel: "low",
+                emotionCategory: "pleasant",
+                emotionKey: "calm",
             },
         }),
         {
@@ -75,6 +82,10 @@ test("adapts Task line-edit fields without changing semantic values", () => {
             due: "2026-08-20",
             timebox: null,
             reminders: ["2026-08-20 08:00"],
+            stressLevel: "low",
+            emotionCategory: "pleasant",
+            emotionKey: "calm",
+            reflectionNotes: null,
         },
     );
 });
@@ -99,6 +110,10 @@ test("adapts Event line-edit fields into the same discriminated contract", () =>
             description: "With @Ana",
             objectReferences: [{ label: "Ana", vaultPath: null }],
             detailNote: { mode: "none" },
+            stressLevel: null,
+            emotionCategory: null,
+            emotionKey: null,
+            reflectionNotes: null,
             allDay: false,
             start: "2026-08-21 13:00",
             end: "2026-08-21 14:00",

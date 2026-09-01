@@ -1,5 +1,8 @@
 import type { App } from "obsidian";
-import { extractScheduledItemBlockId } from "../../../features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
+import {
+    classifyScheduledItemBlockId,
+    extractScheduledItemBlockId,
+} from "../../../features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 import { isTFile } from "../vault/ObsidianFileTypes.ts";
 
 export type ResolveCanonicalScheduledItemResult =
@@ -37,4 +40,14 @@ export async function resolveCanonicalScheduledItemSource(
     if (matches.length === 0) return { status: "orphan" };
     if (matches.length > 1) return { status: "ambiguous" };
     return { status: "resolved", filePath, lineNumber: matches[0].lineNumber, rawLine: matches[0].rawLine };
+}
+
+/** Moment-specific entry point: prevents a Task/Event target from being opened by the Moment editor. */
+export async function resolveCanonicalMomentSource(
+    app: App,
+    canonicalTarget: string,
+): Promise<ResolveCanonicalScheduledItemResult> {
+    const match = canonicalTarget.match(/^(.+)#\^(.+)$/);
+    if (!match || classifyScheduledItemBlockId(match[2]) !== "moment") return { status: "invalid-target" };
+    return resolveCanonicalScheduledItemSource(app, canonicalTarget);
 }

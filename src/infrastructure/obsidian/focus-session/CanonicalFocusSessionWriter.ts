@@ -20,7 +20,7 @@ export type WriteCanonicalFocusSessionResult =
     | { status: "orphan" };
 
 /**
- * Appends one actual Focus Session as a canonical child of its owning Event or Task timebox line,
+ * Appends one actual Focus Session as a canonical child of its owning Event or Task line,
  * resolving the owner's `itemId` to a live file/line via the shared mention index (Task 42 already
  * keeps it warm for the purpose selector). Idempotent by `sessionId`, so a caller retrying a
  * previously-failed attempt with the same id never duplicates history.

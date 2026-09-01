@@ -15,7 +15,7 @@ test("collects canonical Tasks with their due day and timeboxes", async () => {
             cachedRead: async () =>
                 [
                     "- [ ] Menyusun laporan | due:2026-09-03 ^task-abc1234567",
-                    "  - timebox | start:2026-08-31 09:00 | end:2026-08-31 11:00 | status:planned ^timebox-aaaaaaaaaa",
+                    "    - timebox: start:2026-08-31 09:00 | end:2026-08-31 11:00 | status:planned ^timebox-aaaaaaaaaa",
                 ].join("\n"),
         },
         metadataCache: {

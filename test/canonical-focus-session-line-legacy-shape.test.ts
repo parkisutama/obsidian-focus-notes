@@ -13,7 +13,7 @@ import {
  * vaults already contain lines in this shape.
  */
 
-test("a line with no reflection fields formats to the exact legacy 4-field shape", () => {
+test("a line with no Reflection uses the canonical keyed four-field shape", () => {
     const line = formatFocusSessionLine({
         start: "2026-08-31 09:12",
         end: "2026-08-31 09:37",
@@ -23,14 +23,14 @@ test("a line with no reflection fields formats to the exact legacy 4-field shape
     });
     assert.equal(
         line,
-        "    - focus-session | start:2026-08-31 09:12 | end:2026-08-31 09:37 | duration:25m | mode:pomodoro ^focus-aaaaaaaaaa",
+        "    - focus-session: start:2026-08-31 09:12 | end:2026-08-31 09:37 | duration:25m | mode:pomodoro ^focus-aaaaaaaaaa",
     );
 });
 
-test("the exact legacy 4-field line still parses, with reflection fields reported absent", () => {
-    const legacyLine =
-        "    - focus-session | start:2026-08-31 09:12 | end:2026-08-31 09:37 | duration:25m | mode:pomodoro ^focus-aaaaaaaaaa";
-    assert.deepEqual(parseFocusSessionLine(legacyLine), {
+test("the canonical four-field line parses without embedding Reflection", () => {
+    const line =
+        "    - focus-session: start:2026-08-31 09:12 | end:2026-08-31 09:37 | duration:25m | mode:pomodoro ^focus-aaaaaaaaaa";
+    assert.deepEqual(parseFocusSessionLine(line), {
         status: "parsed",
         session: {
             start: "2026-08-31 09:12",
@@ -38,9 +38,6 @@ test("the exact legacy 4-field line still parses, with reflection fields reporte
             durationSeconds: 1500,
             mode: "pomodoro",
             sessionId: "focus-aaaaaaaaaa",
-            stressLevel: null,
-            emotionCategory: null,
-            emotionKey: null,
         },
     });
 });

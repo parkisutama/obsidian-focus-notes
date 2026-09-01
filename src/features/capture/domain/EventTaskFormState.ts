@@ -3,6 +3,7 @@ import type { EventTaskKind } from "./CaptureForm";
 import type { EventTaskRecord, HubNoteRef, TaskRecord } from "../scheduled-item/domain/EventTaskRecord";
 import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
 import type { EventOccurrenceStatus, TaskPriority } from "../scheduled-item/domain/ScheduledItem";
+import type { EmotionCategory, StressLevel } from "../../reflection/domain/Wellbeing.ts";
 
 export type HubMode = "none" | "link" | "create";
 
@@ -44,6 +45,10 @@ export class EventTaskFormState {
     readonly inboxDefaultTitle: string;
     inboxTitle: string;
     inboxBody = "";
+    inboxStressLevel: StressLevel | null = null;
+    inboxEmotionCategory: EmotionCategory | null = null;
+    inboxEmotionKey: string | null = null;
+    inboxReflectionNotes: string | null = null;
     inboxTargetFile: string;
     inboxHeading: string;
     inboxPosition: InsertPosition;
@@ -178,6 +183,10 @@ export class EventTaskFormState {
             defaultTitle: this.inboxDefaultTitle,
             title: this.inboxTitle.trim(),
             body: this.inboxBody,
+            stressLevel: this.inboxStressLevel,
+            emotionCategory: this.inboxEmotionCategory,
+            emotionKey: this.inboxEmotionKey,
+            reflectionNotes: this.inboxReflectionNotes,
         };
     }
 

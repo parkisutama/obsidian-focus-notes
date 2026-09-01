@@ -1,5 +1,7 @@
 import { insertScheduledItemChildLine } from "../../capture/scheduled-item/domain/ScheduledItemChildInsertion.ts";
 import type { EmotionCategory, StressLevel } from "../../reflection/domain/Wellbeing.ts";
+import { formatReflectionLabelLine, reflectionFieldsPresent } from "../../reflection/domain/ReflectionBlockLine.ts";
+import { formatReflectionNotesLine } from "../../capture/shared/domain/FlatBlockChildLine.ts";
 import { formatFocusSessionLine, parseFocusSessionLine } from "./FocusSessionLine.ts";
 import type { FocusSessionOwner } from "./OwnedFocusSession.ts";
 import type { DisplayMode } from "./Timer.ts";
@@ -43,8 +45,7 @@ export function recordFocusSessionInBlock(
         return { status: "already-recorded", block: rawBlock };
     }
 
-    const anchorBlockId = owner.kind === "event" ? owner.itemId : owner.timeboxId;
-    const result = insertScheduledItemChildLine(rawBlock, anchorBlockId, (indent, lineEnding) => {
+    const result = insertScheduledItemChildLine(rawBlock, owner.itemId, (indent, lineEnding) => {
         const mainLine = formatFocusSessionLine(
             {
                 start: fields.actualStart,
@@ -52,14 +53,20 @@ export function recordFocusSessionInBlock(
                 durationSeconds: fields.durationSeconds,
                 mode: fields.mode,
                 sessionId,
-                stressLevel: fields.stressLevel,
-                emotionCategory: fields.emotionCategory,
-                emotionKey: fields.emotionKey,
             },
             indent,
         );
-        const trimmedNotes = fields.notes?.trim();
-        return trimmedNotes ? `${mainLine}${lineEnding}${indent}  - notes: ${trimmedNotes}` : mainLine;
+        const childIndent = `${indent}    `;
+        const reflection = {
+            stressLevel: fields.stressLevel ?? null,
+            emotionCategory: fields.emotionCategory ?? null,
+            emotionKey: fields.emotionKey ?? null,
+        };
+        const children: string[] = [];
+        if (reflectionFieldsPresent(reflection)) children.push(formatReflectionLabelLine(childIndent, reflection));
+        const notes = formatReflectionNotesLine(childIndent, fields.notes ?? "");
+        if (notes) children.push(notes);
+        return children.length ? `${mainLine}${lineEnding}${children.join(lineEnding)}` : mainLine;
     });
     if (result.status === "anchor-not-found") return result;
     return { status: "recorded", block: result.content };
@@ -75,7 +82,8 @@ export interface EditFocusSessionFields {
 
 export type EditFocusSessionResult = { status: "edited"; block: string } | { status: "not-found" };
 
-const NOTES_CHILD_RE = /^\s*-\s*notes:/;
+const REFLECTION_CHILD_RE = /^\s*-\s*reflection:/;
+const NOTES_CHILD_RE = /^\s*-\s*reflection-notes:/;
 
 /**
  * Rewrites an existing `focus-session` line's reflection fields (stress/emotion/mood/notes) in
@@ -106,22 +114,28 @@ export function editFocusSessionInBlock(
             durationSeconds: parsed.session.durationSeconds,
             mode: parsed.session.mode,
             sessionId,
-            stressLevel: fields.stressLevel,
-            emotionCategory: fields.emotionCategory,
-            emotionKey: fields.emotionKey,
         },
         indent,
     );
 
-    const nextLine = lines[lineIndex + 1];
-    const hasExistingNotes =
-        nextLine !== undefined &&
-        (nextLine.match(/^[\t ]*/)?.[0].length ?? 0) > indent.length &&
-        NOTES_CHILD_RE.test(nextLine);
-    const removeCount = hasExistingNotes ? 2 : 1;
+    let removeCount = 1;
+    while (lineIndex + removeCount < lines.length) {
+        const child = lines[lineIndex + removeCount];
+        const childIndent = child.match(/^[\t ]*/)?.[0].length ?? 0;
+        if (childIndent <= indent.length || (!REFLECTION_CHILD_RE.test(child) && !NOTES_CHILD_RE.test(child))) break;
+        removeCount += 1;
+    }
 
-    const trimmedNotes = fields.notes?.trim();
-    const replacement = trimmedNotes ? [newLine, `${indent}  - notes: ${trimmedNotes}`] : [newLine];
+    const nestedIndent = `${indent}    `;
+    const reflection = {
+        stressLevel: fields.stressLevel,
+        emotionCategory: fields.emotionCategory,
+        emotionKey: fields.emotionKey,
+    };
+    const replacement = [newLine];
+    if (reflectionFieldsPresent(reflection)) replacement.push(formatReflectionLabelLine(nestedIndent, reflection));
+    const notes = formatReflectionNotesLine(nestedIndent, fields.notes ?? "");
+    if (notes) replacement.push(notes);
     lines.splice(lineIndex, removeCount, ...replacement);
 
     return { status: "edited", block: lines.join(lineEnding) };

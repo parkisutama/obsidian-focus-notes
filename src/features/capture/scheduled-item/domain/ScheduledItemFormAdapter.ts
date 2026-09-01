@@ -60,6 +60,8 @@ export function hydrateScheduledItemFormEdit(input: {
                 title: input.title,
                 description: block.block.description,
                 detailNote,
+                reflection: block.block.reflection,
+                reflectionNotes: block.block.reflectionNotes,
                 edit: parsed.edit,
             }),
         };
@@ -73,6 +75,8 @@ export function hydrateScheduledItemFormEdit(input: {
             title: input.title,
             description: block.block.description,
             detailNote,
+            reflection: block.block.reflection,
+            reflectionNotes: block.block.reflectionNotes,
             edit: parsed.edit,
         }),
     };
@@ -135,6 +139,9 @@ export function buildScheduledItemFormBlockEdit(
                       due: data.due,
                       timebox: data.timebox,
                       reminders: data.reminders,
+                      stressLevel: null,
+                      emotionCategory: null,
+                      emotionKey: null,
                   },
                   formatDateValue,
               )
@@ -156,6 +163,12 @@ export function buildScheduledItemFormBlockEdit(
             firstLine: lineResult.line,
             description: data.description,
             detailNote: detailBlockFromSelection(data.detailNote, data.title, currentDetail),
+            reflection: {
+                stressLevel: data.stressLevel ?? null,
+                emotionCategory: data.emotionCategory ?? null,
+                emotionKey: data.emotionKey ?? null,
+            },
+            reflectionNotes: data.reflectionNotes ?? null,
         },
     };
 }
@@ -183,6 +196,12 @@ export function buildScheduledItemRecord(data: ScheduledItemFormData): BuildSche
                 actualStart: data.actual ? parseLocalDateTime(data.actual.start, false) : null,
                 actualEnd: data.actual ? parseLocalDateTime(data.actual.end, false) : null,
                 description: data.description,
+                reflection: {
+                    stressLevel: data.stressLevel ?? null,
+                    emotionCategory: data.emotionCategory ?? null,
+                    emotionKey: data.emotionKey ?? null,
+                },
+                reflectionNotes: data.reflectionNotes ?? null,
                 hubNoteRef: null,
             },
         };
@@ -205,6 +224,12 @@ export function buildScheduledItemRecord(data: ScheduledItemFormData): BuildSche
                 : null,
             reminders: data.reminders.map((value) => parseLocalDateTime(value, false) as Date),
             description: data.description,
+            reflection: {
+                stressLevel: data.stressLevel ?? null,
+                emotionCategory: data.emotionCategory ?? null,
+                emotionKey: data.emotionKey ?? null,
+            },
+            reflectionNotes: data.reflectionNotes ?? null,
             hubNoteRef: null,
         },
     };

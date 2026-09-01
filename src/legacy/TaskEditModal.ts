@@ -146,6 +146,9 @@ export class TaskEditModal extends Modal {
                 ? { start: join(this.timeboxStart, true) ?? "", end: join(this.timeboxEnd, true) ?? "" }
                 : null,
             reminders: this.reminders.map((value) => join(value, true) ?? ""),
+            stressLevel: null,
+            emotionCategory: null,
+            emotionKey: null,
         };
     }
 

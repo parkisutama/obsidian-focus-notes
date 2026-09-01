@@ -1,6 +1,9 @@
 import type { EventRecord, EventTaskRecord, HubNoteRef, TaskRecord } from "./EventTaskRecord";
 import type { TaskPriority } from "./ScheduledItem";
 import { appendScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
+import { formatDescriptionLine, formatReflectionNotesLine } from "../../shared/domain/FlatBlockChildLine.ts";
+import { formatReflectionLabelLine, reflectionFieldsPresent } from "../../../reflection/domain/ReflectionBlockLine.ts";
+import { createPlannedTaskTimebox, formatTaskTimeboxLine } from "./TaskTimeboxLine.ts";
 
 /** Formats a date value as a link (or plain text, if unresolvable) for a Task date field. */
 export type FormatDateLink = (when: Date, label: string) => string;
@@ -10,14 +13,30 @@ export function formatEventTaskEntry(
     detailNoteRef?: HubNoteRef | null,
     formatDateLink?: FormatDateLink,
     blockId?: string,
+    timeboxId?: string,
 ): string {
     const semanticLine = record.kind === "event" ? formatEventLine(record) : formatTaskLine(record, formatDateLink);
     const line = blockId ? appendScheduledItemBlockId(semanticLine, blockId) : semanticLine;
     const parts = [line];
-    for (const descriptionLine of record.description.split(/\r?\n/)) {
-        const description = descriptionLine.trim();
-        if (description) parts.push(`    - ${description}`);
+    const description = formatDescriptionLine("    ", record.description);
+    if (description) parts.push(description);
+    if (record.kind === "task" && record.timebox) {
+        if (!timeboxId) throw new Error("Canonical Task timebox requires a timebox block ID.");
+        parts.push(
+            formatTaskTimeboxLine(
+                createPlannedTaskTimebox(
+                    formatDateTime(record.timebox.start),
+                    formatDateTime(record.timebox.end),
+                    () => timeboxId,
+                ),
+            ),
+        );
     }
+    if (record.reflection && reflectionFieldsPresent(record.reflection)) {
+        parts.push(formatReflectionLabelLine("    ", record.reflection));
+    }
+    const reflectionNotes = formatReflectionNotesLine("    ", record.reflectionNotes ?? "");
+    if (reflectionNotes) parts.push(reflectionNotes);
     if (detailNoteRef) {
         parts.push(`    - detail: [${detailNoteRef.title}](${encodePath(detailNoteRef.path)})`);
     }
@@ -49,10 +68,6 @@ function formatTaskLine(record: TaskRecord, formatDateLink?: FormatDateLink): st
     if (record.due) {
         const label = record.dueHasTime ? formatDateTime(record.due) : formatDate(record.due);
         line += ` | due:${dateLink(record.due, label)}`;
-    }
-    if (record.timebox) {
-        line += ` | start:${dateLink(record.timebox.start, formatDateTime(record.timebox.start))}`;
-        line += ` | end:${dateLink(record.timebox.end, formatDateTime(record.timebox.end))}`;
     }
     for (const reminder of record.reminders) {
         line += ` | remind:${dateLink(reminder, formatDateTime(reminder))}`;

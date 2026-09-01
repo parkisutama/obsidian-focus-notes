@@ -1,4 +1,10 @@
 import type { EventOccurrenceStatus, TaskPriority } from "./ScheduledItem";
+import type { ReflectionBlockFields } from "../../../reflection/domain/ReflectionBlockLine.ts";
+
+interface ReflectiveRecordFields {
+    reflection?: ReflectionBlockFields;
+    reflectionNotes?: string | null;
+}
 
 /** Reference to a hub note, used to build a markdown link. */
 export interface HubNoteRef {
@@ -8,7 +14,7 @@ export interface HubNoteRef {
     path: string;
 }
 
-export interface EventRecord {
+export interface EventRecord extends ReflectiveRecordFields {
     kind: "event";
     title: string;
     start: Date;
@@ -21,7 +27,7 @@ export interface EventRecord {
     hubNoteRef: HubNoteRef | null;
 }
 
-export interface TaskRecord {
+export interface TaskRecord extends ReflectiveRecordFields {
     kind: "task";
     title: string;
     priority: TaskPriority;

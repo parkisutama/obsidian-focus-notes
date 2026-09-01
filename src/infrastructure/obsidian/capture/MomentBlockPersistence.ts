@@ -1,38 +1,27 @@
 import type { App } from "obsidian";
+import type { MomentBlockEdit } from "../../../features/capture/moment/domain/MomentBlockEditor.ts";
+import { replaceMomentBlock } from "../../../features/capture/moment/domain/MomentBlockEditor.ts";
 import type { LedgerRecordSnapshot } from "../../../features/capture/scheduled-item/domain/LedgerRecordSource.ts";
-import {
-    replaceScheduledItemBlock,
-    type ScheduledItemBlockEdit,
-} from "../../../features/capture/scheduled-item/domain/ScheduledItemBlockEditor.ts";
 import { isTFile } from "../vault/ObsidianFileTypes.ts";
 
-export type SaveScheduledItemBlockResult =
+export type SaveMomentBlockResult =
     | { status: "saved" | "unchanged" }
     | { status: "conflict"; reason: "file-missing" | "line-missing" | "line-changed" | "block-changed" | "ambiguous" }
     | {
           status: "invalid";
-          reason:
-              | "empty-block"
-              | "duplicate-description"
-              | "duplicate-detail"
-              | "duplicate-reflection"
-              | "duplicate-reflection-notes"
-              | "duplicate-timebox-id"
-              | "duplicate-focus-session-id"
-              | "invalid-timebox-line"
-              | "invalid-focus-session-line";
+          reason: "missing-id" | "duplicate-description" | "duplicate-reflection" | "duplicate-reflection-notes";
       };
 
-export async function saveScheduledItemBlock(
+export async function saveMomentBlock(
     app: App,
     snapshot: LedgerRecordSnapshot,
-    edit: ScheduledItemBlockEdit,
-): Promise<SaveScheduledItemBlockResult> {
+    edit: MomentBlockEdit,
+): Promise<SaveMomentBlockResult> {
     const file = app.vault.getAbstractFileByPath(snapshot.filePath);
     if (!isTFile(file)) return { status: "conflict", reason: "file-missing" };
-    let outcome: SaveScheduledItemBlockResult = { status: "unchanged" };
+    let outcome: SaveMomentBlockResult = { status: "unchanged" };
     await app.vault.process(file, (content) => {
-        const replaced = replaceScheduledItemBlock(content, snapshot, edit);
+        const replaced = replaceMomentBlock(content, snapshot, edit);
         if (replaced.status !== "ready") {
             outcome = replaced.status === "conflict" ? replaced : { status: "invalid", reason: replaced.reason };
             return content;

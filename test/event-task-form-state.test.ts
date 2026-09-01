@@ -47,6 +47,10 @@ test("builds an Inbox record without changing the EventTask record contract", ()
         defaultTitle: "2026-08-01 15:40",
         title: "Hubungi vendor",
         body: "Catatan #follow-up",
+        stressLevel: null,
+        emotionCategory: null,
+        emotionKey: null,
+        reflectionNotes: null,
     });
 });
 

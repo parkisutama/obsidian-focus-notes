@@ -1,4 +1,7 @@
 import type { InboxRecord } from "./InboxRecord";
+import { normalizeFlatBlockText } from "../../shared/domain/FlatBlockChildLine.ts";
+import { formatReflectionNotesLine } from "../../shared/domain/FlatBlockChildLine.ts";
+import { formatReflectionLabelLine, reflectionFieldsPresent } from "../../../reflection/domain/ReflectionBlockLine.ts";
 
 export interface FormatInboxEntryOptions {
     /**
@@ -7,6 +10,7 @@ export interface FormatInboxEntryOptions {
      * heading and repeating it on every bullet is redundant.
      */
     timeOnly?: boolean;
+    blockId?: string;
 }
 
 /** Format one Inbox capture as portable Markdown bullets. */
@@ -14,12 +18,18 @@ export function formatInboxEntry(record: InboxRecord, options: FormatInboxEntryO
     const timestamp = options.timeOnly ? formatLocalTime(record.capturedAt) : formatLocalMinute(record.capturedAt);
     const title = record.title.trim();
     const defaultTitle = record.defaultTitle.trim();
-    const heading = !title || title === defaultTitle ? `- ${timestamp}` : `- ${timestamp} — ${title}`;
-    const bodyLines = record.body
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .map((line) => `    - ${line}`);
+    const baseHeading = !title || title === defaultTitle ? `- ${timestamp}` : `- ${timestamp} — ${title}`;
+    const heading = options.blockId ? `${baseHeading} ^${options.blockId}` : baseHeading;
+    const description = normalizeFlatBlockText(record.body);
+    const bodyLines = description ? [`    - description: ${description}`] : [];
+    const reflection = {
+        stressLevel: record.stressLevel ?? null,
+        emotionCategory: record.emotionCategory ?? null,
+        emotionKey: record.emotionKey ?? null,
+    };
+    if (reflectionFieldsPresent(reflection)) bodyLines.push(formatReflectionLabelLine("    ", reflection));
+    const reflectionNotes = formatReflectionNotesLine("    ", record.reflectionNotes ?? "");
+    if (reflectionNotes) bodyLines.push(reflectionNotes);
 
     return [heading, ...bodyLines].join("\n");
 }

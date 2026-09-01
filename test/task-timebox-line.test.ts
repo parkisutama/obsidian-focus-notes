@@ -15,7 +15,7 @@ test("formats and parses a planned timebox line round trip", () => {
     });
     assert.equal(
         line,
-        "  - timebox | start:2026-08-31 09:00 | end:2026-08-31 11:00 | status:planned ^timebox-abc1234567",
+        "    - timebox: start:2026-08-31 09:00 | end:2026-08-31 11:00 | status:planned ^timebox-abc1234567",
     );
     assert.deepEqual(parseTaskTimeboxLine(line), {
         status: "parsed",
@@ -40,7 +40,7 @@ test("a cross-midnight timebox is valid", () => {
 
 test("a timebox line missing its identity fails explicitly instead of being silently accepted", () => {
     assert.deepEqual(
-        parseTaskTimeboxLine("  - timebox | start:2026-08-31 09:00 | end:2026-08-31 11:00 | status:planned"),
+        parseTaskTimeboxLine("    - timebox: start:2026-08-31 09:00 | end:2026-08-31 11:00 | status:planned"),
         { status: "invalid", reason: "missing-id" },
     );
 });
@@ -48,7 +48,7 @@ test("a timebox line missing its identity fails explicitly instead of being sile
 test("an unrecognized status fails explicitly", () => {
     assert.deepEqual(
         parseTaskTimeboxLine(
-            "  - timebox | start:2026-08-31 09:00 | end:2026-08-31 11:00 | status:done ^timebox-abc1234567",
+            "    - timebox: start:2026-08-31 09:00 | end:2026-08-31 11:00 | status:done ^timebox-abc1234567",
         ),
         { status: "invalid", reason: "invalid-status" },
     );
@@ -57,7 +57,7 @@ test("an unrecognized status fails explicitly", () => {
 test("end before or equal to start fails explicitly", () => {
     assert.deepEqual(
         parseTaskTimeboxLine(
-            "  - timebox | start:2026-08-31 11:00 | end:2026-08-31 09:00 | status:planned ^timebox-abc1234567",
+            "    - timebox: start:2026-08-31 11:00 | end:2026-08-31 09:00 | status:planned ^timebox-abc1234567",
         ),
         { status: "invalid", reason: "invalid-interval" },
     );

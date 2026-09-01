@@ -21,10 +21,6 @@ import {
 import type { TaskTimebox, TaskTimeboxStatus } from "../../domain/TaskTimebox.ts";
 import { planTaskDayReferences, type TaskDayReferenceTimebox } from "../../domain/TaskDayReferencePlan.ts";
 import { describeTaskTimeboxWarnings } from "../../domain/TaskTimeboxWarningLabel.ts";
-import {
-    type ScannedFocusSession,
-    scanFocusSessionsInBlock,
-} from "../../../../focus-session/domain/FocusSessionBlockScan.ts";
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings.ts";
 
 export interface TimeboxManagerOptions {
@@ -43,22 +39,10 @@ const STATUS_LABELS: Record<TaskTimeboxStatus, string> = {
     cancelled: "Cancelled",
 };
 
-const MODE_LABELS: Record<ScannedFocusSession["mode"], string> = {
-    pomodoro: "Pomodoro",
-    timer: "Timer",
-    stopwatch: "Stopwatch",
-};
-
-function formatSessionDuration(totalSeconds: number): string {
-    const minutes = Math.round(totalSeconds / 60);
-    return `${minutes}m`;
-}
-
 export class TimeboxManagerModal extends Modal {
     private snapshot: LedgerRecordSnapshot;
     private originalBlock: ScheduledItemBlock | null = null;
     private timeboxes: TaskTimebox[] = [];
-    private focusSessions: ScannedFocusSession[] = [];
     private editingId: string | null;
     private confirmingDeleteId: string | null = null;
     private errorMessage = "";
@@ -88,7 +72,6 @@ export class TimeboxManagerModal extends Modal {
         const parsed = parseScheduledItemBlock(this.snapshot.rawBlock);
         this.originalBlock = parsed.status === "parsed" ? parsed.block : null;
         this.timeboxes = parsed.status === "parsed" ? parsed.block.timeboxes : [];
-        this.focusSessions = scanFocusSessionsInBlock(this.snapshot.rawBlock);
     }
 
     private render(): void {
@@ -147,22 +130,6 @@ export class TimeboxManagerModal extends Modal {
                     .setTooltip(timebox.status === "planned" ? "Delete" : "Delete (historical)")
                     .onClick(() => this.requestDelete(timebox.timeboxId)),
             );
-        }
-        this.renderFocusSessions(container, timebox.timeboxId);
-    }
-
-    /** Read-only actual Focus Session history for one timebox (Task 44) — never editable here. */
-    private renderFocusSessions(container: HTMLElement, timeboxId: string): void {
-        const sessions = this.focusSessions.filter((session) => session.ownerTimeboxId === timeboxId);
-        if (sessions.length === 0) return;
-        const list = container.createDiv({ cls: "fn-timebox-focus-sessions" });
-        for (const session of sessions) {
-            const startTime = session.start.slice(11);
-            const endTime = session.end.slice(11);
-            list.createDiv({
-                cls: "fn-timebox-focus-session",
-                text: `${startTime} – ${endTime} · ${formatSessionDuration(session.durationSeconds)} · ${MODE_LABELS[session.mode]}`,
-            });
         }
     }
 
@@ -262,8 +229,7 @@ export class TimeboxManagerModal extends Modal {
     private requestDelete(timeboxId: string): void {
         const timebox = this.timeboxes.find((t) => t.timeboxId === timeboxId);
         if (!timebox) return;
-        const hasFocusSessions = this.focusSessions.some((session) => session.ownerTimeboxId === timeboxId);
-        if (timebox.status === "planned" && !hasFocusSessions) {
+        if (timebox.status === "planned") {
             this.applyDelete(timeboxId, false);
             return;
         }
@@ -272,8 +238,7 @@ export class TimeboxManagerModal extends Modal {
     }
 
     private applyDelete(timeboxId: string, confirmedHistorical: boolean): void {
-        const hasFocusSessions = this.focusSessions.some((session) => session.ownerTimeboxId === timeboxId);
-        const result = deleteTaskTimebox(this.timeboxes, timeboxId, { confirmedHistorical, hasFocusSessions });
+        const result = deleteTaskTimebox(this.timeboxes, timeboxId, { confirmedHistorical, hasFocusSessions: false });
         this.confirmingDeleteId = null;
         if (result.status !== "deleted") return;
         this.timeboxes = result.timeboxes;

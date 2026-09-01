@@ -26,7 +26,7 @@ interface InboxSubmissionWriter {
         targetHeading: string,
         position: InsertPosition,
         options?: FormatInboxEntryOptions,
-    ): Promise<void>;
+    ): Promise<unknown>;
     writeRelated(
         markdown: string,
         targetFilePath: string,

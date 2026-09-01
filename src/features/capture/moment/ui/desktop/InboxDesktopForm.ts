@@ -5,6 +5,7 @@ import { FileSuggest } from "../../../../../infrastructure/obsidian/suggestions/
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "../../../domain/CaptureTarget";
 import type { InsertPosition } from "../../../../../shared/markdown/InsertPosition";
+import { EmotionalWellbeingPicker } from "../../../../reflection/ui/EmotionalWellbeingPicker.ts";
 
 interface InboxDesktopFormOptions {
     app: App;
@@ -16,6 +17,7 @@ interface InboxDesktopFormOptions {
 /** Desktop-only Inbox fields kept separate from the event/task modal shell. */
 export class InboxDesktopForm {
     private notesController: InboxNotesController | null = null;
+    private reflectionNotesController: InboxNotesController | null = null;
     private targetSummaryEl: HTMLElement | null = null;
 
     constructor(private readonly options: InboxDesktopFormOptions) {}
@@ -38,13 +40,46 @@ export class InboxDesktopForm {
             onChange: (value) => (this.options.form.inboxBody = value),
         });
 
+        this.renderReflection(container);
+
         this.renderAdvanced(container);
     }
 
     destroy(): void {
         this.notesController?.destroy();
         this.notesController = null;
+        this.reflectionNotesController?.destroy();
+        this.reflectionNotesController = null;
         this.targetSummaryEl = null;
+    }
+
+    private renderReflection(container: HTMLElement): void {
+        const section = container.createDiv({ cls: "focus-notes-modal-section fn-moment-reflection" });
+        section.createDiv({ cls: "focus-notes-modal-label", text: "Reflection" });
+        new EmotionalWellbeingPicker(
+            section,
+            (value) => {
+                this.options.form.inboxStressLevel = value.stressLevel;
+                this.options.form.inboxEmotionCategory = value.emotionCategory;
+                this.options.form.inboxEmotionKey = value.emotionKey;
+            },
+            {
+                stressLevel: this.options.form.inboxStressLevel,
+                emotionCategory: this.options.form.inboxEmotionCategory,
+                emotionKey: this.options.form.inboxEmotionKey,
+            },
+        );
+        section.createDiv({ cls: "focus-notes-modal-label", text: "Reflection notes" });
+        const editor = section.createDiv({
+            cls: "fn-inbox-notes-input",
+            attr: { role: "textbox", "aria-label": "Moment reflection notes", "data-placeholder": "What stood out?" },
+        });
+        this.reflectionNotesController = new InboxNotesController(this.options.app, editor, {
+            initialValue: this.options.form.inboxReflectionNotes ?? "",
+            targetFile: this.options.resolveTarget()?.file ?? "",
+            getContextSources: () => this.options.getSettings().inbox.contextSources,
+            onChange: (value) => (this.options.form.inboxReflectionNotes = value),
+        });
     }
 
     private renderAdvanced(container: HTMLElement): void {
@@ -98,7 +133,10 @@ export class InboxDesktopForm {
         this.targetSummaryEl?.setText(
             target ? `${target.file} · ${target.heading || "No heading"}` : "Selected destination is unavailable",
         );
-        if (updateNotes && target) this.notesController?.setTargetFile(target.file);
+        if (updateNotes && target) {
+            this.notesController?.setTargetFile(target.file);
+            this.reflectionNotesController?.setTargetFile(target.file);
+        }
     }
 
     private makeRow(container: HTMLElement, icon: string): HTMLElement {

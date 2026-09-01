@@ -7,6 +7,7 @@ const RANDOM_SUFFIX_LENGTH = 10;
 export type DerivedBlockIdNamespace = "timebox" | "focus" | "task-ref" | "event-ref" | "focus-ref";
 
 export type ScheduledItemBlockIdKind =
+    | "moment"
     | "task"
     | "event"
     | "timebox"
@@ -17,6 +18,7 @@ export type ScheduledItemBlockIdKind =
     | "unknown";
 
 const BLOCK_ID_NAMESPACES: ReadonlyArray<[RegExp, ScheduledItemBlockIdKind]> = [
+    [/^moment-[0123456789abcdefghjkmnpqrstvwxyz]{10}$/, "moment"],
     [/^task-ref-[0123456789abcdefghjkmnpqrstvwxyz]{10}$/, "task-reference"],
     [/^event-ref-[0123456789abcdefghjkmnpqrstvwxyz]{10}$/, "event-reference"],
     [/^focus-ref-[0123456789abcdefghjkmnpqrstvwxyz]{10}$/, "focus-reference"],
@@ -50,6 +52,10 @@ export function createDerivedBlockId(namespace: DerivedBlockIdNamespace): string
     return createNamespacedBlockId(namespace);
 }
 
+export function createMomentBlockId(createId: () => string = () => createNamespacedBlockId("moment")): string {
+    return createId();
+}
+
 export function classifyScheduledItemBlockId(blockId: string): ScheduledItemBlockIdKind {
     for (const [pattern, kind] of BLOCK_ID_NAMESPACES) {
         if (pattern.test(blockId)) return kind;
@@ -57,7 +63,7 @@ export function classifyScheduledItemBlockId(blockId: string): ScheduledItemBloc
     return "unknown";
 }
 
-function createNamespacedBlockId(namespace: ScheduledItemKind | DerivedBlockIdNamespace): string {
+function createNamespacedBlockId(namespace: ScheduledItemKind | DerivedBlockIdNamespace | "moment"): string {
     const random = new Uint8Array(RANDOM_SUFFIX_LENGTH);
     crypto.getRandomValues(random);
     const suffix = Array.from(random, (value) => BASE32_ALPHABET[value & 31]).join("");

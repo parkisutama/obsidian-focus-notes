@@ -5,7 +5,11 @@ import {
 } from "../../../features/capture/scheduled-item/domain/EventTaskMarkdown.ts";
 import type { EventTaskRecord, HubNoteRef } from "../../../features/capture/scheduled-item/domain/EventTaskRecord";
 import type { EventTaskSettings } from "../../../features/capture/scheduled-item/domain/DetailNoteSettings";
-import { createScheduledItemBlockId } from "../../../features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
+import {
+    createMomentBlockId,
+    createDerivedBlockId,
+    createScheduledItemBlockId,
+} from "../../../features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
 import { removeEventDayReferenceForCanonical } from "../../../features/capture/scheduled-item/domain/EventDayReference.ts";
 import { removeTaskDayReference } from "../../../features/capture/scheduled-item/domain/TaskDayReference.ts";
 import type { InboxRecord } from "../../../features/capture/moment/domain/InboxRecord";
@@ -38,7 +42,8 @@ export class EventTaskWriter {
             ? (when: Date, label: string) => this.formatDailyLink(when, targetFilePath, label)
             : undefined;
         const blockId = createScheduledItemBlockId(record.kind);
-        const content = formatEventTaskEntry(record, detailNoteRef, formatDateLink, blockId);
+        const timeboxId = record.kind === "task" && record.timebox ? createDerivedBlockId("timebox") : undefined;
+        const content = formatEventTaskEntry(record, detailNoteRef, formatDateLink, blockId, timeboxId);
         await this.insertIntoFile(file, targetHeading, content, position);
         return blockId;
     }
@@ -63,9 +68,11 @@ export class EventTaskWriter {
         targetHeading: string,
         position: InsertPosition,
         options?: FormatInboxEntryOptions,
-    ): Promise<void> {
+    ): Promise<string> {
         const file = await this.resolveOrCreateFile(targetFilePath);
-        await this.insertIntoFile(file, targetHeading, formatInboxEntry(record, options), position);
+        const blockId = createMomentBlockId();
+        await this.insertIntoFile(file, targetHeading, formatInboxEntry(record, { ...options, blockId }), position);
+        return blockId;
     }
 
     async writeRelated(

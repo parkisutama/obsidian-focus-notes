@@ -1,6 +1,7 @@
 import { unwrapMarkdownLinkLabel } from "../../../../shared/markdown/MarkdownLink.ts";
 import { appendScheduledItemBlockId, extractScheduledItemBlockId } from "./ScheduledItemBlockId.ts";
 import type { TaskPriority } from "./ScheduledItem";
+import type { EmotionCategory, StressLevel } from "../../../reflection/domain/Wellbeing.ts";
 
 /** Wraps a plain date/time edit value (e.g. into a relative Markdown link) before it's written. */
 export type FormatDateValue = (value: string) => string;
@@ -11,7 +12,19 @@ export interface TaskLineEdit {
     due: string | null;
     timebox: { start: string; end: string } | null;
     reminders: string[];
+    /**
+     * Optional reflection fields, added any time via Edit Task (not at creation) — same
+     * `stress:`/`emotion:`/`mood:` token names as FocusSessionLine.ts's canonical line, so the
+     * grammar reads consistently across the plugin. Absent on a Task that hasn't been reflected
+     * on yet.
+     */
+    stressLevel: StressLevel | null;
+    emotionCategory: EmotionCategory | null;
+    emotionKey: string | null;
 }
+
+const STRESS_LEVELS: ReadonlySet<string> = new Set(["low", "normal", "medium", "high"]);
+const EMOTION_CATEGORIES: ReadonlySet<string> = new Set(["pleasant", "neutral", "unpleasant"]);
 
 export type EditTaskLineResult = { status: "ready"; line: string } | { status: "invalid"; reason: "not-task" };
 
@@ -28,9 +41,9 @@ export type ParseTaskLineEditResult =
     | { status: "parsed"; edit: TaskLineEdit }
     | { status: "invalid"; reason: TaskLineInvalidReason };
 
-type OwnedKey = "priority" | "due" | "start" | "end" | "remind";
+type OwnedKey = "priority" | "due" | "start" | "end" | "remind" | "stress" | "emotion" | "mood";
 
-const OWNED_KEYS: OwnedKey[] = ["priority", "due", "start", "end", "remind"];
+const OWNED_KEYS: OwnedKey[] = ["priority", "due", "start", "end", "remind", "stress", "emotion", "mood"];
 
 function metadataKey(segment: string): string | null {
     const separator = segment.indexOf(":");
@@ -50,6 +63,9 @@ function desiredMetadata(edit: TaskLineEdit, formatDateValue?: FormatDateValue):
         start: edit.timebox ? [link(edit.timebox.start)] : [],
         end: edit.timebox ? [link(edit.timebox.end)] : [],
         remind: edit.reminders.map(link),
+        stress: edit.stressLevel ? [edit.stressLevel] : [],
+        emotion: edit.emotionCategory ? [edit.emotionCategory] : [],
+        mood: edit.emotionKey ? [edit.emotionKey] : [],
     };
 }
 
@@ -78,14 +94,28 @@ export function parseTaskLineEdit(line: string): ParseTaskLineEditResult {
 
     const segments = match[2].split(" | ");
     segments.shift();
-    const values: Record<OwnedKey, string[]> = { priority: [], due: [], start: [], end: [], remind: [] };
+    const values: Record<OwnedKey, string[]> = {
+        priority: [],
+        due: [],
+        start: [],
+        end: [],
+        remind: [],
+        stress: [],
+        emotion: [],
+        mood: [],
+    };
+    const noUnwrap: ReadonlySet<OwnedKey> = new Set(["priority", "stress", "emotion", "mood"]);
     for (const segment of segments) {
         const key = metadataKey(segment);
         if (!key || !OWNED_KEYS.includes(key as OwnedKey)) continue;
         const raw = metadataValue(segment);
-        values[key as OwnedKey].push(key === "priority" ? raw : unwrapMarkdownLinkLabel(raw));
+        values[key as OwnedKey].push(noUnwrap.has(key as OwnedKey) ? raw : unwrapMarkdownLinkLabel(raw));
     }
-    if ([values.priority, values.due, values.start, values.end].some((owned) => owned.length > 1)) {
+    if (
+        [values.priority, values.due, values.start, values.end, values.stress, values.emotion, values.mood].some(
+            (owned) => owned.length > 1,
+        )
+    ) {
         return { status: "invalid", reason: "duplicate-owned-field" };
     }
 
@@ -104,6 +134,14 @@ export function parseTaskLineEdit(line: string): ParseTaskLineEditResult {
             return { status: "invalid", reason: "invalid-timebox" };
         }
     }
+
+    // Reflection fields degrade to absent on an unrecognized value rather than invalidating the
+    // whole line — matches FocusSessionLine.ts's tolerance for the same token names.
+    const stressRaw = values.stress[0]?.toLowerCase() ?? null;
+    const stressLevel = stressRaw && STRESS_LEVELS.has(stressRaw) ? (stressRaw as StressLevel) : null;
+    const emotionRaw = values.emotion[0]?.toLowerCase() ?? null;
+    const emotionCategory = emotionRaw && EMOTION_CATEGORIES.has(emotionRaw) ? (emotionRaw as EmotionCategory) : null;
+    const emotionKey = values.mood[0]?.trim() || null;
     if (values.remind.some((value) => !parseLocalDateTime(value, false))) {
         return { status: "invalid", reason: "invalid-reminder" };
     }
@@ -116,6 +154,9 @@ export function parseTaskLineEdit(line: string): ParseTaskLineEditResult {
             due,
             timebox: start && end ? { start, end } : null,
             reminders: values.remind,
+            stressLevel,
+            emotionCategory,
+            emotionKey,
         },
     };
 }
@@ -149,7 +190,16 @@ function editTaskLineWithOptionalTitle(
     const originalTitle = segments.shift() ?? "";
     const title = titleEdit === null ? originalTitle : renderEditedTitle(originalTitle, titleEdit);
     const desired = desiredMetadata(edit, formatDateValue);
-    const consumed: Record<OwnedKey, number> = { priority: 0, due: 0, start: 0, end: 0, remind: 0 };
+    const consumed: Record<OwnedKey, number> = {
+        priority: 0,
+        due: 0,
+        start: 0,
+        end: 0,
+        remind: 0,
+        stress: 0,
+        emotion: 0,
+        mood: 0,
+    };
     const metadata: string[] = [];
     const ownedPositions: number[] = [];
     const ownedRanks: number[] = [];
