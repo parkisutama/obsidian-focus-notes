@@ -968,9 +968,9 @@ contract without routing it through Scheduled Item semantics.
 Task 57 persistence.
 
 **Acceptance criteria:**
-- [ ] Desktop captures and edits all four Reflection states.
-- [ ] Description and Reflection Notes have separate controllers and cleanup.
-- [ ] Edit resolves the exact Moment block and surfaces conflicts.
+- [x] Desktop captures and edits all four Reflection states.
+- [x] Description and Reflection Notes have separate controllers and cleanup.
+- [x] Edit resolves the exact Moment block and surfaces conflicts.
 
 **Verification:** Desktop Moment form/composition tests and manual edit smoke test.
 
