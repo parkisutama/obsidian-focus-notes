@@ -55,8 +55,8 @@ test("expands each Task child timebox into its own Timeline item sharing the Tas
                 [
                     "## Activities & Tasks",
                     "- [ ] Menyusun laporan | due:2026-09-03 ^task-abc1234567",
-                    "    - timebox | start:2026-08-31 09:00 | end:2026-08-31 11:00 | status:planned ^timebox-aaaaaaaaaa",
-                    "    - timebox | start:2026-09-01 09:00 | end:2026-09-01 11:00 | status:completed ^timebox-bbbbbbbbbb",
+                    "    - timebox: start:2026-08-31 09:00 | end:2026-08-31 11:00 | status:planned ^timebox-aaaaaaaaaa",
+                    "    - timebox: start:2026-09-01 09:00 | end:2026-09-01 11:00 | status:completed ^timebox-bbbbbbbbbb",
                 ].join("\n"),
         },
     } as unknown as App;
@@ -88,7 +88,7 @@ test("expands each Task child timebox into its own Timeline item sharing the Tas
     assert.equal(items[1]?.source.lineNumber, items[0]?.source.lineNumber);
 });
 
-test("attaches actual Focus Sessions to their owning Event or Task timebox item", async () => {
+test("attaches actual Focus Sessions to their owning Event or Task item", async () => {
     const file = { path: "Tasks/Report.md", basename: "Report", extension: "md", stat: {} };
     const eventFile = { path: "Team/Team.md", basename: "Team", extension: "md", stat: {} };
     const app = {
@@ -99,13 +99,13 @@ test("attaches actual Focus Sessions to their owning Event or Task timebox item"
                     ? [
                           "## Activities & Tasks",
                           "- [ ] Menyusun laporan | due:2026-09-03 ^task-abc1234567",
-                          "    - timebox | start:2026-08-31 09:00 | end:2026-08-31 11:00 | status:planned ^timebox-aaaaaaaaaa",
-                          "      - focus-session | start:2026-08-31 09:12 | end:2026-08-31 09:37 | duration:25m | mode:pomodoro ^focus-aaaaaaaaaa",
+                          "    - timebox: start:2026-08-31 09:00 | end:2026-08-31 11:00 | status:planned ^timebox-aaaaaaaaaa",
+                          "    - focus-session: start:2026-08-31 09:12 | end:2026-08-31 09:37 | duration:25m | mode:pomodoro ^focus-aaaaaaaaaa",
                       ].join("\n")
                     : [
                           "## Activities & Tasks",
                           "- 2026-09-01 09:00 - 12:00 Workshop ^event-abc1234567",
-                          "  - focus-session | start:2026-09-01 09:08 | end:2026-09-01 10:02 | duration:54m | mode:stopwatch ^focus-bbbbbbbbbb",
+                          "    - focus-session: start:2026-09-01 09:08 | end:2026-09-01 10:02 | duration:54m | mode:stopwatch ^focus-bbbbbbbbbb",
                       ].join("\n"),
         },
     } as unknown as App;
@@ -119,8 +119,11 @@ test("attaches actual Focus Sessions to their owning Event or Task timebox item"
     );
 
     const timeboxItem = items.find((item) => item.timeboxId === "timebox-aaaaaaaaaa");
+    assert.deepEqual(timeboxItem?.focusSessions ?? [], []);
+
+    const taskOwnItem = items.find((item) => item.id === "task-abc1234567" && item.timeboxId == null);
     assert.deepEqual(
-        timeboxItem?.focusSessions?.map((s) => [s.sessionId, s.durationSeconds, s.mode]),
+        taskOwnItem?.focusSessions?.map((s) => [s.sessionId, s.durationSeconds, s.mode]),
         [["focus-aaaaaaaaaa", 1500, "pomodoro"]],
     );
 
@@ -130,8 +133,36 @@ test("attaches actual Focus Sessions to their owning Event or Task timebox item"
         [["focus-bbbbbbbbbb", 3240, "stopwatch"]],
     );
 
+    assert.equal(taskOwnItem?.focusSessions?.[0]?.ownerItemId, "task-abc1234567");
+    assert.equal(eventItem?.focusSessions?.[0]?.ownerItemId, "event-abc1234567");
+});
+
+test("attaches a Focus Session's Reflection context alongside its interval and duration", async () => {
+    const file = { path: "Tasks/Report.md", basename: "Report", extension: "md", stat: {} };
+    const app = {
+        vault: {
+            getMarkdownFiles: () => [file],
+            cachedRead: async () =>
+                [
+                    "## Activities & Tasks",
+                    "- [ ] Menyusun laporan | due:2026-09-03 ^task-abc1234567",
+                    "    - focus-session: start:2026-08-31 09:12 | end:2026-08-31 09:37 | duration:25m | mode:pomodoro ^focus-aaaaaaaaaa",
+                    "        - reflection: stress:medium | emotion:unpleasant | mood:tense",
+                    "        - reflection-notes: Interrupted twice.",
+                ].join("\n"),
+        },
+    } as unknown as App;
+
+    const items = await new ScheduledItemIndexer(app, new ScheduledItemParser()).buildIndex(
+        [{ id: "tasks", name: "Tasks", folders: ["Tasks"], filter: null }],
+        ["Activities & Tasks"],
+    );
+
     const taskOwnItem = items.find((item) => item.id === "task-abc1234567" && item.timeboxId == null);
-    assert.deepEqual(taskOwnItem?.focusSessions ?? [], []);
+    assert.deepEqual(
+        taskOwnItem?.focusSessions?.map((s) => [s.stressLevel, s.emotionCategory, s.emotionKey, s.notes]),
+        [["medium", "unpleasant", "tense", "Interrupted twice."]],
+    );
 });
 
 test("uses the most specific configured source group while preserving the exact source note", async () => {

@@ -12,16 +12,23 @@ export interface ScheduledItemSource {
 }
 
 /**
- * One actual Focus Session attached to this occurrence (an Event, or one Task timebox). Mirrors
- * `DisplayMode` from the focus-session feature as a literal union rather than importing it, so
- * this cross-feature domain type stays free of a feature-to-feature dependency.
+ * One actual Focus Session, always a direct child of its owning Event or Task (Task 53's grammar
+ * — never a Timebox descendant). Mirrors `DisplayMode` from the focus-session feature and
+ * `StressLevel`/`EmotionCategory` from the reflection feature as literal unions rather than
+ * importing them, so this cross-feature domain type stays free of feature-to-feature dependencies.
  */
 export interface ScheduledItemFocusSession {
     sessionId: string;
+    /** The Event's or Task's own `id` — explicit here so a session survives being read independently of its owner. */
+    ownerItemId: string;
     start: Date;
     end: Date;
     durationSeconds: number;
     mode: "pomodoro" | "timer" | "stopwatch";
+    stressLevel: "low" | "normal" | "medium" | "high" | null;
+    emotionCategory: "pleasant" | "neutral" | "unpleasant" | null;
+    emotionKey: string | null;
+    notes: string | null;
 }
 
 export interface ScheduledItem {

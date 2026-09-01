@@ -73,14 +73,12 @@ export class ScheduledItemIndexer {
             const scanned = captured.status === "captured" ? scanFocusSessionsInBlock(captured.snapshot.rawBlock) : [];
 
             if (item.kind === "task") {
-                items.push({ ...item, focusSessions: [] });
-                items.push(...this.expandTaskTimeboxes(item, captured, scanned));
+                items.push({ ...item, focusSessions: this.toItemFocusSessions(item.id, scanned) });
+                items.push(...this.expandTaskTimeboxes(item, captured));
             } else {
                 items.push({
                     ...item,
-                    focusSessions: this.toItemFocusSessions(
-                        scanned.filter((session) => session.ownerTimeboxId === null),
-                    ),
+                    focusSessions: this.toItemFocusSessions(item.id, scanned),
                 });
             }
         });
@@ -94,11 +92,7 @@ export class ScheduledItemIndexer {
      * every planned occurrence gets its own stable Timeline segment identity. Actual Focus
      * Sessions (Task 43's grammar) attach to whichever timebox they're nested under.
      */
-    private expandTaskTimeboxes(
-        taskItem: ScheduledItem,
-        captured: CaptureLedgerRecordResult,
-        scanned: ScannedFocusSession[],
-    ): ScheduledItem[] {
+    private expandTaskTimeboxes(taskItem: ScheduledItem, captured: CaptureLedgerRecordResult): ScheduledItem[] {
         if (captured.status !== "captured") return [];
         const parsed = parseScheduledItemBlock(captured.snapshot.rawBlock);
         if (parsed.status !== "parsed") return [];
@@ -107,14 +101,11 @@ export class ScheduledItemIndexer {
             const start = parseLocalDateTime(timebox.start, false);
             const end = parseLocalDateTime(timebox.end, false);
             if (!start || !end) return [];
-            const focusSessions = this.toItemFocusSessions(
-                scanned.filter((session) => session.ownerTimeboxId === timebox.timeboxId),
-            );
-            return [{ ...taskItem, timeboxId: timebox.timeboxId, start, end, allDay: false, focusSessions }];
+            return [{ ...taskItem, timeboxId: timebox.timeboxId, start, end, allDay: false, focusSessions: [] }];
         });
     }
 
-    private toItemFocusSessions(scanned: ScannedFocusSession[]): ScheduledItemFocusSession[] {
+    private toItemFocusSessions(ownerItemId: string, scanned: ScannedFocusSession[]): ScheduledItemFocusSession[] {
         return scanned.flatMap((session) => {
             const start = parseLocalDateTime(session.start, false);
             const end = parseLocalDateTime(session.end, false);
@@ -122,10 +113,15 @@ export class ScheduledItemIndexer {
             return [
                 {
                     sessionId: session.sessionId,
+                    ownerItemId,
                     start,
                     end,
                     durationSeconds: session.durationSeconds,
                     mode: session.mode,
+                    stressLevel: session.stressLevel,
+                    emotionCategory: session.emotionCategory,
+                    emotionKey: session.emotionKey,
+                    notes: session.notes,
                 },
             ];
         });

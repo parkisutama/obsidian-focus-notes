@@ -1022,9 +1022,9 @@ order through the existing explicit formatter.
 focused summary without pairings.
 
 **Acceptance criteria:**
-- [ ] Sessions retain sessionId, owner itemId, actual interval, duration, and Reflection context.
-- [ ] Task planned totals use non-cancelled Timeboxes; Event planned total uses its interval.
-- [ ] Focus totals/counts are owner aggregates and work with zero planned time.
+- [x] Sessions retain sessionId, owner itemId, actual interval, duration, and Reflection context.
+- [x] Task planned totals use non-cancelled Timeboxes; Event planned total uses its interval.
+- [x] Focus totals/counts are owner aggregates and work with zero planned time.
 
 **Verification:** Index/query/summary tests for multiple, outside-plan, cancelled, and zero-plan cases.
 

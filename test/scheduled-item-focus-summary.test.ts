@@ -1,0 +1,57 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { summarizeScheduledItemFocus } from "../src/features/timeline/application/ScheduledItemFocusSummary.ts";
+
+test("sums every non-cancelled Task Timebox as planned time, excluding cancelled ones", () => {
+    const summary = summarizeScheduledItemFocus(
+        { kind: "task", start: null, end: null, allDay: false },
+        [
+            { start: new Date(2026, 8, 1, 9, 0), end: new Date(2026, 8, 1, 10, 0), status: "planned" },
+            { start: new Date(2026, 8, 2, 9, 0), end: new Date(2026, 8, 2, 9, 30), status: "completed" },
+            { start: new Date(2026, 8, 3, 9, 0), end: new Date(2026, 8, 3, 11, 0), status: "cancelled" },
+        ],
+        [],
+    );
+    assert.deepEqual(summary, { plannedSeconds: 3600 + 1800, focusedSeconds: 0, sessionCount: 0 });
+});
+
+test("uses an Event's own interval as planned time and zero for all-day", () => {
+    const scheduled = summarizeScheduledItemFocus(
+        { kind: "event", start: new Date(2026, 8, 1, 9, 0), end: new Date(2026, 8, 1, 12, 0), allDay: false },
+        [],
+        [],
+    );
+    assert.equal(scheduled.plannedSeconds, 3 * 3600);
+
+    const allDay = summarizeScheduledItemFocus(
+        { kind: "event", start: new Date(2026, 8, 1), end: new Date(2026, 8, 1), allDay: true },
+        [],
+        [],
+    );
+    assert.equal(allDay.plannedSeconds, 0);
+});
+
+test("counts multiple Focus Sessions and sessions outside the planned interval without pairing", () => {
+    const summary = summarizeScheduledItemFocus(
+        { kind: "task", start: null, end: null, allDay: false },
+        [{ start: new Date(2026, 8, 1, 9, 0), end: new Date(2026, 8, 1, 10, 0), status: "planned" }],
+        [{ durationSeconds: 600 }, { durationSeconds: 1500 }, { durationSeconds: 300 }],
+    );
+    assert.deepEqual(summary, { plannedSeconds: 3600, focusedSeconds: 2400, sessionCount: 3 });
+});
+
+test("reports logged focus time for a Task with zero planned time", () => {
+    const noTimeboxes = summarizeScheduledItemFocus(
+        { kind: "task", start: null, end: null, allDay: false },
+        [],
+        [{ durationSeconds: 900 }],
+    );
+    assert.deepEqual(noTimeboxes, { plannedSeconds: 0, focusedSeconds: 900, sessionCount: 1 });
+
+    const onlyCancelled = summarizeScheduledItemFocus(
+        { kind: "task", start: null, end: null, allDay: false },
+        [{ start: new Date(2026, 8, 1, 9, 0), end: new Date(2026, 8, 1, 10, 0), status: "cancelled" }],
+        [{ durationSeconds: 900 }],
+    );
+    assert.deepEqual(onlyCancelled, { plannedSeconds: 0, focusedSeconds: 900, sessionCount: 1 });
+});
