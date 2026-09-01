@@ -137,6 +137,89 @@ test("reports zero-session utilization for a planned interval with no actual Foc
     assert.deepEqual(layout.blocks[0].utilization, { plannedSeconds: 7200, focusedSeconds: 0, sessionCount: 0 });
 });
 
+test("lays out actual Focus Sessions as their own segments, independent of any planned Timebox", () => {
+    const item = baseTaskItem({
+        timeboxId: "timebox-aaaaaaaaaa",
+        start: new Date(2026, 8, 1, 9, 0),
+        end: new Date(2026, 8, 1, 10, 0),
+        focusSessions: [
+            {
+                sessionId: "focus-aaaaaaaaaa",
+                ownerItemId: "task-abc1234567",
+                start: new Date(2026, 8, 1, 9, 5),
+                end: new Date(2026, 8, 1, 9, 30),
+                durationSeconds: 1500,
+                mode: "pomodoro",
+                stressLevel: null,
+                emotionCategory: null,
+                emotionKey: null,
+                notes: null,
+            },
+            {
+                sessionId: "focus-bbbbbbbbbb",
+                ownerItemId: "task-abc1234567",
+                start: new Date(2026, 8, 1, 14, 0),
+                end: new Date(2026, 8, 1, 14, 20),
+                durationSeconds: 1200,
+                mode: "stopwatch",
+                stressLevel: null,
+                emotionCategory: null,
+                emotionKey: null,
+                notes: null,
+            },
+        ],
+    });
+
+    const layout = new TimelineLayout().build([item], {
+        start: new Date(2026, 8, 1),
+        end: new Date(2026, 8, 2),
+    });
+
+    assert.equal(layout.sessions.length, 2);
+    const outsideBlock = layout.sessions.find((s) => s.sessionId === "focus-bbbbbbbbbb");
+    assert.ok(outsideBlock, "a session outside the planned Timebox interval still lays out");
+    assert.deepEqual(
+        layout.sessions.map((s) => ({ sessionId: s.sessionId, itemId: s.itemId, mode: s.mode })).sort((a, b) => a.sessionId.localeCompare(b.sessionId)),
+        [
+            { sessionId: "focus-aaaaaaaaaa", itemId: "task-abc1234567", mode: "pomodoro" },
+            { sessionId: "focus-bbbbbbbbbb", itemId: "task-abc1234567", mode: "stopwatch" },
+        ],
+    );
+});
+
+test("a cross-midnight Focus Session splits into per-day segments that all keep the same sessionId", () => {
+    const item = baseTaskItem({
+        focusSessions: [
+            {
+                sessionId: "focus-cccccccccc",
+                ownerItemId: "task-abc1234567",
+                start: new Date(2026, 8, 30, 22, 0),
+                end: new Date(2026, 9, 1, 0, 30),
+                durationSeconds: 9000,
+                mode: "timer",
+                stressLevel: null,
+                emotionCategory: null,
+                emotionKey: null,
+                notes: null,
+            },
+        ],
+    });
+
+    const layout = new TimelineLayout().build([item], {
+        start: new Date(2026, 8, 30),
+        end: new Date(2026, 9, 2),
+    });
+
+    assert.equal(layout.sessions.length, 2);
+    assert.deepEqual(
+        layout.sessions.map((s) => ({ dayKey: s.dayKey, sessionId: s.sessionId })),
+        [
+            { dayKey: "2026-09-30", sessionId: "focus-cccccccccc" },
+            { dayKey: "2026-10-01", sessionId: "focus-cccccccccc" },
+        ],
+    );
+});
+
 test("a cross-midnight timebox splits into per-day segments that all keep the same timeboxId", () => {
     const item = baseTaskItem({
         timeboxId: "timebox-cccccccccc",

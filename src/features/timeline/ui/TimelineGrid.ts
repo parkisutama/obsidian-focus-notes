@@ -2,7 +2,7 @@ import type { ScheduledItem } from "../../capture/scheduled-item/domain/Schedule
 import type { FocusUtilizationSummary } from "../../focus-session/domain/FocusUtilization.ts";
 import type { TimelineMode, TimelineRange } from "../domain/Timeline";
 import { addDays, formatDayKey, formatTime, startOfDay } from "../domain/TimelineDate.ts";
-import type { TimelineLayoutResult } from "../domain/TimelineLayout";
+import type { TimelineLayoutResult, TimelineSessionSegment } from "../domain/TimelineLayout";
 
 const HOUR_PX = 60;
 
@@ -151,6 +151,13 @@ export class TimelineGrid {
             const item = this.itemById.get(itemKey(point.itemId, point.timeboxId));
             if (item) this.renderPoint(col, item, point.at);
         }
+
+        // Actual Focus Sessions always attach to the owner item (timeboxId null), never to one
+        // Timebox occurrence — see ScheduledItemIndexer.toItemFocusSessions.
+        for (const session of this.opts.layout.sessions.filter((s) => s.dayKey === dayKey)) {
+            const item = this.itemById.get(itemKey(session.itemId, null));
+            if (item) this.renderSession(col, item, session);
+        }
     }
 
     private renderBlock(
@@ -206,6 +213,35 @@ export class TimelineGrid {
         }
 
         block.addEventListener("click", () => this.opts.onOpenItem(item));
+    }
+
+    /**
+     * A solid actual segment, visually and interactively distinct from a planned block (Task 62):
+     * narrower, offset so it stays legible next to any overlapping planned Timebox/Event, and
+     * never inferring which Timebox it belongs to — it renders wherever it was actually logged,
+     * including entirely outside every planned interval.
+     */
+    private renderSession(parent: HTMLElement, item: ScheduledItem, session: TimelineSessionSegment): void {
+        const topPx = this.toPx(session.start);
+        const heightPx = Math.max(12, this.toPx(session.end) - this.toPx(session.start));
+        const widthPct = 100 / session.columnCount;
+
+        const block = parent.createEl("button", {
+            cls: `ftl-session ftl-${item.kind}${this.lifecycleClass(item)}`,
+        });
+        block.style.top = `${topPx}px`;
+        block.style.height = `${heightPx}px`;
+        block.style.left = `calc(${session.column * widthPct}% + 2px)`;
+        block.style.width = `calc(${widthPct}% - 4px)`;
+        block.style.setProperty("--ftl-color", this.colorFor(item));
+        block.title = this.sessionTooltip(item, session);
+        block.createSpan({ cls: "ftl-session-time", text: `${formatTime(session.start)}–${formatTime(session.end)}` });
+
+        block.addEventListener("click", () => this.opts.onOpenItem(item));
+    }
+
+    private sessionTooltip(item: ScheduledItem, session: TimelineSessionSegment): string {
+        return `Focused: ${item.title}\n${formatTime(session.start)} – ${formatTime(session.end)}`;
     }
 
     private renderPoint(parent: HTMLElement, item: ScheduledItem, at: Date): void {

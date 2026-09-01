@@ -1038,9 +1038,9 @@ focused summary without pairings.
 distinct visual/interaction identities.
 
 **Acceptance criteria:**
-- [ ] Planned segments use planned styling and sessions use solid actual styling.
-- [ ] Sessions outside or overlapping Timeboxes remain visible without inferred attribution.
-- [ ] Cross-day clipping preserves timeboxId/sessionId identity.
+- [x] Planned segments use planned styling and sessions use solid actual styling.
+- [x] Sessions outside or overlapping Timeboxes remain visible without inferred attribution.
+- [x] Cross-day clipping preserves timeboxId/sessionId identity.
 
 **Verification:** Timeline layout/grid/style tests and representative Day/Weekly rendering smoke test.
 

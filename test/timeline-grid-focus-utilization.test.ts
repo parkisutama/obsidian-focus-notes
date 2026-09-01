@@ -10,3 +10,11 @@ test("Timeline blocks render a planned-versus-actual focus fill and surface it i
     assert.match(source, /createDiv\(\{ cls: "ftl-block-focus-fill" \}\)/);
     assert.match(source, /focused of \$\{formatMinutes\(utilization\.plannedSeconds\)\} planned/);
 });
+
+test("Timeline renders each actual Focus Session as its own solid segment, independent of any Timebox pairing", async () => {
+    const source = await readFile(new URL("../src/features/timeline/ui/TimelineGrid.ts", import.meta.url), "utf8");
+    assert.match(source, /layout\.sessions\.filter\(\(s\) => s\.dayKey === dayKey\)/);
+    assert.match(source, /renderSession\(/);
+    assert.match(source, /cls: `ftl-session/);
+    assert.match(source, /itemById\.get\(itemKey\(session\.itemId, null\)\)/);
+});
