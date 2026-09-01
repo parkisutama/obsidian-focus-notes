@@ -42,6 +42,10 @@ import { extractScheduledItemBlockId } from "../../domain/ScheduledItemBlockId.t
 import { parseScheduledItemBlock } from "../../domain/ScheduledItemBlockEditor.ts";
 import { hydrateScheduledItemFormEdit, parseLocalDateTime } from "../../domain/ScheduledItemFormAdapter.ts";
 import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData.ts";
+import {
+    formatScheduledItemFocusSummary,
+    summarizeScheduledItemFocus,
+} from "../../domain/ScheduledItemFocusSummary.ts";
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings";
 import { isTFile } from "../../../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
 
@@ -106,6 +110,7 @@ export class ScheduledItemDesktopEditModal extends Modal {
             onManageTimeboxes: this.data.kind === "task" ? () => this.openTimeboxManager() : undefined,
             focusSessions: scanFocusSessionsInBlock(this.snapshot.rawBlock),
             onEditFocusSession: (session) => this.openFocusSessionEdit(session),
+            focusSummary: formatScheduledItemFocusSummary(this.computeFocusSummary()),
         });
         this.renderer.render(this.contentEl);
     }
@@ -261,6 +266,29 @@ export class ScheduledItemDesktopEditModal extends Modal {
             const end = parseLocalDateTime(timebox.end, false);
             return start && end ? [{ timeboxId: timebox.timeboxId, start, end }] : [];
         });
+    }
+
+    /**
+     * Task 64: reads the same not-yet-modified snapshot Focus Sessions/Timeboxes already come
+     * from — never a second calculation path, and never writes anything back to the block.
+     */
+    private computeFocusSummary() {
+        const sessions = scanFocusSessionsInBlock(this.snapshot.rawBlock);
+        if (this.data.kind === "task") {
+            const parsed = parseScheduledItemBlock(this.snapshot.rawBlock);
+            const timeboxes =
+                parsed.status === "parsed"
+                    ? parsed.block.timeboxes.flatMap((timebox) => {
+                          const start = parseLocalDateTime(timebox.start, false);
+                          const end = parseLocalDateTime(timebox.end, false);
+                          return start && end ? [{ start, end, status: timebox.status }] : [];
+                      })
+                    : [];
+            return summarizeScheduledItemFocus({ kind: "task", start: null, end: null, allDay: false }, timeboxes, sessions);
+        }
+        const start = parseLocalDateTime(this.data.start, this.data.allDay);
+        const end = !this.data.allDay && this.data.end ? parseLocalDateTime(this.data.end, false) : null;
+        return summarizeScheduledItemFocus({ kind: "event", start, end, allDay: this.data.allDay }, [], sessions);
     }
 
     private async retryTaskDayProjection(): Promise<void> {

@@ -11,6 +11,9 @@ import {
 } from "./DesktopCreateTargetSection.ts";
 import { renderDesktopDetailSection } from "./DesktopDetailSection.ts";
 import { renderDesktopFocusSessionsSection } from "./DesktopFocusSessionsSection.ts";
+import { renderDesktopFocusSummarySection } from "./DesktopFocusSummarySection.ts";
+import type { FormattedFocusSummary } from "../../domain/ScheduledItemFocusSummary.ts";
+import { renderDesktopReflectionSection } from "./DesktopTaskReflectionSection.ts";
 import { renderDesktopTemporalSection } from "./DesktopTemporalSection.ts";
 
 export type { DesktopScheduledItemCreateContext } from "./DesktopCreateTargetSection.ts";
@@ -37,11 +40,13 @@ export interface DesktopScheduledItemFormOptions {
     /** Edit mode only: Focus Sessions already logged against this Event/Task's canonical block. */
     focusSessions?: ScannedFocusSession[];
     onEditFocusSession?(session: ScannedFocusSession): void;
+    focusSummary?: FormattedFocusSummary | null; // Task 61/63's shared summary, pre-computed by the caller
 }
 
 export class DesktopScheduledItemForm {
     private container: HTMLElement | null = null;
     private descriptionController: ContextNotesController | null = null;
+    private reflectionNotesController: ContextNotesController | null = null;
     private busy = false;
     private recovery = false;
     private errorMessage = "";
@@ -78,10 +83,20 @@ export class DesktopScheduledItemForm {
             onEventStartChanged: (value) => this.options.onPlannedStartChange?.(value),
             onManageTimeboxes: this.options.onManageTimeboxes,
         });
+        if (this.options.focusSummary) renderDesktopFocusSummarySection(container, this.options.focusSummary);
         if (this.options.focusSessions && this.options.onEditFocusSession) {
             renderDesktopFocusSessionsSection(container, {
                 sessions: this.options.focusSessions,
                 onEdit: this.options.onEditFocusSession,
+            });
+        }
+        if (this.options.mode === "edit" || this.options.mode === "create") {
+            this.reflectionNotesController = renderDesktopReflectionSection(container, {
+                app: this.options.app,
+                data: this.options.data,
+                targetFile: this.options.targetFile,
+                getContextSources: this.options.getContextSources,
+                update: (change) => this.update(change),
             });
         }
         this.renderDescription(container);
@@ -205,6 +220,8 @@ export class DesktopScheduledItemForm {
     private destroyController(): void {
         this.descriptionController?.destroy();
         this.descriptionController = null;
+        this.reflectionNotesController?.destroy();
+        this.reflectionNotesController = null;
     }
 
     private lockFields(container: HTMLElement, actions: HTMLElement): void {

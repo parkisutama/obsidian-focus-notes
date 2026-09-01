@@ -4,7 +4,7 @@ import { formatScheduledItemBlockTarget } from "../../capture/scheduled-item/dom
 import type { ScheduledItem } from "../../capture/scheduled-item/domain/ScheduledItem";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
 import { PendingTasksModal, TimelineItemModal } from "./TimelineItemModal";
-import { summarizeScheduledItemFocusFromItems } from "../application/ScheduledItemFocusSummary.ts";
+import { summarizeScheduledItemFocusFromItems } from "../../capture/scheduled-item/domain/ScheduledItemFocusSummary.ts";
 import type { TimelineSelectedSegment } from "../domain/TimelineItemModalModel";
 
 export interface TimelineModalLauncherOptions {

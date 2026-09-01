@@ -1069,9 +1069,9 @@ Timeline Item Modal.
 **Description:** Present Task 61 summary compactly above Event/Task management without creating a second calculation path.
 
 **Acceptance criteria:**
-- [ ] Event/Task Manage consumes the shared summary model.
-- [ ] Summary updates after Timebox/session changes and agrees with Timeline.
-- [ ] No summary value is written into canonical Markdown.
+- [x] Event/Task Manage consumes the shared summary model.
+- [x] Summary updates after Timebox/session changes and agrees with Timeline.
+- [x] No summary value is written into canonical Markdown.
 
 **Verification:** Manage summary wiring/presentation tests and canonical no-write assertion.
 

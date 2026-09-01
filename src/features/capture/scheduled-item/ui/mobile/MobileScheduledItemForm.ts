@@ -12,6 +12,11 @@ import {
     renderMobileTargetSection,
 } from "./MobileSupplementalSections.ts";
 import { renderMobileTemporalSection } from "./MobileTemporalSection.ts";
+import { renderMobileReflectionSection } from "./MobileReflectionSection.ts";
+import type { ScannedFocusSession } from "../../../../focus-session/domain/FocusSessionBlockScan.ts";
+import { renderMobileFocusSessionsSection } from "./MobileFocusSessionsSection.ts";
+import { renderMobileFocusSummarySection } from "./MobileFocusSummarySection.ts";
+import type { FormattedFocusSummary } from "../../domain/ScheduledItemFocusSummary.ts";
 
 export type { MobileScheduledItemCreateContext } from "./MobileSupplementalSections.ts";
 
@@ -33,11 +38,15 @@ export interface MobileScheduledItemFormOptions {
     onSwitchKind?(kind: "inbox" | "event" | "task"): void;
     onPlannedStartChange?(value: string): void;
     onManageTimeboxes?(): void;
+    focusSessions?: ScannedFocusSession[];
+    onEditFocusSession?(session: ScannedFocusSession): void;
+    focusSummary?: FormattedFocusSummary | null; // Task 61/63's shared summary, pre-computed by the caller
 }
 
 export class MobileScheduledItemForm extends Component {
     private rootEl: HTMLElement | null = null;
     private controller: ContextNotesController | null = null;
+    private reflectionController: ContextNotesController | null = null;
     private busy = false;
     private recovery = false;
     private errorMessage = "";
@@ -66,6 +75,8 @@ export class MobileScheduledItemForm extends Component {
     onunload(): void {
         this.controller?.destroy();
         this.controller = null;
+        this.reflectionController?.destroy();
+        this.reflectionController = null;
         this.rootEl?.remove();
         this.rootEl = null;
         document.body.removeClass("fn-mobile-event-screen-open");
@@ -83,6 +94,8 @@ export class MobileScheduledItemForm extends Component {
         if (!root) return;
         this.controller?.destroy();
         this.controller = null;
+        this.reflectionController?.destroy();
+        this.reflectionController = null;
         root.empty();
         const model = buildMobileScheduledItemFormModel({
             mode: this.options.mode,
@@ -123,7 +136,20 @@ export class MobileScheduledItemForm extends Component {
             onEventStartChanged: (value) => this.options.onPlannedStartChange?.(value),
             onManageTimeboxes: () => this.options.onManageTimeboxes?.(),
         });
+        if (this.options.focusSummary) renderMobileFocusSummarySection(body, this.options.focusSummary);
+        if (this.options.focusSessions && this.options.onEditFocusSession) {
+            renderMobileFocusSessionsSection(body, this.options.focusSessions, this.options.onEditFocusSession);
+        }
         this.renderDescription(body);
+        if (this.options.mode === "edit" || this.options.mode === "create") {
+            this.reflectionController = renderMobileReflectionSection(body, {
+                app: this.options.app,
+                data: this.options.data,
+                targetFile: this.options.targetFile,
+                getContextSources: this.options.getContextSources,
+                update: (change) => this.changed(change),
+            });
+        }
         renderMobileDetailSection(body, {
             app: this.options.app,
             data: this.options.data,

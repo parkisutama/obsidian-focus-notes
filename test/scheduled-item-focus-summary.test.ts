@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+    formatScheduledItemFocusSummary,
     summarizeScheduledItemFocus,
     summarizeScheduledItemFocusFromItems,
-} from "../src/features/timeline/application/ScheduledItemFocusSummary.ts";
+} from "../src/features/capture/scheduled-item/domain/ScheduledItemFocusSummary.ts";
 import type { ScheduledItem } from "../src/features/capture/scheduled-item/domain/ScheduledItem.ts";
 
 function baseTaskItem(overrides: Partial<ScheduledItem>): ScheduledItem {
@@ -127,4 +128,18 @@ test("gathers a Task's owner-level summary from the indexed item list, excluding
         sessionCount: 1,
     });
     assert.equal(summarizeScheduledItemFocusFromItems(items, "task-missing"), null);
+});
+
+test("Task 64: formats the same shared summary Timeline and Manage both present", () => {
+    assert.deepEqual(
+        formatScheduledItemFocusSummary({ plannedSeconds: 3600, focusedSeconds: 1800, sessionCount: 2 }),
+        {
+            plannedLabel: "60m",
+            focusedLabel: "30m",
+            differenceLabel: "-30m",
+            percentageLabel: "50%",
+            sessionCountLabel: "2 sessions",
+        },
+    );
+    assert.equal(formatScheduledItemFocusSummary({ plannedSeconds: 0, focusedSeconds: 0, sessionCount: 0 }), null);
 });
