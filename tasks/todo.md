@@ -1006,9 +1006,9 @@ Task 57 persistence.
 order through the existing explicit formatter.
 
 **Acceptance criteria:**
-- [ ] Preview shows every proposed block change before apply.
-- [ ] Apply preserves stable IDs and converts nested Task sessions to siblings.
-- [ ] A second format pass proposes no changes.
+- [x] Preview shows every proposed block change before apply.
+- [x] Apply preserves stable IDs and converts nested Task sessions to siblings.
+- [x] A second format pass proposes no changes.
 
 **Verification:** Formatter classification, golden output, ID-preservation, conflict, and idempotency tests.
 

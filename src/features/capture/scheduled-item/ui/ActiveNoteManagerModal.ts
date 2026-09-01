@@ -12,6 +12,12 @@ import { createScheduledItemBlockId } from "../domain/ScheduledItemBlockId.ts";
 import { buildScheduledItemIdentityChange } from "../domain/ScheduledItemIdentityMigration.ts";
 import type { TaskFormatChange } from "../domain/TaskFormatWriter";
 import { inspectTaskLine, taskLineLintLabel } from "../domain/TaskLineLint.ts";
+import { captureLedgerRecord } from "../domain/LedgerRecordSource.ts";
+import {
+    planScheduledItemBlockFormat,
+    type ScheduledItemBlockFormatChange,
+} from "../domain/ScheduledItemBlockFormat.ts";
+import { isTFile } from "../../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
 
 export class ActiveNoteManagerModal extends Modal {
     constructor(
@@ -57,62 +63,75 @@ export class ActiveNoteManagerModal extends Modal {
         select.addEventListener("change", () => {
             this.selectedScopeId = select.value;
             this.renderResults(results);
-            this.syncFormatButton(formatButton);
+            void this.syncFormatButton(formatButton);
         });
-        formatButton.addEventListener("click", () => this.openFormatPreview());
-        this.syncFormatButton(formatButton);
+        formatButton.addEventListener("click", () => void this.openFormatPreview());
+        void this.syncFormatButton(formatButton);
         this.renderResults(results);
     }
 
-    private formatChanges(): TaskFormatChange[] {
+    /**
+     * Items still missing a stable block ID get one here, single-line and independent of block
+     * canonicalization: `blockFormatChanges` (Task 60) requires an existing block ID to resolve
+     * the item, so identity always lands first, and a later Format run canonicalizes the rest.
+     */
+    private lineFormatChanges(): TaskFormatChange[] {
         const scope = this.scopes.find((candidate) => candidate.id === this.selectedScopeId) ?? this.scopes[0];
         return (scope?.items ?? []).flatMap((item) => {
-            // References are rebuildable derived lines, not user-maintained Task text; the format
-            // fixer's Task-line normalization doesn't understand canonical:/due:/timebox: fields
-            // and must never rewrite them.
             if (item.referenceTarget) return [];
-            let normalizedLine = item.rawLine;
-            if (item.kind === "task") {
-                const inspection = inspectTaskLine(item.rawLine);
-                if (inspection.status === "needs-format" && inspection.normalizedLine) {
-                    normalizedLine = inspection.normalizedLine;
-                }
+            if (item.blockId) return [];
+            let blockId = this.pendingBlockIds.get(item.id);
+            if (!blockId) {
+                blockId = createScheduledItemBlockId(item.kind);
+                this.pendingBlockIds.set(item.id, blockId);
             }
-            if (!item.blockId) {
-                let blockId = this.pendingBlockIds.get(item.id);
-                if (!blockId) {
-                    blockId = createScheduledItemBlockId(item.kind);
-                    this.pendingBlockIds.set(item.id, blockId);
-                }
-                const identityChange = buildScheduledItemIdentityChange(item, blockId);
-                if (identityChange) {
-                    return [{ ...identityChange, normalizedLine: `${normalizedLine} ^${blockId}` }];
-                }
-            }
-            if (item.kind !== "task") return [];
-            const inspection = inspectTaskLine(item.rawLine);
-            if (inspection.status !== "needs-format" || !inspection.normalizedLine) return [];
-            return [
-                {
-                    lineNumber: item.source.lineNumber,
-                    rawLine: item.rawLine,
-                    normalizedLine: inspection.normalizedLine,
-                },
-            ];
+            const identityChange = buildScheduledItemIdentityChange(item, blockId);
+            return identityChange ? [identityChange] : [];
         });
     }
 
-    private syncFormatButton(button: HTMLButtonElement): void {
-        const count = this.formatChanges().length;
+    /**
+     * Task 60: canonicalizes every already-identified Task/Event block — keyed prefixes, canonical
+     * child order, and a Task Focus Session nested under its Timebox promoted to a direct sibling —
+     * through the same `planScheduledItemBlockFormat` the block editor's own writes converge to.
+     */
+    private blockFormatChanges(content: string): ScheduledItemBlockFormatChange[] {
+        const scope = this.scopes.find((candidate) => candidate.id === this.selectedScopeId) ?? this.scopes[0];
+        return (scope?.items ?? []).flatMap((item) => {
+            if (item.referenceTarget) return [];
+            if (!item.blockId) return [];
+            const captured = captureLedgerRecord(content, {
+                filePath: this.filePath,
+                lineNumber: item.source.lineNumber,
+                rawLine: item.rawLine,
+            });
+            if (captured.status !== "captured") return [];
+            const plan = planScheduledItemBlockFormat(captured.snapshot.rawBlock);
+            if (plan.status !== "needs-format") return [];
+            return [{ lineNumber: item.source.lineNumber, rawLine: item.rawLine, normalizedBlock: plan.normalizedBlock }];
+        });
+    }
+
+    private async readFileContent(): Promise<string | null> {
+        const file = this.app.vault.getAbstractFileByPath(this.filePath);
+        if (!isTFile(file)) return null;
+        return this.app.vault.read(file);
+    }
+
+    private async syncFormatButton(button: HTMLButtonElement): Promise<void> {
+        const content = await this.readFileContent();
+        const count = this.lineFormatChanges().length + (content ? this.blockFormatChanges(content).length : 0);
         button.disabled = count === 0;
         button.setText(count > 0 ? `Format ${count}` : "Format");
     }
 
-    private openFormatPreview(): void {
-        const changes = this.formatChanges();
-        if (changes.length === 0) return;
+    private async openFormatPreview(): Promise<void> {
+        const content = await this.readFileContent();
+        const lineChanges = this.lineFormatChanges();
+        const blockChanges = content ? this.blockFormatChanges(content) : [];
+        if (lineChanges.length === 0 && blockChanges.length === 0) return;
         this.close();
-        new TaskFormatPreviewModal(this.app, this.filePath, changes, this.onFormatComplete).open();
+        new TaskFormatPreviewModal(this.app, this.filePath, lineChanges, blockChanges, this.onFormatComplete).open();
     }
 
     private renderResults(container: HTMLElement): void {
