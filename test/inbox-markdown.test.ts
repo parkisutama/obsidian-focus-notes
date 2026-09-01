@@ -6,6 +6,8 @@ import {
     relativeMarkdownPath,
 } from "../src/features/capture/moment/domain/InboxMarkdown.ts";
 import { unwrapMarkdownLinkLabel } from "../src/shared/markdown/MarkdownLink.ts";
+import { createMomentBlockId } from "../src/features/capture/scheduled-item/domain/ScheduledItemBlockId.ts";
+import { parseMomentBlock } from "../src/features/capture/moment/domain/MomentBlock.ts";
 
 test("formats an untouched or blank Inbox title with one timestamp", () => {
     const capturedAt = new Date(2026, 7, 1, 15, 40);
@@ -18,7 +20,7 @@ test("formats an untouched or blank Inbox title with one timestamp", () => {
             title: "2026-08-01 15:40",
             body: "Catatan",
         }),
-        "- 2026-08-01 15:40\n    - Catatan",
+        "- 2026-08-01 15:40\n    - description: Catatan",
     );
     assert.equal(
         formatInboxEntry({
@@ -42,8 +44,27 @@ test("keeps a custom title and prunes only blank body lines", () => {
             body: "Pertahankan **Markdown**\n   \n#follow-up dan [link](url)",
         }),
         "- 2026-08-01 15:40 — Hubungi vendor\n" +
-            "    - Pertahankan **Markdown**\n" +
-            "    - #follow-up dan [link](url)",
+            "    - description: Pertahankan **Markdown** #follow-up dan [link](url)",
+    );
+});
+
+test("writes Moment wellbeing and optional Reflection Notes as separate sibling children", () => {
+    assert.equal(
+        formatInboxEntry({
+            kind: "inbox",
+            capturedAt: new Date(2026, 7, 1, 15, 40),
+            defaultTitle: "2026-08-01 15:40",
+            title: "Check in",
+            body: "Before the meeting",
+            stressLevel: "medium",
+            emotionCategory: "unpleasant",
+            emotionKey: "anxious",
+            reflectionNotes: "Prepare one question first.",
+        }),
+        "- 2026-08-01 15:40 — Check in\n" +
+            "    - description: Before the meeting\n" +
+            "    - reflection: stress:medium | emotion:unpleasant | mood:anxious\n" +
+            "    - reflection-notes: Prepare one question first.",
     );
 });
 
@@ -61,7 +82,7 @@ test("writes a time-only timestamp for weekly-note captures without changing the
             },
             { timeOnly: true },
         ),
-        "- 15:40\n    - Catatan",
+        "- 15:40\n    - description: Catatan",
     );
     assert.equal(
         formatInboxEntry(
@@ -76,6 +97,45 @@ test("writes a time-only timestamp for weekly-note captures without changing the
         ),
         "- 15:40 — Hubungi vendor",
     );
+});
+
+test("assigns a stable moment block id on create and round-trips it back into a MomentBlock", () => {
+    const blockId = createMomentBlockId(() => "moment-aaaaaaaaaa");
+
+    const entry = formatInboxEntry(
+        {
+            kind: "inbox",
+            capturedAt: new Date(2026, 7, 1, 15, 40),
+            defaultTitle: "2026-08-01 15:40",
+            title: "Check in",
+            body: "Before the meeting",
+            stressLevel: "medium",
+            emotionCategory: "unpleasant",
+            emotionKey: "anxious",
+            reflectionNotes: "Prepare one question first.",
+        },
+        { blockId },
+    );
+
+    assert.equal(
+        entry,
+        "- 2026-08-01 15:40 — Check in ^moment-aaaaaaaaaa\n" +
+            "    - description: Before the meeting\n" +
+            "    - reflection: stress:medium | emotion:unpleasant | mood:anxious\n" +
+            "    - reflection-notes: Prepare one question first.",
+    );
+
+    const parsed = parseMomentBlock(entry);
+    assert.equal(parsed.status, "parsed");
+    if (parsed.status !== "parsed") return;
+    assert.equal(parsed.block.momentId, blockId);
+    assert.equal(parsed.block.description, "Before the meeting");
+    assert.equal(parsed.block.reflectionNotes, "Prepare one question first.");
+    assert.deepEqual(parsed.block.reflection, {
+        stressLevel: "medium",
+        emotionCategory: "unpleasant",
+        emotionKey: "anxious",
+    });
 });
 
 test("builds relative Markdown paths from the destination note", () => {

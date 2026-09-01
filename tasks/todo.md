@@ -766,3 +766,358 @@ Tasks 42–43's job.
 - [ ] Multiple Task timeboxes and purposeful Focus Sessions work on desktop and mobile.
 - [ ] Legacy content remains readable; migration and rebuild are idempotent.
 - [ ] Human approves integrated runtime behavior.
+
+---
+
+# Initiative: Flat Capture, Focus, and Reflection
+
+Approved sources: `CAPABILITY-MAP-capture-focus-reflection.md` and the five `SPEC-*.md` module specs at repository root.
+
+## Task 47: Characterize the approved flat grammar
+
+**Description:** Add failing-first fixtures for the approved Moment/Event/Task examples, singleton child cardinality,
+canonical ordering, direct Task Focus Sessions, and the current WIP shapes that must be replaced.
+
+**Acceptance criteria:**
+- [x] Fixtures cover every approved keyed child prefix.
+- [x] Tests distinguish Task sibling sessions from the former nested-under-timebox shape.
+- [x] Unknown children, Markdown links, CRLF, stable IDs, and duplicate singleton failures are pinned.
+
+**Verification:** Run focused new grammar tests and confirm failures are limited to not-yet-implemented behavior.
+
+**Dependencies:** Approved specs.
+**Files likely touched:** `test/flat-block-grammar.test.ts`, `test/scheduled-item-block-editor.test.ts`, up to two fixtures.
+**Estimated scope:** Medium, 2–4 files.
+
+## Task 48: Implement Description and Reflection line primitives
+
+**Description:** Implement pure keyed line parsing/formatting and one-line normalization for Description, Reflection
+wellbeing, and optional Reflection Notes.
+
+**Acceptance criteria:**
+- [x] Each prefix round-trips its canonical form and preserves inline Markdown.
+- [x] Reflection and Reflection Notes are independently optional singleton values.
+- [x] Invalid wellbeing values follow the approved tolerant contract.
+
+**Verification:** Focused primitive tests; format, lint, and typecheck.
+
+**Dependencies:** Task 47.
+**Files likely touched:** `ReflectionBlockLine.ts`, one shared child-line module, and two focused tests.
+**Estimated scope:** Medium, 3–4 files.
+
+## Task 49: Convert Timebox and Focus Session keyed prefixes
+
+**Description:** Change canonical single-line grammar from `timebox |`/`focus-session |` to
+`timebox:`/`focus-session:` while preserving structured fields and stable IDs.
+
+**Acceptance criteria:**
+- [x] Writers emit approved prefixes and field order.
+- [x] Parsers reject missing IDs and malformed structured fields explicitly.
+- [x] Duration, mode, status, and local-time semantics remain unchanged.
+
+**Verification:** Timebox/Focus line round-trip tests; typecheck; focused compatibility review.
+
+**Dependencies:** Tasks 47–48.
+**Files likely touched:** `TaskTimeboxLine.ts`, `FocusSessionLine.ts`, and their two test files.
+**Estimated scope:** Medium, 4 files.
+
+## Task 50: Rebuild Scheduled Item block ownership and ordering
+
+**Description:** Make the whole-block parser/editor own keyed Description, Timeboxes, direct Focus Sessions, Reflection,
+Reflection Notes, and Detail in canonical order without disturbing unknown subtrees.
+
+**Acceptance criteria:**
+- [x] Event and Task child order matches the spec after write/edit.
+- [x] Task Focus Sessions are direct children and never Timebox descendants.
+- [x] No-op, unknown-child, duplicate, CRLF, and stable-ID behavior remains deterministic.
+
+**Verification:** Scheduled Item block/editor/persistence tests; full `pnpm run check` checkpoint.
+
+**Dependencies:** Tasks 48–49.
+**Files likely touched:** `ScheduledItemBlockEditor.ts`, form adapter, persistence result type, focused tests.
+**Estimated scope:** Medium, 4–5 files.
+
+## Checkpoint: Flat grammar foundation
+
+- [ ] Canonical Event/Task examples round-trip byte-identically.
+- [ ] Direct Task Focus Session ownership parses independently of Timeboxes.
+- [ ] `$env:OBSIDIAN_VAULT_PLUGIN_PATH=""; pnpm run check:ci` passes.
+- [ ] Human reviews representative formatted Markdown.
+
+## Task 51: Give Moment canonical identity and a flat block
+
+**Description:** Add stable `moment-*` identity and parse/format a Moment block containing optional Description and
+Reflection sibling lines.
+
+**Acceptance criteria:**
+- [x] Newly captured Moments receive stable unique block IDs.
+- [x] Moment blocks parse Description/Reflection without Event/Task classification.
+- [x] Formatting preserves timestamp, title, inline links, and canonical order.
+
+**Verification:** Moment identity, Markdown round-trip, writer, and classification tests.
+
+**Dependencies:** Task 50.
+**Files likely touched:** Moment record/Markdown modules, block-ID classifier, writer adapter, focused test.
+**Estimated scope:** Medium, 4–5 files.
+
+## Task 52: Remove the Task Timebox requirement from Focus ownership
+
+**Description:** Simplify Focus ownership to Event/Task item identity and make an existing Task immediately ready in the
+Timer purpose selector without selecting or creating a Timebox.
+
+**Acceptance criteria:**
+- [x] `FocusSessionOwner` contains kind and itemId only.
+- [x] Event and Task selections satisfy the Timer start gate directly.
+- [ ] Explicit Quick-create Task creates/selects an owner without creating a Timebox.
+
+**Verification:** Owner-model, purpose-gate, purpose-selection, and Quick-create tests.
+
+**Dependencies:** Task 50.
+**Files likely touched:** owner domain, Timer purpose domain/controller, Timer controls UI, focused tests.
+**Estimated scope:** Medium, 4–5 files.
+
+## Task 53: Append and scan Focus Sessions directly under canonical items
+
+**Description:** Update canonical append/edit/scan and Obsidian persistence so Event and Task use itemId as the session
+anchor, preserving retry idempotency and daily/weekly canonical links.
+
+**Acceptance criteria:**
+- [x] Event and Task append `focus-session:` as a direct child in the correct region.
+- [x] Multiple sessions retain owner item and independent session IDs.
+- [x] Retry, orphan, and edit behavior never duplicates or changes actual timing.
+
+**Verification:** Canonical append/edit/scan/writer and Timer logging integration tests; full checkpoint gate.
+
+**Dependencies:** Tasks 49–52.
+**Files likely touched:** canonical append, block scan, canonical writer, Timer log workflow, focused tests.
+**Estimated scope:** Medium, 5 files plus mechanical test updates.
+
+## Checkpoint: Canonical Moment and direct Focus ownership
+
+- [ ] Moment has stable canonical identity.
+- [ ] Existing Event or Task can start and record Focus without a Timebox.
+- [ ] Multiple Timeboxes and Focus Sessions coexist as siblings.
+- [ ] `$env:OBSIDIAN_VAULT_PLUGIN_PATH=""; pnpm run check:ci` passes.
+
+## Task 54: Establish the shared Reflection form contract
+
+**Description:** Replace Task-only WIP fields with one semantic Reflection value shared by Moment/Event/Task/Focus Session
+adapters while keeping Description and Reflection Notes independent.
+
+**Acceptance criteria:**
+- [x] Form data represents none, wellbeing-only, notes-only, and both.
+- [x] Hydration/submission maps to sibling keyed lines without owner-line metadata.
+- [x] Clearing either component preserves the other.
+
+**Verification:** Form-data/adapter tests and pure Reflection round trips.
+
+**Dependencies:** Tasks 48, 50–53.
+**Files likely touched:** Reflection form type, Scheduled Item form data/adapter, Focus edit adapter, focused tests.
+**Estimated scope:** Medium, 4–5 files.
+
+## Task 55: Integrate desktop Event and Task management
+
+**Description:** Render owner Reflection, separate Timeboxes and Focus Sessions, and canonical ordering in desktop Create/Edit
+and Manage flows using Task 54.
+
+**Acceptance criteria:**
+- [x] Event and Task create, hydrate, edit, and clear Reflection independently of Description.
+- [x] Task presents separate planned Timebox and actual Focus Session sections.
+- [x] Event presents actual Focus Sessions and owner Reflection; Detail remains last.
+
+**Verification:** Desktop structure/composition tests and manual modal smoke test.
+
+**Dependencies:** Task 54.
+**Files likely touched:** desktop form shell, Reflection section, Focus section, edit modal, focused test.
+**Estimated scope:** Medium, 4–5 files.
+
+## Task 56: Integrate mobile Event and Task management
+
+**Description:** Deliver Task 55 semantics in the independent mobile renderer without desktop DOM dependencies.
+
+**Acceptance criteria:**
+- [x] Mobile exposes equivalent owner Reflection and separate planned/actual sections.
+- [x] Keyboard, scrolling, busy state, and cleanup remain stable.
+- [x] No desktop UI module is imported.
+
+**Verification:** Mobile structure/lifecycle/viewport tests and manual keyboard-open/closed smoke test.
+
+**Dependencies:** Task 54.
+**Files likely touched:** mobile form shell, Reflection section, Focus section, screen composition, focused test.
+**Estimated scope:** Medium, 4–5 files.
+
+## Task 57: Add canonical Moment persistence and editing
+
+**Description:** Capture, locate, snapshot, and conflict-safely edit one stable Moment block using the shared Reflection
+contract without routing it through Scheduled Item semantics.
+
+**Acceptance criteria:**
+- [x] Moment create and edit persist approved keyed lines and stable identity.
+- [x] Exact block resolution rejects orphan/ambiguous IDs.
+- [x] No-op and unknown-child content remain unchanged.
+
+**Verification:** Moment writer/resolver/editor integration tests.
+
+**Dependencies:** Tasks 51 and 54.
+**Files likely touched:** Moment writer, resolver/editor service, persistence adapter, focused tests.
+**Estimated scope:** Medium, 4–5 files.
+
+## Task 58: Add desktop Moment Reflection management
+
+**Description:** Extend desktop Moment Capture/Edit with independent Description, wellbeing, and Reflection Notes fields over
+Task 57 persistence.
+
+**Acceptance criteria:**
+- [ ] Desktop captures and edits all four Reflection states.
+- [ ] Description and Reflection Notes have separate controllers and cleanup.
+- [ ] Edit resolves the exact Moment block and surfaces conflicts.
+
+**Verification:** Desktop Moment form/composition tests and manual edit smoke test.
+
+**Dependencies:** Task 57.
+**Files likely touched:** desktop Moment form/modal, Reflection section reuse, launcher/edit route, focused test.
+**Estimated scope:** Medium, 4–5 files.
+
+## Task 59: Add mobile Moment Reflection management
+
+**Description:** Extend mobile Moment Capture/Edit with Task 58 semantics using mobile-specific layout and lifecycle.
+
+**Acceptance criteria:**
+- [ ] Mobile captures and edits all four Reflection states.
+- [ ] Keyboard and viewport behavior remain stable.
+- [ ] Mobile imports no desktop Moment UI.
+
+**Verification:** Mobile Moment structure/lifecycle tests and real-device acceptance scenario.
+
+**Dependencies:** Task 57.
+**Files likely touched:** mobile Moment form/screen, Reflection section, launcher/edit route, focused test.
+**Estimated scope:** Medium, 4–5 files.
+
+## Checkpoint: Reflection capture and management
+
+- [ ] Moment/Event/Task/Focus Session support none, wellbeing-only, notes-only, and both.
+- [ ] Desktop and mobile produce equivalent canonical blocks.
+- [ ] Description never includes Reflection or Focus history.
+- [ ] `$env:OBSIDIAN_VAULT_PLUGIN_PATH=""; pnpm run check:ci` passes.
+
+## Task 60: Extend explicit preview/apply formatting
+
+**Description:** Convert current unreleased development shapes to keyed prefixes, direct Task Focus Sessions, and canonical
+order through the existing explicit formatter.
+
+**Acceptance criteria:**
+- [ ] Preview shows every proposed block change before apply.
+- [ ] Apply preserves stable IDs and converts nested Task sessions to siblings.
+- [ ] A second format pass proposes no changes.
+
+**Verification:** Formatter classification, golden output, ID-preservation, conflict, and idempotency tests.
+
+**Dependencies:** Tasks 50–59.
+**Files likely touched:** format classifier/preview, application service, manager UI wiring, golden fixture, test.
+**Estimated scope:** Medium, 4–5 files.
+
+## Task 61: Build the sibling-session Timeline read model
+
+**Description:** Index direct Event/Task Focus Sessions independently from Timeboxes and derive one owner-level planned versus
+focused summary without pairings.
+
+**Acceptance criteria:**
+- [ ] Sessions retain sessionId, owner itemId, actual interval, duration, and Reflection context.
+- [ ] Task planned totals use non-cancelled Timeboxes; Event planned total uses its interval.
+- [ ] Focus totals/counts are owner aggregates and work with zero planned time.
+
+**Verification:** Index/query/summary tests for multiple, outside-plan, cancelled, and zero-plan cases.
+
+**Dependencies:** Tasks 53 and 60.
+**Files likely touched:** index projection, Timeline query/read model, summary domain module, focused tests.
+**Estimated scope:** Medium, 4–5 files.
+
+## Task 62: Render independent planned and actual Timeline segments
+
+**Description:** Add actual Focus Session segments at recorded timestamps while retaining Timebox/Event planned segments and
+distinct visual/interaction identities.
+
+**Acceptance criteria:**
+- [ ] Planned segments use planned styling and sessions use solid actual styling.
+- [ ] Sessions outside or overlapping Timeboxes remain visible without inferred attribution.
+- [ ] Cross-day clipping preserves timeboxId/sessionId identity.
+
+**Verification:** Timeline layout/grid/style tests and representative Day/Weekly rendering smoke test.
+
+**Dependencies:** Task 61.
+**Files likely touched:** Timeline layout, grid renderer, styles, action contract, focused tests.
+**Estimated scope:** Medium, 4–5 files.
+
+## Task 63: Add Timeline tooltip and item-modal summaries
+
+**Description:** Show compact selected-segment data on hover and complete owner summary plus selected segment details in
+Timeline Item Modal.
+
+**Acceptance criteria:**
+- [ ] Timebox and Focus Session tooltips clearly say Planned or Focused.
+- [ ] Clicking either opens the same owner modal with exact segment detail.
+- [ ] Planned, focused, difference, percentage, and counts follow Task 61 rules.
+
+**Verification:** Tooltip, modal model/UI, zero-plan, and action-route tests.
+
+**Dependencies:** Task 62.
+**Files likely touched:** tooltip/model, item modal model/UI, view wiring, focused tests.
+**Estimated scope:** Medium, 4–5 files.
+
+## Task 64: Reuse Timeline time summary in Manage
+
+**Description:** Present Task 61 summary compactly above Event/Task management without creating a second calculation path.
+
+**Acceptance criteria:**
+- [ ] Event/Task Manage consumes the shared summary model.
+- [ ] Summary updates after Timebox/session changes and agrees with Timeline.
+- [ ] No summary value is written into canonical Markdown.
+
+**Verification:** Manage summary wiring/presentation tests and canonical no-write assertion.
+
+**Dependencies:** Tasks 55–56 and 61–63.
+**Files likely touched:** summary presenter, desktop/mobile Manage sections, edit shell wiring, focused tests.
+**Estimated scope:** Medium, 4–5 files.
+
+## Checkpoint: Formatting and Timeline actual time
+
+- [ ] Formatter converges and preserves IDs.
+- [ ] Planned and actual segments remain independent and navigable.
+- [ ] Timeline and Manage summaries agree and never persist.
+- [ ] `$env:OBSIDIAN_VAULT_PLUGIN_PATH=""; pnpm run check:ci` passes.
+
+## Pre-Task-65 gate: Fix Task creation regression
+
+**Description:** Reproduce and repair the reported Task creation bug after Tasks 51–64, before documentation and runtime acceptance are closed.
+
+**Acceptance criteria:**
+- [ ] The user-reported Task creation path has a failing regression test before the fix.
+- [ ] Desktop and mobile Task creation succeed without regressing canonical flat blocks.
+- [ ] The fix passes the full automated checkpoint and targeted runtime reproduction.
+
+**Dependencies:** Tasks 51–64 and concrete reproduction details.
+
+## Task 65: Complete documentation and runtime acceptance
+
+**Description:** Update user/developer documentation and record repeatable desktop/mobile evidence for flat capture,
+Reflection, direct Focus ownership, explicit formatting, and Timeline summaries.
+
+**Acceptance criteria:**
+- [ ] Docs contain final syntax and remove the superseded timebox-owned session model.
+- [ ] Automated evidence maps to every module success criterion.
+- [ ] Desktop and real-mobile scenarios are recorded or explicitly waived with risk.
+
+**Verification:** `pnpm run check:ci`; docs links; runtime record; final diff review.
+
+**Dependencies:** Tasks 47–64.
+**Files likely touched:** public/developer docs, status/acceptance docs, task/spec traceability.
+**Estimated scope:** Medium documentation batch.
+
+## Checkpoint: Flat capture, Focus, and Reflection complete
+
+- [ ] Canonical grammar and stable identity invariants hold.
+- [ ] Timeboxes and Focus Sessions are siblings everywhere.
+- [ ] Reflection works for Moment/Event/Task/Focus Session on desktop and mobile.
+- [ ] Actual Timeline segments and all derived summaries match canonical data.
+- [ ] Explicit formatting is idempotent and no background migration exists.
+- [ ] Human approves integrated runtime behavior.
