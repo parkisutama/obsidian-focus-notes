@@ -983,9 +983,9 @@ Task 57 persistence.
 **Description:** Extend mobile Moment Capture/Edit with Task 58 semantics using mobile-specific layout and lifecycle.
 
 **Acceptance criteria:**
-- [ ] Mobile captures and edits all four Reflection states.
-- [ ] Keyboard and viewport behavior remain stable.
-- [ ] Mobile imports no desktop Moment UI.
+- [x] Mobile captures and edits all four Reflection states.
+- [x] Keyboard and viewport behavior remain stable.
+- [x] Mobile imports no desktop Moment UI.
 
 **Verification:** Mobile Moment structure/lifecycle tests and real-device acceptance scenario.
 

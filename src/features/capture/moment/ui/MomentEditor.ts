@@ -1,13 +1,11 @@
-import { type App, Notice } from "obsidian";
+import { type App, Notice, Platform } from "obsidian";
 import { captureMomentEdit } from "../../../../infrastructure/obsidian/capture/MomentLedgerEditor.ts";
 import type { LedgerRecordSource } from "../../scheduled-item/domain/LedgerRecordSource.ts";
 import { MomentDesktopEditModal } from "./desktop/MomentDesktopEditModal.ts";
+import { MomentMobileEditScreen } from "./mobile/MomentMobileEditScreen.ts";
+import { shouldUseMobileForm } from "../../scheduled-item/ui/mobile/MobileFormPolicy.ts";
 import type { FocusNotesSettings } from "../../../settings/domain/FocusNotesSettings";
 
-/**
- * Desktop-only for now: mobile's equivalent screen lands with the mobile Moment
- * Reflection task and will branch this the same way ScheduledItemEditor does.
- */
 export async function openMomentEditor(
     app: App,
     source: LedgerRecordSource,
@@ -19,13 +17,18 @@ export async function openMomentEditor(
         new Notice(momentCaptureFailureMessage(captured.status));
         return;
     }
-    new MomentDesktopEditModal({
+    const options = {
         app,
         snapshot: captured.snapshot,
         block: captured.block,
         getContextSources: () => getSettings().inbox.contextSources,
         onComplete,
-    }).open();
+    };
+    if (!shouldUseMobileForm(Platform.isMobile, window.innerWidth)) {
+        new MomentDesktopEditModal(options).open();
+        return;
+    }
+    new MomentMobileEditScreen(options).open();
 }
 
 function momentCaptureFailureMessage(status: "conflict" | "invalid"): string {
