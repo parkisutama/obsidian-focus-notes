@@ -1,6 +1,12 @@
 import { type App, Modal, setIcon } from "obsidian";
 import type { ScheduledItem } from "../../capture/scheduled-item/domain/ScheduledItem";
-import { buildPendingTaskModalModel, buildTimelineItemModalModel } from "../domain/TimelineItemModalModel";
+import type { FocusUtilizationSummary } from "../../focus-session/domain/FocusUtilization.ts";
+import {
+    buildPendingTaskModalModel,
+    buildTimelineItemModalModel,
+    type TimelineItemModalFocusSummary,
+    type TimelineSelectedSegment,
+} from "../domain/TimelineItemModalModel";
 
 export class TimelineItemModal extends Modal {
     constructor(
@@ -8,12 +14,14 @@ export class TimelineItemModal extends Modal {
         private item: ScheduledItem,
         private onOpenSource: (item: ScheduledItem) => void,
         private onEditItem: (item: ScheduledItem) => void,
+        private focusSummary: FocusUtilizationSummary | null = null,
+        private selectedSegment: TimelineSelectedSegment | null = null,
     ) {
         super(app);
     }
 
     onOpen(): void {
-        const model = buildTimelineItemModalModel(this.item);
+        const model = buildTimelineItemModalModel(this.item, this.focusSummary, this.selectedSegment);
         this.modalEl.addClass("fn-timeline-item-modal");
         this.contentEl.empty();
 
@@ -25,7 +33,9 @@ export class TimelineItemModal extends Modal {
         const details = this.contentEl.createDiv({ cls: "fn-timeline-modal-details" });
         this.renderDetail(details, "calendar-clock", "When", model.scheduleLabel);
         if (model.actualScheduleLabel) this.renderDetail(details, "clock-check", "Actual", model.actualScheduleLabel);
+        if (model.selectedSegmentLabel) this.renderDetail(details, "target", "Selected", model.selectedSegmentLabel);
         if (model.priorityLabel) this.renderDetail(details, "signal", "Priority", model.priorityLabel);
+        if (model.focusSummary) this.renderFocusSummary(details, model.focusSummary);
         this.renderDetail(details, "file-text", "Source", model.sourceLabel, model.sourcePath);
 
         const actions = this.contentEl.createDiv({ cls: "fn-timeline-modal-actions" });
@@ -47,6 +57,23 @@ export class TimelineItemModal extends Modal {
 
     onClose(): void {
         this.contentEl.empty();
+    }
+
+    /** Task 63/64: same shared model Manage reuses (Task 64) — never a second calculation path. */
+    private renderFocusSummary(parent: HTMLElement, summary: TimelineItemModalFocusSummary): void {
+        const row = parent.createDiv({ cls: "fn-timeline-modal-detail" });
+        const iconEl = row.createDiv({ cls: "fn-timeline-modal-detail-icon", attr: { "aria-hidden": "true" } });
+        setIcon(iconEl, "timer");
+        const body = row.createDiv();
+        body.createDiv({ cls: "fn-timeline-modal-detail-label", text: "Focus" });
+        body.createDiv({
+            cls: "fn-timeline-modal-detail-value",
+            text: `${summary.focusedLabel} of ${summary.plannedLabel} planned (${summary.percentageLabel})`,
+        });
+        body.createDiv({
+            cls: "fn-timeline-modal-detail-secondary",
+            text: `${summary.differenceLabel} · ${summary.sessionCountLabel}`,
+        });
     }
 
     private renderDetail(parent: HTMLElement, icon: string, label: string, value: string, secondary?: string): void {

@@ -1054,9 +1054,9 @@ distinct visual/interaction identities.
 Timeline Item Modal.
 
 **Acceptance criteria:**
-- [ ] Timebox and Focus Session tooltips clearly say Planned or Focused.
-- [ ] Clicking either opens the same owner modal with exact segment detail.
-- [ ] Planned, focused, difference, percentage, and counts follow Task 61 rules.
+- [x] Timebox and Focus Session tooltips clearly say Planned or Focused.
+- [x] Clicking either opens the same owner modal with exact segment detail.
+- [x] Planned, focused, difference, percentage, and counts follow Task 61 rules.
 
 **Verification:** Tooltip, modal model/UI, zero-plan, and action-route tests.
 

@@ -101,7 +101,17 @@ export class ScheduledItemIndexer {
             const start = parseLocalDateTime(timebox.start, false);
             const end = parseLocalDateTime(timebox.end, false);
             if (!start || !end) return [];
-            return [{ ...taskItem, timeboxId: timebox.timeboxId, start, end, allDay: false, focusSessions: [] }];
+            return [
+                {
+                    ...taskItem,
+                    timeboxId: timebox.timeboxId,
+                    timeboxStatus: timebox.status,
+                    start,
+                    end,
+                    allDay: false,
+                    focusSessions: [],
+                },
+            ];
         });
     }
 

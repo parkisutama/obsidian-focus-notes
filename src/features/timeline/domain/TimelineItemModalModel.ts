@@ -1,4 +1,20 @@
 import type { ScheduledItem } from "../../capture/scheduled-item/domain/ScheduledItem";
+import type { FocusUtilizationSummary } from "../../focus-session/domain/FocusUtilization.ts";
+
+export interface TimelineItemModalFocusSummary {
+    plannedLabel: string;
+    focusedLabel: string;
+    differenceLabel: string;
+    percentageLabel: string;
+    sessionCountLabel: string;
+}
+
+/** The exact Timebox or Focus Session the user clicked, as opposed to the owner-level aggregate. */
+export interface TimelineSelectedSegment {
+    kind: "planned" | "focused";
+    start: Date;
+    end: Date;
+}
 
 export interface TimelineItemModalModel {
     title: string;
@@ -11,6 +27,10 @@ export interface TimelineItemModalModel {
     actualScheduleLabel: string | null;
     sourceLabel: string;
     sourcePath: string;
+    /** Task 63: owner-level planned-versus-focused aggregate (Task 61's rules), null when there's nothing to show. */
+    focusSummary: TimelineItemModalFocusSummary | null;
+    /** Task 63: which specific segment triggered the click, clearly labeled Planned or Focused. */
+    selectedSegmentLabel: string | null;
 }
 
 export interface PendingTaskModalItemModel {
@@ -35,7 +55,11 @@ const TIME_FORMAT = new Intl.DateTimeFormat("en-US", {
     hour12: false,
 });
 
-export function buildTimelineItemModalModel(item: ScheduledItem): TimelineItemModalModel {
+export function buildTimelineItemModalModel(
+    item: ScheduledItem,
+    focusSummary: FocusUtilizationSummary | null = null,
+    selectedSegment: TimelineSelectedSegment | null = null,
+): TimelineItemModalModel {
     const heading = item.source.headingPath.join(" › ");
     return {
         title: item.title,
@@ -51,7 +75,31 @@ export function buildTimelineItemModalModel(item: ScheduledItem): TimelineItemMo
                 : null,
         sourceLabel: [item.source.fileName, heading, `Line ${item.source.lineNumber}`].filter(Boolean).join(" · "),
         sourcePath: item.source.filePath,
+        focusSummary:
+            focusSummary && (focusSummary.plannedSeconds > 0 || focusSummary.sessionCount > 0)
+                ? formatFocusSummary(focusSummary)
+                : null,
+        selectedSegmentLabel: selectedSegment
+            ? `${selectedSegment.kind === "planned" ? "Planned" : "Focused"}: ${formatInterval(selectedSegment.start, selectedSegment.end)}`
+            : null,
     };
+}
+
+/** Task 63: planned, focused, difference, percentage, and count all follow Task 61's summary rules directly — no second calculation. */
+function formatFocusSummary(summary: FocusUtilizationSummary): TimelineItemModalFocusSummary {
+    const differenceSeconds = summary.focusedSeconds - summary.plannedSeconds;
+    const percentage = summary.plannedSeconds > 0 ? Math.round((summary.focusedSeconds / summary.plannedSeconds) * 100) : null;
+    return {
+        plannedLabel: formatMinutes(summary.plannedSeconds),
+        focusedLabel: formatMinutes(summary.focusedSeconds),
+        differenceLabel: `${differenceSeconds >= 0 ? "+" : "-"}${formatMinutes(Math.abs(differenceSeconds))}`,
+        percentageLabel: percentage === null ? "—" : `${percentage}%`,
+        sessionCountLabel: `${summary.sessionCount} session${summary.sessionCount === 1 ? "" : "s"}`,
+    };
+}
+
+function formatMinutes(totalSeconds: number): string {
+    return `${Math.round(totalSeconds / 60)}m`;
 }
 
 function formatStatus(item: ScheduledItem): "Scheduled" | "Pending" | "Completed" | "Cancelled" {

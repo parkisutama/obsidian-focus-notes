@@ -4,6 +4,8 @@ import { formatScheduledItemBlockTarget } from "../../capture/scheduled-item/dom
 import type { ScheduledItem } from "../../capture/scheduled-item/domain/ScheduledItem";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
 import { PendingTasksModal, TimelineItemModal } from "./TimelineItemModal";
+import { summarizeScheduledItemFocusFromItems } from "../application/ScheduledItemFocusSummary.ts";
+import type { TimelineSelectedSegment } from "../domain/TimelineItemModalModel";
 
 export interface TimelineModalLauncherOptions {
     app: App;
@@ -19,12 +21,19 @@ export interface TimelineModalLauncherOptions {
 export class TimelineModalLauncher {
     constructor(private options: TimelineModalLauncherOptions) {}
 
-    openItemDetails(item: ScheduledItem): void {
+    /**
+     * `allItems` is the full unfiltered index (not just the current visible range) so a Task's
+     * owner-level summary (Task 61) counts every Timebox and Focus Session regardless of whether
+     * it falls inside the currently displayed range.
+     */
+    openItemDetails(item: ScheduledItem, allItems: ScheduledItem[] = [item], selectedSegment: TimelineSelectedSegment | null = null): void {
         new TimelineItemModal(
             this.options.app,
             item,
             (selected) => void this.openSourceItem(selected),
             (selected) => void this.openItemEditor(selected),
+            summarizeScheduledItemFocusFromItems(allItems, item.id),
+            selectedSegment,
         ).open();
     }
 

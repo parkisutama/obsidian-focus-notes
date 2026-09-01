@@ -96,6 +96,52 @@ test("Timeline item modal model handles an item without schedule or heading meta
     assert.equal(model.priorityLabel, null);
 });
 
+test("presents a Task 61 focus summary with planned, focused, difference, percentage, and count", () => {
+    const model = buildTimelineItemModalModel(baseItem, { plannedSeconds: 3600, focusedSeconds: 1800, sessionCount: 2 });
+    assert.deepEqual(model.focusSummary, {
+        plannedLabel: "60m",
+        focusedLabel: "30m",
+        differenceLabel: "-30m",
+        percentageLabel: "50%",
+        sessionCountLabel: "2 sessions",
+    });
+});
+
+test("reports a positive difference and no percentage when nothing was planned", () => {
+    const model = buildTimelineItemModalModel(baseItem, { plannedSeconds: 0, focusedSeconds: 900, sessionCount: 1 });
+    assert.deepEqual(model.focusSummary, {
+        plannedLabel: "0m",
+        focusedLabel: "15m",
+        differenceLabel: "+15m",
+        percentageLabel: "—",
+        sessionCountLabel: "1 session",
+    });
+});
+
+test("omits the focus summary entirely when there is nothing planned or logged", () => {
+    const model = buildTimelineItemModalModel(baseItem, { plannedSeconds: 0, focusedSeconds: 0, sessionCount: 0 });
+    assert.equal(model.focusSummary, null);
+    assert.equal(buildTimelineItemModalModel(baseItem, null).focusSummary, null);
+});
+
+test("labels the exact clicked segment as Planned or Focused, distinct from the owner aggregate", () => {
+    const planned = buildTimelineItemModalModel(baseItem, null, {
+        kind: "planned",
+        start: new Date(2026, 7, 3, 9, 0),
+        end: new Date(2026, 7, 3, 10, 0),
+    });
+    assert.match(planned.selectedSegmentLabel ?? "", /^Planned: /);
+
+    const focused = buildTimelineItemModalModel(baseItem, null, {
+        kind: "focused",
+        start: new Date(2026, 7, 3, 9, 12),
+        end: new Date(2026, 7, 3, 9, 37),
+    });
+    assert.match(focused.selectedSegmentLabel ?? "", /^Focused: /);
+
+    assert.equal(buildTimelineItemModalModel(baseItem).selectedSegmentLabel, null);
+});
+
 test("pending modal model reports varying dates and file depths without losing source identity", () => {
     const nestedTask: ScheduledItem = {
         ...baseItem,

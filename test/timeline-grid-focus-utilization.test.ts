@@ -8,7 +8,18 @@ test("Timeline blocks render a planned-versus-actual focus fill and surface it i
     assert.match(source, /utilization: FocusUtilizationSummary/);
     assert.match(source, /if \(utilization\.sessionCount > 0 && heightPx >= 34\)/);
     assert.match(source, /createDiv\(\{ cls: "ftl-block-focus-fill" \}\)/);
-    assert.match(source, /focused of \$\{formatMinutes\(utilization\.plannedSeconds\)\} planned/);
+    assert.match(source, /Focused: \$\{formatMinutes\(utilization\.focusedSeconds\)\} of \$\{formatMinutes\(utilization\.plannedSeconds\)\} planned/);
+});
+
+test("Timeline block tooltips clearly say Planned, and clicking a block passes its exact planned segment", async () => {
+    const source = await readFile(new URL("../src/features/timeline/ui/TimelineGrid.ts", import.meta.url), "utf8");
+    assert.match(source, /Planned: \$\{formatTime\(start\)\} – \$\{formatTime\(end\)\}/);
+    assert.match(source, /onOpenItem\(item, \{ kind: "planned", start, end \}\)/);
+});
+
+test("clicking a Focus Session passes its exact focused segment, labeled distinctly from planned", async () => {
+    const source = await readFile(new URL("../src/features/timeline/ui/TimelineGrid.ts", import.meta.url), "utf8");
+    assert.match(source, /onOpenItem\(item, \{ kind: "focused", start: session\.start, end: session\.end \}\)/);
 });
 
 test("Timeline renders each actual Focus Session as its own solid segment, independent of any Timebox pairing", async () => {

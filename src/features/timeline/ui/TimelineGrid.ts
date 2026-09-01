@@ -3,6 +3,7 @@ import type { FocusUtilizationSummary } from "../../focus-session/domain/FocusUt
 import type { TimelineMode, TimelineRange } from "../domain/Timeline";
 import { addDays, formatDayKey, formatTime, startOfDay } from "../domain/TimelineDate.ts";
 import type { TimelineLayoutResult, TimelineSessionSegment } from "../domain/TimelineLayout";
+import type { TimelineSelectedSegment } from "../domain/TimelineItemModalModel";
 
 const HOUR_PX = 60;
 
@@ -20,7 +21,7 @@ export class TimelineGrid {
             sourceColors: Record<string, string>;
             showPendingSummary: boolean;
             onOpenPendingItems: (items: ScheduledItem[]) => void;
-            onOpenItem: (item: ScheduledItem) => void;
+            onOpenItem: (item: ScheduledItem, selectedSegment?: TimelineSelectedSegment) => void;
         },
     ) {
         this.itemById = new Map(
@@ -182,7 +183,7 @@ export class TimelineGrid {
         block.style.left = `calc(${column * widthPct}% + ${gap}px)`;
         block.style.width = `calc(${widthPct}% - ${gap * 2}px)`;
         block.style.setProperty("--ftl-color", this.colorFor(item));
-        block.title = this.tooltip(item, utilization);
+        block.title = this.tooltip(item, utilization, start, end);
         block.toggleClass("ftl-block--compact", heightPx < 34);
         block.toggleClass("ftl-block--medium", heightPx >= 34 && heightPx < 56);
         block.toggleClass("ftl-block--roomy", heightPx >= 56);
@@ -212,7 +213,7 @@ export class TimelineGrid {
             fill.style.height = `${Math.max(0, Math.min(100, pct))}%`;
         }
 
-        block.addEventListener("click", () => this.opts.onOpenItem(item));
+        block.addEventListener("click", () => this.opts.onOpenItem(item, { kind: "planned", start, end }));
     }
 
     /**
@@ -237,7 +238,9 @@ export class TimelineGrid {
         block.title = this.sessionTooltip(item, session);
         block.createSpan({ cls: "ftl-session-time", text: `${formatTime(session.start)}–${formatTime(session.end)}` });
 
-        block.addEventListener("click", () => this.opts.onOpenItem(item));
+        block.addEventListener("click", () =>
+            this.opts.onOpenItem(item, { kind: "focused", start: session.start, end: session.end }),
+        );
     }
 
     private sessionTooltip(item: ScheduledItem, session: TimelineSessionSegment): string {
@@ -324,13 +327,14 @@ export class TimelineGrid {
         return item.isCompleted ? " ftl-completed" : "";
     }
 
-    private tooltip(item: ScheduledItem, utilization?: FocusUtilizationSummary): string {
+    private tooltip(item: ScheduledItem, utilization?: FocusUtilizationSummary, start?: Date, end?: Date): string {
         const heading = item.source.headingPath.length ? `\n${item.source.headingPath.join(" > ")}` : "";
+        const planned = start && end ? `\nPlanned: ${formatTime(start)} – ${formatTime(end)}` : "";
         const focus =
             utilization && utilization.sessionCount > 0
-                ? `\n${formatMinutes(utilization.focusedSeconds)} focused of ${formatMinutes(utilization.plannedSeconds)} planned`
+                ? `\nFocused: ${formatMinutes(utilization.focusedSeconds)} of ${formatMinutes(utilization.plannedSeconds)} planned`
                 : "";
-        return `${item.title}\n${item.source.filePath}:${item.source.lineNumber}${heading}${focus}`;
+        return `${item.title}\n${item.source.filePath}:${item.source.lineNumber}${heading}${planned}${focus}`;
     }
 }
 

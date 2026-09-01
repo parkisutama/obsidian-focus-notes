@@ -1,6 +1,39 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizeScheduledItemFocus } from "../src/features/timeline/application/ScheduledItemFocusSummary.ts";
+import {
+    summarizeScheduledItemFocus,
+    summarizeScheduledItemFocusFromItems,
+} from "../src/features/timeline/application/ScheduledItemFocusSummary.ts";
+import type { ScheduledItem } from "../src/features/capture/scheduled-item/domain/ScheduledItem.ts";
+
+function baseTaskItem(overrides: Partial<ScheduledItem>): ScheduledItem {
+    return {
+        id: "task-abc1234567",
+        kind: "task",
+        title: "Menyusun laporan",
+        start: null,
+        end: null,
+        due: null,
+        dueHasTime: false,
+        remind: null,
+        priority: null,
+        eventStatus: null,
+        actualStart: null,
+        actualEnd: null,
+        allDay: false,
+        isCompleted: false,
+        source: {
+            groupId: "daily-notes",
+            groupName: "Daily Notes",
+            filePath: "Tasks/Report.md",
+            fileName: "Report.md",
+            lineNumber: 3,
+            headingPath: [],
+        },
+        rawLine: "- [ ] Menyusun laporan ^task-abc1234567",
+        ...overrides,
+    };
+}
 
 test("sums every non-cancelled Task Timebox as planned time, excluding cancelled ones", () => {
     const summary = summarizeScheduledItemFocus(
@@ -54,4 +87,44 @@ test("reports logged focus time for a Task with zero planned time", () => {
         [{ durationSeconds: 900 }],
     );
     assert.deepEqual(onlyCancelled, { plannedSeconds: 0, focusedSeconds: 900, sessionCount: 1 });
+});
+
+test("gathers a Task's owner-level summary from the indexed item list, excluding a cancelled sibling Timebox", () => {
+    const items: ScheduledItem[] = [
+        baseTaskItem({
+            focusSessions: [
+                {
+                    sessionId: "focus-aaaaaaaaaa",
+                    ownerItemId: "task-abc1234567",
+                    start: new Date(2026, 8, 1, 9, 5),
+                    end: new Date(2026, 8, 1, 9, 30),
+                    durationSeconds: 1500,
+                    mode: "pomodoro",
+                    stressLevel: null,
+                    emotionCategory: null,
+                    emotionKey: null,
+                    notes: null,
+                },
+            ],
+        }),
+        baseTaskItem({
+            timeboxId: "timebox-aaaaaaaaaa",
+            timeboxStatus: "planned",
+            start: new Date(2026, 8, 1, 9, 0),
+            end: new Date(2026, 8, 1, 10, 0),
+        }),
+        baseTaskItem({
+            timeboxId: "timebox-bbbbbbbbbb",
+            timeboxStatus: "cancelled",
+            start: new Date(2026, 8, 2, 9, 0),
+            end: new Date(2026, 8, 2, 11, 0),
+        }),
+    ];
+
+    assert.deepEqual(summarizeScheduledItemFocusFromItems(items, "task-abc1234567"), {
+        plannedSeconds: 3600,
+        focusedSeconds: 1500,
+        sessionCount: 1,
+    });
+    assert.equal(summarizeScheduledItemFocusFromItems(items, "task-missing"), null);
 });

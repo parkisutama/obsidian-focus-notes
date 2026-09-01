@@ -37,6 +37,8 @@ export interface ScheduledItem {
     blockId?: string | null;
     /** Set when this item represents one Task timebox occurrence rather than the Task itself. */
     timeboxId?: string | null;
+    /** That Timebox's own status (Task 61's owner-summary rule excludes cancelled ones from planned time). Only set alongside `timeboxId`. */
+    timeboxStatus?: "planned" | "completed" | "skipped" | "cancelled" | null;
     /**
      * Set when this record is a derived Daily reference (event-ref or task-ref), not the
      * canonical block. Value is the canonical's `file#^blockId` target; editing must resolve and

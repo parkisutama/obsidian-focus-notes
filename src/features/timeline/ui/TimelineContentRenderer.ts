@@ -105,7 +105,7 @@ export class TimelineContentRenderer {
             sourceColors: settings.timeline.sourceColors,
             showPendingSummary: settings.timeline.showPendingSummary,
             onOpenPendingItems: (pending) => modalLauncher.openPendingItems(pending),
-            onOpenItem: (item) => modalLauncher.openItemDetails(item),
+            onOpenItem: (item, selectedSegment) => modalLauncher.openItemDetails(item, items, selectedSegment ?? null),
         }).render();
     }
 

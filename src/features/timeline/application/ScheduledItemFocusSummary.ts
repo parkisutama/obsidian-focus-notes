@@ -43,3 +43,23 @@ function plannedEventSeconds(item: Pick<ScheduledItem, "start" | "end" | "allDay
 function intervalSeconds(start: Date, end: Date): number {
     return Math.max(0, (end.getTime() - start.getTime()) / 1000);
 }
+
+/**
+ * Task 63: the same owner-level summary, gathered from an already-indexed `ScheduledItem[]`
+ * (Timeline's read model, or Manage's — Task 64 reuses this rather than a second calculation
+ * path) instead of requiring the caller to assemble Timeboxes/sessions by hand. Returns null when
+ * no item with `itemId` is present at all.
+ */
+export function summarizeScheduledItemFocusFromItems(
+    items: readonly ScheduledItem[],
+    itemId: string,
+): FocusUtilizationSummary | null {
+    const related = items.filter((candidate) => candidate.id === itemId);
+    const owner = related.find((candidate) => (candidate.timeboxId ?? null) === null) ?? related[0];
+    if (!owner) return null;
+    const timeboxes: ScheduledItemFocusTimebox[] = related.flatMap((candidate) => {
+        if ((candidate.timeboxId ?? null) === null || !candidate.start || !candidate.end) return [];
+        return [{ start: candidate.start, end: candidate.end, status: candidate.timeboxStatus ?? "planned" }];
+    });
+    return summarizeScheduledItemFocus(owner, timeboxes, owner.focusSessions ?? []);
+}
