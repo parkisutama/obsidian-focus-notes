@@ -169,7 +169,7 @@ export class TimeboxManagerModal extends Modal {
         const input = field.createEl("input", {
             type: "datetime-local",
             cls: "fn-timebox-datetime-input",
-            attr: { "aria-label": `Timebox ${label.toLowerCase()}` },
+            attr: { "aria-label": `Timebox ${label.toLowerCase()}`, lang: "en-GB" },
         });
         input.value = toDateTimeLocalValue(value);
         input.addEventListener("change", () => onChange(fromDateTimeLocalValue(input.value)));

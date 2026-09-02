@@ -12,11 +12,17 @@ export class MobileFormFields {
     ): Setting {
         const [dateValue = "", timeValue = ""] = value?.split(" ") ?? [];
         const setting = new Setting(container).setName(label);
-        const date = setting.controlEl.createEl("input", { type: "date", attr: { "aria-label": `${label} date` } });
+        const date = setting.controlEl.createEl("input", {
+            type: "date",
+            attr: { "aria-label": `${label} date`, lang: "en-GB" },
+        });
         date.value = dateValue;
         let time: HTMLInputElement | null = null;
         if (requireTime || timeValue) {
-            time = setting.controlEl.createEl("input", { type: "time", attr: { "aria-label": `${label} time` } });
+            time = setting.controlEl.createEl("input", {
+                type: "time",
+                attr: { "aria-label": `${label} time`, lang: "en-GB" },
+            });
             time.value = timeValue;
         }
         const emit = (): void =>
