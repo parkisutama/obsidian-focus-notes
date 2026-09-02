@@ -3978,7 +3978,9 @@ body.fn-mobile-event-screen-open .suggestion-container {
     color: var(--text-muted);
 }
 .fn-datetime-popup {
-    z-index: var(--layer-popover, 70);
+    /* Must outrank the Modal it's opened from (--layer-modal), not just an ordinary popover —
+     * otherwise it renders behind the modal and only whatever sliver pokes past its edge shows. */
+    z-index: calc(var(--layer-modal, 1000) + 10);
     width: 240px;
     padding: 10px;
     border-radius: 8px;

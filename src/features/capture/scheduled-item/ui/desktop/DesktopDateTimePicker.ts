@@ -91,8 +91,10 @@ export class DesktopDateTimePicker {
     private openPopup(): void {
         const popup = document.body.createDiv({ cls: "fn-datetime-popup" });
         this.popupEl = popup;
-        this.positionPopup(popup);
+        popup.style.position = "fixed";
         this.renderPopupContent(popup);
+        // Sized only once its content exists, so the viewport clamp below has real dimensions.
+        this.positionPopup(popup);
         // Deferred so the click that opened the popup doesn't immediately close it via bubbling.
         window.setTimeout(() => {
             document.addEventListener("click", this.onOutsideClick);
@@ -108,11 +110,17 @@ export class DesktopDateTimePicker {
         document.removeEventListener("keydown", this.onKeyDown);
     }
 
+    /** Anchors below the button, flipping above and clamping horizontally when it would overflow the viewport. */
     private positionPopup(popup: HTMLElement): void {
         const rect = this.buttonEl.getBoundingClientRect();
-        popup.style.position = "fixed";
-        popup.style.top = `${rect.bottom + 4}px`;
-        popup.style.left = `${rect.left}px`;
+        const margin = 8;
+        const width = popup.offsetWidth || 240;
+        const height = popup.offsetHeight || 320;
+        const left = Math.min(Math.max(margin, rect.left), window.innerWidth - width - margin);
+        const fitsBelow = rect.bottom + 4 + height <= window.innerHeight - margin;
+        const top = fitsBelow ? rect.bottom + 4 : Math.max(margin, rect.top - height - 4);
+        popup.style.left = `${left}px`;
+        popup.style.top = `${top}px`;
     }
 
     private renderPopupContent(popup: HTMLElement): void {

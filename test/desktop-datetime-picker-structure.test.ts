@@ -16,3 +16,15 @@ test("DesktopDateTimePicker builds its display/parse from the locale-free DateTi
     assert.match(source, /document\.addEventListener\("click", this\.onOutsideClick\)/);
     assert.match(source, /document\.addEventListener\("keydown", this\.onKeyDown\)/);
 });
+
+test("popup outranks the modal it opens from and clamps to the viewport instead of overflowing", async () => {
+    const source = await readFile(
+        new URL("../src/features/capture/scheduled-item/ui/desktop/DesktopDateTimePicker.ts", import.meta.url),
+        "utf8",
+    );
+    assert.match(source, /window\.innerWidth - width - margin/);
+    assert.match(source, /window\.innerHeight - margin/);
+
+    const css = await readFile(new URL("../styles.css", import.meta.url), "utf8");
+    assert.match(css, /\.fn-datetime-popup\s*\{\s*\/\*[\s\S]*?z-index: calc\(var\(--layer-modal, 1000\) \+ 10\);/);
+});
