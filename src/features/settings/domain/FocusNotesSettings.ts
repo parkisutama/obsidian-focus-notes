@@ -4,7 +4,6 @@ import type {
     MomentCaptureSettings,
     TaskCaptureSettings,
 } from "../../capture/domain/CaptureSettings";
-import type { FocusTarget } from "../../capture/domain/CaptureTarget";
 import type { EventTaskSettings } from "../../capture/scheduled-item/domain/DetailNoteSettings";
 import type { DisplayMode } from "../../focus-session/domain/Timer.ts";
 import type { InboxSettings } from "../../object-notes/domain/ContextSourceSettings";
@@ -22,9 +21,6 @@ export interface FocusNotesSettings {
 
     /** Where Focus session logs go by default. */
     captureFocusSession: FocusSessionCaptureSettings;
-
-    /** Live sidebar target override with per-field fallback semantics. */
-    liveTarget: FocusTarget;
 
     /** Format string used for a bare {{date}} token. */
     dailyNoteFormat: string;

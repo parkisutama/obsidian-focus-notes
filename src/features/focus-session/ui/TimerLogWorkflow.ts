@@ -236,7 +236,7 @@ export class TimerLogWorkflow {
     }
 
     private activeTarget(): FocusTarget {
-        return this.options.buildResolver().getActiveTarget();
+        return this.options.buildResolver().getDefaultTarget();
     }
 
     /**

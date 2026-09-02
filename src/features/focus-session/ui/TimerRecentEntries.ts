@@ -84,6 +84,6 @@ export class TimerRecentEntries {
     }
 
     private activeTarget(): FocusTarget {
-        return this.buildResolver().getActiveTarget();
+        return this.buildResolver().getDefaultTarget();
     }
 }

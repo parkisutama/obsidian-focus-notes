@@ -1,21 +1,16 @@
-import { type App, debounce, type EventRef } from "obsidian";
+import { type App, type EventRef } from "obsidian";
 import { isTFile } from "../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
-import { FileSuggest, HeadingSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
 import type { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
-import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
 import type { FocusTarget } from "../../capture/domain/CaptureTarget";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
 
 /**
- * The Timer sidebar's collapsible "More options" section — Save to / Heading / Insert position
- * and group-by-date inputs, matching the label conventions of Event/Task/Moment's own capture
- * forms (see InboxDesktopForm.ts). Live edits here write to settings.liveTarget, which
- * TargetResolver prefers over the configured Focus session capture target.
+ * The Timer sidebar's collapsible "More options" section — just the group-by-date toggle now.
+ * Save to/Heading/Insert position used to live here as a per-session override (settings.liveTarget),
+ * but that's removed: the Focus session log target always follows the configured "Focus session
+ * capture" settings, with no live override.
  */
 export class TimerTargetEditor {
-    private targetFileInput!: HTMLInputElement;
-    private targetHeadingInput!: HTMLInputElement;
-    private targetPositionSelect!: HTMLSelectElement;
     private targetGroupToggle!: HTMLInputElement;
     private targetGroupLevelSelect!: HTMLSelectElement;
 
@@ -35,77 +30,6 @@ export class TimerTargetEditor {
         summary.createEl("span", { text: "More options", cls: "focus-notes-section-title" });
 
         const body = details.createDiv({ cls: "focus-notes-section-body" });
-
-        // Why "input" instead of "change":
-        //   "change" fires only on blur. When AbstractInputSuggest sets the
-        //   value programmatically (user picked from the dropdown), it
-        //   dispatches "input", not "change", so a "change"-only listener
-        //   misses suggester selections entirely. Switching to "input" with
-        //   a 300ms debounce makes the suggester picks persist immediately
-        //   while keeping per-keystroke saves cheap.
-        const persistTargetEdit = debounce(
-            () => {
-                void this.saveSettings();
-                this.onTargetChanged();
-            },
-            300,
-            true,
-        );
-
-        // File row — shows the resolved concrete path (e.g. "Daily/2026-08-30.md"), the same
-        // way Event/Task's "Save to file" field shows a plain path rather than a template.
-        // liveTarget.file itself can still hold a {{date:FORMAT}} token (advanced/typed-by-hand
-        // use), but the field never leads with that syntax by default.
-        const fileRow = body.createDiv({ cls: "focus-notes-target-row" });
-        fileRow.createEl("label", { text: "Save to", cls: "focus-notes-target-label" });
-        const fileCell = fileRow.createDiv({ cls: "focus-notes-target-cell" });
-        this.targetFileInput = fileCell.createEl("input", {
-            type: "text",
-            cls: "focus-notes-target-input",
-            attr: { placeholder: "e.g. Daily/2026-08-30.md" },
-        });
-        new FileSuggest(this.app, this.targetFileInput);
-        this.targetFileInput.addEventListener("input", () => {
-            this.getSettings().liveTarget.file = this.targetFileInput.value.trim();
-            persistTargetEdit();
-        });
-
-        // Heading row — uses the file-aware HeadingSuggest so it autocompletes
-        // against whatever file path is currently typed in the file input.
-        // The thunk re-reads liveTarget on every suggestion query, so keystrokes
-        // in the file input propagate to the heading suggester immediately
-        // (because we update liveTarget.file on each "input" event above).
-        const headingRow = body.createDiv({ cls: "focus-notes-target-row" });
-        headingRow.createEl("label", { text: "Heading", cls: "focus-notes-target-label" });
-        this.targetHeadingInput = headingRow.createEl("input", {
-            type: "text",
-            cls: "focus-notes-target-input",
-            attr: { placeholder: "(empty = end of file)" },
-        });
-        new HeadingSuggest(
-            this.app,
-            this.targetHeadingInput,
-            () => this.buildResolver().resolve(this.activeTarget()).file,
-        );
-        this.targetHeadingInput.addEventListener("input", () => {
-            this.getSettings().liveTarget.heading = this.targetHeadingInput.value.trim();
-            persistTargetEdit();
-        });
-
-        // Position row — a <select> only fires "change" (no per-character
-        // editing to debounce), so the simpler immediate save is fine here.
-        const posRow = body.createDiv({ cls: "focus-notes-target-row" });
-        posRow.createEl("label", { text: "Insert position", cls: "focus-notes-target-label" });
-        this.targetPositionSelect = posRow.createEl("select", {
-            cls: "focus-notes-target-input",
-        });
-        this.targetPositionSelect.createEl("option", { text: "End (newest at bottom)", value: "end" });
-        this.targetPositionSelect.createEl("option", { text: "Start (newest at top)", value: "start" });
-        this.targetPositionSelect.addEventListener("change", () => {
-            this.getSettings().liveTarget.position = this.targetPositionSelect.value as InsertPosition;
-            void this.saveSettings();
-            this.onTargetChanged();
-        });
 
         // Group-by-date toggle — affects both writer and reader. Lives next to
         // the target picker because it's a per-target structural choice (the
@@ -140,25 +64,6 @@ export class TimerTargetEditor {
         });
         this.targetGroupToggle = groupToggle;
 
-        // Reset to default clears live overrides so later Settings changes
-        // keep flowing into this sidebar target.
-        const resetLink = body.createEl("a", {
-            text: "Reset to default",
-            cls: "focus-notes-target-reset",
-            href: "#",
-        });
-        resetLink.addEventListener("click", (evt) => {
-            evt.preventDefault();
-            this.getSettings().liveTarget = {
-                file: "",
-                heading: "",
-                position: this.getSettings().captureFocusSession.position,
-            };
-            void this.saveSettings();
-            this.syncTargetInputs();
-            this.onTargetChanged();
-        });
-
         this.syncTargetInputs();
 
         // Refresh the recent feed when the active target file is modified
@@ -176,20 +81,10 @@ export class TimerTargetEditor {
     }
 
     private activeTarget(): FocusTarget {
-        return this.buildResolver().getActiveTarget();
+        return this.buildResolver().getDefaultTarget();
     }
 
-    /**
-     * Populates the File field with the resolved concrete path (today's actual file), not the
-     * unresolved `{{date:FORMAT}}` template — matching how Event/Task's "Save to file" always
-     * shows a plain path. Untouched (empty liveTarget.file), this is display-only: it doesn't
-     * persist, so the field still shows tomorrow's file correctly next time this re-syncs.
-     */
     private syncTargetInputs(): void {
-        const active = this.activeTarget();
-        this.targetFileInput.value = this.buildResolver().resolve(active).file;
-        this.targetHeadingInput.value = active.heading;
-        this.targetPositionSelect.value = active.position;
         const s = this.getSettings();
         this.targetGroupToggle.checked = s.groupByDate;
         this.targetGroupLevelSelect.value = String(s.dateSubHeadingLevel);

@@ -10,11 +10,6 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         heading: "Focus timeline",
         position: "end",
     },
-    liveTarget: {
-        file: "",
-        heading: "",
-        position: "end",
-    },
     dailyNoteFormat: "YYYY-MM-DD",
 
     // Date grouping defaults: off, level-3 sub-heading, [[wikilinked]] date so
@@ -164,10 +159,6 @@ export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): F
             allowedSourceIds: [
                 ...(saved.captureTask?.allowedSourceIds ?? DEFAULT_SETTINGS.captureTask.allowedSourceIds),
             ],
-        },
-        liveTarget: {
-            ...DEFAULT_SETTINGS.liveTarget,
-            ...((saved.liveTarget ?? {}) as Partial<typeof DEFAULT_SETTINGS.liveTarget>),
         },
         timeline: {
             ...DEFAULT_SETTINGS.timeline,

@@ -55,7 +55,6 @@ function renderFocusSessionCapture(containerEl: HTMLElement, ctx: SettingsRender
         ctx.settings.captureFocusSession.profileId,
         async (profileId) => {
             ctx.settings.captureFocusSession.profileId = profileId;
-            ctx.settings.liveTarget.file = "";
             await ctx.saveSettings();
         },
     );
@@ -71,7 +70,6 @@ function renderFocusSessionCapture(containerEl: HTMLElement, ctx: SettingsRender
                 .setValue(ctx.settings.captureFocusSession.heading)
                 .onChange(async (v) => {
                     ctx.settings.captureFocusSession.heading = v.trim();
-                    ctx.settings.liveTarget.heading = "";
                     await ctx.saveSettings();
                 });
             // Scoped to the profile's today-resolved file so suggestions reflect whatever
@@ -93,7 +91,6 @@ function renderFocusSessionCapture(containerEl: HTMLElement, ctx: SettingsRender
             .setValue(ctx.settings.captureFocusSession.position)
             .onChange(async (v) => {
                 ctx.settings.captureFocusSession.position = v as InsertPosition;
-                ctx.settings.liveTarget.position = v as InsertPosition;
                 await ctx.saveSettings();
             }),
     );

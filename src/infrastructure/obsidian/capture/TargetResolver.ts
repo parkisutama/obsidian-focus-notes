@@ -19,12 +19,12 @@ export class TargetResolver {
     constructor(private settings: FocusNotesSettings) {}
 
     /**
-     * Returns the abstract default target for Focus session logging. The file
-     * may still contain {{date}} tokens — use resolve() afterwards to expand
-     * them for actual file IO. This is what the sidebar's editable "Save to"
-     * fields display, so file stays a literal template; heading is resolved
-     * for "now" when the chosen profile has a headingFormat (there is no
-     * sensible way to show a dated-heading template as editable plain text).
+     * The Focus session log target — always the configured "Focus session
+     * capture" settings (Periodical profile + heading + position), with no
+     * per-session override. The file may still contain {{date}} tokens — use
+     * resolve() afterwards to expand them for actual file IO. Heading is
+     * resolved for "now" when the chosen profile has a headingFormat (there is
+     * no sensible way to show a dated-heading template as editable plain text).
      */
     public getDefaultTarget(): FocusTarget {
         const s = this.settings.captureFocusSession;
@@ -32,25 +32,6 @@ export class TargetResolver {
         const file = this.getProfileFileTemplate(s.profileId) ?? "";
         const heading = profile?.headingFormat ? moment().format(profile.headingFormat) : s.heading;
         return { file, heading, position: s.position };
-    }
-
-    /**
-     * The "what would actually be written right now" target.
-     *
-     * Per-field merge of liveTarget over the default: empty file or heading
-     * in liveTarget falls through to the default's value. Position always
-     * comes from liveTarget because there is no empty/sentinel value for it.
-     *
-     * Still abstract — call resolve() to expand {{date}} tokens.
-     */
-    public getActiveTarget(): FocusTarget {
-        const def = this.getDefaultTarget();
-        const live = this.settings.liveTarget;
-        return {
-            file: live.file.trim() || def.file,
-            heading: live.heading.trim() || def.heading,
-            position: live.position,
-        };
     }
 
     /**

@@ -132,7 +132,7 @@ function renderTimelineAlignmentStatus(container: HTMLElement, ctx: SettingsRend
         dailyFolder,
         settings.inbox.contextSources,
     );
-    const target = resolver.resolve(resolver.getActiveTarget()).file;
+    const target = resolver.resolve(resolver.getDefaultTarget()).file;
     const targetFile = ctx.app.vault.getAbstractFileByPath(target);
     const properties = isTFile(targetFile)
         ? (ctx.app.metadataCache.getFileCache(targetFile)?.frontmatter as Record<string, unknown> | undefined)
