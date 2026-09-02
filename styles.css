@@ -4098,6 +4098,109 @@ body.fn-mobile-event-screen-open .suggestion-container {
     color: var(--text-normal);
 }
 
+/* ---- Custom date/time picker (MobileDateTimePicker) ---------------------- */
+.fn-mobile-datetime-trigger {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.fn-mobile-datetime-trigger--empty {
+    color: var(--text-muted);
+}
+.fn-mobile-datetime-panel {
+    margin-top: 6px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+}
+.fn-mobile-datetime-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.fn-mobile-datetime-title {
+    font-size: var(--font-ui-small);
+    font-weight: 600;
+    color: var(--text-normal);
+}
+.fn-mobile-datetime-nav {
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+}
+.fn-mobile-datetime-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+.fn-mobile-datetime-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+.fn-mobile-datetime-day {
+    padding: 8px 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-normal);
+    font-size: var(--font-ui-smaller);
+}
+.fn-mobile-datetime-day--outside {
+    color: var(--text-faint);
+}
+.fn-mobile-datetime-day--today {
+    font-weight: 700;
+    color: var(--text-accent);
+}
+.fn-mobile-datetime-day--selected {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+.fn-mobile-datetime-time {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 8px;
+}
+.fn-mobile-datetime-time-input {
+    width: 56px;
+    padding: 6px;
+    text-align: center;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+}
+.fn-mobile-datetime-time-sep {
+    color: var(--text-muted);
+}
+.fn-mobile-datetime-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 10px;
+}
+.fn-mobile-datetime-footer button {
+    font-size: var(--font-ui-smaller);
+}
+
 /* ---- Mobile modal layout ------------------------------------------------ */
 
 @media (max-width: 640px) {
