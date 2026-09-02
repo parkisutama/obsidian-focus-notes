@@ -3955,6 +3955,126 @@ body.fn-mobile-event-screen-open .suggestion-container {
     width: 100%;
 }
 
+/* ---- Custom date/time picker (DesktopDateTimePicker) -------------------- */
+/* Replaces native <input type="date"/"time"/"datetime-local">: its display
+ * format follows the OS/Electron process locale, which a plugin can't
+ * override, so this renders and controls DD/MM/YYYY + 24-hour formatting
+ * itself instead. */
+.fn-datetime-trigger {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.fn-datetime-trigger:hover {
+    background: var(--background-modifier-hover);
+}
+.fn-datetime-trigger--empty {
+    color: var(--text-muted);
+}
+.fn-datetime-popup {
+    z-index: var(--layer-popover, 70);
+    width: 240px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    box-shadow: var(--shadow-l);
+}
+.fn-datetime-popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.fn-datetime-popup-title {
+    font-size: var(--font-ui-small);
+    font-weight: 600;
+    color: var(--text-normal);
+}
+.fn-datetime-popup-nav {
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.fn-datetime-popup-nav:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+.fn-datetime-popup-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+.fn-datetime-popup-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+.fn-datetime-popup-day {
+    padding: 4px 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-normal);
+    font-size: var(--font-ui-smaller);
+    cursor: pointer;
+}
+.fn-datetime-popup-day:hover {
+    background: var(--background-modifier-hover);
+}
+.fn-datetime-popup-day--outside {
+    color: var(--text-faint);
+}
+.fn-datetime-popup-day--today {
+    font-weight: 700;
+    color: var(--text-accent);
+}
+.fn-datetime-popup-day--selected {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+.fn-datetime-popup-time {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 8px;
+}
+.fn-datetime-popup-time-input {
+    width: 48px;
+    padding: 4px;
+    text-align: center;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+}
+.fn-datetime-popup-time-sep {
+    color: var(--text-muted);
+}
+.fn-datetime-popup-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 10px;
+}
+.fn-datetime-popup-footer button {
+    font-size: var(--font-ui-smaller);
+}
+
 /* Native datetime-local picker fields for Add/Edit timebox. */
 .fn-timebox-datetime-field {
     display: flex;
