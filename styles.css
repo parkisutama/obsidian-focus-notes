@@ -593,6 +593,48 @@ body.fn-mobile-event-screen-open .suggestion-container {
     cursor: not-allowed;
 }
 
+/* ---- Purpose / focus input --------------------------------------------- */
+/* Obsidian's default .setting-item lays name/desc next to the control side by
+ * side, which doesn't fit the narrow sidebar (name+desc column squeezes the
+ * input to a sliver). Stack them instead, same approach as the mobile
+ * scheduled-item form uses for its own narrow-width Setting rows. */
+.focus-notes-purpose .setting-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 0;
+    border: none;
+}
+.focus-notes-purpose .setting-item-info {
+    margin-right: 0;
+}
+.focus-notes-purpose .setting-item-control {
+    width: 100%;
+}
+.focus-notes-purpose .setting-item-control input {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+}
+.focus-notes-purpose-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--background-secondary);
+    font-size: var(--font-ui-smaller);
+    color: var(--text-normal);
+}
+.focus-notes-purpose-summary button {
+    font-size: var(--font-ui-smaller);
+}
 
 .focus-notes-duration-row {
     display: flex;
@@ -2315,6 +2357,44 @@ body.fn-mobile-event-screen-open .suggestion-container {
     margin-top: 20px;
 }
 
+/* ---- Manage's Task 61/64 focus summary (Focus Sessions section) -------- */
+.fn-focus-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+.fn-focus-summary-headline {
+    color: var(--text-normal);
+    font-weight: 500;
+}
+.fn-focus-summary-detail {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+
+/* ---- Focus Sessions list (DesktopFocusSessionsSection/MobileFocusSessionsSection) ---- */
+.fn-focus-sessions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+.fn-focus-sessions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--background-secondary);
+    font-size: var(--font-ui-smaller);
+}
+.fn-focus-sessions-summary {
+    overflow-wrap: anywhere;
+    color: var(--text-normal);
+}
+
 .fn-task-edit-modal .modal-content,
 .fn-event-edit-modal .modal-content,
 .fn-scheduled-item-edit-modal .modal-content,
@@ -3855,6 +3935,24 @@ body.fn-mobile-event-screen-open .suggestion-container {
 .fn-timebox-focus-session {
     font-size: var(--font-ui-smaller);
     color: var(--text-muted);
+}
+
+/* Obsidian's default .setting-item lays name next to the control side by
+ * side; with two datetime fields plus a button in the control column, that
+ * squeezes "Add timebox"/the row status name down to a sliver and wraps it
+ * character by character. Stack instead, and let the control column wrap. */
+.fn-timebox-manager-modal .setting-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--size-4-2);
+}
+.fn-timebox-manager-modal .setting-item-info {
+    margin-right: 0;
+}
+.fn-timebox-manager-modal .setting-item-control {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    width: 100%;
 }
 
 /* Native datetime-local picker fields for Add/Edit timebox. */
