@@ -61,13 +61,11 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         profileId: "daily",
         heading: "Activities & Tasks",
         position: "end",
-        hubNotesFolder: "Notes",
     },
     captureTask: {
         allowedSourceIds: [],
         heading: "Activities & Tasks",
         position: "end",
-        hubNotesFolder: "Notes",
     },
     periodicalNotes: {
         syncDailyFromCorePlugin: true,

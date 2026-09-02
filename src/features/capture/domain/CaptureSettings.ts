@@ -10,9 +10,7 @@ export interface CaptureHeadingTarget {
 
 export type FocusSessionCaptureSettings = CaptureHeadingTarget;
 
-export interface EventCaptureSettings extends CaptureHeadingTarget {
-    hubNotesFolder: string;
-}
+export type EventCaptureSettings = CaptureHeadingTarget;
 
 /**
  * Task targets an Object Note rather than a Periodical Notes profile — a task
@@ -26,7 +24,6 @@ export interface TaskCaptureSettings {
     allowedSourceIds: string[];
     heading: string;
     position: InsertPosition;
-    hubNotesFolder: string;
 }
 
 /**

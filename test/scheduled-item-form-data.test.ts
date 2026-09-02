@@ -13,7 +13,6 @@ function createState(): EventTaskFormState {
         file: "Projects/Alpha.md",
         heading: "Tasks",
         position: "end",
-        hubNotesFolder: "Objects",
         detailNotesFolder: "Details",
     });
 }

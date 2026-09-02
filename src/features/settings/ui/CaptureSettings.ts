@@ -174,18 +174,6 @@ export function renderEventCapture(containerEl: HTMLElement, ctx: SettingsRender
             }),
     );
 
-    new Setting(containerEl)
-        .setName("Hub notes folder")
-        .setDesc("Folder where new Event hub notes are created. Created automatically if it doesn't exist.")
-        .addText((text) => {
-            text.setPlaceholder("Notes")
-                .setValue(ctx.settings.captureEvent.hubNotesFolder)
-                .onChange(async (v) => {
-                    ctx.settings.captureEvent.hubNotesFolder = v.trim() || "Notes";
-                    await ctx.saveSettings();
-                });
-            new FolderSuggest(ctx.app, text.inputEl);
-        });
 }
 
 export function renderTaskCapture(containerEl: HTMLElement, ctx: SettingsRenderContext): void {
@@ -225,18 +213,6 @@ export function renderTaskCapture(containerEl: HTMLElement, ctx: SettingsRenderC
             }),
     );
 
-    new Setting(containerEl)
-        .setName("Hub notes folder")
-        .setDesc("Folder where new Task hub notes are created. Created automatically if it doesn't exist.")
-        .addText((text) => {
-            text.setPlaceholder("Notes")
-                .setValue(ctx.settings.captureTask.hubNotesFolder)
-                .onChange(async (v) => {
-                    ctx.settings.captureTask.hubNotesFolder = v.trim() || "Notes";
-                    await ctx.saveSettings();
-                });
-            new FolderSuggest(ctx.app, text.inputEl);
-        });
 }
 
 /** Checklist of Object Sources allowed as Task "Save to" destinations. */

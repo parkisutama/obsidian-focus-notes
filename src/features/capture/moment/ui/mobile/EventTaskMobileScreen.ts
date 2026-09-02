@@ -72,7 +72,6 @@ export class EventTaskMobileScreen extends Component {
             file: target.file,
             heading: settings.captureEvent.heading || target.heading,
             position: target.position,
-            hubNotesFolder: settings.captureEvent.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
             inboxTargetFile: inboxTarget?.file ?? "",
             inboxHeading: inboxTarget?.heading ?? settings.captureMoment.heading,

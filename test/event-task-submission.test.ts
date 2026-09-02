@@ -9,7 +9,6 @@ test("writes Inbox once through a renderer-independent submission", async () => 
         file: "Planning.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
     });
     state.inboxTitle = "Capture idea";
@@ -46,7 +45,6 @@ test("does not write Inbox when the selected destination is unavailable", async 
         file: "Planning.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
     });
 
@@ -74,7 +72,6 @@ test("reports an Inbox writer failure without reporting success", async () => {
         file: "Planning.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
     });
 
@@ -101,7 +98,6 @@ test("backlinks a weekly-note Moment capture into the same-day Daily Note", asyn
         file: "Planning.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
     });
     state.inboxBody = "Discuss with Andi";
@@ -137,7 +133,6 @@ test("passes a time-only write option for weekly-note Moment captures", async ()
         file: "Planning.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
     });
     state.inboxBody = "Discuss with Andi";
@@ -163,7 +158,6 @@ test("omits the Daily Note backlink when it is unavailable", async () => {
         file: "Planning.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
     });
     state.inboxBody = "Discuss with Andi";
@@ -244,7 +238,6 @@ test("writes contextual Inbox logs using its own temporal record", async () => {
         file: "Daily.md",
         heading: "Activities & Tasks",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
     });
     inboxState.inboxTitle = "Ask Andi about archive";

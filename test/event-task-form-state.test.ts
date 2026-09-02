@@ -8,7 +8,6 @@ test("initializes an immutable Inbox capture independently of Event and Task", (
         file: "Daily/{{date}}.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
         inboxHeading: "Inbox",
         inboxPosition: "start",
@@ -35,7 +34,6 @@ test("builds an Inbox record without changing the EventTask record contract", ()
         file: "Daily.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
     });
     state.inboxTitle = "  Hubungi vendor  ";
@@ -59,7 +57,6 @@ test("keeps Inbox and Event/Task titles independent while switching kinds", () =
         file: "Daily.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
     });
 
@@ -77,7 +74,6 @@ test("builds the same default event record independently of a renderer", () => {
         file: "Daily/{{date}}.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
     });
     state.kind = "event";
@@ -98,7 +94,6 @@ test("builds task due, timebox, and reminders from shared form state", () => {
         file: "Tasks.md",
         heading: "Tasks",
         position: "start",
-        hubNotesFolder: "",
         detailNotesFolder: "",
     });
     state.kind = "task";
@@ -201,7 +196,6 @@ test("keeps late-night defaults valid at the 23:00 boundary", () => {
         file: "Daily.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
     });
 
@@ -215,7 +209,6 @@ function createState(): EventTaskFormState {
         file: "Daily.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
     });
 }

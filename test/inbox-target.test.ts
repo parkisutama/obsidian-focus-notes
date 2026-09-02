@@ -84,7 +84,6 @@ test("uses the directly editable Inbox target for every renderer", () => {
         file: "Planning.md",
         heading: "Schedule",
         position: "end",
-        hubNotesFolder: "Hub",
         detailNotesFolder: "Details",
         inboxTargetFile: "Captures/Quick.md",
     });

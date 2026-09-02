@@ -76,7 +76,6 @@ export class EventTaskModal extends Modal {
             file: resolved.file,
             heading: settings.captureEvent.heading || resolved.heading,
             position: resolved.position,
-            hubNotesFolder: settings.captureEvent.hubNotesFolder,
             detailNotesFolder: settings.eventTask.detailNotesFolder,
             inboxTargetFile: inboxTarget?.file ?? "",
             inboxHeading: inboxTarget?.heading ?? settings.captureMoment.heading,

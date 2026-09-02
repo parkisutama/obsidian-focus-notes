@@ -5,8 +5,6 @@ import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
 import type { EventOccurrenceStatus, TaskPriority } from "../scheduled-item/domain/ScheduledItem";
 import type { EmotionCategory, StressLevel } from "../../reflection/domain/Wellbeing.ts";
 
-export type HubMode = "none" | "link" | "create";
-
 export type CaptureRecord = EventTaskRecord | InboxRecord;
 
 export interface ReminderEntry {
@@ -18,7 +16,6 @@ export interface EventTaskFormDefaults {
     file: string;
     heading: string;
     position: InsertPosition;
-    hubNotesFolder: string;
     detailNotesFolder: string;
     inboxTargetFile?: string;
     /** Resolved initial heading for the active Moment target (e.g. a weekly note's per-day heading). */
@@ -76,11 +73,6 @@ export class EventTaskFormState {
 
     title = "";
     description = "";
-    hubMode: HubMode = "none";
-    hubLinkPath = "";
-    hubCreateName = "";
-    hubCreateFolder: string;
-    writeToHubNote = false;
     detailNoteEnabled = false;
     detailNoteName = "";
     detailNoteFolder: string;
@@ -113,7 +105,6 @@ export class EventTaskFormState {
         this.targetFile = defaults.file;
         this.targetHeading = defaults.heading;
         this.targetPosition = defaults.position;
-        this.hubCreateFolder = defaults.hubNotesFolder;
         this.detailNoteFolder = defaults.detailNotesFolder;
     }
 

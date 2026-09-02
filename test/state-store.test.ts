@@ -6,11 +6,10 @@ import { DEFAULT_SETTINGS, mergeSettingsWithDefaults } from "../src/features/set
 test("adds Object Source defaults when loading settings saved before Inbox existed", () => {
     const merged = mergeSettingsWithDefaults({
         pomodoroMinutes: 45,
-        eventTask: { ...DEFAULT_SETTINGS.eventTask, hubNotesFolder: "Hubs" },
+        eventTask: { ...DEFAULT_SETTINGS.eventTask },
     });
 
     assert.equal(merged.pomodoroMinutes, 45);
-    assert.equal(merged.eventTask.hubNotesFolder, "Hubs");
     assert.deepEqual(merged.inbox, DEFAULT_SETTINGS.inbox);
 });
 
@@ -109,7 +108,6 @@ test("defaults Focus session and Event capture to the daily periodical profile",
     assert.equal(merged.captureFocusSession.position, "end");
     assert.equal(merged.captureEvent.profileId, "daily");
     assert.equal(merged.captureEvent.heading, "Activities & Tasks");
-    assert.equal(merged.captureEvent.hubNotesFolder, "Notes");
 });
 
 test("defaults Task capture to no allowed Object Sources (full-vault suggestions)", () => {
@@ -118,7 +116,6 @@ test("defaults Task capture to no allowed Object Sources (full-vault suggestions
     assert.deepEqual(merged.captureTask.allowedSourceIds, []);
     assert.equal(merged.captureTask.heading, "Activities & Tasks");
     assert.equal(merged.captureTask.position, "end");
-    assert.equal(merged.captureTask.hubNotesFolder, "Notes");
 });
 
 test("preserves a saved Task capture target and clones its allowed-source list", () => {
@@ -127,7 +124,6 @@ test("preserves a saved Task capture target and clones its allowed-source list",
             allowedSourceIds: ["projects"],
             heading: "Backlog",
             position: "start" as const,
-            hubNotesFolder: "Hubs",
         },
     };
     const first = mergeSettingsWithDefaults(saved);
@@ -135,7 +131,6 @@ test("preserves a saved Task capture target and clones its allowed-source list",
 
     assert.deepEqual(first.captureTask.allowedSourceIds, ["projects"]);
     assert.equal(first.captureTask.heading, "Backlog");
-    assert.equal(first.captureTask.hubNotesFolder, "Hubs");
 
     first.captureTask.allowedSourceIds.push("other");
     assert.deepEqual(second.captureTask.allowedSourceIds, ["projects"]);
@@ -144,13 +139,12 @@ test("preserves a saved Task capture target and clones its allowed-source list",
 test("preserves a saved Focus session / Event capture target across settings merges", () => {
     const merged = mergeSettingsWithDefaults({
         captureFocusSession: { profileId: "weekly", heading: "Sessions", position: "start" },
-        captureEvent: { profileId: "weekly", heading: "Agenda", position: "start", hubNotesFolder: "Hubs" },
+        captureEvent: { profileId: "weekly", heading: "Agenda", position: "start" },
     });
 
     assert.equal(merged.captureFocusSession.profileId, "weekly");
     assert.equal(merged.captureFocusSession.heading, "Sessions");
     assert.equal(merged.captureEvent.profileId, "weekly");
-    assert.equal(merged.captureEvent.hubNotesFolder, "Hubs");
 });
 
 test("clones Object Source state during settings merge", () => {

@@ -107,15 +107,6 @@ export class EventTaskWriter {
         if (updated !== original) await this.app.vault.modify(file, updated);
     }
 
-    async createHubNote(title: string, record: EventTaskRecord, folder: string): Promise<TFile> {
-        const filePath = await this.resolveNotePath(title, folder);
-        const existing = this.app.vault.getAbstractFileByPath(filePath);
-        if (isTFile(existing)) return existing;
-
-        const content = `${this.buildFrontmatter(record)}\n\n# ${title}\n\n`;
-        return this.app.vault.create(filePath, content);
-    }
-
     async createDetailNote(
         title: string,
         record: EventTaskRecord,
@@ -158,23 +149,6 @@ export class EventTaskWriter {
         }
 
         return filePath;
-    }
-
-    private buildFrontmatter(record: EventTaskRecord): string {
-        const lines = ["---"];
-        if (record.kind === "event") {
-            lines.push("type: event");
-            lines.push(`date: ${this.fmtDate(record.start)}`);
-            if (!record.allDay) {
-                lines.push(`start: "${this.fmtTime(record.start)}"`);
-                lines.push(`end: "${this.fmtTime(record.end)}"`);
-            }
-        } else {
-            lines.push("type: task");
-            if (record.due) lines.push(`due: ${this.fmtDate(record.due)}`);
-        }
-        lines.push("---");
-        return lines.join("\n");
     }
 
     private buildDetailFrontmatter(record: EventTaskRecord, targetPath: string, hubPath: string | null): string {
