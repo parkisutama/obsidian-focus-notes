@@ -1,6 +1,7 @@
-import { AbstractInputSuggest, type App, Setting } from "obsidian";
+import { AbstractInputSuggest, type App, Setting, type TFile } from "obsidian";
 import type { ScheduledItemMentionCandidate } from "../../capture/scheduled-item/application/ScheduledItemMentionIndex.ts";
 import { getScheduledItemMentionSource } from "../../../infrastructure/obsidian/suggestions/ObsidianScheduledItemMentionSource.ts";
+import { applyInputSuggestion } from "../../capture/moment/ui/SuggestionSelection.ts";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings.ts";
 import type { TimerPurposeSelection } from "../domain/TimerPurposeGate.ts";
 
@@ -11,15 +12,17 @@ export interface TimerPurposeSelectorOptions {
 }
 
 /**
- * Timer's required "what is this session for" picker: search an existing Task/Event (reusing
- * the same mention index @task/@event capture already builds), then — for a Task — pick or
- * create a timebox. Never invents a Task, Event, or timebox on its own; Quick-create always
- * opens the real Create form or Timebox Manager so the write goes through their own validation.
+ * Timer's single "what is this session for" row: one input that both resolves the required
+ * Task/Event owner (Task 42's gate) and doubles as the free-text {{task}} log description —
+ * picking a Task/Event candidate sets both; picking a file or typing freely only changes the
+ * displayed text, since a file mention or plain text was never a valid owner. Never invents a
+ * Task, Event, or timebox on its own; Quick-create always opens the real Create form or Timebox
+ * Manager so the write goes through their own validation.
  */
 export class TimerPurposeSelector {
     private selection: TimerPurposeSelection = { status: "none" };
-    private container: HTMLElement | null = null;
-    private readonly candidateById = new Map<string, ScheduledItemMentionCandidate>();
+    private input!: HTMLInputElement;
+    private summaryEl: HTMLElement | null = null;
 
     constructor(private readonly options: TimerPurposeSelectorOptions) {
         void getScheduledItemMentionSource(options.app).rebuild();
@@ -29,49 +32,69 @@ export class TimerPurposeSelector {
         return this.selection;
     }
 
+    getFocusText(): string {
+        return this.input.value;
+    }
+
+    setFocusText(value: string): void {
+        this.input.value = value;
+    }
+
     reset(): void {
         this.selection = { status: "none" };
+        this.input.value = "";
         this.notify();
-        this.renderPicker();
+        this.renderSummary();
     }
 
     render(parent: HTMLElement): void {
-        this.container = parent.createDiv({ cls: "focus-notes-purpose" });
-        this.renderPicker();
+        const container = parent.createDiv({ cls: "focus-notes-purpose" });
+        const setting = new Setting(container)
+            .setName("What are you doing?")
+            .setDesc("Search a Task or Event to set the session owner, a file to link, or just type freely.");
+        this.input = setting.controlEl.createEl("input", {
+            type: "text",
+            attr: { placeholder: "Search Task, Event, or file…", "aria-label": "What are you doing" },
+        });
+        new TimerFocusSuggest(this.options.app, this.input, (pick) => this.applyPick(pick));
+        // Auto-wrap a typed-out .md path the same way a picked file suggestion already is —
+        // matches the plain-text convenience the old standalone "What are you doing" field had.
+        this.input.addEventListener("input", () => {
+            const value = this.input.value;
+            if (/^[^\s[]+\.md$/.test(value)) {
+                this.input.value = `[[${value.replace(/\.md$/, "")}]]`;
+            }
+        });
+
+        this.summaryEl = container.createDiv({ cls: "focus-notes-purpose-summary" });
+        this.renderSummary();
     }
 
-    private renderPicker(): void {
-        const container = this.container;
-        if (!container) return;
-        container.empty();
+    private applyPick(pick: TimerFocusSuggestion): void {
+        if (pick.kind === "file") {
+            applyInputSuggestion(this.input, `[[${pick.file.basename}]]`);
+            return;
+        }
+        this.input.value = pick.candidate.title;
+        this.selection =
+            pick.kind === "event"
+                ? { status: "event", itemId: pick.candidate.blockId, title: pick.candidate.title }
+                : { status: "task", itemId: pick.candidate.blockId, title: pick.candidate.title };
+        this.notify();
+        this.renderSummary();
+    }
 
-        const setting = new Setting(container)
-            .setName("Focus on")
-            .setDesc("Required: pick the Task or Event this session is for.");
-        const input = setting.controlEl.createEl("input", {
-            type: "text",
-            attr: { placeholder: "Search Task or Event…", "aria-label": "Search Task or Event" },
-        });
-        new TimerPurposeSuggest(this.options.app, input, (candidate) => this.selectCandidate(candidate));
-
+    private renderSummary(): void {
+        const summaryEl = this.summaryEl;
+        if (!summaryEl) return;
+        summaryEl.empty();
         if (this.selection.status === "none") return;
 
-        const summary = container.createDiv({ cls: "focus-notes-purpose-summary" });
-        summary.createSpan({
+        summaryEl.createSpan({
             text: `${this.selection.status === "event" ? "Event" : "Task"}: ${this.selection.title}`,
         });
-        const clear = summary.createEl("button", { text: "Change", attr: { type: "button" } });
+        const clear = summaryEl.createEl("button", { text: "Change", attr: { type: "button" } });
         clear.addEventListener("click", () => this.reset());
-    }
-
-    private selectCandidate(candidate: ScheduledItemMentionCandidate): void {
-        this.candidateById.set(candidate.blockId, candidate);
-        this.selection =
-            candidate.kind === "event"
-                ? { status: "event", itemId: candidate.blockId, title: candidate.title }
-                : { status: "task", itemId: candidate.blockId, title: candidate.title };
-        this.notify();
-        this.renderPicker();
     }
 
     private notify(): void {
@@ -79,29 +102,48 @@ export class TimerPurposeSelector {
     }
 }
 
-class TimerPurposeSuggest extends AbstractInputSuggest<ScheduledItemMentionCandidate> {
+type TimerFocusSuggestion =
+    | { kind: "event" | "task"; candidate: ScheduledItemMentionCandidate }
+    | { kind: "file"; file: TFile };
+
+class TimerFocusSuggest extends AbstractInputSuggest<TimerFocusSuggestion> {
     constructor(
         app: App,
-        private readonly inputEl: HTMLInputElement,
-        private readonly onPick: (candidate: ScheduledItemMentionCandidate) => void,
+        inputEl: HTMLInputElement,
+        private readonly onPick: (pick: TimerFocusSuggestion) => void,
     ) {
         super(app, inputEl);
     }
 
-    getSuggestions(query: string): ScheduledItemMentionCandidate[] {
+    getSuggestions(query: string): TimerFocusSuggestion[] {
         const source = getScheduledItemMentionSource(this.app);
-        const events = source.query("event", query, 8, () => undefined);
-        const tasks = source.query("task", query, 8, () => undefined);
-        return [...events, ...tasks];
+        const events = source
+            .query("event", query, 5, () => undefined)
+            .map((candidate): TimerFocusSuggestion => ({ kind: "event", candidate }));
+        const tasks = source
+            .query("task", query, 5, () => undefined)
+            .map((candidate): TimerFocusSuggestion => ({ kind: "task", candidate }));
+        const lower = query.trim().toLowerCase();
+        const files: TimerFocusSuggestion[] = lower
+            ? this.app.vault
+                  .getMarkdownFiles()
+                  .filter((file) => file.path.toLowerCase().includes(lower))
+                  .slice(0, 5)
+                  .map((file) => ({ kind: "file", file }))
+            : [];
+        return [...events, ...tasks, ...files];
     }
 
-    renderSuggestion(candidate: ScheduledItemMentionCandidate, el: HTMLElement): void {
-        el.setText(`${candidate.kind === "event" ? "Event" : "Task"} · ${candidate.title}`);
+    renderSuggestion(item: TimerFocusSuggestion, el: HTMLElement): void {
+        if (item.kind === "file") {
+            el.setText(`File · ${item.file.path}`);
+            return;
+        }
+        el.setText(`${item.kind === "event" ? "Event" : "Task"} · ${item.candidate.title}`);
     }
 
-    selectSuggestion(candidate: ScheduledItemMentionCandidate): void {
-        this.inputEl.value = candidate.title;
+    selectSuggestion(item: TimerFocusSuggestion): void {
         this.close();
-        this.onPick(candidate);
+        this.onPick(item);
     }
 }

@@ -1,5 +1,4 @@
 import { type App, Menu, Notice, setIcon } from "obsidian";
-import { FileSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
 import { CircularDisplay } from "./CircularDisplay";
 import { type DisplayMode, toEngineMode } from "../domain/Timer";
@@ -27,7 +26,6 @@ export interface TimerControlsOptions {
 export class TimerControls {
     private display!: CircularDisplay;
     private modeButton!: HTMLButtonElement;
-    private focusInput!: HTMLInputElement;
     private durationRow!: HTMLElement;
     private durationInput!: HTMLInputElement;
     private resetBtn!: HTMLButtonElement;
@@ -45,7 +43,6 @@ export class TimerControls {
     render(parent: HTMLElement): void {
         this.renderModeMenu(parent);
         this.renderPurposeSelector(parent);
-        this.renderFocusInput(parent);
         this.display = new CircularDisplay(parent);
         this.renderDurationRow(parent);
         this.renderActions(parent);
@@ -63,11 +60,11 @@ export class TimerControls {
     }
 
     getFocusInputValue(): string {
-        return this.focusInput.value;
+        return this.purposeSelector.getFocusText();
     }
 
     setFocusInputValue(value: string): void {
-        this.focusInput.value = value;
+        this.purposeSelector.setFocusText(value);
     }
 
     parseMinutes(): number {
@@ -169,42 +166,17 @@ export class TimerControls {
     }
 
     /**
-     * Required "what is this session for" picker (Task 42). Kept separate from focusInput below,
-     * which stays exactly as it was: focusInput still drives the legacy free-text {{task}} log
-     * token, so existing users' log templates render unchanged. Selecting a purpose here just
-     * pre-fills that field when it's still empty.
+     * Required "what is this session for" row (Task 42), merged with the free-text {{task}} log
+     * description into one input (see TimerPurposeSelector) — picking a Task/Event candidate sets
+     * both; a file mention or plain typing only changes the displayed text.
      */
     private renderPurposeSelector(parent: HTMLElement): void {
         this.purposeSelector = new TimerPurposeSelector({
             app: this.options.app,
             getSettings: this.options.getSettings,
-            onSelectionChanged: (selection) => {
-                if (selection.status === "none" || this.focusInput?.value.trim()) return;
-                this.focusInput.value = selection.title;
-            },
+            onSelectionChanged: () => undefined,
         });
         this.purposeSelector.render(parent);
-    }
-
-    private renderFocusInput(parent: HTMLElement): void {
-        const row = parent.createDiv({ cls: "focus-notes-focus-row" });
-        this.focusInput = row.createEl("input", {
-            type: "text",
-            cls: "focus-notes-focus-input",
-            attr: { placeholder: "What are you doing?" },
-        });
-        // FileSuggest mirrors the modal's "What are you doing?" field — same
-        // input type in both places means the user doesn't have to remember
-        // which surface gives them link completion. Auto-wrap on selection
-        // so a picked path becomes [[FileName]] instead of a raw path.
-        new FileSuggest(this.options.app, this.focusInput);
-        this.focusInput.addEventListener("input", () => {
-            const value = this.focusInput.value;
-            if (/^[^\s[]+\.md$/.test(value)) {
-                const stem = value.replace(/\.md$/, "");
-                this.focusInput.value = `[[${stem}]]`;
-            }
-        });
     }
 
     private renderDurationRow(parent: HTMLElement): void {

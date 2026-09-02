@@ -7,27 +7,25 @@ import { TimerEngine } from "../domain/TimerEngine";
 import { TimerControls } from "./TimerControls";
 import { TimerLogWorkflow } from "./TimerLogWorkflow";
 import { TimerRecentEntries } from "./TimerRecentEntries";
-import { TimerTargetEditor } from "./TimerTargetEditor";
 
 export const VIEW_TYPE_FOCUS_NOTES = "focus-notes-view";
 
 /**
  * The full Focus Notes sidebar. Owns only Obsidian ItemView lifecycle and
  * composition; each concern is its own class:
- *   - TimerControls     — mode selector, focus-on input, circular display,
- *                         duration row, and Discard/Start-Pause/Stop buttons.
- *   - TimerTargetEditor — collapsible "Log target" section.
- *   - TimerRecentEntries — collapsible "Recent in section" panel.
- *   - TimerLogWorkflow  — stopping/completing a session, LogModal, and
- *                         writing the SessionRecord.
- *   - TimerEngine       — pure timing state machine, shared by controls and
- *                         the log workflow.
+ *   - TimerControls      — mode selector, merged Focus-on/focus-text input,
+ *                          circular display, duration row, and
+ *                          Discard/Start-Pause/Stop buttons.
+ *   - TimerRecentEntries — collapsible "Recent" panel, following the active note.
+ *   - TimerLogWorkflow   — stopping/completing a session, LogModal, and
+ *                          writing the SessionRecord.
+ *   - TimerEngine        — pure timing state machine, shared by controls and
+ *                          the log workflow.
  */
 export class TimerView extends ItemView {
     private engine: TimerEngine;
     private controls: TimerControls;
     private logWorkflow: TimerLogWorkflow;
-    private targetEditor!: TimerTargetEditor;
     private recentEntries!: TimerRecentEntries;
 
     constructor(
@@ -89,22 +87,7 @@ export class TimerView extends ItemView {
         const wrap = root.createDiv({ cls: "focus-notes-wrap" });
 
         this.controls.render(wrap);
-        this.targetEditor = new TimerTargetEditor(
-            this.app,
-            this.getSettings,
-            this.saveSettings,
-            this.buildResolver,
-            () => void this.recentEntries.refresh(),
-            (ref) => this.registerEvent(ref),
-        );
-        this.targetEditor.render(wrap);
-        this.recentEntries = new TimerRecentEntries(
-            this.app,
-            this,
-            this.getSettings,
-            this.buildResolver,
-            this.buildReader,
-        );
+        this.recentEntries = new TimerRecentEntries(this.app, this, this.getSettings, this.buildReader);
         this.recentEntries.render(wrap);
 
         await this.recentEntries.refresh();

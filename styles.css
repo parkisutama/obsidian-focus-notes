@@ -593,20 +593,6 @@ body.fn-mobile-event-screen-open .suggestion-container {
     cursor: not-allowed;
 }
 
-/* ---- Focus input ------------------------------------------------------- */
-
-.focus-notes-focus-row {
-    display: flex;
-}
-.focus-notes-focus-input {
-    flex: 1;
-    padding: 8px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-primary);
-    color: var(--text-normal);
-    font-size: var(--font-ui-small);
-}
 
 .focus-notes-duration-row {
     display: flex;
@@ -803,32 +789,6 @@ body.fn-mobile-event-screen-open .suggestion-container {
     gap: 6px;
 }
 
-.focus-notes-target-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.focus-notes-target-label {
-    width: 64px;
-    color: var(--text-muted);
-    font-size: var(--font-ui-smaller);
-}
-.focus-notes-target-cell {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-.focus-notes-target-input {
-    flex: 1;
-    padding: 4px 8px;
-    font-size: var(--font-ui-smaller);
-    border-radius: 4px;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-primary);
-    color: var(--text-normal);
-}
 /* ---- Recent entries list --------------------------------------------- */
 
 .focus-notes-recent-list {
@@ -937,32 +897,6 @@ body.fn-mobile-event-screen-open .suggestion-container {
     color: var(--text-muted);
     font-size: var(--font-ui-smaller);
     margin-bottom: 8px;
-}
-
-/* ---- Group-by-date controls in the live target panel ---------------------- */
-.focus-notes-group-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0;
-    background: transparent;
-    border: none;
-}
-.focus-notes-group-label {
-    color: var(--text-muted);
-    font-size: var(--font-ui-smaller);
-}
-.focus-notes-group-level {
-    margin-left: auto;
-    padding: 2px 6px;
-    font-size: var(--font-ui-smaller);
-    background: var(--background-modifier-form-field);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 3px;
-    color: var(--text-normal);
-}
-.focus-notes-group-level:disabled {
-    opacity: 0.4;
 }
 
 /* ---- Mood picker container ------------------------------------------------- */

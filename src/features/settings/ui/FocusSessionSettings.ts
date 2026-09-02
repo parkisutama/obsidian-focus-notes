@@ -103,7 +103,7 @@ function renderDateGrouping(containerEl: HTMLElement, ctx: SettingsRenderContext
         .setName("Group entries under date sub-headings")
         .setDesc(
             "When on, each session is placed under a date sub-heading inside the main heading. " +
-                "When off, the date appears inside the bullet line. The sidebar's Group toggle controls this too.",
+                "When off, the date appears inside the bullet line.",
         )
         .addToggle((toggle) =>
             toggle.setValue(ctx.settings.groupByDate).onChange(async (v) => {

@@ -1,13 +1,13 @@
 import { type App, type Component, MarkdownRenderer, setIcon } from "obsidian";
 import { isTFile } from "../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
-import type { TargetResolver } from "../../../infrastructure/obsidian/capture/TargetResolver";
 import type { RecentEntriesReader } from "../../../infrastructure/obsidian/focus-session/RecentEntriesReader";
 import type { FocusTarget } from "../../capture/domain/CaptureTarget";
 import type { FocusNotesSettings } from "../../settings/domain/FocusNotesSettings";
 
 /**
- * The Timer sidebar's collapsible "Recent in section" panel: lists the most
- * recent logged entries at the active target and lets the user click one to
+ * The Timer sidebar's collapsible "Recent" panel: lists the most recently
+ * logged entries in the active note (whichever note the user currently has
+ * open, not a specific configured target) and lets the user click one to
  * jump to its line.
  */
 export class TimerRecentEntries {
@@ -16,10 +16,9 @@ export class TimerRecentEntries {
 
     constructor(
         private app: App,
-        /** Ties MarkdownRenderer's cleanup to the owning ItemView's lifecycle. */
+        /** Ties MarkdownRenderer's cleanup and vault/workspace listeners to the owning ItemView's lifecycle. */
         private component: Component,
         private getSettings: () => FocusNotesSettings,
-        private buildResolver: () => TargetResolver,
         private buildReader: () => RecentEntriesReader,
     ) {}
 
@@ -28,7 +27,7 @@ export class TimerRecentEntries {
         details.setAttribute("open", "");
         const summary = details.createEl("summary");
         this.recentTitle = summary.createEl("span", {
-            text: "Recent in section",
+            text: "Recent",
             cls: "focus-notes-section-title",
         });
         const refresh = summary.createEl("button", {
@@ -43,17 +42,34 @@ export class TimerRecentEntries {
         });
 
         this.recentList = details.createDiv({ cls: "focus-notes-recent-list" });
+
+        // Follow the active note: switching files or editing the current one
+        // both refresh the feed, so it always reflects whatever's open now.
+        this.component.registerEvent(
+            this.app.workspace.on("active-leaf-change", () => void this.refresh()),
+        );
+        this.component.registerEvent(
+            this.app.vault.on("modify", (file) => {
+                if (file.path === this.app.workspace.getActiveFile()?.path) void this.refresh();
+            }),
+        );
     }
 
     async refresh(): Promise<void> {
         if (!this.recentList) return;
         this.recentList.empty();
-        const settings = this.getSettings();
-        const resolver = this.buildResolver();
-        const resolved = resolver.resolve(this.activeTarget());
-        this.recentTitle.setText(resolved.heading ? `Recent in “${resolved.heading}”` : "Recent in target file");
+        const target = this.activeTarget();
+        if (!target.file) {
+            this.recentTitle.setText("Recent");
+            this.recentList.createDiv({
+                cls: "focus-notes-recent-empty",
+                text: "No active note.",
+            });
+            return;
+        }
+        this.recentTitle.setText(`Recent in “${target.file}”`);
         const reader = this.buildReader();
-        const entries = await reader.read(resolved, settings.recentEntriesCount);
+        const entries = await reader.read(target, this.getSettings().recentEntriesCount);
         if (entries.length === 0) {
             this.recentList.createDiv({
                 cls: "focus-notes-recent-empty",
@@ -66,12 +82,12 @@ export class TimerRecentEntries {
             item.setAttr("title", "Click to open at this line");
             // Render markdown so [[wikilinks]] and **bold** display properly.
             // sourcePath is the target file so relative links resolve correctly.
-            void MarkdownRenderer.render(this.app, entry.text, item, resolved.file, this.component);
+            void MarkdownRenderer.render(this.app, entry.text, item, target.file, this.component);
             item.addEventListener("click", (evt) => {
                 // Don't intercept clicks on rendered links — let them follow
                 // their hrefs via Obsidian's normal handlers.
                 if ((evt.target as HTMLElement).closest("a")) return;
-                void this.openAtLine(resolved.file, entry.lineNumber);
+                void this.openAtLine(target.file, entry.lineNumber);
             });
         }
     }
@@ -83,7 +99,13 @@ export class TimerRecentEntries {
         await leaf.openFile(file, { eState: { line: lineNumber } });
     }
 
+    /** Whole-file scan (no heading scoping) of whichever note is currently active. */
     private activeTarget(): FocusTarget {
-        return this.buildResolver().getDefaultTarget();
+        const active = this.app.workspace.getActiveFile();
+        return {
+            file: active?.extension === "md" ? active.path : "",
+            heading: "",
+            position: this.getSettings().captureFocusSession.position,
+        };
     }
 }
