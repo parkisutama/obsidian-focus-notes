@@ -16,19 +16,6 @@ export function renderPeriodicalNotes(containerEl: HTMLElement, ctx: SettingsRen
     });
 
     new Setting(containerEl)
-        .setName("Sync Daily profile from core Daily Notes plugin")
-        .setDesc(
-            'When the core Daily Notes plugin is enabled, the "Daily" profile\'s folder and file format ' +
-                "are read from it live. Disabled, unavailable, or any other profile: its own fields below apply.",
-        )
-        .addToggle((toggle) =>
-            toggle.setValue(ctx.settings.periodicalNotes.syncDailyFromCorePlugin).onChange(async (v) => {
-                ctx.settings.periodicalNotes.syncDailyFromCorePlugin = v;
-                await ctx.saveSettings();
-            }),
-        );
-
-    new Setting(containerEl)
         .setName("Default date format")
         .setDesc("Moment.js format used for a bare {{date}} token (no explicit :FORMAT). Example: YYYY-MM-DD.")
         .addText((text) =>
@@ -85,7 +72,7 @@ function renderPeriodicalProfile(
     });
     const preview = card.createDiv({ cls: "fn-periodical-profile-preview" });
     const updatePreview = (): void => {
-        const target = new TargetResolver(ctx.app, ctx.settings).getPeriodicalTarget(profile.id, new Date());
+        const target = new TargetResolver(ctx.settings).getPeriodicalTarget(profile.id, new Date());
         preview.setText(
             target?.file
                 ? target.heading

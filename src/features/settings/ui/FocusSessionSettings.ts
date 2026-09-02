@@ -80,7 +80,7 @@ function renderFocusSessionCapture(containerEl: HTMLElement, ctx: SettingsRender
                 ctx.app,
                 text.inputEl,
                 () =>
-                    new TargetResolver(ctx.app, ctx.settings).getPeriodicalTarget(
+                    new TargetResolver(ctx.settings).getPeriodicalTarget(
                         ctx.settings.captureFocusSession.profileId,
                     )?.file ?? "",
             );

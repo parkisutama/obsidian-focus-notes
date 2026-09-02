@@ -89,7 +89,7 @@ export class TimelineIndex {
 
     getEffectiveSourceGroups() {
         const settings = this.getSettings();
-        const dailyFolder = new TargetResolver(this.app, settings).getProfileFolder("daily");
+        const dailyFolder = new TargetResolver(settings).getProfileFolder("daily");
         return buildTimelineSourceGroups(settings.timeline.sourceFolders, dailyFolder, settings.inbox.contextSources);
     }
 

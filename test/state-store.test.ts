@@ -65,10 +65,9 @@ test("merges a partially saved Moment backlink object onto its defaults", () => 
     assert.equal(merged.captureMoment.backlink.position, DEFAULT_SETTINGS.captureMoment.backlink.position);
 });
 
-test("seeds default Daily/Weekly periodical profiles and syncs Daily from core plugin by default", () => {
+test("seeds default Daily/Weekly periodical profiles", () => {
     const merged = mergeSettingsWithDefaults({ pomodoroMinutes: 45 });
 
-    assert.equal(merged.periodicalNotes.syncDailyFromCorePlugin, true);
     assert.deepEqual(
         merged.periodicalNotes.profiles.map((profile) => profile.id),
         ["daily", "weekly"],
@@ -85,14 +84,12 @@ test("seeds default Daily/Weekly periodical profiles and syncs Daily from core p
 test("preserves a saved periodical profile list and clones it, not sharing mutable state", () => {
     const saved = {
         periodicalNotes: {
-            syncDailyFromCorePlugin: false,
             profiles: [{ id: "daily", name: "Daily", folder: "Journal", fileFormat: "YYYY-MM-DD", headingFormat: "" }],
         },
     };
     const first = mergeSettingsWithDefaults(saved);
     const second = mergeSettingsWithDefaults(saved);
 
-    assert.equal(first.periodicalNotes.syncDailyFromCorePlugin, false);
     assert.equal(first.periodicalNotes.profiles.length, 1);
     assert.equal(first.periodicalNotes.profiles[0]?.folder, "Journal");
 

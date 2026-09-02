@@ -63,7 +63,7 @@ export function openDesktopScheduledItemCreate(
     targetFile?: string,
 ): void {
     const settings = getSettings();
-    const resolver = new TargetResolver(app, settings);
+    const resolver = new TargetResolver(settings);
     // Task never defaults to Daily Notes / the ambient active target — it should
     // attach to a specific Project or task-list note, chosen explicitly. An
     // active markdown note is still preferred below as a convenience default

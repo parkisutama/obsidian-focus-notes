@@ -1,4 +1,4 @@
-import { type App, moment } from "obsidian";
+import { moment } from "obsidian";
 import type { FocusTarget } from "../../../features/capture/domain/CaptureTarget";
 import { normalizeDailyNoteFormat } from "../../../features/periodical-notes/domain/DailyNotePath";
 import type { PeriodicalNoteProfile } from "../../../features/periodical-notes/domain/PeriodicalNote";
@@ -11,20 +11,12 @@ import type { FocusNotesSettings } from "../../../features/settings/domain/Focus
  * Why a separate class:
  *   The view, the writer, and the recent-entries reader all need to know
  *   "what file should I touch right now?". Centralizing the resolution logic
- *   stops three callers from drifting in how they treat empty paths,
- *   {{date}} tokens, and the Daily-Notes-plugin fallback.
+ *   stops three callers from drifting in how they treat empty paths and
+ *   {{date}} tokens.
  */
 
-interface DailyNotesConfig {
-    folder?: string;
-    format?: string;
-}
-
 export class TargetResolver {
-    constructor(
-        private app: App,
-        private settings: FocusNotesSettings,
-    ) {}
+    constructor(private settings: FocusNotesSettings) {}
 
     /**
      * Returns the abstract default target for Focus session logging. The file
@@ -65,18 +57,12 @@ export class TargetResolver {
      * Resolve a user-defined Periodical Note profile for an explicit date.
      * Returns null when no profile with that id exists — callers must surface
      * that rather than silently falling back elsewhere.
-     *
-     * The reserved "daily" profile optionally syncs its folder/fileFormat live
-     * from the core Daily Notes plugin (settings.periodicalNotes.
-     * syncDailyFromCorePlugin); every other profile is always resolved purely
-     * from its own manual fields, so this never hard-depends on that plugin.
      */
     public getPeriodicalTarget(profileId: string, when: Date = new Date()): FocusTarget | null {
         const profile = this.findProfile(profileId);
         if (!profile) return null;
-        const { folder, fileFormat } = this.resolveProfileFolderAndFormat(profile);
-        const folderPrefix = folder ? `${folder.replace(/\/+$/, "")}/` : "";
-        const format = normalizeDailyNoteFormat(fileFormat, "YYYY-MM-DD");
+        const folderPrefix = profile.folder ? `${profile.folder.replace(/\/+$/, "")}/` : "";
+        const format = normalizeDailyNoteFormat(profile.fileFormat, "YYYY-MM-DD");
         const resolved = this.resolve(
             { file: `${folderPrefix}{{date:${format}}}.md`, heading: "", position: "end" },
             when,
@@ -93,24 +79,20 @@ export class TargetResolver {
     public getProfileFileTemplate(profileId: string): string | null {
         const profile = this.findProfile(profileId);
         if (!profile) return null;
-        const { folder, fileFormat } = this.resolveProfileFolderAndFormat(profile);
-        const folderPrefix = folder ? `${folder.replace(/\/+$/, "")}/` : "";
-        const format = normalizeDailyNoteFormat(fileFormat, "YYYY-MM-DD");
+        const folderPrefix = profile.folder ? `${profile.folder.replace(/\/+$/, "")}/` : "";
+        const format = normalizeDailyNoteFormat(profile.fileFormat, "YYYY-MM-DD");
         return `${folderPrefix}{{date:${format}}}.md`;
     }
 
     /**
      * Folder for a Periodical Note profile (no date expansion), or null when
      * no profile with that id exists. Used for Timeline auto-inclusion and
-     * Detail Note folder placement. Replaces the old Daily-Notes-only
-     * getDailyNoteFolder() with the same core-plugin-sync behavior, scoped to
-     * whichever profile id is asked for.
+     * Detail Note folder placement.
      */
     public getProfileFolder(profileId: string): string | null {
         const profile = this.findProfile(profileId);
         if (!profile) return null;
-        const { folder } = this.resolveProfileFolderAndFormat(profile);
-        const normalized = folder
+        const normalized = profile.folder
             .trim()
             .replace(/\\/g, "/")
             .replace(/^\/+|\/+$/g, "");
@@ -127,10 +109,9 @@ export class TargetResolver {
     public resolveDailyFileDate(filePath: string): Date | null {
         const profile = this.findProfile("daily");
         if (!profile) return null;
-        const { folder, fileFormat } = this.resolveProfileFolderAndFormat(profile);
-        const folderPrefix = folder ? `${folder.replace(/\/+$/, "")}/` : "";
+        const folderPrefix = profile.folder ? `${profile.folder.replace(/\/+$/, "")}/` : "";
         if (!filePath.startsWith(folderPrefix)) return null;
-        const format = normalizeDailyNoteFormat(fileFormat, "YYYY-MM-DD");
+        const format = normalizeDailyNoteFormat(profile.fileFormat, "YYYY-MM-DD");
         const basename = filePath.slice(folderPrefix.length).replace(/\.md$/, "");
         const parsed = moment(basename, format, true);
         return parsed.isValid() ? parsed.toDate() : null;
@@ -138,25 +119,6 @@ export class TargetResolver {
 
     private findProfile(profileId: string): PeriodicalNoteProfile | null {
         return this.settings.periodicalNotes.profiles.find((profile) => profile.id === profileId) ?? null;
-    }
-
-    /**
-     * Shared "daily" core-plugin-sync rule used by getPeriodicalTarget(),
-     * getProfileFileTemplate(), and getProfileFolder() — the reserved "daily"
-     * profile can read its folder/fileFormat live from the core Daily Notes
-     * plugin when enabled; every other profile always uses its own fields.
-     */
-    private resolveProfileFolderAndFormat(profile: PeriodicalNoteProfile): { folder: string; fileFormat: string } {
-        let folder = profile.folder;
-        let fileFormat = profile.fileFormat;
-        if (profile.id === "daily" && this.settings.periodicalNotes.syncDailyFromCorePlugin) {
-            const dn = this.readDailyNotesConfig();
-            if (dn) {
-                folder = dn.folder ?? folder;
-                fileFormat = normalizeDailyNoteFormat(dn.format, fileFormat);
-            }
-        }
-        return { folder, fileFormat };
     }
 
     /**
@@ -192,30 +154,5 @@ export class TargetResolver {
             const f = fmt || this.settings.dailyNoteFormat;
             return moment(when).format(f);
         });
-    }
-
-    /**
-     * Defensively read the core Daily Notes plugin's options.
-     * The internalPlugins API is officially private; we wrap the access in
-     * try/catch and feature-test rather than typing it, so a future Obsidian
-     * change degrades to "use settings defaults" instead of throwing.
-     */
-    private readDailyNotesConfig(): DailyNotesConfig | null {
-        try {
-            const internal = (
-                this.app as unknown as {
-                    internalPlugins?: {
-                        plugins?: Record<string, { enabled?: boolean; instance?: { options?: DailyNotesConfig } }>;
-                    };
-                }
-            ).internalPlugins;
-            const dn = internal?.plugins?.["daily-notes"];
-            if (!dn?.enabled) return null;
-            const opts = dn.instance?.options;
-            if (!opts) return null;
-            return { folder: opts.folder, format: opts.format };
-        } catch {
-            return null;
-        }
     }
 }

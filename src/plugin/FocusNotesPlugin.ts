@@ -55,7 +55,7 @@ export default class FocusNotesPlugin extends Plugin {
                     () => this.settings,
                     () => this.saveSettings(),
                     () => new NoteWriter(this.app, this.settings),
-                    () => new TargetResolver(this.app, this.settings),
+                    () => new TargetResolver(this.settings),
                     () => new RecentEntriesReader(this.app),
                 ),
         );

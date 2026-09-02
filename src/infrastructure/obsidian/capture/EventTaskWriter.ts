@@ -57,7 +57,7 @@ export class EventTaskWriter {
     formatDailyLink(when: Date, targetFilePath: string, label: string): string {
         const getFocusSettings = this.getFocusSettings;
         if (!getFocusSettings) return label;
-        const dailyPath = new TargetResolver(this.app, getFocusSettings()).getPeriodicalTarget("daily", when)?.file;
+        const dailyPath = new TargetResolver(getFocusSettings()).getPeriodicalTarget("daily", when)?.file;
         if (!dailyPath) return label;
         return createObsidianLinkFormatter(this.app)(targetFilePath, dailyPath, label);
     }

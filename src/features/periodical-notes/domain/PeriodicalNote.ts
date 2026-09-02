@@ -4,7 +4,7 @@
  * see TargetResolver.getPeriodicalTarget() for how they're expanded.
  */
 export interface PeriodicalNoteProfile {
-    /** Stable id. "daily" is reserved — see PeriodicalNotesSettings.syncDailyFromCorePlugin. */
+    /** Stable id. "daily" is reserved for the built-in Daily profile. */
     id: string;
     /** Display name shown in profile pickers. */
     name: string;
@@ -18,10 +18,4 @@ export interface PeriodicalNoteProfile {
 
 export interface PeriodicalNotesSettings {
     profiles: PeriodicalNoteProfile[];
-    /**
-     * When true, the "daily" profile's folder/fileFormat are read live from the
-     * core Daily Notes plugin if it's enabled, falling back to that profile's
-     * own manual fields otherwise. Never a hard requirement.
-     */
-    syncDailyFromCorePlugin: boolean;
 }

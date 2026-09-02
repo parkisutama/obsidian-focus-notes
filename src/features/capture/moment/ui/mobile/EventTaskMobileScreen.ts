@@ -50,7 +50,7 @@ export class EventTaskMobileScreen extends Component {
     ) {
         super();
         const settings = getSettings();
-        const resolver = new TargetResolver(app, settings);
+        const resolver = new TargetResolver(settings);
         const configured: FocusTarget = resolver.getPeriodicalTarget(settings.captureEvent.profileId, anchorDate) ?? {
             file: "",
             heading: settings.captureEvent.heading,
@@ -350,7 +350,7 @@ export class EventTaskMobileScreen extends Component {
      */
     private resolveInboxTarget(): FocusTarget | null {
         const settings = this.getSettings();
-        const target = resolveInboxFormTarget(new TargetResolver(this.app, settings), this.form);
+        const target = resolveInboxFormTarget(new TargetResolver(settings), this.form);
         if (!target || !this.momentUsesDatedHeading()) return target;
         const writer = new EventTaskWriter(this.app, settings.eventTask, () => settings);
         const linkedHeading = writer.formatDailyLink(this.form.inboxCapturedAt, target.file, target.heading);
@@ -361,7 +361,7 @@ export class EventTaskMobileScreen extends Component {
         const settings = this.getSettings();
         const backlink = settings.captureMoment.backlink;
         if (!backlink.enabled) return null;
-        const resolver = new TargetResolver(this.app, settings);
+        const resolver = new TargetResolver(settings);
         // The "daily" Periodical Notes profile already syncs from the core
         // Daily Notes plugin when enabled and falls back to its own manual
         // fields otherwise (see TargetResolver.getPeriodicalTarget()).

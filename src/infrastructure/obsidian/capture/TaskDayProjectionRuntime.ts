@@ -14,7 +14,7 @@ import type { WriteSuppressionTracker } from "./WriteSuppressionTracker.ts";
 
 /** Shared desktop/mobile glue wiring TaskDayProjection's pure service to real vault I/O. */
 export function runTaskDayProjection(
-    app: App,
+    _app: App,
     settings: FocusNotesSettings,
     input: TaskDayProjectionInput,
     previousPlan: readonly TaskDayReferencePlanEntry[],
@@ -22,26 +22,25 @@ export function runTaskDayProjection(
     previousCompleted?: boolean,
     tracker?: WriteSuppressionTracker,
 ): Promise<TaskDayProjectionResult> {
-    return projectTaskDays(input, previousPlan, dependencies(app, settings, writer, tracker), previousCompleted);
+    return projectTaskDays(input, previousPlan, dependencies(settings, writer, tracker), previousCompleted);
 }
 
 export function retryTaskDayProjectionRuntime(
-    app: App,
+    _app: App,
     settings: FocusNotesSettings,
     pending: Extract<TaskDayProjectionResult, { status: "partial" }>,
     writer: EventTaskWriter,
     tracker?: WriteSuppressionTracker,
 ): Promise<TaskDayProjectionResult> {
-    return retryTaskDayProjection(pending, dependencies(app, settings, writer, tracker));
+    return retryTaskDayProjection(pending, dependencies(settings, writer, tracker));
 }
 
 function dependencies(
-    app: App,
     settings: FocusNotesSettings,
     writer: EventTaskWriter,
     tracker?: WriteSuppressionTracker,
 ) {
-    const resolver = new TargetResolver(app, settings);
+    const resolver = new TargetResolver(settings);
     return {
         resolveDayFile: (dayKey: string) => {
             const day = parseLocalDateTime(dayKey, true) ?? new Date(dayKey);

@@ -35,7 +35,7 @@ export async function runProjectionReconciliation(
     app: App,
     settings: FocusNotesSettings,
 ): Promise<ProjectionReconciliationSummary> {
-    const resolver = new TargetResolver(app, settings);
+    const resolver = new TargetResolver(settings);
     const writer = new EventTaskWriter(app, settings.eventTask, () => settings);
     const scan = await scanVaultForProjectionReconciliation(app, {
         resolveDailyFileDate: (filePath) => resolver.resolveDailyFileDate(filePath),

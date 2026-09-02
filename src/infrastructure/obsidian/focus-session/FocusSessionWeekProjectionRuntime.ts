@@ -48,7 +48,7 @@ export async function runFocusSessionWeekProjection(
     const candidate = source.findCandidate(input.owner.kind, input.owner.itemId);
     if (!candidate) return;
 
-    const resolver = new TargetResolver(app, settings);
+    const resolver = new TargetResolver(settings);
     const canonicalTarget = formatScheduledItemBlockTarget(candidate.filePath, input.owner.itemId);
     const heading = settings.captureFocusSession.heading;
     const position = settings.captureFocusSession.position;

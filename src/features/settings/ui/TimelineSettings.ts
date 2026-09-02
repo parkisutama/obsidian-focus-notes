@@ -125,7 +125,7 @@ export function renderFocusTimeline(containerEl: HTMLElement, ctx: SettingsRende
 
 function renderTimelineAlignmentStatus(container: HTMLElement, ctx: SettingsRenderContext): void {
     const settings = ctx.settings;
-    const resolver = new TargetResolver(ctx.app, settings);
+    const resolver = new TargetResolver(settings);
     const dailyFolder = resolver.getProfileFolder("daily");
     const groups = buildTimelineSourceGroups(
         settings.timeline.sourceFolders,

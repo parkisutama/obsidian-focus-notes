@@ -94,7 +94,7 @@ export class ScheduledItemDesktopCreateModal extends Modal {
             contextLabel: `${this.context.targetFile} · ${this.context.targetHeading || "No heading"}`,
             targetFile: this.context.targetFile,
             createContext: this.context,
-            defaultDetailNotesFolder: new TargetResolver(this.app, this.getSettings()).getDetailNotesFolder(
+            defaultDetailNotesFolder: new TargetResolver(this.getSettings()).getDetailNotesFolder(
                 this.context.targetFile,
             ),
             getContextSources: () => this.getSettings().inbox.contextSources,
@@ -123,7 +123,7 @@ export class ScheduledItemDesktopCreateModal extends Modal {
         const start = parseLocalDateTime(plannedStart, true);
         if (!start) return;
         const settings = this.getSettings();
-        const resolver = new TargetResolver(this.app, settings);
+        const resolver = new TargetResolver(settings);
         const target = resolveEventCaptureTarget(
             resolver.getPeriodicalTarget(settings.captureEvent.profileId, start),
             settings.captureEvent,
@@ -311,7 +311,7 @@ export class ScheduledItemDesktopCreateModal extends Modal {
             built.record.kind === "event"
                 ? built.record.start
                 : (built.record.due ?? built.record.timebox?.start ?? new Date());
-        return new TargetResolver(this.app, this.getSettings()).resolve(
+        return new TargetResolver(this.getSettings()).resolve(
             {
                 file: this.context.targetFile.trim(),
                 heading: this.context.targetHeading.trim(),

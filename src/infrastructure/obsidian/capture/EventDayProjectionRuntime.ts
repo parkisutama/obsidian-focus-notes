@@ -12,26 +12,26 @@ import type { EventTaskWriter } from "./EventTaskWriter.ts";
 
 /** Shared desktop/mobile glue wiring EventDayProjection's pure service to real vault I/O. */
 export function runEventDayProjection(
-    app: App,
+    _app: App,
     settings: FocusNotesSettings,
     input: EventDayProjectionInput,
     previousTouchedDayKeys: readonly string[],
     writer: EventTaskWriter,
 ): Promise<EventDayProjectionResult> {
-    return projectEventDays(input, previousTouchedDayKeys, dependencies(app, settings, writer));
+    return projectEventDays(input, previousTouchedDayKeys, dependencies(settings, writer));
 }
 
 export function retryEventDayProjectionRuntime(
-    app: App,
+    _app: App,
     settings: FocusNotesSettings,
     pending: Extract<EventDayProjectionResult, { status: "partial" }>,
     writer: EventTaskWriter,
 ): Promise<EventDayProjectionResult> {
-    return retryEventDayProjection(pending, dependencies(app, settings, writer));
+    return retryEventDayProjection(pending, dependencies(settings, writer));
 }
 
-function dependencies(app: App, settings: FocusNotesSettings, writer: EventTaskWriter) {
-    const resolver = new TargetResolver(app, settings);
+function dependencies(settings: FocusNotesSettings, writer: EventTaskWriter) {
+    const resolver = new TargetResolver(settings);
     return {
         resolveDayFile: (dayKey: string) => {
             const day = parseLocalDateTime(dayKey, true) ?? new Date(dayKey);

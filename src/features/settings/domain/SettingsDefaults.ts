@@ -68,7 +68,6 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         position: "end",
     },
     periodicalNotes: {
-        syncDailyFromCorePlugin: true,
         profiles: [
             { id: "daily", name: "Daily", folder: "", fileFormat: "YYYY-MM-DD", headingFormat: "" },
             { id: "weekly", name: "Weekly", folder: "Weekly", fileFormat: "GGGG-[W]WW", headingFormat: "YYYY-MM-DD" },
@@ -189,9 +188,6 @@ export function mergeSettingsWithDefaults(saved: Partial<FocusNotesSettings>): F
             ...((saved.eventTask ?? {}) as Partial<typeof DEFAULT_SETTINGS.eventTask>),
         },
         periodicalNotes: {
-            syncDailyFromCorePlugin:
-                saved.periodicalNotes?.syncDailyFromCorePlugin ??
-                DEFAULT_SETTINGS.periodicalNotes.syncDailyFromCorePlugin,
             profiles: periodicalProfiles,
         },
         inbox: {
