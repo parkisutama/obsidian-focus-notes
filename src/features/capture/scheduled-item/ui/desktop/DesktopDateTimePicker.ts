@@ -42,12 +42,11 @@ export class DesktopDateTimePicker {
     private parts: DateTimeParts | null;
     private viewYear: number;
     private viewMonth: number;
+    private wrapEl!: HTMLElement;
     private buttonEl!: HTMLButtonElement;
     private popupEl: HTMLElement | null = null;
     private readonly onOutsideClick = (event: MouseEvent): void => {
-        if (this.popupEl && !this.popupEl.contains(event.target as Node) && event.target !== this.buttonEl) {
-            this.closePopup();
-        }
+        if (this.popupEl && !this.wrapEl.contains(event.target as Node)) this.closePopup();
     };
     private readonly onKeyDown = (event: KeyboardEvent): void => {
         if (event.key === "Escape") this.closePopup();
@@ -60,8 +59,15 @@ export class DesktopDateTimePicker {
         this.viewMonth = base.month;
     }
 
-    render(container: HTMLElement): HTMLButtonElement {
-        this.buttonEl = container.createEl("button", {
+    render(container: HTMLElement): HTMLElement {
+        // A popup positioned via getBoundingClientRect()+position:fixed, or portaled onto
+        // document.body/the modal root, turned out unreliable: Obsidian's Modal can trap pointer
+        // interaction to its own subtree, and any transformed ancestor breaks fixed-position math
+        // silently. Instead the popup is a plain position:absolute child of this wrapper — a
+        // completely ordinary, already-interactive part of the same DOM subtree as everything
+        // else in the form, so none of that applies.
+        this.wrapEl = container.createDiv({ cls: "fn-datetime-wrap" });
+        this.buttonEl = this.wrapEl.createEl("button", {
             type: "button",
             cls: "fn-datetime-trigger",
             attr: { "aria-label": this.options.ariaLabel },
@@ -69,9 +75,10 @@ export class DesktopDateTimePicker {
         this.updateButtonText();
         this.buttonEl.addEventListener("click", (event) => {
             event.preventDefault();
+            event.stopPropagation();
             this.toggle();
         });
-        return this.buttonEl;
+        return this.wrapEl;
     }
 
     destroy(): void {
@@ -89,18 +96,10 @@ export class DesktopDateTimePicker {
     }
 
     private openPopup(): void {
-        // Obsidian's Modal traps pointer interaction to its own subtree, so a popup appended
-        // straight to document.body (a sibling, not a descendant) never receives clicks even
-        // though it's visually on top — clicking it does nothing. Appending inside the modal
-        // (position: fixed still makes it viewport-relative, unaffected by depth) fixes that;
-        // document.body remains the fallback for pickers opened outside any modal.
-        const host = this.buttonEl.closest<HTMLElement>(".modal") ?? document.body;
-        const popup = host.createDiv({ cls: "fn-datetime-popup" });
+        const popup = this.wrapEl.createDiv({ cls: "fn-datetime-popup" });
         this.popupEl = popup;
-        popup.style.position = "fixed";
         this.renderPopupContent(popup);
-        // Sized only once its content exists, so the viewport clamp below has real dimensions.
-        this.positionPopup(popup);
+        this.applyOverflowGuard(popup);
         // Deferred so the click that opened the popup doesn't immediately close it via bubbling.
         window.setTimeout(() => {
             document.addEventListener("click", this.onOutsideClick);
@@ -116,17 +115,10 @@ export class DesktopDateTimePicker {
         document.removeEventListener("keydown", this.onKeyDown);
     }
 
-    /** Anchors below the button, flipping above and clamping horizontally when it would overflow the viewport. */
-    private positionPopup(popup: HTMLElement): void {
-        const rect = this.buttonEl.getBoundingClientRect();
-        const margin = 8;
-        const width = popup.offsetWidth || 240;
-        const height = popup.offsetHeight || 320;
-        const left = Math.min(Math.max(margin, rect.left), window.innerWidth - width - margin);
-        const fitsBelow = rect.bottom + 4 + height <= window.innerHeight - margin;
-        const top = fitsBelow ? rect.bottom + 4 : Math.max(margin, rect.top - height - 4);
-        popup.style.left = `${left}px`;
-        popup.style.top = `${top}px`;
+    /** Flips right-aligned when the default left-aligned popup would overflow the viewport's right edge. */
+    private applyOverflowGuard(popup: HTMLElement): void {
+        const rect = popup.getBoundingClientRect();
+        popup.toggleClass("fn-datetime-popup--align-right", rect.right > window.innerWidth - 8);
     }
 
     private renderPopupContent(popup: HTMLElement): void {

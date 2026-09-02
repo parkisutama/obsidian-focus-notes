@@ -3960,6 +3960,10 @@ body.fn-mobile-event-screen-open .suggestion-container {
  * format follows the OS/Electron process locale, which a plugin can't
  * override, so this renders and controls DD/MM/YYYY + 24-hour formatting
  * itself instead. */
+.fn-datetime-wrap {
+    position: relative;
+    display: inline-block;
+}
 .fn-datetime-trigger {
     padding: 6px 10px;
     border-radius: 6px;
@@ -3977,16 +3981,25 @@ body.fn-mobile-event-screen-open .suggestion-container {
 .fn-datetime-trigger--empty {
     color: var(--text-muted);
 }
+/* A plain absolute-positioned child of .fn-datetime-wrap — not fixed/viewport-based, not
+ * portaled onto document.body or the modal root. Native DOM flow means it's inherently part of
+ * the same interactive subtree as the rest of the form, so nothing needs to specially "outrank"
+ * anything: painting above static-flow siblings is the default behavior of a positioned element. */
 .fn-datetime-popup {
-    /* Must outrank the Modal it's opened from (--layer-modal), not just an ordinary popover —
-     * otherwise it renders behind the modal and only whatever sliver pokes past its edge shows. */
-    z-index: calc(var(--layer-modal, 1000) + 10);
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 5;
     width: 240px;
     padding: 10px;
     border-radius: 8px;
     border: 1px solid var(--background-modifier-border);
     background: var(--background-primary);
     box-shadow: var(--shadow-l);
+}
+.fn-datetime-popup--align-right {
+    left: auto;
+    right: 0;
 }
 .fn-datetime-popup-header {
     display: flex;
