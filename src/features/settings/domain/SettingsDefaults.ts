@@ -44,7 +44,12 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
         sourceColors: {},
     },
     eventTask: {
+        // "sourceFolder" matches the folder-resolution behavior this plugin always had before the
+        // Task 65-adjacent strategy picker existed, so existing users see no change by default.
+        detailNotesFolderStrategy: "sourceFolder",
         detailNotesFolder: "Notes",
+        detailNotesFolderEvent: "Notes",
+        detailNotesFolderTask: "Notes",
         eventNoteTemplate: "# {{title}}\n\n{{description}}",
         taskNoteTemplate: "# {{title}}\n\n{{description}}",
         relatedFieldFormat: "[[{{date}}]]",

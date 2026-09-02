@@ -95,7 +95,9 @@ export class ScheduledItemDesktopCreateModal extends Modal {
             targetFile: this.context.targetFile,
             createContext: this.context,
             defaultDetailNotesFolder: new TargetResolver(this.getSettings()).getDetailNotesFolder(
+                this.app,
                 this.context.targetFile,
+                this.kind,
             ),
             getContextSources: () => this.getSettings().inbox.contextSources,
             getAllowedTaskSources: () => {

@@ -97,7 +97,11 @@ export class ScheduledItemMobileCreateScreen extends Component {
             contextLabel: `${this.context.targetFile} · ${this.context.targetHeading || "No heading"}`,
             targetFile: this.context.targetFile,
             createContext: this.context,
-            defaultDetailNotesFolder: this.getSettings().eventTask.detailNotesFolder,
+            defaultDetailNotesFolder: new TargetResolver(this.getSettings()).getDetailNotesFolder(
+                this.app,
+                this.context.targetFile,
+                this.kind,
+            ),
             getContextSources: () => this.getSettings().inbox.contextSources,
             getAllowedTaskSources: () => {
                 const s = this.getSettings();

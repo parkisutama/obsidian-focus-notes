@@ -14,6 +14,7 @@ import {
     createObsidianLinkResolver,
 } from "../../../../../infrastructure/obsidian/suggestions/ObsidianLinkResolver.ts";
 import { saveScheduledItemBlock } from "../../../../../infrastructure/obsidian/capture/ScheduledItemBlockPersistence.ts";
+import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver.ts";
 import {
     runEventDayProjection,
     retryEventDayProjectionRuntime,
@@ -91,7 +92,11 @@ export class ScheduledItemMobileEditScreen extends Component {
             data: this.data,
             contextLabel: `${this.snapshot.filePath} · Line ${this.snapshot.lineNumber}`,
             targetFile: this.snapshot.filePath,
-            defaultDetailNotesFolder: this.getSettings().eventTask.detailNotesFolder,
+            defaultDetailNotesFolder: new TargetResolver(this.getSettings()).getDetailNotesFolder(
+                this.app,
+                this.snapshot.filePath,
+                this.data.kind,
+            ),
             getContextSources: () => this.getSettings().inbox.contextSources,
             onChange: () => undefined,
             onSubmit: () => void this.submit(),

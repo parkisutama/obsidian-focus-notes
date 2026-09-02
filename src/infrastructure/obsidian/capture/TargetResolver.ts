@@ -1,5 +1,6 @@
-import { moment } from "obsidian";
+import { type App, moment } from "obsidian";
 import type { FocusTarget } from "../../../features/capture/domain/CaptureTarget";
+import { resolveDetailNotesFolder } from "../../../features/capture/scheduled-item/domain/DetailNotesFolderResolution.ts";
 import { normalizeDailyNoteFormat } from "../../../features/periodical-notes/domain/DailyNotePath";
 import type { PeriodicalNoteProfile } from "../../../features/periodical-notes/domain/PeriodicalNote";
 import type { FocusNotesSettings } from "../../../features/settings/domain/FocusNotesSettings";
@@ -103,21 +104,19 @@ export class TargetResolver {
     }
 
     /**
-     * Default folder to offer for a new Detail Note.
-     *
-     * Detail notes usually belong alongside the list note that owns the Task
-     * or Event, so default to that note's own folder. A Daily Note is just a
-     * place a Task is passing through before it gets filed elsewhere, so for
-     * targets inside the configured Daily Notes folder this falls back to the
-     * globally configured Detail Notes folder instead.
+     * Default folder to offer for a new Detail Note. `app` is only read for the "obsidianDefault"
+     * strategy; everything else defers to the pure `resolveDetailNotesFolder` (see its own doc for
+     * what each strategy means) so that logic stays directly unit-testable without an App.
      */
-    public getDetailNotesFolder(targetFile: string): string {
-        const parent = targetFile.includes("/") ? targetFile.slice(0, targetFile.lastIndexOf("/")) : "";
-        if (!parent) return this.settings.eventTask.detailNotesFolder;
-        const dailyFolder = this.getProfileFolder("daily");
-        const withinDailyNotes =
-            dailyFolder !== null && (parent === dailyFolder || parent.startsWith(`${dailyFolder}/`));
-        return withinDailyNotes ? this.settings.eventTask.detailNotesFolder : parent;
+    public getDetailNotesFolder(app: App, targetFile: string, kind: "event" | "task"): string {
+        const s = this.settings.eventTask;
+        return resolveDetailNotesFolder(
+            s,
+            targetFile,
+            kind,
+            this.getProfileFolder("daily"),
+            () => app.fileManager.getNewFileParent(targetFile).path,
+        );
     }
 
     /** Expand {{date}} / {{date:FORMAT}} tokens in the file path against `when`. */

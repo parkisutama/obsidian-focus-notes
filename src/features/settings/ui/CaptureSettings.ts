@@ -1,6 +1,7 @@
 import { Setting } from "obsidian";
 import { FolderSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
 import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
+import type { DetailNotesFolderStrategy } from "../../capture/scheduled-item/domain/DetailNoteSettings.ts";
 import { renderProfilePicker } from "./SettingsFormFields";
 import type { SettingsRenderContext } from "./SettingsRenderContext";
 
@@ -253,20 +254,82 @@ export function renderSharedNoteCreation(containerEl: HTMLElement, ctx: Settings
     });
 
     new Setting(containerEl)
-        .setName("Detail notes folder")
+        .setName("Detail notes folder strategy")
         .setDesc(
-            "Folder where event/task detail notes are created (the third file, with full frontmatter). " +
-                "Created automatically if it doesn't exist.",
+            "How the folder is picked when creating a new event/task detail note (the third file, " +
+                "with full frontmatter). Always just a starting suggestion — editable per note before saving.",
         )
-        .addText((text) => {
-            text.setPlaceholder("Notes")
-                .setValue(ctx.settings.eventTask.detailNotesFolder)
+        .addDropdown((drop) =>
+            drop
+                .addOption("sourceFolder", "Same folder as the note's Task/Event list")
+                .addOption("configured", "Fixed folder below")
+                .addOption("obsidianDefault", "Obsidian's Default location for new notes")
+                .addOption("perKind", "Separate folder for Events and Tasks")
+                .setValue(ctx.settings.eventTask.detailNotesFolderStrategy)
                 .onChange(async (v) => {
-                    ctx.settings.eventTask.detailNotesFolder = v.trim() || "Notes";
+                    ctx.settings.eventTask.detailNotesFolderStrategy = v as DetailNotesFolderStrategy;
                     await ctx.saveSettings();
-                });
-            new FolderSuggest(ctx.app, text.inputEl);
-        });
+                    ctx.redisplay();
+                }),
+        );
+
+    if (ctx.settings.eventTask.detailNotesFolderStrategy === "configured") {
+        new Setting(containerEl)
+            .setName("Detail notes folder")
+            .setDesc("Folder where new event/task detail notes are created. Created automatically if it doesn't exist.")
+            .addText((text) => {
+                text.setPlaceholder("Notes")
+                    .setValue(ctx.settings.eventTask.detailNotesFolder)
+                    .onChange(async (v) => {
+                        ctx.settings.eventTask.detailNotesFolder = v.trim() || "Notes";
+                        await ctx.saveSettings();
+                    });
+                new FolderSuggest(ctx.app, text.inputEl);
+            });
+    }
+
+    if (ctx.settings.eventTask.detailNotesFolderStrategy === "sourceFolder") {
+        new Setting(containerEl)
+            .setName("Detail notes folder (Daily Notes fallback)")
+            .setDesc(
+                "Used only when the Task/Event's own list note is itself inside your Daily Notes folder — " +
+                    "a Daily Note is just a place a Task passes through, not where its detail note should live.",
+            )
+            .addText((text) => {
+                text.setPlaceholder("Notes")
+                    .setValue(ctx.settings.eventTask.detailNotesFolder)
+                    .onChange(async (v) => {
+                        ctx.settings.eventTask.detailNotesFolder = v.trim() || "Notes";
+                        await ctx.saveSettings();
+                    });
+                new FolderSuggest(ctx.app, text.inputEl);
+            });
+    }
+
+    if (ctx.settings.eventTask.detailNotesFolderStrategy === "perKind") {
+        new Setting(containerEl)
+            .setName("Event detail notes folder")
+            .addText((text) => {
+                text.setPlaceholder("Notes")
+                    .setValue(ctx.settings.eventTask.detailNotesFolderEvent)
+                    .onChange(async (v) => {
+                        ctx.settings.eventTask.detailNotesFolderEvent = v.trim() || "Notes";
+                        await ctx.saveSettings();
+                    });
+                new FolderSuggest(ctx.app, text.inputEl);
+            });
+        new Setting(containerEl)
+            .setName("Task detail notes folder")
+            .addText((text) => {
+                text.setPlaceholder("Notes")
+                    .setValue(ctx.settings.eventTask.detailNotesFolderTask)
+                    .onChange(async (v) => {
+                        ctx.settings.eventTask.detailNotesFolderTask = v.trim() || "Notes";
+                        await ctx.saveSettings();
+                    });
+                new FolderSuggest(ctx.app, text.inputEl);
+            });
+    }
 
     containerEl.createEl("h4", { text: "Detail note templates" });
 
