@@ -4042,6 +4042,11 @@ body.fn-mobile-event-screen-open .suggestion-container {
 .fn-datetime-popup-day--today {
     font-weight: 700;
     color: var(--text-accent);
+    box-shadow: inset 0 0 0 1px var(--text-accent);
+}
+.fn-datetime-popup-day--today.fn-datetime-popup-day--selected {
+    color: var(--text-on-accent);
+    box-shadow: inset 0 0 0 1px var(--text-on-accent);
 }
 .fn-datetime-popup-day--selected {
     background: var(--interactive-accent);
@@ -4158,6 +4163,11 @@ body.fn-mobile-event-screen-open .suggestion-container {
 .fn-mobile-datetime-day--today {
     font-weight: 700;
     color: var(--text-accent);
+    box-shadow: inset 0 0 0 1px var(--text-accent);
+}
+.fn-mobile-datetime-day--today.fn-mobile-datetime-day--selected {
+    color: var(--text-on-accent);
+    box-shadow: inset 0 0 0 1px var(--text-on-accent);
 }
 .fn-mobile-datetime-day--selected {
     background: var(--interactive-accent);

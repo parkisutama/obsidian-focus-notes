@@ -28,3 +28,12 @@ test("popup outranks the modal it opens from and clamps to the viewport instead 
     const css = await readFile(new URL("../styles.css", import.meta.url), "utf8");
     assert.match(css, /\.fn-datetime-popup\s*\{\s*\/\*[\s\S]*?z-index: calc\(var\(--layer-modal, 1000\) \+ 10\);/);
 });
+
+test("popup mounts inside the modal it opens from instead of document.body, so it stays interactive", async () => {
+    const source = await readFile(
+        new URL("../src/features/capture/scheduled-item/ui/desktop/DesktopDateTimePicker.ts", import.meta.url),
+        "utf8",
+    );
+    assert.match(source, /this\.buttonEl\.closest<HTMLElement>\("\.modal"\) \?\? document\.body/);
+    assert.doesNotMatch(source, /document\.body\.createDiv/);
+});

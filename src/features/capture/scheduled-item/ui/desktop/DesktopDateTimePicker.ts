@@ -89,7 +89,13 @@ export class DesktopDateTimePicker {
     }
 
     private openPopup(): void {
-        const popup = document.body.createDiv({ cls: "fn-datetime-popup" });
+        // Obsidian's Modal traps pointer interaction to its own subtree, so a popup appended
+        // straight to document.body (a sibling, not a descendant) never receives clicks even
+        // though it's visually on top — clicking it does nothing. Appending inside the modal
+        // (position: fixed still makes it viewport-relative, unaffected by depth) fixes that;
+        // document.body remains the fallback for pickers opened outside any modal.
+        const host = this.buttonEl.closest<HTMLElement>(".modal") ?? document.body;
+        const popup = host.createDiv({ cls: "fn-datetime-popup" });
         this.popupEl = popup;
         popup.style.position = "fixed";
         this.renderPopupContent(popup);
