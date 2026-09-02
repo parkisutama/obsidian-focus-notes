@@ -83,6 +83,7 @@ export class DesktopScheduledItemForm {
             onEventStartChanged: (value) => this.options.onPlannedStartChange?.(value),
             onManageTimeboxes: this.options.onManageTimeboxes,
         });
+        this.renderDescription(container);
         if (this.options.focusSummary) renderDesktopFocusSummarySection(container, this.options.focusSummary);
         if (this.options.focusSessions && this.options.onEditFocusSession) {
             renderDesktopFocusSessionsSection(container, {
@@ -99,7 +100,6 @@ export class DesktopScheduledItemForm {
                 update: (change) => this.update(change),
             });
         }
-        this.renderDescription(container);
         renderDesktopDetailSection(container, {
             app: this.options.app,
             data: this.options.data,

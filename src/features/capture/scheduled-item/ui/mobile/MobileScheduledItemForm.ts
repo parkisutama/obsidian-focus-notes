@@ -136,11 +136,11 @@ export class MobileScheduledItemForm extends Component {
             onEventStartChanged: (value) => this.options.onPlannedStartChange?.(value),
             onManageTimeboxes: () => this.options.onManageTimeboxes?.(),
         });
+        this.renderDescription(body);
         if (this.options.focusSummary) renderMobileFocusSummarySection(body, this.options.focusSummary);
         if (this.options.focusSessions && this.options.onEditFocusSession) {
             renderMobileFocusSessionsSection(body, this.options.focusSessions, this.options.onEditFocusSession);
         }
-        this.renderDescription(body);
         if (this.options.mode === "edit" || this.options.mode === "create") {
             this.reflectionController = renderMobileReflectionSection(body, {
                 app: this.options.app,
