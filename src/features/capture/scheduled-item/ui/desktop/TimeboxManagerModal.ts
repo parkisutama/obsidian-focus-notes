@@ -13,15 +13,12 @@ import {
 import { captureLedgerRecord, type LedgerRecordSnapshot } from "../../domain/LedgerRecordSource.ts";
 import { extractScheduledItemBlockId } from "../../domain/ScheduledItemBlockId.ts";
 import { type ScheduledItemBlock, parseScheduledItemBlock } from "../../domain/ScheduledItemBlockEditor.ts";
-import {
-    fromDateTimeLocalValue,
-    parseLocalDateTime,
-    toDateTimeLocalValue,
-} from "../../domain/ScheduledItemFormAdapter.ts";
+import { parseLocalDateTime } from "../../domain/ScheduledItemFormAdapter.ts";
 import type { TaskTimebox, TaskTimeboxStatus } from "../../domain/TaskTimebox.ts";
 import { planTaskDayReferences, type TaskDayReferenceTimebox } from "../../domain/TaskDayReferencePlan.ts";
 import { describeTaskTimeboxWarnings } from "../../domain/TaskTimeboxWarningLabel.ts";
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings.ts";
+import { DesktopDateTimePicker } from "./DesktopDateTimePicker.ts";
 
 export interface TimeboxManagerOptions {
     snapshot: LedgerRecordSnapshot;
@@ -46,6 +43,7 @@ export class TimeboxManagerModal extends Modal {
     private editingId: string | null;
     private confirmingDeleteId: string | null = null;
     private errorMessage = "";
+    private dateTimePickers: DesktopDateTimePicker[] = [];
 
     constructor(
         app: App,
@@ -65,6 +63,7 @@ export class TimeboxManagerModal extends Modal {
     }
 
     onClose(): void {
+        this.destroyDateTimePickers();
         this.contentEl.empty();
     }
 
@@ -74,7 +73,13 @@ export class TimeboxManagerModal extends Modal {
         this.timeboxes = parsed.status === "parsed" ? parsed.block.timeboxes : [];
     }
 
+    private destroyDateTimePickers(): void {
+        for (const picker of this.dateTimePickers) picker.destroy();
+        this.dateTimePickers = [];
+    }
+
     private render(): void {
+        this.destroyDateTimePickers();
         const { contentEl } = this;
         contentEl.empty();
         contentEl.createEl("h2", { text: "Manage timeboxes" });
@@ -157,7 +162,7 @@ export class TimeboxManagerModal extends Modal {
         );
     }
 
-    /** Native browser date/time picker instead of a free-typed "YYYY-MM-DD HH:mm" string. */
+    /** Custom DD/MM/YYYY + 24-hour picker instead of a free-typed "YYYY-MM-DD HH:mm" string — see DesktopDateTimePicker.ts. */
     private renderDateTimeField(
         container: HTMLElement,
         label: string,
@@ -166,13 +171,14 @@ export class TimeboxManagerModal extends Modal {
     ): void {
         const field = container.createDiv({ cls: "fn-timebox-datetime-field" });
         field.createSpan({ cls: "fn-timebox-datetime-label", text: label });
-        const input = field.createEl("input", {
-            type: "datetime-local",
-            cls: "fn-timebox-datetime-input",
-            attr: { "aria-label": `Timebox ${label.toLowerCase()}` },
+        const picker = new DesktopDateTimePicker({
+            initialValue: value || null,
+            requireTime: true,
+            ariaLabel: `Timebox ${label.toLowerCase()}`,
+            onChange: (next) => onChange(next ?? ""),
         });
-        input.value = toDateTimeLocalValue(value);
-        input.addEventListener("change", () => onChange(fromDateTimeLocalValue(input.value)));
+        picker.render(field);
+        this.dateTimePickers.push(picker);
     }
 
     private renderAddForm(container: HTMLElement): void {

@@ -4088,16 +4088,6 @@ body.fn-mobile-event-screen-open .suggestion-container {
     color: var(--text-muted);
 }
 
-.fn-timebox-datetime-input {
-    font-family: inherit;
-    font-size: var(--font-ui-small);
-    padding: var(--size-2-1) var(--size-2-2);
-    border-radius: var(--input-radius);
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-primary);
-    color: var(--text-normal);
-}
-
 /* ---- Custom date/time picker (MobileDateTimePicker) ---------------------- */
 .fn-mobile-datetime-trigger {
     width: 100%;

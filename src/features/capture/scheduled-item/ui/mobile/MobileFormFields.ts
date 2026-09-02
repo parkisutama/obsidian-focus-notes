@@ -1,4 +1,6 @@
 import { Setting } from "obsidian";
+import { parseCanonicalValue } from "../../domain/DateTimeFormat.ts";
+import { MobileDateTimePicker } from "./MobileDateTimePicker.ts";
 
 export class MobileFormFields {
     constructor(private readonly changed: (change: () => void) => void) {}
@@ -10,19 +12,16 @@ export class MobileFormFields {
         requireTime: boolean,
         onChange: (value: string | null) => void,
     ): Setting {
-        const [dateValue = "", timeValue = ""] = value?.split(" ") ?? [];
+        // A field that doesn't strictly require time still shows it once its existing value
+        // already carries one, matching the old native-input behavior exactly.
+        const hasExistingTime = parseCanonicalValue(value)?.hour !== null && parseCanonicalValue(value)?.hour !== undefined;
         const setting = new Setting(container).setName(label);
-        const date = setting.controlEl.createEl("input", { type: "date", attr: { "aria-label": `${label} date` } });
-        date.value = dateValue;
-        let time: HTMLInputElement | null = null;
-        if (requireTime || timeValue) {
-            time = setting.controlEl.createEl("input", { type: "time", attr: { "aria-label": `${label} time` } });
-            time.value = timeValue;
-        }
-        const emit = (): void =>
-            this.changed(() => onChange(date.value ? `${date.value}${time?.value ? ` ${time.value}` : ""}` : null));
-        date.addEventListener("change", emit);
-        time?.addEventListener("change", emit);
+        new MobileDateTimePicker({
+            initialValue: value,
+            requireTime: requireTime || hasExistingTime,
+            ariaLabel: label,
+            onChange: (next) => this.changed(() => onChange(next)),
+        }).render(setting.controlEl);
         return setting;
     }
 

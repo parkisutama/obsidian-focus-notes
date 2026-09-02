@@ -1,5 +1,7 @@
 import { Setting } from "obsidian";
 import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData.ts";
+import { parseCanonicalValue } from "../../domain/DateTimeFormat.ts";
+import { DesktopDateTimePicker } from "./DesktopDateTimePicker.ts";
 
 interface DesktopTemporalSectionOptions {
     mode: "create" | "edit";
@@ -12,12 +14,22 @@ interface DesktopTemporalSectionOptions {
     onManageTimeboxes?(): void;
 }
 
-export function renderDesktopTemporalSection(container: HTMLElement, options: DesktopTemporalSectionOptions): void {
-    if (options.data.kind === "task") renderTaskSection(container, options);
-    else renderEventSection(container, options);
+/** Returns every date/time picker this render created, so the caller can destroy them before the next render. */
+export function renderDesktopTemporalSection(
+    container: HTMLElement,
+    options: DesktopTemporalSectionOptions,
+): DesktopDateTimePicker[] {
+    const pickers: DesktopDateTimePicker[] = [];
+    if (options.data.kind === "task") renderTaskSection(container, options, pickers);
+    else renderEventSection(container, options, pickers);
+    return pickers;
 }
 
-function renderTaskSection(container: HTMLElement, options: DesktopTemporalSectionOptions): void {
+function renderTaskSection(
+    container: HTMLElement,
+    options: DesktopTemporalSectionOptions,
+    pickers: DesktopDateTimePicker[],
+): void {
     const data = options.data;
     if (data.kind !== "task") return;
     if (options.mode === "edit") {
@@ -33,7 +45,7 @@ function renderTaskSection(container: HTMLElement, options: DesktopTemporalSecti
             .setValue(data.priority)
             .onChange((value) => options.update(() => (data.priority = value as typeof data.priority))),
     );
-    dateTimeSetting(container, "Due", data.due, false, options.update, (value) => (data.due = value));
+    dateTimeSetting(container, pickers, "Due", data.due, false, options.update, (value) => (data.due = value));
     new Setting(container).setName("Timebox").addToggle((toggle) =>
         toggle.setValue(data.timebox !== null).onChange((enabled) => {
             data.timebox = enabled
@@ -43,10 +55,10 @@ function renderTaskSection(container: HTMLElement, options: DesktopTemporalSecti
         }),
     );
     if (data.timebox) {
-        dateTimeSetting(container, "Timebox start", data.timebox.start, true, options.update, (value) => {
+        dateTimeSetting(container, pickers, "Timebox start", data.timebox.start, true, options.update, (value) => {
             if (data.timebox) data.timebox.start = value ?? "";
         });
-        dateTimeSetting(container, "Timebox end", data.timebox.end, true, options.update, (value) => {
+        dateTimeSetting(container, pickers, "Timebox end", data.timebox.end, true, options.update, (value) => {
             if (data.timebox) data.timebox.end = value ?? "";
         });
     }
@@ -65,9 +77,17 @@ function renderTaskSection(container: HTMLElement, options: DesktopTemporalSecti
         }),
     );
     data.reminders.forEach((reminder, index) => {
-        const row = dateTimeSetting(container, `Reminder ${index + 1}`, reminder, true, options.update, (value) => {
-            data.reminders[index] = value ?? "";
-        });
+        const row = dateTimeSetting(
+            container,
+            pickers,
+            `Reminder ${index + 1}`,
+            reminder,
+            true,
+            options.update,
+            (value) => {
+                data.reminders[index] = value ?? "";
+            },
+        );
         row.addButton((button) =>
             button
                 .setIcon("trash")
@@ -80,7 +100,11 @@ function renderTaskSection(container: HTMLElement, options: DesktopTemporalSecti
     });
 }
 
-function renderEventSection(container: HTMLElement, options: DesktopTemporalSectionOptions): void {
+function renderEventSection(
+    container: HTMLElement,
+    options: DesktopTemporalSectionOptions,
+    pickers: DesktopDateTimePicker[],
+): void {
     const data = options.data;
     if (data.kind !== "event") return;
     new Setting(container).setName("All day").addToggle((toggle) =>
@@ -91,12 +115,12 @@ function renderEventSection(container: HTMLElement, options: DesktopTemporalSect
             options.changedAndRender();
         }),
     );
-    dateTimeSetting(container, "Planned start", data.start, !data.allDay, options.update, (value) => {
+    dateTimeSetting(container, pickers, "Planned start", data.start, !data.allDay, options.update, (value) => {
         data.start = value ?? "";
         options.onEventStartChanged?.(data.start);
     });
     if (!data.allDay) {
-        dateTimeSetting(container, "Planned end", data.end, true, options.update, (value) => (data.end = value));
+        dateTimeSetting(container, pickers, "Planned end", data.end, true, options.update, (value) => (data.end = value));
     }
     new Setting(container).setName("Status").addDropdown((dropdown) =>
         dropdown
@@ -116,35 +140,35 @@ function renderEventSection(container: HTMLElement, options: DesktopTemporalSect
         }),
     );
     if (!data.actual) return;
-    dateTimeSetting(container, "Actual start", data.actual.start, true, options.update, (value) => {
+    dateTimeSetting(container, pickers, "Actual start", data.actual.start, true, options.update, (value) => {
         if (data.actual) data.actual.start = value ?? "";
     });
-    dateTimeSetting(container, "Actual end", data.actual.end, true, options.update, (value) => {
+    dateTimeSetting(container, pickers, "Actual end", data.actual.end, true, options.update, (value) => {
         if (data.actual) data.actual.end = value ?? "";
     });
 }
 
 function dateTimeSetting(
     container: HTMLElement,
+    pickers: DesktopDateTimePicker[],
     label: string,
     value: string | null,
     requireTime: boolean,
     update: (change: () => void) => void,
     onChange: (value: string | null) => void,
 ): Setting {
-    const [dateValue = "", timeValue = ""] = value?.split(" ") ?? [];
+    // A field that doesn't strictly require time (e.g. "Due") still shows the time row once its
+    // existing value already carries one, matching the old native-input behavior exactly.
+    const hasExistingTime = parseCanonicalValue(value)?.hour !== null && parseCanonicalValue(value)?.hour !== undefined;
     const setting = new Setting(container).setName(label);
-    const date = setting.controlEl.createEl("input", { type: "date", attr: { "aria-label": `${label} date` } });
-    date.value = dateValue;
-    let time: HTMLInputElement | null = null;
-    if (requireTime || timeValue) {
-        time = setting.controlEl.createEl("input", { type: "time", attr: { "aria-label": `${label} time` } });
-        time.value = timeValue;
-    }
-    const emit = (): void =>
-        update(() => onChange(date.value ? `${date.value}${time?.value ? ` ${time.value}` : ""}` : null));
-    date.addEventListener("change", emit);
-    time?.addEventListener("change", emit);
+    const picker = new DesktopDateTimePicker({
+        initialValue: value,
+        requireTime: requireTime || hasExistingTime,
+        ariaLabel: label,
+        onChange: (next) => update(() => onChange(next)),
+    });
+    picker.render(setting.controlEl);
+    pickers.push(picker);
     return setting;
 }
 

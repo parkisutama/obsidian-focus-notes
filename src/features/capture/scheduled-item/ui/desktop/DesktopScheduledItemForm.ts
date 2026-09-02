@@ -5,16 +5,14 @@ import { parseObjectReferences } from "../../../domain/ObjectReference.ts";
 import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData";
 import type { ContextSourceSettings } from "../../../../object-notes/domain/ContextSourceSettings";
 import type { ScannedFocusSession } from "../../../../focus-session/domain/FocusSessionBlockScan.ts";
-import {
-    type DesktopScheduledItemCreateContext,
-    renderDesktopCreateTargetSection,
-} from "./DesktopCreateTargetSection.ts";
+import { type DesktopScheduledItemCreateContext, renderDesktopCreateTargetSection } from "./DesktopCreateTargetSection.ts";
 import { renderDesktopDetailSection } from "./DesktopDetailSection.ts";
 import { renderDesktopFocusSessionsSection } from "./DesktopFocusSessionsSection.ts";
 import { renderDesktopFocusSummarySection } from "./DesktopFocusSummarySection.ts";
 import type { FormattedFocusSummary } from "../../domain/ScheduledItemFocusSummary.ts";
 import { renderDesktopReflectionSection } from "./DesktopTaskReflectionSection.ts";
 import { renderDesktopTemporalSection } from "./DesktopTemporalSection.ts";
+import type { DesktopDateTimePicker } from "./DesktopDateTimePicker.ts";
 
 export type { DesktopScheduledItemCreateContext } from "./DesktopCreateTargetSection.ts";
 
@@ -47,6 +45,7 @@ export class DesktopScheduledItemForm {
     private container: HTMLElement | null = null;
     private descriptionController: ContextNotesController | null = null;
     private reflectionNotesController: ContextNotesController | null = null;
+    private dateTimePickers: DesktopDateTimePicker[] = [];
     private busy = false;
     private recovery = false;
     private errorMessage = "";
@@ -75,7 +74,7 @@ export class DesktopScheduledItemForm {
         header.createDiv({ cls: "fn-scheduled-item-form-context", text: model.contextLabel });
         this.renderKindChips(container);
         this.renderIdentity(container);
-        renderDesktopTemporalSection(container, {
+        this.dateTimePickers = renderDesktopTemporalSection(container, {
             mode: this.options.mode,
             data: this.options.data,
             update: (change) => this.update(change),
@@ -86,10 +85,7 @@ export class DesktopScheduledItemForm {
         this.renderDescription(container);
         if (this.options.focusSummary) renderDesktopFocusSummarySection(container, this.options.focusSummary);
         if (this.options.focusSessions && this.options.onEditFocusSession) {
-            renderDesktopFocusSessionsSection(container, {
-                sessions: this.options.focusSessions,
-                onEdit: this.options.onEditFocusSession,
-            });
+            renderDesktopFocusSessionsSection(container, { sessions: this.options.focusSessions, onEdit: this.options.onEditFocusSession });
         }
         if (this.options.mode === "edit" || this.options.mode === "create") {
             this.reflectionNotesController = renderDesktopReflectionSection(container, {
@@ -222,6 +218,8 @@ export class DesktopScheduledItemForm {
         this.descriptionController = null;
         this.reflectionNotesController?.destroy();
         this.reflectionNotesController = null;
+        for (const picker of this.dateTimePickers) picker.destroy();
+        this.dateTimePickers = [];
     }
 
     private lockFields(container: HTMLElement, actions: HTMLElement): void {
