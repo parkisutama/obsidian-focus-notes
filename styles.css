@@ -3961,8 +3961,8 @@ body.fn-mobile-event-screen-open .suggestion-container {
  * override, so this renders and controls DD/MM/YYYY + 24-hour formatting
  * itself instead. flatpickr's own calendar CSS (including its built-in time
  * spin-input row) is themed separately, below the vendored flatpickr.css
- * block — these rules are just this input's own wrapper and its Today/Clear
- * buttons. */
+ * block — these rules are just this input's own wrapper and its calendar
+ * toggle/Today/Clear buttons. */
 .fn-datetime-input-wrap {
     display: flex;
     align-items: center;
@@ -3978,6 +3978,24 @@ body.fn-mobile-event-screen-open .suggestion-container {
     font-size: var(--font-ui-small);
     font-family: inherit;
     width: 155px;
+}
+.fn-datetime-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.fn-datetime-toggle:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
 }
 .fn-datetime-today,
 .fn-datetime-clear {

@@ -1,3 +1,4 @@
+import { setIcon } from "obsidian";
 import flatpickr from "flatpickr";
 import type { Instance as FlatpickrInstance } from "flatpickr/dist/types/instance";
 import type { Options as FlatpickrOptions } from "flatpickr/dist/types/options";
@@ -55,6 +56,15 @@ export interface DateTimeInputOptions {
  * wheel handling over entirely — one input's worth of hour or minute at a time, wrapping at the
  * 24/60 boundary — and drives it through `fp.setDate` so flatpickr's own state, its redraw, and
  * this component's onChange all update atomically on every tick.
+ *
+ * On mobile, flatpickr's default `clickOpens: true` meant tapping the text field simultaneously
+ * (a) focused it, which — being a real text input — summons the on-screen keyboard, and (b) opened
+ * the calendar, which flatpickr positions once and doesn't recompute as the keyboard resizes the
+ * viewport, so it could render partly behind the keyboard with no way to reach it. `clickOpens` is
+ * now false, and a dedicated calendar-icon button opens the picker instead (matching Obsidian's
+ * own date-picker convention: an icon for the visual picker, direct typing for manual entry). The
+ * icon's own click handler never focuses the text input, so no keyboard opens; tapping the text
+ * field itself still focuses it and shows the keyboard, exactly like any other text field.
  */
 export class DateTimeInput {
     private readonly dateInputEl: HTMLInputElement;
@@ -68,6 +78,12 @@ export class DateTimeInput {
         const initial = parseCanonicalValue(options.initialValue);
 
         const wrap = container.createDiv({ cls: "fn-datetime-input-wrap" });
+        const toggleBtn = wrap.createEl("button", {
+            type: "button",
+            cls: "fn-datetime-toggle",
+            attr: { "aria-label": `Open ${options.ariaLabel} calendar` },
+        });
+        setIcon(toggleBtn, "calendar");
         this.dateInputEl = wrap.createEl("input", {
             type: "text",
             cls: "fn-datetime-input",
@@ -76,6 +92,7 @@ export class DateTimeInput {
         this.fp = flatpickr(this.dateInputEl, {
             dateFormat: this.requireTime ? "d/m/Y H:i" : "d/m/Y",
             allowInput: true,
+            clickOpens: false,
             enableTime: this.requireTime,
             time_24hr: true,
             defaultHour: 0,
@@ -88,6 +105,11 @@ export class DateTimeInput {
             ...buildModalPositionConfig(container, this.dateInputEl),
         });
         if (this.requireTime) this.attachTimeWheelControl();
+        toggleBtn.addEventListener("click", (event) => {
+            event.preventDefault();
+            if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+            this.fp.open();
+        });
 
         const todayBtn = wrap.createEl("button", {
             type: "button",

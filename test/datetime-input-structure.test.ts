@@ -11,6 +11,7 @@ test("DateTimeInput wraps flatpickr for the date grid and its own 24-hour spin-i
     assert.doesNotMatch(source, /createEl\("select"/);
     assert.match(source, /import flatpickr from "flatpickr"/);
     assert.match(source, /dateFormat: this\.requireTime \? "d\/m\/Y H:i" : "d\/m\/Y"/);
+    assert.match(source, /clickOpens: false/);
     assert.match(source, /enableTime: this\.requireTime/);
     assert.match(source, /time_24hr: true/);
     assert.match(source, /locale: \{ firstDayOfWeek: 1 \}/);
@@ -19,6 +20,19 @@ test("DateTimeInput wraps flatpickr for the date grid and its own 24-hour spin-i
     assert.match(source, /cls: "fn-datetime-today"/);
     assert.match(source, /this\.fp\.setDate\(new Date\(\), true\)/);
     assert.match(source, /destroy\(\): void \{\s*this\.fp\.destroy\(\);/);
+});
+
+test("DateTimeInput opens the calendar only from a dedicated icon button that never focuses the text input, so opening it can't summon the on-screen keyboard on mobile", async () => {
+    const source = await readFile(
+        new URL("../src/infrastructure/obsidian/datetime/DateTimeInput.ts", import.meta.url),
+        "utf8",
+    );
+    assert.match(source, /import \{ setIcon \} from "obsidian"/);
+    assert.match(source, /cls: "fn-datetime-toggle"/);
+    assert.match(source, /setIcon\(toggleBtn, "calendar"\)/);
+    assert.match(source, /document\.activeElement\.blur\(\)/);
+    assert.match(source, /this\.fp\.open\(\)/);
+    assert.doesNotMatch(source, /toggleBtn[\s\S]*?dateInputEl\.focus\(\)/);
 });
 
 test("DateTimeInput takes over wheel handling on the hour/minute inputs so it stays in sync with flatpickr's own state on every tick, instead of relying on native step-on-scroll", async () => {
@@ -62,6 +76,7 @@ test("styles.css vendors flatpickr's CSS and themes it (including the time spin-
     assert.match(css, /\.flatpickr-time /);
     assert.match(css, /\.flatpickr-weekwrapper \.flatpickr-weeks \{\s*box-shadow: 1px 0 0 var\(--background-modifier-border\);/);
     assert.match(css, /\.fn-datetime-input-wrap \{/);
+    assert.match(css, /\.fn-datetime-toggle \{/);
     assert.match(css, /\.fn-datetime-today,\s*\.fn-datetime-clear \{/);
 });
 
