@@ -43,6 +43,17 @@ test("DateTimeInput appends flatpickr's calendar inside the nearest .modal, with
     assert.match(source, /\.\.\.buildModalPositionConfig\(container, this\.dateInputEl\)/);
 });
 
+test("buildModalPositionConfig clamps the calendar's left/top within the modal's own bounds, so it can't force a new scrollbar on the modal", async () => {
+    const source = await readFile(
+        new URL("../src/infrastructure/obsidian/datetime/DateTimeInput.ts", import.meta.url),
+        "utf8",
+    );
+    assert.match(source, /const maxLeft = Math\.max\(margin, hostBounds\.width - calendar\.offsetWidth - margin\);/);
+    assert.match(source, /const maxTop = Math\.max\(margin, hostBounds\.height - calendarHeight - margin\);/);
+    assert.match(source, /Math\.min\(Math\.max\(top, margin\), maxTop\)/);
+    assert.match(source, /Math\.min\(Math\.max\(left, margin\), maxLeft\)/);
+});
+
 test("styles.css vendors flatpickr's CSS and themes it (including the time spin-input row) with Obsidian variables", async () => {
     const css = await readFile(new URL("../styles.css", import.meta.url), "utf8");
     assert.match(css, /Vendored: flatpickr/);
@@ -52,4 +63,15 @@ test("styles.css vendors flatpickr's CSS and themes it (including the time spin-
     assert.match(css, /\.flatpickr-weekwrapper \.flatpickr-weeks \{\s*box-shadow: 1px 0 0 var\(--background-modifier-border\);/);
     assert.match(css, /\.fn-datetime-input-wrap \{/);
     assert.match(css, /\.fn-datetime-today,\s*\.fn-datetime-clear \{/);
+});
+
+test("styles.css shrinks flatpickr's fixed default dimensions so the calendar (including the time row) needs less vertical space", async () => {
+    const css = await readFile(new URL("../styles.css", import.meta.url), "utf8");
+    assert.match(css, /Compact sizing for vendored flatpickr/);
+    assert.match(
+        css,
+        /\.flatpickr-calendar,\s*\.flatpickr-days,\s*\.dayContainer \{\s*width: 266px;\s*\}/,
+    );
+    assert.match(css, /\.dayContainer \{\s*min-width: 266px;\s*max-width: 266px;\s*\}/);
+    assert.match(css, /\.flatpickr-day \{\s*max-width: 34px;\s*height: 34px;\s*line-height: 34px;\s*\}/);
 });

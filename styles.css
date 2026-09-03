@@ -5024,3 +5024,50 @@ span.flatpickr-weekday {
 .numInputWrapper:hover {
     background: transparent;
 }
+
+/* ---- Compact sizing for vendored flatpickr — shrinks its default fixed
+   307.875px/39px/40px dimensions so the whole picker (including the time row)
+   fits without extra scrolling inside a Task/Event modal. The three width
+   rules below (.flatpickr-calendar, .flatpickr-days, .dayContainer) must stay
+   equal to each other, and .flatpickr-day's max-width/height/line-height must
+   stay equal to each other, or the 7-day grid misaligns. --------------------- */
+.flatpickr-calendar,
+.flatpickr-days,
+.dayContainer {
+    width: 266px;
+}
+.dayContainer {
+    min-width: 266px;
+    max-width: 266px;
+}
+.flatpickr-calendar {
+    font-size: 13px;
+}
+.flatpickr-day {
+    max-width: 34px;
+    height: 34px;
+    line-height: 34px;
+}
+.flatpickr-months .flatpickr-month {
+    height: 30px;
+}
+.flatpickr-current-month {
+    height: 30px;
+    padding-top: 5px;
+}
+.flatpickr-weekdays {
+    height: 24px;
+}
+span.flatpickr-weekday {
+    line-height: 24px;
+}
+.flatpickr-weekwrapper .flatpickr-weeks {
+    padding: 0 8px;
+}
+.flatpickr-time {
+    max-height: 34px;
+    line-height: 34px;
+}
+.flatpickr-time .numInputWrapper {
+    height: 34px;
+}

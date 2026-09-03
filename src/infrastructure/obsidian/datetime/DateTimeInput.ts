@@ -154,6 +154,7 @@ export class DateTimeInput {
 function buildModalPositionConfig(container: HTMLElement, positionElement: HTMLElement): Partial<FlatpickrOptions> {
     const modalEl = container.closest<HTMLElement>(".modal");
     if (!modalEl) return {};
+    const margin = 8;
     return {
         appendTo: modalEl,
         position: (instance) => {
@@ -168,10 +169,12 @@ function buildModalPositionConfig(container: HTMLElement, positionElement: HTMLE
                 window.innerHeight - inputBounds.bottom < calendarHeight && inputBounds.top > calendarHeight;
             calendar.classList.toggle("arrowTop", !showOnTop);
             calendar.classList.toggle("arrowBottom", showOnTop);
-            calendar.style.top = `${
-                inputBounds.top - hostBounds.top + (showOnTop ? -calendarHeight - 2 : positionElement.offsetHeight + 2)
-            }px`;
-            calendar.style.left = `${inputBounds.left - hostBounds.left}px`;
+            const top = inputBounds.top - hostBounds.top + (showOnTop ? -calendarHeight - 2 : positionElement.offsetHeight + 2);
+            const left = inputBounds.left - hostBounds.left;
+            const maxLeft = Math.max(margin, hostBounds.width - calendar.offsetWidth - margin);
+            const maxTop = Math.max(margin, hostBounds.height - calendarHeight - margin);
+            calendar.style.top = `${Math.min(Math.max(top, margin), maxTop)}px`;
+            calendar.style.left = `${Math.min(Math.max(left, margin), maxLeft)}px`;
             calendar.style.right = "auto";
         },
     };
