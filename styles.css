@@ -4953,6 +4953,17 @@ span.flatpickr-weekday {
 .flatpickr-days {
     border-color: var(--background-modifier-border);
 }
+.flatpickr-weekwrapper .flatpickr-weeks {
+    box-shadow: 1px 0 0 var(--background-modifier-border);
+}
+.flatpickr-weekwrapper .flatpickr-weekday {
+    background: var(--background-primary);
+    color: var(--text-muted);
+}
+.flatpickr-weekwrapper span.flatpickr-day,
+.flatpickr-weekwrapper span.flatpickr-day:hover {
+    color: var(--text-faint);
+}
 .flatpickr-day {
     color: var(--text-normal);
 }

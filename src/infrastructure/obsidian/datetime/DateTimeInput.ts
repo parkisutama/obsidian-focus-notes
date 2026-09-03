@@ -29,6 +29,10 @@ export interface DateTimeInputOptions {
  * unreachable. The month name is static text rather than flatpickr's month <select>
  * (monthSelectorType) for the same reason — the prev/next arrows and the year spin-input already
  * cover navigation without an unreliable native popup.
+ *
+ * Weeks start Monday (locale.firstDayOfWeek) with the ISO 8601 week number shown alongside each
+ * row (weekNumbers) — flatpickr's default getWeek already implements the ISO 8601 algorithm
+ * (Thursday-of-the-week decides the week's year), so no override is needed for the number itself.
  */
 export class DateTimeInput {
     private readonly dateInputEl: HTMLInputElement;
@@ -55,6 +59,8 @@ export class DateTimeInput {
             defaultHour: 0,
             defaultMinute: 0,
             monthSelectorType: "static",
+            locale: { firstDayOfWeek: 1 },
+            weekNumbers: true,
             defaultDate: initial ? toJsDate(initial) : undefined,
             onChange: (selectedDates) => this.emit(selectedDates[0] ?? null),
         });

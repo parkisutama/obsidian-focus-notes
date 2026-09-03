@@ -14,6 +14,8 @@ test("DateTimeInput wraps flatpickr for the date grid and its own 24-hour spin-i
     assert.match(source, /enableTime: this\.requireTime/);
     assert.match(source, /time_24hr: true/);
     assert.match(source, /monthSelectorType: "static"/);
+    assert.match(source, /locale: \{ firstDayOfWeek: 1 \}/);
+    assert.match(source, /weekNumbers: true/);
     assert.match(source, /cls: "fn-datetime-today"/);
     assert.match(source, /this\.fp\.setDate\(new Date\(\), true\)/);
     assert.match(source, /destroy\(\): void \{\s*this\.fp\.destroy\(\);/);
@@ -25,6 +27,7 @@ test("styles.css vendors flatpickr's CSS and themes it (including the time spin-
     assert.match(css, /\.flatpickr-day\.today/);
     assert.match(css, /\.flatpickr-day\.selected/);
     assert.match(css, /\.flatpickr-time /);
+    assert.match(css, /\.flatpickr-weekwrapper \.flatpickr-weeks \{\s*box-shadow: 1px 0 0 var\(--background-modifier-border\);/);
     assert.match(css, /\.fn-datetime-input-wrap \{/);
     assert.match(css, /\.fn-datetime-today,\s*\.fn-datetime-clear \{/);
 });
