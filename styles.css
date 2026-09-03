@@ -3959,9 +3959,10 @@ body.fn-mobile-event-screen-open .suggestion-container {
 /* Replaces native <input type="date"/"time"/"datetime-local">: its display
  * format follows the OS/Electron process locale, which a plugin can't
  * override, so this renders and controls DD/MM/YYYY + 24-hour formatting
- * itself instead. flatpickr's own calendar CSS is themed separately, below
- * the vendored flatpickr.css block — these rules are just this input's own
- * wrapper/clear button/time <select> dropdowns. */
+ * itself instead. flatpickr's own calendar CSS (including its built-in time
+ * spin-input row) is themed separately, below the vendored flatpickr.css
+ * block — these rules are just this input's own wrapper and its Today/Clear
+ * buttons. */
 .fn-datetime-input-wrap {
     display: flex;
     align-items: center;
@@ -3976,8 +3977,9 @@ body.fn-mobile-event-screen-open .suggestion-container {
     color: var(--text-normal);
     font-size: var(--font-ui-small);
     font-family: inherit;
-    width: 130px;
+    width: 155px;
 }
+.fn-datetime-today,
 .fn-datetime-clear {
     padding: 4px 8px;
     border-radius: 6px;
@@ -3987,26 +3989,10 @@ body.fn-mobile-event-screen-open .suggestion-container {
     cursor: pointer;
     font-size: var(--font-ui-smaller);
 }
+.fn-datetime-today:hover,
 .fn-datetime-clear:hover {
     background: var(--background-modifier-hover);
     color: var(--text-normal);
-}
-.fn-datetime-time-wrap {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-.fn-datetime-time-select {
-    padding: 5px 6px;
-    border-radius: 6px;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-primary);
-    color: var(--text-normal);
-    font-size: var(--font-ui-small);
-    font-family: inherit;
-}
-.fn-datetime-time-sep {
-    color: var(--text-muted);
 }
 .fn-mobile-event-screen .fn-datetime-input {
     flex: 1 1 auto;
