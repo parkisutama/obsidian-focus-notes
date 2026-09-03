@@ -13,7 +13,6 @@ test("DateTimeInput wraps flatpickr for the date grid and its own 24-hour spin-i
     assert.match(source, /dateFormat: this\.requireTime \? "d\/m\/Y H:i" : "d\/m\/Y"/);
     assert.match(source, /enableTime: this\.requireTime/);
     assert.match(source, /time_24hr: true/);
-    assert.match(source, /monthSelectorType: "static"/);
     assert.match(source, /locale: \{ firstDayOfWeek: 1 \}/);
     assert.match(source, /weekNumbers: true/);
     assert.match(source, /minuteIncrement: 1/);
@@ -30,6 +29,18 @@ test("DateTimeInput takes over wheel handling on the hour/minute inputs so it st
     assert.match(source, /"wheel",[\s\S]*?event\.preventDefault\(\);/);
     assert.match(source, /\{ passive: false \}/);
     assert.match(source, /this\.fp\.setDate\(next, true\);/);
+});
+
+test("DateTimeInput appends flatpickr's calendar inside the nearest .modal, with its own host-relative position function, instead of flatpickr's default document.body append", async () => {
+    const source = await readFile(
+        new URL("../src/infrastructure/obsidian/datetime/DateTimeInput.ts", import.meta.url),
+        "utf8",
+    );
+    assert.match(source, /function buildModalPositionConfig/);
+    assert.match(source, /container\.closest<HTMLElement>\("\.modal"\)/);
+    assert.match(source, /appendTo: modalEl/);
+    assert.match(source, /position: \(instance\) => \{/);
+    assert.match(source, /\.\.\.buildModalPositionConfig\(container, this\.dateInputEl\)/);
 });
 
 test("styles.css vendors flatpickr's CSS and themes it (including the time spin-input row) with Obsidian variables", async () => {

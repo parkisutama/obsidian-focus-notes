@@ -1,5 +1,6 @@
 import flatpickr from "flatpickr";
 import type { Instance as FlatpickrInstance } from "flatpickr/dist/types/instance";
+import type { Options as FlatpickrOptions } from "flatpickr/dist/types/options";
 import {
     formatCanonicalValue,
     parseCanonicalValue,
@@ -26,9 +27,20 @@ export interface DateTimeInputOptions {
  * Time uses flatpickr's own 24-hour spin-input row (enableTime), not a plain <select> — a native
  * <select> with 24/60 <option>s was tried first, but its dropdown popup doesn't reliably
  * clamp/scroll inside Obsidian's Electron window, leaving the higher hour/minute values
- * unreachable. The month name is static text rather than flatpickr's month <select>
- * (monthSelectorType) for the same reason — the prev/next arrows and the year spin-input already
- * cover navigation without an unreliable native popup.
+ * unreachable.
+ *
+ * By default flatpickr appends its calendar straight to document.body, outside the Obsidian
+ * `Modal` this input usually lives in — which is exactly what keeps the calendar's *day* clicks
+ * working (clicking one only needs a "click" listener to fire) but silently breaks *typing* into
+ * its year/hour/minute/month-dropdown inputs (that needs the input to actually keep keyboard
+ * focus, and something in Obsidian's modal focus handling steals it back once focus lands on an
+ * element the Modal doesn't consider its own — a well-documented flatpickr-in-a-modal failure
+ * mode, not specific to this app). buildModalPositionConfig below appends the calendar inside the
+ * nearest `.modal` instead, which keeps it inside whatever DOM subtree that focus handling
+ * respects, and supplies a `position` function that reproduces flatpickr's own
+ * below-input/flip-above-if-cramped placement math but relative to that `.modal` (its actual new
+ * containing block) instead of the page — flatpickr's own math assumes a document.body-relative
+ * containing block and renders in the wrong place otherwise.
  *
  * Weeks start Monday (locale.firstDayOfWeek) with the ISO 8601 week number shown alongside each
  * row (weekNumbers) — flatpickr's default getWeek already implements the ISO 8601 algorithm
@@ -69,11 +81,11 @@ export class DateTimeInput {
             defaultHour: 0,
             defaultMinute: 0,
             minuteIncrement: 1,
-            monthSelectorType: "static",
             locale: { firstDayOfWeek: 1 },
             weekNumbers: true,
             defaultDate: initial ? toJsDate(initial) : undefined,
             onChange: (selectedDates) => this.emit(selectedDates[0] ?? null),
+            ...buildModalPositionConfig(container, this.dateInputEl),
         });
         if (this.requireTime) this.attachTimeWheelControl();
 
@@ -135,4 +147,32 @@ export class DateTimeInput {
         const parts = partsFromJsDate(date, this.requireTime ? date.getHours() : null, this.requireTime ? date.getMinutes() : null);
         this.onChange(formatCanonicalValue(parts));
     }
+}
+
+/** Empty (flatpickr's own document.body append is used unchanged) when `container` isn't inside a
+ * `.modal` — e.g. mobile's full-screen forms, which don't have this focus-handling conflict. */
+function buildModalPositionConfig(container: HTMLElement, positionElement: HTMLElement): Partial<FlatpickrOptions> {
+    const modalEl = container.closest<HTMLElement>(".modal");
+    if (!modalEl) return {};
+    return {
+        appendTo: modalEl,
+        position: (instance) => {
+            const calendar = instance.calendarContainer;
+            const inputBounds = positionElement.getBoundingClientRect();
+            const hostBounds = modalEl.getBoundingClientRect();
+            const calendarHeight = Array.from(calendar.children).reduce(
+                (total, child) => total + (child as HTMLElement).offsetHeight,
+                0,
+            );
+            const showOnTop =
+                window.innerHeight - inputBounds.bottom < calendarHeight && inputBounds.top > calendarHeight;
+            calendar.classList.toggle("arrowTop", !showOnTop);
+            calendar.classList.toggle("arrowBottom", showOnTop);
+            calendar.style.top = `${
+                inputBounds.top - hostBounds.top + (showOnTop ? -calendarHeight - 2 : positionElement.offsetHeight + 2)
+            }px`;
+            calendar.style.left = `${inputBounds.left - hostBounds.left}px`;
+            calendar.style.right = "auto";
+        },
+    };
 }
