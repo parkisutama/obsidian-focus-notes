@@ -1,9 +1,17 @@
 import { Setting } from "obsidian";
 import { parseCanonicalValue } from "../../domain/DateTimeFormat.ts";
-import { MobileDateTimePicker } from "./MobileDateTimePicker.ts";
+import { DateTimeInput } from "../../../../../infrastructure/obsidian/datetime/DateTimeInput.ts";
 
 export class MobileFormFields {
+    private readonly pickers: DateTimeInput[] = [];
+
     constructor(private readonly changed: (change: () => void) => void) {}
+
+    /** Destroys every DateTimeInput this instance created — flatpickr keeps document-level listeners and a detached calendar element alive until told to stop, so callers must invoke this before discarding a render pass. */
+    destroyPickers(): void {
+        for (const picker of this.pickers) picker.destroy();
+        this.pickers.length = 0;
+    }
 
     dateTime(
         container: HTMLElement,
@@ -16,12 +24,14 @@ export class MobileFormFields {
         // already carries one, matching the old native-input behavior exactly.
         const hasExistingTime = parseCanonicalValue(value)?.hour !== null && parseCanonicalValue(value)?.hour !== undefined;
         const setting = new Setting(container).setName(label);
-        new MobileDateTimePicker({
-            initialValue: value,
-            requireTime: requireTime || hasExistingTime,
-            ariaLabel: label,
-            onChange: (next) => this.changed(() => onChange(next)),
-        }).render(setting.controlEl);
+        this.pickers.push(
+            new DateTimeInput(setting.controlEl, {
+                initialValue: value,
+                requireTime: requireTime || hasExistingTime,
+                ariaLabel: label,
+                onChange: (next) => this.changed(() => onChange(next)),
+            }),
+        );
         return setting;
     }
 

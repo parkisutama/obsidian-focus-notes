@@ -1,7 +1,7 @@
 /**
- * Pure parsing/formatting/calendar-grid math for the custom date/time picker (replaces native
+ * Pure parsing/formatting math for the custom date/time picker (replaces native
  * <input type="date"/"time"/"datetime-local">, whose displayed format follows the OS/Electron
- * process locale — something a plugin cannot override; see DesktopDateTimePicker.ts for why).
+ * process locale — something a plugin cannot override; see DateTimeInput.ts for why).
  *
  * The app's canonical string shape stays exactly what ScheduledItemFormAdapter.parseLocalDateTime
  * already expects: "YYYY-MM-DD" or "YYYY-MM-DD HH:mm".
@@ -35,61 +35,12 @@ export function formatCanonicalValue(parts: DateTimeParts): string {
     return `${date} ${pad2(parts.hour)}:${pad2(parts.minute)}`;
 }
 
-/** "02/09/2026 15:54", "02/09/2026" (no time), or "" for null — never locale-dependent. */
-export function formatDisplayValue(parts: DateTimeParts | null): string {
-    if (!parts) return "";
-    const date = `${pad2(parts.day)}/${pad2(parts.month)}/${pad4(parts.year)}`;
-    if (parts.hour === null || parts.minute === null) return date;
-    return `${date} ${pad2(parts.hour)}:${pad2(parts.minute)}`;
-}
-
 export function toJsDate(parts: DateTimeParts): Date {
     return new Date(parts.year, parts.month - 1, parts.day, parts.hour ?? 0, parts.minute ?? 0);
 }
 
 export function partsFromJsDate(date: Date, hour: number | null, minute: number | null): DateTimeParts {
     return { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate(), hour, minute };
-}
-
-export function isSameDay(a: DateTimeParts, b: DateTimeParts): boolean {
-    return a.year === b.year && a.month === b.month && a.day === b.day;
-}
-
-export interface CalendarCell {
-    year: number;
-    month: number; // 1-12
-    day: number;
-    /** False for a leading/trailing day borrowed from the adjacent month to fill the grid. */
-    inCurrentMonth: boolean;
-}
-
-/**
- * Monday-first weeks (en-GB/ISO convention) covering the full month, padded with adjacent-month
- * days so every week has exactly 7 cells.
- */
-export function buildCalendarWeeks(year: number, month: number): CalendarCell[][] {
-    const firstOfMonth = new Date(year, month - 1, 1);
-    const daysInMonth = new Date(year, month, 0).getDate();
-    // getDay(): 0=Sunday..6=Saturday. Convert to Monday-first offset (0=Monday..6=Sunday).
-    const leadingCount = (firstOfMonth.getDay() + 6) % 7;
-
-    const cells: CalendarCell[] = [];
-    for (let i = leadingCount; i > 0; i--) {
-        const d = new Date(year, month - 1, 1 - i);
-        cells.push({ year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate(), inCurrentMonth: false });
-    }
-    for (let day = 1; day <= daysInMonth; day++) {
-        cells.push({ year, month, day, inCurrentMonth: true });
-    }
-    while (cells.length % 7 !== 0) {
-        const last = cells[cells.length - 1];
-        const d = new Date(last.year, last.month - 1, last.day + 1);
-        cells.push({ year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate(), inCurrentMonth: false });
-    }
-
-    const weeks: CalendarCell[][] = [];
-    for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
-    return weeks;
 }
 
 function isValidParts(parts: DateTimeParts): boolean {

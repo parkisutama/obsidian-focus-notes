@@ -47,13 +47,12 @@ export class MobileScheduledItemForm extends Component {
     private rootEl: HTMLElement | null = null;
     private controller: ContextNotesController | null = null;
     private reflectionController: ContextNotesController | null = null;
+    private fields: MobileFormFields | null = null;
     private busy = false;
     private recovery = false;
     private errorMessage = "";
 
-    constructor(private readonly options: MobileScheduledItemFormOptions) {
-        super();
-    }
+    constructor(private readonly options: MobileScheduledItemFormOptions) { super(); }
 
     open(owner?: Component): void {
         if (this.rootEl) return;
@@ -73,13 +72,19 @@ export class MobileScheduledItemForm extends Component {
     }
 
     onunload(): void {
+        this.destroyFieldControllers();
+        this.rootEl?.remove();
+        this.rootEl = null;
+        document.body.removeClass("fn-mobile-event-screen-open");
+    }
+
+    private destroyFieldControllers(): void {
         this.controller?.destroy();
         this.controller = null;
         this.reflectionController?.destroy();
         this.reflectionController = null;
-        this.rootEl?.remove();
-        this.rootEl = null;
-        document.body.removeClass("fn-mobile-event-screen-open");
+        this.fields?.destroyPickers();
+        this.fields = null;
     }
 
     setSubmissionState(state: { busy: boolean; recovery: boolean; errorMessage?: string }): void {
@@ -92,10 +97,7 @@ export class MobileScheduledItemForm extends Component {
     private render(): void {
         const root = this.rootEl;
         if (!root) return;
-        this.controller?.destroy();
-        this.controller = null;
-        this.reflectionController?.destroy();
-        this.reflectionController = null;
+        this.destroyFieldControllers();
         root.empty();
         const model = buildMobileScheduledItemFormModel({
             mode: this.options.mode,
@@ -123,7 +125,7 @@ export class MobileScheduledItemForm extends Component {
         submit.addEventListener("click", this.options.onSubmit);
 
         const body = root.createEl("main", { cls: "fn-mobile-event-body" });
-        const fields = new MobileFormFields((change) => this.changed(change));
+        const fields = (this.fields = new MobileFormFields((change) => this.changed(change)));
         body.createDiv({ cls: "fn-mobile-scheduled-context", text: model.contextLabel });
         this.renderKindChips(body);
         fields.text(body, "Title", this.options.data.title, (value) => (this.options.data.title = value));

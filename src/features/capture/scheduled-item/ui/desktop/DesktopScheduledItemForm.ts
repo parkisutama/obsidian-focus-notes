@@ -12,7 +12,7 @@ import { renderDesktopFocusSummarySection } from "./DesktopFocusSummarySection.t
 import type { FormattedFocusSummary } from "../../domain/ScheduledItemFocusSummary.ts";
 import { renderDesktopReflectionSection } from "./DesktopTaskReflectionSection.ts";
 import { renderDesktopTemporalSection } from "./DesktopTemporalSection.ts";
-import type { DesktopDateTimePicker } from "./DesktopDateTimePicker.ts";
+import type { DateTimeInput } from "../../../../../infrastructure/obsidian/datetime/DateTimeInput.ts";
 
 export type { DesktopScheduledItemCreateContext } from "./DesktopCreateTargetSection.ts";
 
@@ -45,7 +45,7 @@ export class DesktopScheduledItemForm {
     private container: HTMLElement | null = null;
     private descriptionController: ContextNotesController | null = null;
     private reflectionNotesController: ContextNotesController | null = null;
-    private dateTimePickers: DesktopDateTimePicker[] = [];
+    private dateTimePickers: DateTimeInput[] = [];
     private busy = false;
     private recovery = false;
     private errorMessage = "";

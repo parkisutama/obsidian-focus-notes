@@ -1,7 +1,7 @@
 import { Setting } from "obsidian";
 import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData.ts";
 import { parseCanonicalValue } from "../../domain/DateTimeFormat.ts";
-import { DesktopDateTimePicker } from "./DesktopDateTimePicker.ts";
+import { DateTimeInput } from "../../../../../infrastructure/obsidian/datetime/DateTimeInput.ts";
 
 interface DesktopTemporalSectionOptions {
     mode: "create" | "edit";
@@ -14,12 +14,12 @@ interface DesktopTemporalSectionOptions {
     onManageTimeboxes?(): void;
 }
 
-/** Returns every date/time picker this render created, so the caller can destroy them before the next render. */
+/** Returns every date/time input this render created, so the caller can destroy them before the next render. */
 export function renderDesktopTemporalSection(
     container: HTMLElement,
     options: DesktopTemporalSectionOptions,
-): DesktopDateTimePicker[] {
-    const pickers: DesktopDateTimePicker[] = [];
+): DateTimeInput[] {
+    const pickers: DateTimeInput[] = [];
     if (options.data.kind === "task") renderTaskSection(container, options, pickers);
     else renderEventSection(container, options, pickers);
     return pickers;
@@ -28,7 +28,7 @@ export function renderDesktopTemporalSection(
 function renderTaskSection(
     container: HTMLElement,
     options: DesktopTemporalSectionOptions,
-    pickers: DesktopDateTimePicker[],
+    pickers: DateTimeInput[],
 ): void {
     const data = options.data;
     if (data.kind !== "task") return;
@@ -103,7 +103,7 @@ function renderTaskSection(
 function renderEventSection(
     container: HTMLElement,
     options: DesktopTemporalSectionOptions,
-    pickers: DesktopDateTimePicker[],
+    pickers: DateTimeInput[],
 ): void {
     const data = options.data;
     if (data.kind !== "event") return;
@@ -150,7 +150,7 @@ function renderEventSection(
 
 function dateTimeSetting(
     container: HTMLElement,
-    pickers: DesktopDateTimePicker[],
+    pickers: DateTimeInput[],
     label: string,
     value: string | null,
     requireTime: boolean,
@@ -161,13 +161,12 @@ function dateTimeSetting(
     // existing value already carries one, matching the old native-input behavior exactly.
     const hasExistingTime = parseCanonicalValue(value)?.hour !== null && parseCanonicalValue(value)?.hour !== undefined;
     const setting = new Setting(container).setName(label);
-    const picker = new DesktopDateTimePicker({
+    const picker = new DateTimeInput(setting.controlEl, {
         initialValue: value,
         requireTime: requireTime || hasExistingTime,
         ariaLabel: label,
         onChange: (next) => update(() => onChange(next)),
     });
-    picker.render(setting.controlEl);
     pickers.push(picker);
     return setting;
 }

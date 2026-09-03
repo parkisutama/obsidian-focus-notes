@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      flatpickr:
+        specifier: ^4.6.13
+        version: 4.6.13
     devDependencies:
       '@biomejs/biome':
         specifier: 2.5.8
@@ -870,6 +874,9 @@ packages:
 
   estree-walker@2.0.2:
     resolution: {integrity: sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==}
+
+  flatpickr@4.6.13:
+    resolution: {integrity: sha512-97PMG/aywoYpB4IvbvUJi0RQi8vearvU0oov1WW3k0WZPBMrTQVqekSX5CjSG/M4Q3i6A/0FKXC7RyAoAUUSPw==}
 
   focus-trap@7.8.0:
     resolution: {integrity: sha512-/yNdlIkpWbM0ptxno3ONTuf+2g318kh2ez3KSeZN5dZ8YC6AAmgeWz+GasYYiBJPFaYcSAPeu4GfhUaChzIJXA==}
@@ -1811,6 +1818,8 @@ snapshots:
       '@esbuild/win32-x64': 0.28.2
 
   estree-walker@2.0.2: {}
+
+  flatpickr@4.6.13: {}
 
   focus-trap@7.8.0:
     dependencies:

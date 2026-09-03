@@ -11,7 +11,7 @@ test("Event/Task desktop temporal fields, Timebox Manager, and mobile form field
     for (const relativePath of files) {
         const source = await readFile(new URL(relativePath, import.meta.url), "utf8");
         assert.doesNotMatch(source, /type: "date"|type: "time"|type: "datetime-local"/, relativePath);
-        assert.match(source, /DateTimePicker/, relativePath);
+        assert.match(source, /DateTimeInput/, relativePath);
     }
 });
 

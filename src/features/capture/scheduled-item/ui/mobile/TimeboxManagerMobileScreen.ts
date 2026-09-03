@@ -46,6 +46,7 @@ export class TimeboxManagerMobileScreen extends Component {
     private confirmingDeleteId: string | null = null;
     private errorMessage = "";
     private opened = false;
+    private fields: MobileFormFields[] = [];
 
     constructor(
         private readonly app: App,
@@ -79,9 +80,15 @@ export class TimeboxManagerMobileScreen extends Component {
     }
 
     onunload(): void {
+        this.destroyFields();
         this.rootEl?.remove();
         this.rootEl = null;
         document.body.removeClass("fn-mobile-event-screen-open");
+    }
+
+    private destroyFields(): void {
+        for (const fields of this.fields) fields.destroyPickers();
+        this.fields = [];
     }
 
     private loadFromSnapshot(): void {
@@ -93,6 +100,7 @@ export class TimeboxManagerMobileScreen extends Component {
     private render(): void {
         const root = this.rootEl;
         if (!root) return;
+        this.destroyFields();
         root.empty();
         const header = root.createEl("header", { cls: "fn-mobile-event-header" });
         const cancel = header.createEl("button", {
@@ -105,6 +113,7 @@ export class TimeboxManagerMobileScreen extends Component {
 
         const body = root.createEl("main", { cls: "fn-mobile-event-body" });
         const fields = new MobileFormFields((change) => change());
+        this.fields.push(fields);
         if (this.errorMessage) {
             body.createDiv({
                 cls: "fn-scheduled-item-form-error",
@@ -149,6 +158,7 @@ export class TimeboxManagerMobileScreen extends Component {
         let start = timebox.start;
         let end = timebox.end;
         const fields = new MobileFormFields((change) => change());
+        this.fields.push(fields);
         fields.dateTime(container, "Start", timebox.start, true, (value) => {
             start = value ?? "";
         });

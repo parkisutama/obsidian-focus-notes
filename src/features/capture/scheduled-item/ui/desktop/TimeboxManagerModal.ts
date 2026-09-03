@@ -18,7 +18,7 @@ import type { TaskTimebox, TaskTimeboxStatus } from "../../domain/TaskTimebox.ts
 import { planTaskDayReferences, type TaskDayReferenceTimebox } from "../../domain/TaskDayReferencePlan.ts";
 import { describeTaskTimeboxWarnings } from "../../domain/TaskTimeboxWarningLabel.ts";
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings.ts";
-import { DesktopDateTimePicker } from "./DesktopDateTimePicker.ts";
+import { DateTimeInput } from "../../../../../infrastructure/obsidian/datetime/DateTimeInput.ts";
 
 export interface TimeboxManagerOptions {
     snapshot: LedgerRecordSnapshot;
@@ -43,7 +43,7 @@ export class TimeboxManagerModal extends Modal {
     private editingId: string | null;
     private confirmingDeleteId: string | null = null;
     private errorMessage = "";
-    private dateTimePickers: DesktopDateTimePicker[] = [];
+    private dateTimePickers: DateTimeInput[] = [];
 
     constructor(
         app: App,
@@ -162,7 +162,7 @@ export class TimeboxManagerModal extends Modal {
         );
     }
 
-    /** Custom DD/MM/YYYY + 24-hour picker instead of a free-typed "YYYY-MM-DD HH:mm" string — see DesktopDateTimePicker.ts. */
+    /** Custom DD/MM/YYYY + 24-hour picker instead of a free-typed "YYYY-MM-DD HH:mm" string — see DateTimeInput.ts. */
     private renderDateTimeField(
         container: HTMLElement,
         label: string,
@@ -171,13 +171,12 @@ export class TimeboxManagerModal extends Modal {
     ): void {
         const field = container.createDiv({ cls: "fn-timebox-datetime-field" });
         field.createSpan({ cls: "fn-timebox-datetime-label", text: label });
-        const picker = new DesktopDateTimePicker({
+        const picker = new DateTimeInput(field, {
             initialValue: value || null,
             requireTime: true,
             ariaLabel: `Timebox ${label.toLowerCase()}`,
             onChange: (next) => onChange(next ?? ""),
         });
-        picker.render(field);
         this.dateTimePickers.push(picker);
     }
 
