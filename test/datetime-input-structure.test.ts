@@ -16,9 +16,20 @@ test("DateTimeInput wraps flatpickr for the date grid and its own 24-hour spin-i
     assert.match(source, /monthSelectorType: "static"/);
     assert.match(source, /locale: \{ firstDayOfWeek: 1 \}/);
     assert.match(source, /weekNumbers: true/);
+    assert.match(source, /minuteIncrement: 1/);
     assert.match(source, /cls: "fn-datetime-today"/);
     assert.match(source, /this\.fp\.setDate\(new Date\(\), true\)/);
     assert.match(source, /destroy\(\): void \{\s*this\.fp\.destroy\(\);/);
+});
+
+test("DateTimeInput takes over wheel handling on the hour/minute inputs so it stays in sync with flatpickr's own state on every tick, instead of relying on native step-on-scroll", async () => {
+    const source = await readFile(
+        new URL("../src/infrastructure/obsidian/datetime/DateTimeInput.ts", import.meta.url),
+        "utf8",
+    );
+    assert.match(source, /"wheel",[\s\S]*?event\.preventDefault\(\);/);
+    assert.match(source, /\{ passive: false \}/);
+    assert.match(source, /this\.fp\.setDate\(next, true\);/);
 });
 
 test("styles.css vendors flatpickr's CSS and themes it (including the time spin-input row) with Obsidian variables", async () => {

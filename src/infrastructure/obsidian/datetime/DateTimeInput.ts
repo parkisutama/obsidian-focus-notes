@@ -33,6 +33,16 @@ export interface DateTimeInputOptions {
  * Weeks start Monday (locale.firstDayOfWeek) with the ISO 8601 week number shown alongside each
  * row (weekNumbers) — flatpickr's default getWeek already implements the ISO 8601 algorithm
  * (Thursday-of-the-week decides the week's year), so no override is needed for the number itself.
+ *
+ * The hour/minute spin-inputs are plain `<input type="number">`, so a mouse wheel over a focused
+ * one steps its value using the browser's own native handling — but that only mutates the input's
+ * DOM value; flatpickr doesn't notice until the input blurs (it syncs on blur or on its own
+ * synthetic "increment" event from an arrow-key press or spinner click, not on wheel), so scrolling
+ * both fields in the same gesture, or scrolling and then reading the picker's emitted value before
+ * blurring, desyncs what's on screen from what's actually selected. attachTimeWheelControl takes
+ * wheel handling over entirely — one input's worth of hour or minute at a time, wrapping at the
+ * 24/60 boundary — and drives it through `fp.setDate` so flatpickr's own state, its redraw, and
+ * this component's onChange all update atomically on every tick.
  */
 export class DateTimeInput {
     private readonly dateInputEl: HTMLInputElement;
@@ -58,12 +68,14 @@ export class DateTimeInput {
             time_24hr: true,
             defaultHour: 0,
             defaultMinute: 0,
+            minuteIncrement: 1,
             monthSelectorType: "static",
             locale: { firstDayOfWeek: 1 },
             weekNumbers: true,
             defaultDate: initial ? toJsDate(initial) : undefined,
             onChange: (selectedDates) => this.emit(selectedDates[0] ?? null),
         });
+        if (this.requireTime) this.attachTimeWheelControl();
 
         const todayBtn = wrap.createEl("button", {
             type: "button",
@@ -90,6 +102,29 @@ export class DateTimeInput {
 
     destroy(): void {
         this.fp.destroy();
+    }
+
+    private attachTimeWheelControl(): void {
+        this.attachWheelStep(this.fp.hourElement, "hours", 23);
+        this.attachWheelStep(this.fp.minuteElement, "minutes", 59);
+    }
+
+    private attachWheelStep(input: HTMLInputElement | undefined, unit: "hours" | "minutes", max: number): void {
+        if (!input) return;
+        input.addEventListener(
+            "wheel",
+            (event) => {
+                event.preventDefault();
+                const next = new Date(this.fp.selectedDates[0] ?? new Date());
+                const delta = event.deltaY < 0 ? 1 : -1;
+                const current = unit === "hours" ? next.getHours() : next.getMinutes();
+                const wrapped = ((current + delta) % (max + 1) + (max + 1)) % (max + 1);
+                if (unit === "hours") next.setHours(wrapped);
+                else next.setMinutes(wrapped);
+                this.fp.setDate(next, true);
+            },
+            { passive: false },
+        );
     }
 
     private emit(date: Date | null): void {
