@@ -43,6 +43,34 @@ test("hydrates Task and Event edits through the shared form contract", () => {
     assert.equal(event.status === "ready" && event.data.kind, "event");
 });
 
+test("hydrates owner Reflection after Focus Sessions without legacy line fields overriding it", () => {
+    const result = hydrateScheduledItemFormEdit({
+        kind: "task",
+        title: "Active Development",
+        snapshot: capture(
+            [
+                "- [ ] Active Development | due:2026-09-02 ^task-abc1234567",
+                "    - description: Implement the focused flow",
+                "    - focus-session: start:2026-09-02 08:22 | end:2026-09-02 08:23 | duration:1m | mode:stopwatch ^focus-aaaaaaaaaa",
+                "        - reflection: stress:low | emotion:neutral | mood:disconnected",
+                "        - reflection-notes: First session",
+                "    - focus-session: start:2026-09-02 08:30 | end:2026-09-02 09:01 | duration:31m | mode:stopwatch ^focus-bbbbbbbbbb",
+                "        - reflection: stress:normal | emotion:neutral | mood:flat",
+                "        - reflection-notes: Second session",
+                "    - reflection: stress:normal | emotion:unpleasant | mood:irritable",
+                "    - reflection-notes: Task-level reflection",
+            ].join("\n"),
+        ),
+    });
+
+    assert.equal(result.status, "ready");
+    if (result.status !== "ready" || result.data.kind !== "task") return;
+    assert.equal(result.data.stressLevel, "normal");
+    assert.equal(result.data.emotionCategory, "unpleasant");
+    assert.equal(result.data.emotionKey, "irritable");
+    assert.equal(result.data.reflectionNotes, "Task-level reflection");
+});
+
 test("applies identical validation rules independent of persistence mode", () => {
     const invalid: ScheduledItemFormData = {
         kind: "event",

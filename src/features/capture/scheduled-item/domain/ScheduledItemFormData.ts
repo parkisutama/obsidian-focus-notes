@@ -115,12 +115,19 @@ export function scheduledItemFormDataFromCreateState(state: EventTaskFormState):
 }
 
 export function scheduledTaskFormDataFromLineEdit(input: LineEditAdapterInput<TaskLineEdit>): ScheduledTaskFormData {
+    const childReflection = input.reflection;
+    const hasChildReflection = Boolean(
+        childReflection &&
+            (childReflection.stressLevel !== null ||
+                childReflection.emotionCategory !== null ||
+                childReflection.emotionKey !== null),
+    );
     return {
         kind: "task",
         ...commonFields(input.title, input.description, input.detailNote),
-        ...(input.reflection ?? {}),
-        reflectionNotes: input.reflectionNotes ?? null,
         ...input.edit,
+        ...(hasChildReflection ? childReflection : {}),
+        reflectionNotes: input.reflectionNotes ?? null,
     };
 }
 
