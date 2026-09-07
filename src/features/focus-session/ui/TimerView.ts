@@ -87,6 +87,7 @@ export class TimerView extends ItemView {
         const wrap = root.createDiv({ cls: "focus-notes-wrap" });
 
         this.controls.render(wrap);
+        this.controls.renderPurpose(wrap);
         this.recentEntries = new TimerRecentEntries(this.app, this, this.getSettings, this.buildReader);
         this.recentEntries.render(wrap);
 

@@ -42,12 +42,16 @@ export class TimerControls {
 
     render(parent: HTMLElement): void {
         this.renderModeMenu(parent);
-        this.renderPurposeSelector(parent);
         this.display = new CircularDisplay(parent);
         this.renderDurationRow(parent);
         this.renderActions(parent);
         this.applyMode(this.currentMode); // sets default duration + display
         this.refreshDisplay();
+    }
+
+    /** Rendered after the timer controls so the sidebar reads timer -> purpose -> recent. */
+    renderPurpose(parent: HTMLElement): void {
+        this.renderPurposeSelector(parent);
     }
 
     /** The resolved Event/Task(+timebox) owner from the last successful start; null once idle again. */
