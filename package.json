@@ -40,12 +40,12 @@
     "author": "Parkis",
     "license": "MIT",
     "devDependencies": {
-        "@biomejs/biome": "2.5.8",
-        "@types/node": "^24.13.3",
+        "@biomejs/biome": "2.5.12",
+        "@types/node": "^26.4.1",
         "esbuild": "0.28.2",
         "obsidian": "1.13.1",
         "tslib": "^2.8.1",
-        "typescript": "^5.9.3",
+        "typescript": "^7.0.2",
         "vitepress": "1.6.4"
     },
     "dependencies": {

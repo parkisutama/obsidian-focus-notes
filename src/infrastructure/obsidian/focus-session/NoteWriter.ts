@@ -1,6 +1,8 @@
-import { type App, type TFile, moment, normalizePath } from "obsidian";
+import { type App, type TFile, moment as obsidianMoment, normalizePath } from "obsidian";
 import type { FocusTarget } from "../../../features/capture/domain/CaptureTarget";
 import type { SessionRecord } from "../../../features/focus-session/domain/SessionRecord";
+
+const moment = obsidianMoment as unknown as (input: Date) => { format(format: string): string };
 import {
     getEmotionCategoryLabel,
     getStressLevelLabel,

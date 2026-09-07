@@ -1,9 +1,20 @@
-import { type App, moment } from "obsidian";
+import { type App, moment as obsidianMoment } from "obsidian";
 import type { FocusTarget } from "../../../features/capture/domain/CaptureTarget";
 import { resolveDetailNotesFolder } from "../../../features/capture/scheduled-item/domain/DetailNotesFolderResolution.ts";
 import { normalizeDailyNoteFormat } from "../../../features/periodical-notes/domain/DailyNotePath";
 import type { PeriodicalNoteProfile } from "../../../features/periodical-notes/domain/PeriodicalNote";
 import type { FocusNotesSettings } from "../../../features/settings/domain/FocusNotesSettings";
+
+interface ObsidianMomentValue {
+    format(format: string): string;
+    isValid(): boolean;
+    toDate(): Date;
+}
+
+const moment = obsidianMoment as unknown as {
+    (input?: Date): ObsidianMomentValue;
+    (input: string, format: string, strict: boolean): ObsidianMomentValue;
+};
 
 /**
  * Resolves abstract targets (which may contain template tokens or be empty)
