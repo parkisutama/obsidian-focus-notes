@@ -2,6 +2,7 @@ import type { ContextSourceSettings, InboxSettings } from "../../object-notes/do
 import type { FocusNotesSettings } from "./FocusNotesSettings";
 
 export const DEFAULT_SETTINGS: FocusNotesSettings = {
+    hideBlockIdsUntilHover: false,
     pomodoroMinutes: 25,
     timerMinutes: 10,
     lastMode: "pomodoro",

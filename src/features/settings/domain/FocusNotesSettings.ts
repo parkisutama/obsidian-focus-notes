@@ -11,6 +11,9 @@ import type { PeriodicalNotesSettings } from "../../periodical-notes/domain/Peri
 import type { FocusTimelineSettings } from "../../timeline/domain/TimelineSettings";
 
 export interface FocusNotesSettings {
+    /** De-emphasize rendered/editor block IDs and make them click-to-copy. */
+    hideBlockIdsUntilHover: boolean;
+
     /** Default focus duration for the Pomodoro tab. */
     pomodoroMinutes: number;
     /** Default duration for the Timer tab. */

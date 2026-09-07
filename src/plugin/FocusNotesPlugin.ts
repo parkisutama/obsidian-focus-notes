@@ -34,6 +34,9 @@ export default class FocusNotesPlugin extends Plugin {
 
     async onload(): Promise<void> {
         await this.loadSettings();
+        this.applyAppearanceSettings();
+        this.register(() => document.body.removeClass("fn-minimal-block-ids"));
+        this.registerDomEvent(document, "click", (event) => void this.copyClickedBlockId(event));
 
         this.registerHoverLinkSource("focus-notes-inbox", {
             display: "Focus Notes",
@@ -148,6 +151,24 @@ export default class FocusNotesPlugin extends Plugin {
 
     async saveSettings(): Promise<void> {
         await this.stateStore.save(this.settings);
+        this.applyAppearanceSettings();
+    }
+
+    private applyAppearanceSettings(): void {
+        document.body.toggleClass("fn-minimal-block-ids", this.settings.hideBlockIdsUntilHover);
+    }
+
+    private async copyClickedBlockId(event: MouseEvent): Promise<void> {
+        if (!this.settings.hideBlockIdsUntilHover) return;
+        const target = event.target instanceof Element ? event.target.closest(".cm-blockid, .blockid") : null;
+        const value = target?.textContent?.trim();
+        if (!value || !/^\^[a-z0-9-]+$/i.test(value)) return;
+        try {
+            await navigator.clipboard.writeText(value);
+            new Notice(`Copied ${value}`);
+        } catch {
+            new Notice("Could not copy the block ID.");
+        }
     }
 
     private async activateView(): Promise<void> {

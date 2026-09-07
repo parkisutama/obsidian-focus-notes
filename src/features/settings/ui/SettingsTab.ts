@@ -1,4 +1,4 @@
-import { type App, type Plugin, PluginSettingTab, setIcon } from "obsidian";
+import { type App, type Plugin, PluginSettingTab, Setting, setIcon } from "obsidian";
 import {
     renderEventCapture,
     renderMomentCapture,
@@ -144,6 +144,15 @@ export class FocusNotesSettingsTab extends PluginSettingTab {
         for (const category of ROOT_CATEGORIES) {
             this.renderCategoryRow(list, category, () => this.navigateTo(category.id));
         }
+        new Setting(containerEl)
+            .setName("Minimal block IDs")
+            .setDesc("Hide block IDs until hover or keyboard focus. Click an ID to copy it.")
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.hideBlockIdsUntilHover).onChange(async (value) => {
+                    this.plugin.settings.hideBlockIdsUntilHover = value;
+                    await this.plugin.saveSettings();
+                }),
+            );
     }
 
     private renderCaptureList(containerEl: HTMLElement): void {
