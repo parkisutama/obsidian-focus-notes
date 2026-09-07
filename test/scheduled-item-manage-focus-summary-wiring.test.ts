@@ -39,10 +39,7 @@ test("the shared summary module never touches the vault — Task 64's no-write g
 test("desktop and mobile summary sections only render pre-formatted labels, never write them", async () => {
     const [desktop, mobile] = await Promise.all([
         readFile(
-            new URL(
-                "../src/features/capture/scheduled-item/ui/desktop/DesktopFocusSummarySection.ts",
-                import.meta.url,
-            ),
+            new URL("../src/features/capture/scheduled-item/ui/desktop/DesktopFocusSummarySection.ts", import.meta.url),
             "utf8",
         ),
         readFile(

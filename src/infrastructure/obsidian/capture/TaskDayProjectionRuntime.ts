@@ -35,11 +35,7 @@ export function retryTaskDayProjectionRuntime(
     return retryTaskDayProjection(pending, dependencies(settings, writer, tracker));
 }
 
-function dependencies(
-    settings: FocusNotesSettings,
-    writer: EventTaskWriter,
-    tracker?: WriteSuppressionTracker,
-) {
+function dependencies(settings: FocusNotesSettings, writer: EventTaskWriter, tracker?: WriteSuppressionTracker) {
     const resolver = new TargetResolver(settings);
     return {
         resolveDayFile: (dayKey: string) => {

@@ -126,7 +126,8 @@ export class MobileScheduledItemForm extends Component {
         submit.addEventListener("click", this.options.onSubmit);
 
         const body = root.createEl("main", { cls: "fn-mobile-event-body" });
-        const fields = (this.fields = new MobileFormFields((change) => this.changed(change)));
+        const fields = new MobileFormFields((change) => this.changed(change));
+        this.fields = fields;
         body.createDiv({ cls: "fn-mobile-scheduled-context", text: model.contextLabel });
         this.renderKindChips(body);
         fields.text(body, "Title", this.options.data.title, (value) => (this.options.data.title = value));
@@ -285,8 +286,7 @@ export class MobileScheduledItemForm extends Component {
         if (viewport) {
             viewport.addEventListener("resize", update);
             viewport.addEventListener("scroll", update);
-            // focusin fires before the on-screen keyboard finishes opening, so the initial
-            // Re-run after visualViewport receives the keyboard's final size.
+            // Re-run after focus because visualViewport receives the keyboard size later.
             viewport.addEventListener("resize", reveal);
             this.register(() => {
                 viewport.removeEventListener("resize", update);

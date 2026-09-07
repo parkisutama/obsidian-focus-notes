@@ -17,8 +17,5 @@ test("Timer's Recent panel follows the active note instead of a resolved periodi
         "utf8",
     );
     assert.doesNotMatch(viewSource, /TimerTargetEditor/);
-    assert.match(
-        viewSource,
-        /new TimerRecentEntries\(this\.app, this, this\.getSettings, this\.buildReader\)/,
-    );
+    assert.match(viewSource, /new TimerRecentEntries\(this\.app, this, this\.getSettings, this\.buildReader\)/);
 });

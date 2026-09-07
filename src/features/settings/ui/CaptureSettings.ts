@@ -174,7 +174,6 @@ export function renderEventCapture(containerEl: HTMLElement, ctx: SettingsRender
                 await ctx.saveSettings();
             }),
     );
-
 }
 
 export function renderTaskCapture(containerEl: HTMLElement, ctx: SettingsRenderContext): void {
@@ -213,7 +212,6 @@ export function renderTaskCapture(containerEl: HTMLElement, ctx: SettingsRenderC
                 await ctx.saveSettings();
             }),
     );
-
 }
 
 /** Checklist of Object Sources allowed as Task "Save to" destinations. */
@@ -307,28 +305,24 @@ export function renderSharedNoteCreation(containerEl: HTMLElement, ctx: Settings
     }
 
     if (ctx.settings.eventTask.detailNotesFolderStrategy === "perKind") {
-        new Setting(containerEl)
-            .setName("Event detail notes folder")
-            .addText((text) => {
-                text.setPlaceholder("Notes")
-                    .setValue(ctx.settings.eventTask.detailNotesFolderEvent)
-                    .onChange(async (v) => {
-                        ctx.settings.eventTask.detailNotesFolderEvent = v.trim() || "Notes";
-                        await ctx.saveSettings();
-                    });
-                new FolderSuggest(ctx.app, text.inputEl);
-            });
-        new Setting(containerEl)
-            .setName("Task detail notes folder")
-            .addText((text) => {
-                text.setPlaceholder("Notes")
-                    .setValue(ctx.settings.eventTask.detailNotesFolderTask)
-                    .onChange(async (v) => {
-                        ctx.settings.eventTask.detailNotesFolderTask = v.trim() || "Notes";
-                        await ctx.saveSettings();
-                    });
-                new FolderSuggest(ctx.app, text.inputEl);
-            });
+        new Setting(containerEl).setName("Event detail notes folder").addText((text) => {
+            text.setPlaceholder("Notes")
+                .setValue(ctx.settings.eventTask.detailNotesFolderEvent)
+                .onChange(async (v) => {
+                    ctx.settings.eventTask.detailNotesFolderEvent = v.trim() || "Notes";
+                    await ctx.saveSettings();
+                });
+            new FolderSuggest(ctx.app, text.inputEl);
+        });
+        new Setting(containerEl).setName("Task detail notes folder").addText((text) => {
+            text.setPlaceholder("Notes")
+                .setValue(ctx.settings.eventTask.detailNotesFolderTask)
+                .onChange(async (v) => {
+                    ctx.settings.eventTask.detailNotesFolderTask = v.trim() || "Notes";
+                    await ctx.saveSettings();
+                });
+            new FolderSuggest(ctx.app, text.inputEl);
+        });
     }
 
     containerEl.createEl("h4", { text: "Detail note templates" });

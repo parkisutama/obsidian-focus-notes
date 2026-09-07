@@ -152,7 +152,7 @@ export class DateTimeInput {
                 const next = new Date(this.fp.selectedDates[0] ?? new Date());
                 const delta = event.deltaY < 0 ? 1 : -1;
                 const current = unit === "hours" ? next.getHours() : next.getMinutes();
-                const wrapped = ((current + delta) % (max + 1) + (max + 1)) % (max + 1);
+                const wrapped = (((current + delta) % (max + 1)) + (max + 1)) % (max + 1);
                 if (unit === "hours") next.setHours(wrapped);
                 else next.setMinutes(wrapped);
                 this.fp.setDate(next, true);
@@ -166,7 +166,11 @@ export class DateTimeInput {
             this.onChange(null);
             return;
         }
-        const parts = partsFromJsDate(date, this.requireTime ? date.getHours() : null, this.requireTime ? date.getMinutes() : null);
+        const parts = partsFromJsDate(
+            date,
+            this.requireTime ? date.getHours() : null,
+            this.requireTime ? date.getMinutes() : null,
+        );
         this.onChange(formatCanonicalValue(parts));
     }
 }
@@ -191,7 +195,8 @@ function buildModalPositionConfig(container: HTMLElement, positionElement: HTMLE
                 window.innerHeight - inputBounds.bottom < calendarHeight && inputBounds.top > calendarHeight;
             calendar.classList.toggle("arrowTop", !showOnTop);
             calendar.classList.toggle("arrowBottom", showOnTop);
-            const top = inputBounds.top - hostBounds.top + (showOnTop ? -calendarHeight - 2 : positionElement.offsetHeight + 2);
+            const top =
+                inputBounds.top - hostBounds.top + (showOnTop ? -calendarHeight - 2 : positionElement.offsetHeight + 2);
             const left = inputBounds.left - hostBounds.left;
             const maxLeft = Math.max(margin, hostBounds.width - calendar.offsetWidth - margin);
             const maxTop = Math.max(margin, hostBounds.height - calendarHeight - margin);

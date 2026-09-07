@@ -8,7 +8,10 @@ test("Timeline blocks render a planned-versus-actual focus fill and surface it i
     assert.match(source, /utilization: FocusUtilizationSummary/);
     assert.match(source, /if \(utilization\.sessionCount > 0 && heightPx >= 34\)/);
     assert.match(source, /createDiv\(\{ cls: "ftl-block-focus-fill" \}\)/);
-    assert.match(source, /Focused: \$\{formatMinutes\(utilization\.focusedSeconds\)\} of \$\{formatMinutes\(utilization\.plannedSeconds\)\} planned/);
+    assert.match(
+        source,
+        /Focused: \$\{formatMinutes\(utilization\.focusedSeconds\)\} of \$\{formatMinutes\(utilization\.plannedSeconds\)\} planned/,
+    );
 });
 
 test("Timeline block tooltips clearly say Planned, and clicking a block passes its exact planned segment", async () => {

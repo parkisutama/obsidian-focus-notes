@@ -37,14 +37,17 @@ test("rejects null, empty, malformed, and non-existent calendar dates", () => {
 
 test("round-trips canonical formatting for both date-only and date+time", () => {
     const dateOnly = parseCanonicalValue("2026-09-02");
-    assert.equal(formatCanonicalValue(dateOnly!), "2026-09-02");
+    assert.ok(dateOnly);
+    assert.equal(formatCanonicalValue(dateOnly), "2026-09-02");
 
     const withTime = parseCanonicalValue("2026-01-05 09:07");
-    assert.equal(formatCanonicalValue(withTime!), "2026-01-05 09:07");
+    assert.ok(withTime);
+    assert.equal(formatCanonicalValue(withTime), "2026-01-05 09:07");
 });
 
 test("converts to and from a JS Date without losing the time-vs-date-only distinction", () => {
-    const parts = parseCanonicalValue("2026-09-02 15:54")!;
+    const parts = parseCanonicalValue("2026-09-02 15:54");
+    assert.ok(parts);
     const date = toJsDate(parts);
     assert.equal(date.getFullYear(), 2026);
     assert.equal(date.getMonth(), 8);

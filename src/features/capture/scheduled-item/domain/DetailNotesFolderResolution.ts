@@ -31,7 +31,6 @@ export function resolveDetailNotesFolder(
                 dailyFolder !== null && (parent === dailyFolder || parent.startsWith(`${dailyFolder}/`));
             return withinDailyNotes ? settings.detailNotesFolder : parent;
         }
-        case "configured":
         default:
             return settings.detailNotesFolder;
     }

@@ -142,9 +142,9 @@ export class TimelineLayout {
         return segments;
     }
 
-    private assignColumns<
-        T extends { dayKey: string; start: Date; end: Date; column: number; columnCount: number },
-    >(blocks: T[]): void {
+    private assignColumns<T extends { dayKey: string; start: Date; end: Date; column: number; columnCount: number }>(
+        blocks: T[],
+    ): void {
         const byDay = new Map<string, T[]>();
         for (const block of blocks) {
             const dayBlocks = byDay.get(block.dayKey) ?? [];

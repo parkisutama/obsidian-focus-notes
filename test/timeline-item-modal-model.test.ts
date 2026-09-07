@@ -97,7 +97,11 @@ test("Timeline item modal model handles an item without schedule or heading meta
 });
 
 test("presents a Task 61 focus summary with planned, focused, difference, percentage, and count", () => {
-    const model = buildTimelineItemModalModel(baseItem, { plannedSeconds: 3600, focusedSeconds: 1800, sessionCount: 2 });
+    const model = buildTimelineItemModalModel(baseItem, {
+        plannedSeconds: 3600,
+        focusedSeconds: 1800,
+        sessionCount: 2,
+    });
     assert.deepEqual(model.focusSummary, {
         plannedLabel: "60m",
         focusedLabel: "30m",

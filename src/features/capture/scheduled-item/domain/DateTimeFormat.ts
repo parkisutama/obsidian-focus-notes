@@ -46,11 +46,7 @@ export function partsFromJsDate(date: Date, hour: number | null, minute: number 
 function isValidParts(parts: DateTimeParts): boolean {
     if ((parts.hour === null) !== (parts.minute === null)) return false;
     const date = toJsDate(parts);
-    if (
-        date.getFullYear() !== parts.year ||
-        date.getMonth() !== parts.month - 1 ||
-        date.getDate() !== parts.day
-    ) {
+    if (date.getFullYear() !== parts.year || date.getMonth() !== parts.month - 1 || date.getDate() !== parts.day) {
         return false;
     }
     if (parts.hour !== null && (parts.hour < 0 || parts.hour > 23)) return false;

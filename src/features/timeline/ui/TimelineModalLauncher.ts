@@ -26,7 +26,11 @@ export class TimelineModalLauncher {
      * owner-level summary (Task 61) counts every Timebox and Focus Session regardless of whether
      * it falls inside the currently displayed range.
      */
-    openItemDetails(item: ScheduledItem, allItems: ScheduledItem[] = [item], selectedSegment: TimelineSelectedSegment | null = null): void {
+    openItemDetails(
+        item: ScheduledItem,
+        allItems: ScheduledItem[] = [item],
+        selectedSegment: TimelineSelectedSegment | null = null,
+    ): void {
         new TimelineItemModal(
             this.options.app,
             item,

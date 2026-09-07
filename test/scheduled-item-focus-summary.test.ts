@@ -131,15 +131,12 @@ test("gathers a Task's owner-level summary from the indexed item list, excluding
 });
 
 test("Task 64: formats the same shared summary Timeline and Manage both present", () => {
-    assert.deepEqual(
-        formatScheduledItemFocusSummary({ plannedSeconds: 3600, focusedSeconds: 1800, sessionCount: 2 }),
-        {
-            plannedLabel: "60m",
-            focusedLabel: "30m",
-            differenceLabel: "-30m",
-            percentageLabel: "50%",
-            sessionCountLabel: "2 sessions",
-        },
-    );
+    assert.deepEqual(formatScheduledItemFocusSummary({ plannedSeconds: 3600, focusedSeconds: 1800, sessionCount: 2 }), {
+        plannedLabel: "60m",
+        focusedLabel: "30m",
+        differenceLabel: "-30m",
+        percentageLabel: "50%",
+        sessionCountLabel: "2 sessions",
+    });
     assert.equal(formatScheduledItemFocusSummary({ plannedSeconds: 0, focusedSeconds: 0, sessionCount: 0 }), null);
 });

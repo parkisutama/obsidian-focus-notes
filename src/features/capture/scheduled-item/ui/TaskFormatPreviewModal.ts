@@ -109,10 +109,9 @@ export class TaskFormatPreviewModal extends Modal {
 }
 
 function formatFailureMessage(
-    result:
-        | { status: "conflict" | "ambiguous"; lineNumber: number }
-        | { status: "file-missing" },
+    result: { status: "conflict" | "ambiguous"; lineNumber: number } | { status: "file-missing" },
 ): string {
-    const detail = result.status === "file-missing" ? "The note no longer exists." : `Line ${result.lineNumber} changed.`;
+    const detail =
+        result.status === "file-missing" ? "The note no longer exists." : `Line ${result.lineNumber} changed.`;
     return `Formatting cancelled. ${detail} Reopen the manager and try again.`;
 }

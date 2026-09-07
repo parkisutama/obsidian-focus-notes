@@ -74,7 +74,10 @@ test("styles.css vendors flatpickr's CSS and themes it (including the time spin-
     assert.match(css, /\.flatpickr-day\.today/);
     assert.match(css, /\.flatpickr-day\.selected/);
     assert.match(css, /\.flatpickr-time /);
-    assert.match(css, /\.flatpickr-weekwrapper \.flatpickr-weeks \{\s*box-shadow: 1px 0 0 var\(--background-modifier-border\);/);
+    assert.match(
+        css,
+        /\.flatpickr-weekwrapper \.flatpickr-weeks \{\s*box-shadow: 1px 0 0 var\(--background-modifier-border\);/,
+    );
     assert.match(css, /\.fn-datetime-input-wrap \{/);
     assert.match(css, /\.fn-datetime-toggle \{/);
     assert.match(css, /\.fn-datetime-today,\s*\.fn-datetime-clear \{/);
@@ -83,10 +86,7 @@ test("styles.css vendors flatpickr's CSS and themes it (including the time spin-
 test("styles.css shrinks flatpickr's fixed default dimensions so the calendar (including the time row) needs less vertical space", async () => {
     const css = await readFile(new URL("../styles.css", import.meta.url), "utf8");
     assert.match(css, /Compact sizing for vendored flatpickr/);
-    assert.match(
-        css,
-        /\.flatpickr-calendar,\s*\.flatpickr-days,\s*\.dayContainer \{\s*width: 266px;\s*\}/,
-    );
+    assert.match(css, /\.flatpickr-calendar,\s*\.flatpickr-days,\s*\.dayContainer \{\s*width: 266px;\s*\}/);
     assert.match(css, /\.dayContainer \{\s*min-width: 266px;\s*max-width: 266px;\s*\}/);
     assert.match(css, /\.flatpickr-day \{\s*max-width: 34px;\s*height: 34px;\s*line-height: 34px;\s*\}/);
 });

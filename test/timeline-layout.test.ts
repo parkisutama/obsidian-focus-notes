@@ -179,7 +179,9 @@ test("lays out actual Focus Sessions as their own segments, independent of any p
     const outsideBlock = layout.sessions.find((s) => s.sessionId === "focus-bbbbbbbbbb");
     assert.ok(outsideBlock, "a session outside the planned Timebox interval still lays out");
     assert.deepEqual(
-        layout.sessions.map((s) => ({ sessionId: s.sessionId, itemId: s.itemId, mode: s.mode })).sort((a, b) => a.sessionId.localeCompare(b.sessionId)),
+        layout.sessions
+            .map((s) => ({ sessionId: s.sessionId, itemId: s.itemId, mode: s.mode }))
+            .sort((a, b) => a.sessionId.localeCompare(b.sessionId)),
         [
             { sessionId: "focus-aaaaaaaaaa", itemId: "task-abc1234567", mode: "pomodoro" },
             { sessionId: "focus-bbbbbbbbbb", itemId: "task-abc1234567", mode: "stopwatch" },

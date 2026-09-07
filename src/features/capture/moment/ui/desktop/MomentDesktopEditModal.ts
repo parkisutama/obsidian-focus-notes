@@ -83,9 +83,17 @@ export class MomentDesktopEditModal extends Modal {
         });
 
         const footer = contentEl.createDiv({ cls: "fn-gcal-footer" });
-        const cancel = footer.createEl("button", { cls: "fn-gcal-btn-discard", text: "Cancel", attr: { type: "button" } });
+        const cancel = footer.createEl("button", {
+            cls: "fn-gcal-btn-discard",
+            text: "Cancel",
+            attr: { type: "button" },
+        });
         cancel.addEventListener("click", () => this.close());
-        const save = footer.createEl("button", { cls: "fn-gcal-btn-save mod-cta", text: "Save", attr: { type: "button" } });
+        const save = footer.createEl("button", {
+            cls: "fn-gcal-btn-save mod-cta",
+            text: "Save",
+            attr: { type: "button" },
+        });
         this.saveButtonEl = save;
         save.addEventListener("click", () => void this.submit());
     }

@@ -1,5 +1,8 @@
 import type { App } from "obsidian";
-import type { LedgerRecordSnapshot, LedgerRecordSource } from "../../../features/capture/scheduled-item/domain/LedgerRecordSource.ts";
+import type {
+    LedgerRecordSnapshot,
+    LedgerRecordSource,
+} from "../../../features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import { captureLedgerRecord } from "../../../features/capture/scheduled-item/domain/LedgerRecordSource.ts";
 import type { MomentBlock, MomentBlockInvalidReason } from "../../../features/capture/moment/domain/MomentBlock.ts";
 import { parseMomentBlock } from "../../../features/capture/moment/domain/MomentBlock.ts";

@@ -5,6 +5,7 @@
             "**/*.{js,mjs,ts,json,jsonc}",
             "!!main.js",
             "!!node_modules",
+            "!!.claude",
             "!!.vscode",
             "!!docs/.vitepress/cache",
             "!!docs/.vitepress/dist",

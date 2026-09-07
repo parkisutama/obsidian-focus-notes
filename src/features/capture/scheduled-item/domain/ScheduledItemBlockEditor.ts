@@ -248,7 +248,10 @@ function inspectOwnedChildren(lines: string[]): OwnedChildren {
                         const nestedFocusSession = parseFocusSessionLine(entry.line);
                         if (nestedFocusSession.status === "parsed") {
                             let end = cursor;
-                            while (end + 1 < subtree.length && leadingIndent(subtree[end + 1].line) > childIndentLength) {
+                            while (
+                                end + 1 < subtree.length &&
+                                leadingIndent(subtree[end + 1].line) > childIndentLength
+                            ) {
                                 end += 1;
                             }
                             result.focusSessionIds.push(nestedFocusSession.session.sessionId);

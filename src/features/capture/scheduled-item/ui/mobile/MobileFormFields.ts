@@ -22,7 +22,8 @@ export class MobileFormFields {
     ): Setting {
         // A field that doesn't strictly require time still shows it once its existing value
         // already carries one, matching the old native-input behavior exactly.
-        const hasExistingTime = parseCanonicalValue(value)?.hour !== null && parseCanonicalValue(value)?.hour !== undefined;
+        const hasExistingTime =
+            parseCanonicalValue(value)?.hour !== null && parseCanonicalValue(value)?.hour !== undefined;
         const setting = new Setting(container).setName(label);
         this.pickers.push(
             new DateTimeInput(setting.controlEl, {

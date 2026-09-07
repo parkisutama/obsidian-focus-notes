@@ -108,7 +108,9 @@ export class ActiveNoteManagerModal extends Modal {
             if (captured.status !== "captured") return [];
             const plan = planScheduledItemBlockFormat(captured.snapshot.rawBlock);
             if (plan.status !== "needs-format") return [];
-            return [{ lineNumber: item.source.lineNumber, rawLine: item.rawLine, normalizedBlock: plan.normalizedBlock }];
+            return [
+                { lineNumber: item.source.lineNumber, rawLine: item.rawLine, normalizedBlock: plan.normalizedBlock },
+            ];
         });
     }
 

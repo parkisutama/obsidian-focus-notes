@@ -45,9 +45,7 @@ export class TimerRecentEntries {
 
         // Follow the active note: switching files or editing the current one
         // both refresh the feed, so it always reflects whatever's open now.
-        this.component.registerEvent(
-            this.app.workspace.on("active-leaf-change", () => void this.refresh()),
-        );
+        this.component.registerEvent(this.app.workspace.on("active-leaf-change", () => void this.refresh()));
         this.component.registerEvent(
             this.app.vault.on("modify", (file) => {
                 if (file.path === this.app.workspace.getActiveFile()?.path) void this.refresh();

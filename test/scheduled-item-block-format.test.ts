@@ -97,20 +97,15 @@ test("combines Task first-line metadata reordering with child canonicalization i
     if (plan.status !== "needs-format") return;
     assert.equal(
         plan.normalizedBlock,
-        [
-            "- [ ] Prepare invoice | priority:high | due:2026-09-05",
-            "    - reflection-notes: Retrospective note.",
-        ].join("\n"),
+        ["- [ ] Prepare invoice | priority:high | due:2026-09-05", "    - reflection-notes: Retrospective note."].join(
+            "\n",
+        ),
     );
     assert.deepEqual(planScheduledItemBlockFormat(plan.normalizedBlock), { status: "unchanged" });
 });
 
 test("reports invalid for an ambiguous block instead of proposing a change", () => {
-    const rawBlock = [
-        "- [ ] Prepare invoice",
-        "    - description: One",
-        "    - description: Two",
-    ].join("\n");
+    const rawBlock = ["- [ ] Prepare invoice", "    - description: One", "    - description: Two"].join("\n");
 
     assert.deepEqual(planScheduledItemBlockFormat(rawBlock), { status: "invalid" });
 });
@@ -130,15 +125,26 @@ test("applies every planned block change atomically, all-or-nothing", () => {
         { lineNumber: 1, rawLine: "- [ ] Prepare invoice", normalizedBlock: firstPlan.normalizedBlock },
         { lineNumber: 3, rawLine: "- [ ] Deep work", normalizedBlock: secondPlan.normalizedBlock },
     ]);
-    assert.deepEqual(result, { status: "ready", content: `${firstPlan.normalizedBlock}\n${secondPlan.normalizedBlock}` });
+    assert.deepEqual(result, {
+        status: "ready",
+        content: `${firstPlan.normalizedBlock}\n${secondPlan.normalizedBlock}`,
+    });
 });
 
 test("aborts every change without writing when one source line changed", () => {
     const first = ["- [ ] Prepare invoice", "    - notes: First retrospective."].join("\n");
     const content = `${first}\n- [ ] Deep work\n    - notes: unrelated`;
 
-    const result = applyScheduledItemBlockFormatChanges(content.replace("Prepare invoice", "Prepare invoice (renamed)"), "Tasks.md", [
-        { lineNumber: 1, rawLine: "- [ ] Prepare invoice", normalizedBlock: "- [ ] Prepare invoice\n    - reflection-notes: First retrospective." },
-    ]);
+    const result = applyScheduledItemBlockFormatChanges(
+        content.replace("Prepare invoice", "Prepare invoice (renamed)"),
+        "Tasks.md",
+        [
+            {
+                lineNumber: 1,
+                rawLine: "- [ ] Prepare invoice",
+                normalizedBlock: "- [ ] Prepare invoice\n    - reflection-notes: First retrospective.",
+            },
+        ],
+    );
     assert.deepEqual(result, { status: "conflict", lineNumber: 1 });
 });
