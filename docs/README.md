@@ -1,6 +1,14 @@
 # Focus Notes Documentation
 
-Dokumentasi repository saat ini masih dalam tahap konsolidasi. Gunakan indeks ini untuk membedakan situs publik, status aktual, spesifikasi yang direncanakan, dan catatan implementasi historis.
+Dokumentasi repository sudah dikonsolidasikan. Gunakan indeks ini untuk membedakan
+referensi aktif, situs publik, dan catatan implementasi historis.
+
+## Mulai dari sini
+
+- [Current State](current-state.md) — fitur, arsitektur, model data, dan legacy.
+- [Usage Workflow](usage-workflow.md) — alur penggunaan plugin dari capture sampai Timeline.
+- [Changelog](changelog.md) — ringkasan perubahan dan keputusan besar.
+- [Archive](archive/README.md) — plan, todo, dan spec yang sudah selesai.
 
 ## Public documentation
 
@@ -16,23 +24,23 @@ Jalankan `pnpm run docs:dev` untuk menulis secara lokal dan `pnpm run docs:build
 - [Development status](development-status.md) — snapshot kesiapan engineering, fitur, dokumentasi, dan gate sebelum merge.
 - [ADR-001: Use VitePress for project documentation](decisions/001-use-vitepress-for-documentation.md) — keputusan tooling dan struktur publikasi dokumentasi.
 - [Persona-rooted contextual activity system](ideas/persona-rooted-contextual-activity-system.md) — arah produk untuk capture Daily Notes, object context yang extensible, Focus Timeline, promosi, dan historical related logs.
-- [Persona-rooted implementation plan](../tasks/persona-contextual-activity-plan.md) — dependency graph, prioritas P0–P3, acceptance criteria, checkpoint, risiko, dan batas implementasi.
-- [Code quality remediation](spec-code-quality-remediation.md) — rencana perbaikan kualitas setelah fondasi Developer Experience.
-- [Inbox quick capture](spec-inbox-quick-capture.md) — kontrak fitur Inbox.
-- [Mobile event/task modal](spec-mobile-event-task-modal.md) — kontrak modal mobile.
-- [Task and Event single-line semantics](spec-task-event-line-semantics.md) — kontrak kanonis grammar, atribut,
+- [Persona-rooted implementation plan](archive/tasks/persona-contextual-activity-plan.md) — dependency graph dan acceptance criteria historis.
+- [Code quality remediation](archive/specs/spec-code-quality-remediation.md) — kontrak historis.
+- [Inbox quick capture](archive/specs/spec-inbox-quick-capture.md) — kontrak fitur Inbox.
+- [Mobile event/task modal](archive/specs/spec-mobile-event-task-modal.md) — kontrak modal mobile.
+- [Task and Event single-line semantics](archive/specs/spec-task-event-line-semantics.md) — kontrak historis grammar,
   lifecycle, batas implementasi saat ini, dan proposal ekstensi Task/Event.
-- [Unified Scheduled Item form](spec-unified-scheduled-item-form.md) — kontrak Create/Edit bersama, Object Reference
+- [Unified Scheduled Item form](archive/specs/spec-unified-scheduled-item-form.md) — kontrak Create/Edit bersama, Object Reference
   berbasis vault path, Detail Note promotion, dan pemisahan renderer desktop/mobile.
-- [Unified Scheduled Item runtime acceptance](unified-scheduled-item-runtime-acceptance.md) — ledger terpisah untuk hasil
+- [Unified Scheduled Item runtime acceptance](archive/acceptance/unified-scheduled-item-runtime-acceptance.md) — ledger historis hasil
   automated gate, desktop Obsidian, Android, dan iOS.
-- [Event occurrence lifecycle](spec-event-occurrence-lifecycle.md) — proposal lifecycle Event yang belum
+- [Event occurrence lifecycle](archive/specs/spec-event-occurrence-lifecycle.md) — proposal lifecycle Event yang belum
   diimplementasikan dan masih menunggu persetujuan semantic.
 
 ## Supporting notes
 
-- [Mobile keyboard troubleshooting handover](mobile-modal-keyboard-troubleshooting-handover.md) — bukti dan konteks debugging mobile.
-- [Focus Timeline implementation blueprint](may%20feature/focus-timeline-implementation-blueprint.md) — blueprint historis Timeline; bukan status implementasi terkini.
+- [Mobile keyboard troubleshooting handover](archive/handovers/mobile-modal-keyboard-troubleshooting-handover.md) — bukti dan konteks debugging mobile.
+- [Focus Timeline implementation blueprint](archive/ideas/focus-timeline-implementation-blueprint.md) — blueprint historis Timeline; bukan status implementasi terkini.
 
 ## Documentation gaps
 

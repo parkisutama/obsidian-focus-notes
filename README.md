@@ -1,270 +1,178 @@
-# Focus Notes
-
-A focus timer plugin for Obsidian with structured session logging and a lightweight emotional wellbeing check-in. Three modes — Pomodoro, Timer, Stopwatch — in a clean circular sidebar.
-
-Use it for whatever needs focused time: a 25-minute coding sprint, a 10-minute meditation, or an open-ended reading block. When you stop (or the timer finishes), a log modal appears asking what you worked on, how stressed you felt, what emotion fits the moment, a free-form reflection, and any related notes — then writes a templated entry into whichever file and heading you've chosen.
-
-The wellbeing check-in is intentionally low-friction: **stress** is one of four levels (Low / Normal / Medium / High), and **emotion** is a broad category (Unpleasant / Neutral / Pleasant) with optional chips for a more specific state drawn from the existing mood reference.
-
+---
+title: Focus Notes
+created: 2026-09-03T00:00
+modified: 2026-09-03T00:00
+tags:
+  - obsidian
+  - focus
+  - flat-block
 ---
 
-## User Guide
+# Focus Notes
 
-### Install (manual)
+Focus Notes adalah plugin Obsidian untuk menangkap apa yang sedang terjadi,
+merencanakan apa yang akan dilakukan, memberi jeda untuk refleksi, dan
+melacak waktu fokus yang benar-benar terjadi.
 
-```bash
-git clone <this-folder> obsidian-focus-notes
-cd obsidian-focus-notes
-corepack enable
+Modelnya terinspirasi dari beberapa cara kerja yang sudah akrab:
+
+- **Moment** untuk catatan cepat seperti inbox, backlog, fleeting note, dan
+  quick capture.
+- **Event dan Task** menggunakan flat-block yang terinspirasi dari Periodical
+  Notes: Daily, Weekly, dan Bullet Journal.
+- **Reflection Notes** terinspirasi dari CBT dan Interstitial Journaling,
+  yaitu jeda berpikir singkat yang proaktif di sekitar Moment, Event, dan Task.
+- **Object Notes** terinspirasi dari Capacities untuk menyebut People, Project,
+  dan Book pada setiap capture atau reflection.
+- **Focus Session** melacak waktu aktual pada Event dan Task.
+- **Timebox** menyimpan rencana waktu, sedangkan Focus Session menyimpan waktu
+  aktual yang benar-benar digunakan.
+
+## Cara berpikir tentang Focus Notes
+
+```text
+capture cepat -> Moment
+sesuatu yang dijadwalkan -> Event atau Task
+rencana durasi -> Timebox
+waktu yang benar-benar fokus -> Focus Session
+jeda berpikir -> Reflection Notes
+konteks yang dirujuk -> People, Project, atau Book
+```
+
+## Apa itu flat-block?
+
+Flat-block adalah format Markdown berbasis baris dan indentasi. Satu bullet
+utama menjadi satu owner, lalu child bullet langsung di bawahnya menyimpan
+informasi tambahan yang dimiliki owner tersebut.
+
+Format ini sengaja tetap mudah dibaca sebagai Markdown biasa, tetapi juga
+deterministik untuk dibaca plugin atau diekstrak menjadi tabel. Empat spasi
+menunjukkan satu tingkat kepemilikan.
+
+Setiap block penting memiliki **block ID** yang stabil di akhir baris, misalnya
+`^task-abc123`. Block ID membuat record dapat ditemukan, diedit, dirujuk, dan
+di-update tanpa bergantung pada judulnya.
+
+### Contoh Moment
+
+Moment adalah capture cepat. Moment dapat memiliki description, reflection, dan
+reflection notes.
+
+```markdown
+- Menanyakan ide buku baru ^moment-a1b2c3
+    - description: Catatan cepat sebelum ide ini hilang.
+    - reflection: stress:normal | emotion:pleasant | mood:curious
+    - reflection-notes: Saya ingin meninjau ide ini setelah sesi fokus.
+```
+
+### Contoh Event
+
+Event memiliki interval terencana dan dapat memiliki Focus Session aktual.
+
+```markdown
+- Review roadmap Q4 | start:2026-09-03 10:00 | end:2026-09-03 11:30 ^event-d4e5f6
+    - description: Menyelaraskan prioritas dengan tim.
+    - focus-session: start:2026-09-03 10:08 | end:2026-09-03 10:52 | duration:44m | mode:pomodoro ^focus-d4e5f6-s1
+        - reflection: stress:normal | emotion:pleasant | mood:focused
+        - reflection-notes: Bagian risiko lebih jelas setelah ditulis.
+    - reflection: stress:normal | emotion:pleasant | mood:satisfied
+    - reflection-notes: Perlu mengirim rangkuman sebelum makan siang.
+```
+
+### Contoh Task dan Timebox
+
+Task menggunakan checkbox Markdown. Timebox adalah rencana; beberapa Timebox
+dapat hidup berdampingan dengan beberapa Focus Session.
+
+```markdown
+- [ ] Menulis proposal Project Atlas | priority:high | due:2026-09-05 17:00 ^task-g7h8i9
+    - description: Menyusun masalah, opsi solusi, dan keputusan yang dibutuhkan.
+    - timebox: start:2026-09-03 13:00 | end:2026-09-03 14:00 | status:planned ^timebox-g7h8i9-a1
+    - focus-session: start:2026-09-03 13:07 | end:2026-09-03 13:32 | duration:25m | mode:pomodoro ^focus-g7h8i9-s1
+    - reflection: stress:normal | emotion:pleasant | mood:productive
+    - reflection-notes: Draft pertama sudah cukup untuk dibahas.
+    - detail: [Proposal Project Atlas](Details/Proposal%20Project%20Atlas.md)
+```
+
+Timebox dan Focus Session adalah **sibling**, bukan parent-child. Focus Session
+tidak dianggap milik Timebox hanya karena waktunya beririsan.
+
+### Contoh Object Notes
+
+People, Project, dan Book dapat disebut dari description atau reflection notes
+menggunakan link Markdown biasa.
+
+```markdown
+- Membahas Project Atlas dengan [Rina](People/Rina.md) ^moment-j1k2l3
+    - description: Membawa insight dari [Inspired](Books/Inspired.md).
+    - reflection-notes: Rina membantu memperjelas keputusan berikutnya.
+```
+
+Object Notes memberi konteks yang dapat dipakai ulang tanpa mengubah Moment,
+Event, Task, atau Reflection menjadi object yang sama.
+
+## Aturan penting flat-block
+
+- `description:` menyimpan teks bebas pada satu baris fisik.
+- `timebox:` menyimpan rencana `start`, `end`, dan `status`.
+- `focus-session:` menyimpan waktu aktual `start`, `end`, `duration`, dan
+  `mode`.
+- `reflection:` menyimpan wellbeing terstruktur.
+- `reflection-notes:` menyimpan catatan refleksi bebas.
+- `detail:` adalah child opsional terakhir.
+- Field yang dihapus tidak meninggalkan baris kosong.
+- Block ID dipertahankan saat edit atau formatting.
+- Unknown children tetap dipertahankan saat perubahan yang tidak terkait.
+- Formatter hanya berjalan melalui preview/apply eksplisit; tidak ada migrasi
+  vault diam-diam saat startup.
+
+## Mulai menggunakan repository
+
+Prasyarat: Node.js 24 dan pnpm 11.
+
+```powershell
 pnpm install
+pnpm run check
 pnpm run build
 ```
 
-This produces `main.js` next to `manifest.json` and `styles.css`. Copy those three files into your vault at:
+Perintah penting:
+
+| Perintah | Kegunaan |
+| --- | --- |
+| `pnpm run dev` | Watch build TypeScript |
+| `pnpm run dev:vault` | Watch build dan copy ke vault |
+| `pnpm run check` | Format, lint, version, typecheck, dan test |
+| `pnpm run check:ci` | Check lengkap, build, artifact, dan docs |
+| `pnpm run docs:dev` | Menjalankan dokumentasi VitePress |
+| `pnpm run package:plugin` | Membuat zip distribusi |
+
+## Dokumentasi lanjutan
+
+- [Current State](docs/current-state.md) — fitur dan arsitektur saat ini.
+- [Usage Workflow](docs/usage-workflow.md) — alur penggunaan plugin.
+- [Capability Map](docs/reference/CAPABILITY-MAP-capture-focus-reflection.md)
+  — hubungan antar capability.
+- [Architecture Baseline](docs/reference/code-architecture-baseline.md)
+  — ownership source dan arah dependency.
+- [Documentation index](docs/README.md) — dokumentasi aktif dan arsip.
+- [Archive](docs/archive/README.md) — plan, spec, audit, handover, dan
+  acceptance record historis.
+
+## Struktur source
 
 ```text
-<vault>/.obsidian/plugins/focus-notes/
+src/
+  plugin/                    lifecycle dan composition plugin
+  features/                  domain, application, dan UI per capability
+  infrastructure/obsidian/  adapter vault dan persistence
+  shared/                    primitive lintas feature
+  legacy/                    source lama yang dikarantina
 ```
 
-Reload Obsidian, then enable **Focus Notes** under Settings → Community plugins.
+Markdown vault adalah sumber kebenaran canonical. Domain tidak mengimpor
+Obsidian atau DOM, dan production tidak mengimpor `legacy`.
 
----
-
-### Usage
-
-Open the panel via the timer ribbon icon or the command palette (`Open Focus Notes panel`). The sidebar has these regions:
-
-**Mode tabs** — Pomodoro, Timer, Stopwatch. Pomodoro and Timer are both countdown variants with different default durations; Stopwatch counts up.
-
-**Focus input** — type what you're focusing on before you start. Pre-fills the modal so you don't have to retype it after.
-
-**Circular timer** — time remaining (countdown) or elapsed (stopwatch). Below it: Reset, Play/Pause, Stop & Log. Stop & Log works while paused — you don't have to resume first.
-
-**Log target (collapsible)** — set the file, heading, position, and group-by-date for *this session*. The file accepts `{{date}}` and `{{date:FORMAT}}` tokens, so `Daily/{{date:YYYY-MM-DD}}.md` always resolves to today. The Group-by-date toggle decides whether sessions are placed under a date sub-heading inside the main heading, or whether each entry carries the date inline. The level dropdown (`H2/H3/H4`) controls the depth of that sub-heading.
-
-**Recent (collapsible)** — most recent entries from the current section, newest-first. Multi-line entries (main bullet + sub-bullets for wellbeing/notes/links) display as a single block. Click any entry to jump to its line. Walks date sub-headings automatically when group-by-date is on.
-
----
-
-### Focus Timeline
-
-Open the planner via the calendar ribbon icon or the command palette (`Open Focus Timeline`). This is a separate view from the timer. Configure **Focus Timeline → Source folders** in settings first; one folder per line. The timeline intentionally does not scan the whole vault until you opt folders in.
-
-Supported event lines:
-
-```markdown
-- 2026-05-24 15:00 - 16:00 Testing ^event-7k3m9x2pqw
-- 2026-05-24 22:00 - 2026-05-25 02:00 Deployment window ^event-r4n8c2v6yz
-```
-
-Supported task lines:
-
-```markdown
-- [ ] Update CSV blok | due:2026-05-23 | remind:2026-05-23 18:11 ^task-7k3m9x2pqw
-- [ ] Agenda meeting | start:2026-05-20 14:00 | end:2026-05-20 15:00 | due:2026-05-20 ^task-r4n8c2v6yz
-- [x] Daftar aplikasi | due:2026-05-19 ^task-b5h7j3s9wx
-```
-
-Focus Notes assigns a stable Obsidian block ID to newly created Tasks and Events. Mention the canonical record elsewhere
-with `[[Tasks.md#^task-7k3m9x2pqw|Update CSV blok]]` or embed it with `![[Tasks.md#^task-7k3m9x2pqw]]`; scheduling and
-lifecycle metadata remain owned by the original ledger line. Editing a legacy record adds its missing ID, and Manage's
-Format preview can migrate a selected scope in one confirmed write.
-
-Inside Focus Notes rich description fields, type `@` and choose **Task** or **Event**, then fuzzy-search the selected
-record type. The direct forms `@task <query>` and `@event <query>` work as well. Selection stores an ordinary cross-file
-block link, so navigation and page preview remain native to Obsidian. Escape dismisses the active dropdown without
-closing the form; Backspace retains the existing suggestion-cancel behavior.
-
-Timeline behavior:
-
-- `start + end` renders as a timed block.
-- `start` or `remind` renders as a point item.
-- `due` renders as a due chip on that day.
-- Unchecked tasks with a past `due` date appear in the pending summary.
-- In Day mode, source notes sit above the timeline so the view remains compact in a sidebar/panel.
-- Switching from Day to Weekly View opens a new workspace tab, giving the planner more horizontal room.
-- In Weekly View, source notes use a left navigation rail with a minimal source toggle.
-- Clicking a timeline item's source opens its exact block when an ID is available, with a line-number fallback for legacy
-  records.
-- Day and Weekly View can be switched from the timeline header.
-
----
-
-### The log modal
-
-Four sections, top to bottom:
-
-1. **What are you doing?** — free text or a `[[note link]]`. Pick from the suggester to wrap as a wikilink automatically. (The sidebar's input shows the same prompt without the suggester — quick capture, no list.)
-2. **Emotional Wellbeing** — choose stress level (Low / Normal / Medium / High), then Unpleasant, Neutral, or Pleasant. Optional emotion-state chips let you capture a more specific state without the old by-feeling/by-body flow.
-3. **Reflection and notes** — full-width textarea. The placeholder asks what happened, what shifted your stress or emotion, and what you produced. Click **Open expanded ↗** to launch the focus reflection modal (see below).
-4. **Related links** — text input plus an `+ Add note` button that opens a fuzzy file picker; selections append `[[Name]]` to the field. You can also type freely.
-
----
-
-### Expanded reflection modal
-
-Click **Open expanded ↗** on the reflection field to open a focused writing space. Three things visible at once:
-
-- **Emotional Wellbeing card** — the stress level and emotion context you just selected.
-- **Big writing area** — full-width textarea, ~14 rows. The same `notes` field as the inline textarea — whatever you type here replaces the inline value when you hit "Save reflection".
-- **Two collapsible reference panels**:
-  - **Mini-CBT prompts** — six questions as bullets you can read while writing: Intensity (1–10), Trigger, Automatic thought, Pattern check, Evidence for and against, Balanced view. *Reference, not form fields.* You write your answers in the textarea above, in any order, skipping anything that doesn't fit.
-  - **Cognitive distortions to check** — ten patterns (all-or-nothing, overgeneralization, catastrophizing, mind reading, personalization, labeling, emotional reasoning, mental filter, minimization, blaming others), each with a short example quote and one-line description. Scan to identify what your automatic thought looks like.
-
-The reflection modal is *cancel-safe*: closing without "Save reflection" preserves whatever you had in the inline textarea.
-
----
-
-### Output shape
-
-**Flat mode** (group-by-date OFF):
-
-```markdown
-## Focus timeline
-
-- 2026-04-28 09:44 - 10:09 Refactor pipeline
-    - focus: 25m 0s · pomodoro
-    - stress: normal · 😌 Satisfied — fixed the join order, performance is much better now
-    - [[Project X]] [[Performance notes]]
-```
-
-**Grouped mode** (group-by-date ON, level 3):
-
-```markdown
-## Focus timeline
-
-### [[2026-04-28]]
-
-- 2026-04-28 19:44 - 20:09 Update Dashboard token
-    - focus: 25m 0s · pomodoro
-    - stress: high · 😤 Frustrated — DevOps blocking access to Tableau, had to escalate
-    - [[Project X]] [[Executive Summary Dashboard]]
-- 2026-04-28 09:44 - 10:09 Refactor pipeline
-    - focus: 25m 0s · pomodoro
-    - stress: low · 😌 Satisfied — fixed the join order, flow state the whole session
-    - [[Project X]] [[Performance notes]]
-```
-
----
-
-### Settings
-
-Settings hold the *defaults* — the sidebar's per-session override always wins for that session.
-
-- **Pomodoro / Timer minutes** — default durations.
-- **Periodical Notes** — a tab of its own: define named profiles (Daily, Weekly, or anything else — Monthly, a project journal) with a folder, file-name format, and optional per-period heading format, all Moment.js tokens. A toggle lets the reserved `daily` profile sync its folder/format live from the core Daily Notes plugin when enabled, or fall back to its own manual fields — Daily Notes is an optional convenience, never a hard dependency.
-- **Focus session capture** — which Periodical Notes profile new sessions log to by default, plus heading and insert position. New installs point at the `daily` profile's `## Focus timeline` heading.
-- **Event capture / Task capture / Moment capture** — each capture kind gets its own profile (or, for Task, a filtered list of Object Sources instead of a periodical note), heading, and insert position, so your vault structure doesn't force all three into the same file. Moment can also reuse Event's active target instead of a profile, and optionally back-link into another profile (e.g. a same-day note) when it saves.
-- **Group entries under date sub-headings** — global default for the sidebar's group toggle.
-- **Date sub-heading level / template** — `## / ### / ####` and the text template (default `[[{{date}}]]`).
-- **Flat template** — used when grouping is off. The default format is timeline-compatible: `- {{date}} {{startTime}} - {{endTime}} {{task}}`.
-- **Grouped template** — used when grouping is on. The default still keeps `{{date}}` in each bullet because Focus Timeline parses line-by-line instead of inferring dates from headings.
-- **Auto-open log modal on completion** — countdown finishes → modal opens automatically.
-- **Play sound on completion** — short beep at the end of a countdown.
-- **Recent entries to show** — how many to surface in the sidebar.
-- **Focus Timeline** — enable the timeline view, choose default Day/Weekly View mode, set weekly span, configure source folders, show/hide completed tasks and pending summary, and choose whether the source sidebar starts collapsed. New installs index `Journal` by default, matching the default log target folder.
-
-#### Template placeholders
-
-Time / session: `{{date}}`, `{{startTime}}`, `{{endTime}}`, `{{startISO}}`, `{{endISO}}`, `{{duration}}`, `{{durationMinutes}}`, `{{durationSeconds}}`, `{{mode}}`, `{{task}}`, `{{notes}}`.
-
-Emotional Wellbeing: `{{wellbeing}}`, `{{stressLevel}}`, `{{stressLabel}}`, `{{emotionCategory}}`, `{{emotionCategoryName}}`, `{{emotionKey}}`, `{{emotionName}}`, `{{emotionEmoji}}`, `{{emotionTag}}`. Legacy mood aliases still work: `{{moodKey}}`, `{{moodName}}`, `{{moodEmoji}}`, `{{moodTag}}`, `{{moodKeywords}}`.
-
-Related: `{{links}}`.
-
----
-
-### Workflow patterns
-
-**Capture-then-organize.** Default target is your daily note. Hit Start, Stop & Log; later pull the entries into a dedicated note by hand or with another plugin.
-
-**Project-scoped.** Override the target in the sidebar to your project note's `## Sessions` heading. All sessions for the next hour log there.
-
-**Daily journal as timeline.** Group-by-date OFF, target the daily note's `## Focus timeline`. Completed timer sessions, manually written events, and task lines can live in the same section and appear in Focus Timeline.
-
-**Dedicated log file with date grouping.** Group-by-date ON, target a permanent file like `Logs/Focus 2026.md` with heading `## Sessions`. Each new day creates its own `### [[YYYY-MM-DD]]` sub-heading; the recent feed walks them automatically.
-
-**Wellbeing pattern review.** Use Dataview to count `#emotion/anxious`, `#emotion/satisfied`, stress levels, or emotion categories across files. If you log consistently, recurring patterns across days tell you more than any single entry.
-
----
-
-## Developer Reference
-
-### Documentation
-
-The VitePress source lives in `docs/site/` and is organized by audience: User documentation contains tutorials and use-case how-tos, while Developer documentation contains explanations and technical references. Internal ADRs, specifications, and development checkpoints remain in `docs/` but are excluded from the published site.
-
-- `pnpm run docs:dev` — start the local documentation server.
-- `pnpm run docs:build` — validate the production build and internal links.
-- `pnpm run docs:preview` — preview the built site locally.
-
-Start from [`docs/README.md`](docs/README.md) for the documentation map.
-
-### Local quality workflow
-
-Development uses Node.js 24 and the pnpm version declared in `package.json`. Enable Corepack before the first install:
-
-```bash
-corepack enable
-pnpm install --frozen-lockfile
-```
-
-Use these commands before opening a pull request:
-
-- `pnpm run check` — formatting, lint, version metadata, typecheck, and unit tests.
-- `pnpm run test:coverage` — unit tests with the native Node.js coverage report. The report covers source modules loaded by the current tests; it is a visibility baseline, not a claim that every runtime path is covered.
-- `pnpm run check:ci` — the complete local CI gate, including the production bundle and artifact validation. `build` (and therefore `check:ci`) never copies files into a vault.
-- `pnpm run format` — apply the repository's Biome formatting rules.
-
-`pnpm run dev` and `pnpm run build` never touch a vault, regardless of `.env`. To also copy `manifest.json`, `main.js`, and `styles.css` into `OBSIDIAN_VAULT_PLUGIN_PATH` after a successful build, use `pnpm run dev:vault` (watch mode) or `pnpm run deploy:vault` (one-shot production build) instead.
-
-Tests live in `test/` and use Node's built-in test runner. Reusable test-only fakes and async helpers belong in `test/support/`; keep one-off fixtures beside the test that owns them. Obsidian UI integration still requires manual desktop and mobile validation because the unit runner does not provide an Obsidian runtime.
-
-### State persistence
-
-Settings use Obsidian's standard plugin-data API and live at
-`<vault>/.obsidian/plugins/focus-notes/data.json`. To share them between
-devices with Obsidian Sync, enable vault configuration sync for community
-plugins and their settings on each device, then reload Obsidian after the
-configuration finishes syncing.
-
-Releases that used `<vault>/.obsidian/focus-notes-state.json` migrate that file
-into standard plugin data when `data.json` is still missing. The old file is
-left untouched as a recovery copy but is no longer read after migration or
-written by the plugin.
-
----
-
-### Architecture
-
-```text
-TimerEngine              — pure state machine (countdown | stopwatch)
-TargetResolver           — expands {{date}} tokens, resolves Periodical Notes profiles
-NoteWriter               — heading-aware insertion + date-sub-heading creation
-                           + empty-sub-bullet pruning, file/folder auto-creation
-RecentEntriesReader      — multi-line entry bundling, walks date sub-headings
-ScheduledItemParser      — strict line-based parser for timeline event/task grammar
-ScheduledItemIndexer     — scans configured markdown folders into scheduled items
-ScheduledItemQuery       — range/source/completed/pending filtering
-TimelineLayout           — render model for blocks, points, due chips
-TimelineView             — separate planner view with sidebar and Day/Weekly View grid
-CircularDisplay          — SVG ring + centered time/label
-MoodReference            — existing emotion-state catalog used by wellbeing chips
-EmotionalWellbeingPicker — stress level + Unpleasant/Neutral/Pleasant emotion UI
-CognitiveDistortions     — 6 CBT prompts + 10 distortion patterns (data only)
-ReflectionFocusModal     — wellbeing reminder + big textarea + collapsible CBT
-                           reference panels
-LogModal                 — what-are-you-doing + wellbeing + reflection + links
-TimerView                — composes the above; owns per-session target override
-StateStore               — ordered data.json writes and legacy-state migration
-SettingsTab              — defaults
-main.ts                  — plugin lifecycle and DI
-```
-
-The view starts with a fresh copy of the default target on each open, so yesterday's override doesn't silently follow you into today.
-
----
-
-## License
+## Lisensi
 
 MIT
