@@ -1,17 +1,23 @@
 import { type App, setIcon } from "obsidian";
-import type { EventTaskFormState } from "../../../domain/EventTaskFormState";
-import { InboxNotesController } from "../InboxNotesController";
 import { FileSuggest } from "../../../../../infrastructure/obsidian/suggestions/Suggesters";
+import type { InsertPosition } from "../../../../../shared/markdown/InsertPosition";
+import {
+    getEmotionCategoryLabel,
+    getStressLevelLabel,
+} from "../../../../reflection/domain/EmotionalWellbeingReference.ts";
+import { getMood } from "../../../../reflection/domain/MoodReference.ts";
+import { EmotionalWellbeingPicker } from "../../../../reflection/ui/EmotionalWellbeingPicker.ts";
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings";
 import type { FocusTarget } from "../../../domain/CaptureTarget";
-import type { InsertPosition } from "../../../../../shared/markdown/InsertPosition";
-import { EmotionalWellbeingPicker } from "../../../../reflection/ui/EmotionalWellbeingPicker.ts";
+import type { EventTaskFormState } from "../../../domain/EventTaskFormState";
+import { InboxNotesController } from "../InboxNotesController";
 
 interface InboxMobileFormOptions {
     app: App;
     form: EventTaskFormState;
     getSettings(): FocusNotesSettings;
     resolveTarget(): FocusTarget | null;
+    targetSummaryEl: HTMLElement;
     registerCleanup(cleanup: () => void): void;
 }
 
@@ -24,9 +30,13 @@ export class InboxMobileForm {
     constructor(private readonly options: InboxMobileFormOptions) {}
 
     render(container: HTMLElement): void {
-        const notes = this.fieldRow(container, "align-left", "Notes");
+        this.targetSummaryEl = this.options.targetSummaryEl;
+        this.refreshTarget(false);
+
+        const notes = container.createDiv({ cls: "fn-mobile-moment-section fn-mobile-moment-notes-section" });
+        notes.createDiv({ cls: "fn-mobile-event-label", text: "Notes" });
         const notesEl = notes.createDiv({
-            cls: "fn-mobile-inbox-notes",
+            cls: "fn-mobile-inbox-notes fn-mobile-moment-primary-editor",
             attr: {
                 "aria-label": "Moment notes",
                 "data-placeholder": "Add context. Use @ for contextual notes, # for tags.",
@@ -63,14 +73,25 @@ export class InboxMobileForm {
     }
 
     private renderReflection(container: HTMLElement): void {
-        const section = container.createDiv({ cls: "fn-mobile-event-disclosure-content fn-mobile-moment-reflection" });
-        section.createDiv({ cls: "fn-mobile-event-label", text: "Reflection" });
+        const section = container.createDiv({ cls: "fn-mobile-moment-reflection" });
+        const wellbeing = section.createEl("details", {
+            cls: "focus-notes-modal-section fn-wellbeing-disclosure",
+        });
+        wellbeing.open = false;
+        const summary = wellbeing.createEl("summary", { cls: "fn-wellbeing-disclosure-summary" });
+        summary.createSpan({ cls: "focus-notes-modal-label", text: "Emotional Wellbeing" });
+        const summaryValue = summary.createSpan({
+            cls: "fn-wellbeing-disclosure-value",
+            text: this.summarizeWellbeing(),
+        });
+        const wellbeingBody = wellbeing.createDiv({ cls: "fn-wellbeing-disclosure-body" });
         new EmotionalWellbeingPicker(
-            section,
+            wellbeingBody,
             (value) => {
                 this.options.form.inboxStressLevel = value.stressLevel;
                 this.options.form.inboxEmotionCategory = value.emotionCategory;
                 this.options.form.inboxEmotionKey = value.emotionKey;
+                summaryValue.setText(this.summarizeWellbeing());
             },
             {
                 stressLevel: this.options.form.inboxStressLevel,
@@ -78,9 +99,12 @@ export class InboxMobileForm {
                 emotionKey: this.options.form.inboxEmotionKey,
             },
         );
+        const notesLabel = section.createDiv({ cls: "fn-mobile-moment-reflection-label" });
+        notesLabel.createDiv({ cls: "fn-mobile-event-label", text: "Reflection notes" });
+        notesLabel.createEl("small", { text: "What stood out?" });
         const editor = section.createDiv({
-            cls: "fn-mobile-inbox-notes",
-            attr: { role: "textbox", "aria-label": "Moment reflection notes", "data-placeholder": "What stood out?" },
+            cls: "fn-mobile-inbox-notes fn-mobile-moment-reflection-editor",
+            attr: { role: "textbox", "aria-label": "Moment reflection notes" },
         });
         this.reflectionNotesController = new InboxNotesController(this.options.app, editor, {
             initialValue: this.options.form.inboxReflectionNotes ?? "",
@@ -91,8 +115,9 @@ export class InboxMobileForm {
     }
 
     private renderAdvanced(container: HTMLElement): void {
-        this.targetSummaryEl = container.createDiv({ cls: "fn-mobile-inbox-target" });
-        this.refreshTarget(false);
+        const title = this.textField(container, "clock-3", "Moment title", "Timestamp or custom title");
+        title.value = this.options.form.inboxTitle;
+        title.addEventListener("input", () => (this.options.form.inboxTitle = title.value));
 
         const file = this.textField(container, "file-text", "Save to", "Note path");
         file.value = this.options.form.inboxTargetFile;
@@ -169,5 +194,19 @@ export class InboxMobileForm {
             this.notesController?.setTargetFile(target.file);
             this.reflectionNotesController?.setTargetFile(target.file);
         }
+    }
+
+    private summarizeWellbeing(): string {
+        const stress = getStressLevelLabel(this.options.form.inboxStressLevel);
+        const emotion = getEmotionCategoryLabel(this.options.form.inboxEmotionCategory);
+        const mood = getMood(this.options.form.inboxEmotionKey);
+        if (!stress && !emotion && !mood) return "Not set";
+        return [
+            stress ? `Stress ${stress}` : "",
+            emotion ? `Emotion ${emotion}` : "",
+            mood ? `Mood ${mood.emoji} ${mood.name}` : "",
+        ]
+            .filter(Boolean)
+            .join(" · ");
     }
 }

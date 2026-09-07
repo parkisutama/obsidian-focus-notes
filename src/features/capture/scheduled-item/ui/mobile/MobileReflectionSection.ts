@@ -1,13 +1,13 @@
 import { type App, Setting } from "obsidian";
-import { ContextNotesController } from "../../../moment/ui/InboxNotesController.ts";
-import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData.ts";
 import type { ContextSourceSettings } from "../../../../object-notes/domain/ContextSourceSettings.ts";
-import { EmotionalWellbeingPicker } from "../../../../reflection/ui/EmotionalWellbeingPicker.ts";
-import { getMood } from "../../../../reflection/domain/MoodReference.ts";
 import {
     getEmotionCategoryLabel,
     getStressLevelLabel,
 } from "../../../../reflection/domain/EmotionalWellbeingReference.ts";
+import { getMood } from "../../../../reflection/domain/MoodReference.ts";
+import { EmotionalWellbeingPicker } from "../../../../reflection/ui/EmotionalWellbeingPicker.ts";
+import { ContextNotesController } from "../../../moment/ui/InboxNotesController.ts";
+import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData.ts";
 
 export function renderMobileReflectionSection(
     container: HTMLElement,
@@ -22,7 +22,7 @@ export function renderMobileReflectionSection(
     const wellbeing = container.createEl("details", {
         cls: "focus-notes-modal-section fn-wellbeing-disclosure",
     });
-    if (!hasWellbeing(options.data)) wellbeing.setAttr("open", "");
+    wellbeing.open = false;
     const summary = wellbeing.createEl("summary", { cls: "fn-wellbeing-disclosure-summary" });
     summary.createSpan({ cls: "focus-notes-modal-label", text: "Emotional Wellbeing" });
     const summaryValue = summary.createSpan({
@@ -56,10 +56,6 @@ export function renderMobileReflectionSection(
         referenceFormat: "markdown-link",
         onChange: (value) => options.update(() => (options.data.reflectionNotes = value)),
     });
-}
-
-function hasWellbeing(data: ScheduledItemFormData): boolean {
-    return Boolean(data.stressLevel || data.emotionCategory || data.emotionKey);
 }
 
 function summarizeWellbeing(data: ScheduledItemFormData): string {

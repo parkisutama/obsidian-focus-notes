@@ -1,26 +1,26 @@
 import { type App, Component, Notice, setIcon } from "obsidian";
+import { EventTaskWriter } from "../../../../../infrastructure/obsidian/capture/EventTaskWriter";
+import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver";
+import { readContextSuggestionNotes } from "../../../../../infrastructure/obsidian/suggestions/ObsidianInboxSuggestionSource";
+import {
+    createObsidianLinkFormatter,
+    createObsidianLinkResolver,
+} from "../../../../../infrastructure/obsidian/suggestions/ObsidianLinkResolver.ts";
+import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings";
 import { preferActiveNoteTarget } from "../../../domain/ActiveCaptureTarget";
-import { EventTaskFormState } from "../../../domain/EventTaskFormState";
 import type { EventTaskKind, OpenEventTaskFormOptions } from "../../../domain/CaptureForm";
+import type { FocusTarget } from "../../../domain/CaptureTarget";
+import { EventTaskFormState } from "../../../domain/EventTaskFormState";
+import { getMobileViewportMetrics } from "../../../scheduled-item/ui/mobile/MobileViewport";
 import {
     type EventTaskSubmissionResult,
     type PartialSubmissionResult,
     retryRelatedSubmission,
     submitInbox,
 } from "../../application/EventTaskSubmission";
-import { EventTaskWriter } from "../../../../../infrastructure/obsidian/capture/EventTaskWriter";
-import { InboxMobileForm } from "./InboxMobileForm";
-import { resolveInboxFormTarget, selectInboxTarget } from "../../domain/InboxTarget";
-import { getMobileViewportMetrics } from "../../../scheduled-item/ui/mobile/MobileViewport";
-import { readContextSuggestionNotes } from "../../../../../infrastructure/obsidian/suggestions/ObsidianInboxSuggestionSource";
-import {
-    createObsidianLinkFormatter,
-    createObsidianLinkResolver,
-} from "../../../../../infrastructure/obsidian/suggestions/ObsidianLinkResolver.ts";
 import { SubmissionPolicy } from "../../application/SubmissionPolicy";
-import { TargetResolver } from "../../../../../infrastructure/obsidian/capture/TargetResolver";
-import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings";
-import type { FocusTarget } from "../../../domain/CaptureTarget";
+import { resolveInboxFormTarget, selectInboxTarget } from "../../domain/InboxTarget";
+import { InboxMobileForm } from "./InboxMobileForm";
 
 /**
  * Moment (Inbox) capture shell. Event and Task both redirect to
@@ -128,6 +128,7 @@ export class EventTaskMobileScreen extends Component {
             attr: { type: "button", "aria-label": "Cancel" },
         });
         setIcon(cancel, "x");
+        header.createDiv({ cls: "fn-mobile-scheduled-title", text: "Create Moment" });
         const save = header.createEl("button", {
             cls: "fn-mobile-event-save mod-cta",
             text: "Save",
@@ -136,25 +137,11 @@ export class EventTaskMobileScreen extends Component {
         this.saveButtonEl = save;
 
         this.bodyEl = root.createEl("main", { cls: "fn-mobile-event-body" });
-        const title = this.bodyEl.createEl("input", {
-            type: "text",
-            cls: "fn-mobile-event-title",
-            attr: { placeholder: "Add title", "aria-label": "Title" },
-        });
-        title.value = this.form.getTitleForKind(this.form.kind);
-        this.registerDomEvent(title, "input", () => this.setTitle(title.value));
-        this.registerDomEvent(title, "keydown", (event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                void this.submit();
-            }
-        });
-
+        const context = this.bodyEl.createDiv({ cls: "fn-mobile-scheduled-context" });
         const inboxSection = this.bodyEl.createDiv({ cls: "fn-mobile-inbox-primary" });
         this.renderKindSelector(
             this.bodyEl,
             (kind) => {
-                title.value = this.form.getTitleForKind(kind);
                 inboxSection.toggleClass("fn-gcal-hidden", kind !== "inbox");
             },
             inboxSection,
@@ -165,13 +152,12 @@ export class EventTaskMobileScreen extends Component {
             form: this.form,
             getSettings: this.getSettings,
             resolveTarget: () => this.resolveInboxTarget(),
+            targetSummaryEl: context,
             registerCleanup: (cleanup) => this.register(cleanup),
         }).render(inboxSection);
 
         this.registerDomEvent(cancel, "click", () => this.close());
         this.registerDomEvent(save, "click", () => void this.submit());
-        const focusTimer = window.setTimeout(() => title.focus(), 50);
-        this.register(() => window.clearTimeout(focusTimer));
     }
 
     private renderKindSelector(
@@ -223,14 +209,6 @@ export class EventTaskMobileScreen extends Component {
         // field only ever holds Event's Daily-Notes-derived default (it's not
         // kind-aware), which would otherwise leak into Task too.
         this.openScheduledItem(kind);
-    }
-
-    private setTitle(value: string): void {
-        if (this.form.kind === "inbox") {
-            this.form.inboxTitle = value;
-            return;
-        }
-        this.form.title = value;
     }
 
     private registerLifecycle(): void {

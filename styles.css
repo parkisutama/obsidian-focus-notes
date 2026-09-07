@@ -281,6 +281,43 @@ body.fn-mobile-event-screen-open .suggestion-container {
     flex-direction: column;
 }
 
+.fn-mobile-event-screen .fn-mobile-moment-notes-section {
+    padding: 8px 0 10px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.fn-mobile-event-screen .fn-mobile-moment-primary-editor {
+    min-height: 112px;
+}
+
+.fn-mobile-event-screen .fn-mobile-moment-reflection {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.fn-mobile-event-screen .fn-mobile-moment-reflection .fn-wellbeing-disclosure {
+    margin-top: 0;
+}
+
+.fn-mobile-event-screen .fn-mobile-moment-reflection-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 12px;
+}
+
+.fn-mobile-event-screen .fn-mobile-moment-reflection-label small {
+    color: var(--text-muted);
+}
+
+.fn-mobile-event-screen .fn-mobile-moment-reflection-editor {
+    min-height: 88px;
+    padding-top: 4px;
+}
+
 .fn-mobile-event-screen .fn-mobile-inbox-notes {
     width: 100%;
     min-height: 104px;
@@ -1150,6 +1187,9 @@ body.fn-mobile-event-screen-open .suggestion-container {
 }
 .fn-wellbeing-disclosure-body {
     padding: 0 10px 10px;
+}
+.fn-wellbeing-disclosure:not([open]) > .fn-wellbeing-disclosure-body {
+    display: none;
 }
 .fn-wellbeing-disclosure-body .fn-wellbeing-picker {
     border: 0;
