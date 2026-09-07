@@ -3,6 +3,11 @@ import { ContextNotesController } from "../../../moment/ui/InboxNotesController.
 import type { ContextSourceSettings } from "../../../../object-notes/domain/ContextSourceSettings.ts";
 import { EmotionalWellbeingPicker } from "../../../../reflection/ui/EmotionalWellbeingPicker.ts";
 import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData.ts";
+import { getMood } from "../../../../reflection/domain/MoodReference.ts";
+import {
+    getEmotionCategoryLabel,
+    getStressLevelLabel,
+} from "../../../../reflection/domain/EmotionalWellbeingReference.ts";
 
 export interface DesktopTaskReflectionSectionOptions {
     app: App;
@@ -31,20 +36,31 @@ export function renderDesktopReflectionSection(
 ): ContextNotesController {
     const { data } = options;
 
-    const wellbeingSection = container.createDiv({ cls: "focus-notes-modal-section" });
-    wellbeingSection.createDiv({ cls: "focus-notes-modal-label", text: "Emotional Wellbeing" });
-    wellbeingSection.createDiv({
+    const wellbeingSection = container.createEl("details", {
+        cls: "focus-notes-modal-section fn-wellbeing-disclosure",
+    });
+    if (!hasWellbeing(data)) wellbeingSection.setAttr("open", "");
+    const summary = wellbeingSection.createEl("summary", { cls: "fn-wellbeing-disclosure-summary" });
+    summary.createSpan({ cls: "focus-notes-modal-label", text: "Emotional Wellbeing" });
+    const summaryValue = summary.createSpan({
+        cls: "fn-wellbeing-disclosure-value",
+        text: summarizeWellbeing(data),
+    });
+    const wellbeingBody = wellbeingSection.createDiv({ cls: "fn-wellbeing-disclosure-body" });
+    wellbeingBody.createDiv({
         cls: "focus-notes-modal-desc",
-        text: "Optional — how did working on this Task feel? Add or update any time.",
+        text: "Optional — how did working on this Task feel?",
     });
     new EmotionalWellbeingPicker(
-        wellbeingSection,
-        (value) =>
+        wellbeingBody,
+        (value) => {
             options.update(() => {
                 data.stressLevel = value.stressLevel;
                 data.emotionCategory = value.emotionCategory;
                 data.emotionKey = value.emotionKey;
-            }),
+            });
+            summaryValue.setText(summarizeWellbeing(data));
+        },
         { stressLevel: data.stressLevel, emotionCategory: data.emotionCategory, emotionKey: data.emotionKey },
     );
 
@@ -70,4 +86,22 @@ export function renderDesktopReflectionSection(
         referenceFormat: "markdown-link",
         onChange: (value) => options.update(() => (data.reflectionNotes = value)),
     });
+}
+
+function hasWellbeing(data: ScheduledItemFormData): boolean {
+    return Boolean(data.stressLevel || data.emotionCategory || data.emotionKey);
+}
+
+function summarizeWellbeing(data: ScheduledItemFormData): string {
+    const stress = getStressLevelLabel(data.stressLevel);
+    const emotion = getEmotionCategoryLabel(data.emotionCategory);
+    const mood = getMood(data.emotionKey);
+    if (!stress && !emotion && !mood) return "Not set";
+    return [
+        stress ? `Stress ${stress}` : "",
+        emotion ? `Emotion ${emotion}` : "",
+        mood ? `Mood ${mood.emoji} ${mood.name}` : "",
+    ]
+        .filter(Boolean)
+        .join(" · ");
 }

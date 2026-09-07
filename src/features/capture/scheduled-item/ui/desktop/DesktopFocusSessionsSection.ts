@@ -1,4 +1,3 @@
-import { Setting } from "obsidian";
 import type { ScannedFocusSession } from "../../../../focus-session/domain/FocusSessionBlockScan.ts";
 
 export interface DesktopFocusSessionsSectionOptions {
@@ -18,12 +17,17 @@ export function renderDesktopFocusSessionsSection(
 ): void {
     if (options.sessions.length === 0) return;
 
-    new Setting(container).setName("Focus Sessions").setHeading();
+    const header = container.createDiv({ cls: "fn-focus-sessions-header" });
+    header.createEl("h3", { text: "Session history" });
+    header.createSpan({ text: `${options.sessions.length} logged`, cls: "fn-focus-sessions-count" });
     const list = container.createDiv({ cls: "fn-focus-sessions-list" });
     for (const session of options.sessions) {
         const row = list.createDiv({ cls: "fn-focus-sessions-row" });
         row.createSpan({ cls: "fn-focus-sessions-summary", text: summarize(session) });
-        const editBtn = row.createEl("button", { text: "Edit", attr: { type: "button" } });
+        const editBtn = row.createEl("button", {
+            text: "Open",
+            attr: { type: "button", "aria-label": "Open focus session details" },
+        });
         editBtn.addEventListener("click", () => options.onEdit(session));
     }
 }

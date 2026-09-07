@@ -18,8 +18,9 @@ test("Edit Task modal opens the Timebox Manager for Task kind only", async () =>
     );
     assert.match(
         source,
-        /new TimeboxManagerModal\(\s*this\.app,\s*this\.getSettings,\s*\{ snapshot: this\.snapshot, title, completed, due \},\s*onComplete,\s*\)\.open\(\);/,
+        /new TimeboxManagerModal\(\s*this\.app,\s*this\.getSettings,\s*\{ snapshot: this\.snapshot, title, completed, due \},/,
     );
+    assert.match(source, /this\.snapshot = snapshot/);
 });
 
 test("the Timebox Manager modal is built on the Task 34 service and canonical block parser", async () => {

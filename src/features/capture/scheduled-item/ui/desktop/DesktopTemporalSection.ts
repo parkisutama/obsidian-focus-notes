@@ -12,6 +12,7 @@ interface DesktopTemporalSectionOptions {
     onEventStartChanged?(value: string): void;
     /** Edit-mode Task only: opens the Timebox Manager for this Task's saved canonical block. */
     onManageTimeboxes?(): void;
+    renderAfterDue?(): void;
 }
 
 /** Returns every date/time input this render created, so the caller can destroy them before the next render. */
@@ -46,6 +47,14 @@ function renderTaskSection(
             .onChange((value) => options.update(() => (data.priority = value as typeof data.priority))),
     );
     dateTimeSetting(container, pickers, "Due", data.due, false, options.update, (value) => (data.due = value));
+    options.renderAfterDue?.();
+    if (options.mode === "edit" && options.onManageTimeboxes) {
+        new Setting(container)
+            .setName("Planning")
+            .setDesc("Manage reminders first, then allocate timeboxes.")
+            .addButton((button) => button.setButtonText("Open planning").onClick(() => options.onManageTimeboxes?.()));
+        return;
+    }
     new Setting(container).setName("Timebox").addToggle((toggle) =>
         toggle.setValue(data.timebox !== null).onChange((enabled) => {
             data.timebox = enabled
@@ -62,15 +71,11 @@ function renderTaskSection(
             if (data.timebox) data.timebox.end = value ?? "";
         });
     }
-    if (options.mode === "edit" && options.onManageTimeboxes) {
-        new Setting(container)
-            .setName("Timeboxes")
-            .setDesc("Manage multiple planned work sessions for this Task.")
-            .addButton((button) =>
-                button.setButtonText("Manage timeboxes").onClick(() => options.onManageTimeboxes?.()),
-            );
-    }
-    new Setting(container).setName("Reminders").addButton((button) =>
+    const reminders = container.createEl("details", { cls: "fn-compact-disclosure fn-reminders-disclosure" });
+    if (data.reminders.length > 0) reminders.setAttr("open", "");
+    reminders.createEl("summary", { text: `Reminders · ${data.reminders.length}` });
+    const reminderBody = reminders.createDiv({ cls: "fn-compact-disclosure-body" });
+    new Setting(reminderBody).setName("Reminder").addButton((button) =>
         button.setButtonText("Add reminder").onClick(() => {
             data.reminders.push(data.due?.includes(" ") ? data.due : "");
             options.changedAndRender();
@@ -78,7 +83,7 @@ function renderTaskSection(
     );
     data.reminders.forEach((reminder, index) => {
         const row = dateTimeSetting(
-            container,
+            reminderBody,
             pickers,
             `Reminder ${index + 1}`,
             reminder,
@@ -88,6 +93,8 @@ function renderTaskSection(
                 data.reminders[index] = value ?? "";
             },
         );
+        row.settingEl.addClass("fn-reminder-row");
+        if (isPastReminder(reminder)) row.settingEl.addClass("is-past");
         row.addButton((button) =>
             button
                 .setIcon("trash")
@@ -98,6 +105,11 @@ function renderTaskSection(
                 }),
         );
     });
+}
+
+function isPastReminder(value: string): boolean {
+    const parsed = Date.parse(value.replace(" ", "T"));
+    return Number.isFinite(parsed) && parsed < Date.now();
 }
 
 function renderEventSection(
@@ -120,7 +132,15 @@ function renderEventSection(
         options.onEventStartChanged?.(data.start);
     });
     if (!data.allDay) {
-        dateTimeSetting(container, pickers, "Planned end", data.end, true, options.update, (value) => (data.end = value));
+        dateTimeSetting(
+            container,
+            pickers,
+            "Planned end",
+            data.end,
+            true,
+            options.update,
+            (value) => (data.end = value),
+        );
     }
     new Setting(container).setName("Status").addDropdown((dropdown) =>
         dropdown

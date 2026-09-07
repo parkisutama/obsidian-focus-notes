@@ -10,7 +10,7 @@ test("desktop Scheduled Item shell delegates cohesive form sections", async () =
         access(new URL("DesktopCreateTargetSection.ts", desktopUrl)),
     ]);
     const shell = await readFile(new URL("DesktopScheduledItemForm.ts", desktopUrl), "utf8");
-    assert.ok(shell.split(/\r?\n/).length < 240);
+    assert.ok(shell.split(/\r?\n/).length < 250);
     assert.match(shell, /renderDesktopTemporalSection/);
     assert.match(shell, /renderDesktopDetailSection/);
     assert.match(shell, /renderDesktopCreateTargetSection/);

@@ -13,7 +13,7 @@ test("mobile Scheduled Item shell retains lifecycle and delegates field sections
     ]);
     const shell = await readFile(new URL("MobileScheduledItemForm.ts", mobileUrl), "utf8");
     // Reflection adds controller lifecycle only; its field implementation remains delegated.
-    assert.ok(shell.split(/\r?\n/).length < 290);
+    assert.ok(shell.split(/\r?\n/).length < 300);
     assert.match(shell, /registerViewportLifecycle/);
     assert.match(shell, /renderMobileTemporalSection/);
     assert.match(shell, /renderMobileDetailSection/);

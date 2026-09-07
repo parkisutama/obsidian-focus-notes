@@ -7,6 +7,8 @@ import type { EmotionCategory, StressLevel } from "../../reflection/domain/Wellb
 import { ContextNotesController } from "../../capture/moment/ui/InboxNotesController.ts";
 import type { ContextSourceSettings } from "../../object-notes/domain/ContextSourceSettings.ts";
 import type { ScannedFocusSession } from "../domain/FocusSessionBlockScan.ts";
+import { getMood } from "../../reflection/domain/MoodReference.ts";
+import { getEmotionCategoryLabel, getStressLevelLabel } from "../../reflection/domain/EmotionalWellbeingReference.ts";
 
 /**
  * Lets the user add or correct a logged Focus Session's mood/emotion/reflection after the fact —
@@ -52,14 +54,24 @@ export class FocusSessionEditModal extends Modal {
             text: this.summarizeSession(),
         });
 
-        const wellbeingSection = contentEl.createDiv({ cls: "focus-notes-modal-section" });
-        wellbeingSection.createEl("div", { cls: "focus-notes-modal-label", text: "Emotional Wellbeing" });
+        const wellbeingSection = contentEl.createEl("details", {
+            cls: "focus-notes-modal-section fn-wellbeing-disclosure",
+        });
+        if (!this.stressLevel && !this.emotionCategory && !this.emotionKey) wellbeingSection.setAttr("open", "");
+        const wellbeingSummary = wellbeingSection.createEl("summary", { cls: "fn-wellbeing-disclosure-summary" });
+        wellbeingSummary.createSpan({ cls: "focus-notes-modal-label", text: "Emotional Wellbeing" });
+        const wellbeingValue = wellbeingSummary.createSpan({
+            cls: "fn-wellbeing-disclosure-value",
+            text: this.summarizeWellbeing(),
+        });
+        const wellbeingBody = wellbeingSection.createDiv({ cls: "fn-wellbeing-disclosure-body" });
         new EmotionalWellbeingPicker(
-            wellbeingSection,
+            wellbeingBody,
             (value) => {
                 this.stressLevel = value.stressLevel;
                 this.emotionCategory = value.emotionCategory;
                 this.emotionKey = value.emotionKey;
+                wellbeingValue.setText(this.summarizeWellbeing());
             },
             { stressLevel: this.stressLevel, emotionCategory: this.emotionCategory, emotionKey: this.emotionKey },
         );
@@ -100,7 +112,7 @@ export class FocusSessionEditModal extends Modal {
         });
 
         const buttons = contentEl.createDiv({ cls: "focus-notes-modal-buttons" });
-        const cancel = buttons.createEl("button", { text: "Cancel" });
+        const cancel = buttons.createEl("button", { text: "Back to task" });
         cancel.addEventListener("click", () => this.close());
         const save = buttons.createEl("button", { text: "Save", cls: "mod-cta" });
         save.addEventListener("click", () => void this.submit());
@@ -165,5 +177,19 @@ export class FocusSessionEditModal extends Modal {
         const s = this.session.durationSeconds % 60;
         const dur = m > 0 ? `${m}m ${s}s` : `${s}s`;
         return `${label} • ${this.session.start} → ${this.session.end} • ${dur}`;
+    }
+
+    private summarizeWellbeing(): string {
+        const stress = getStressLevelLabel(this.stressLevel);
+        const mood = getMood(this.emotionKey);
+        const emotion = getEmotionCategoryLabel(this.emotionCategory);
+        if (!stress && !emotion && !mood) return "Not set";
+        return [
+            stress ? `Stress ${stress}` : "",
+            emotion ? `Emotion ${emotion}` : "",
+            mood ? `Mood ${mood.emoji} ${mood.name}` : "",
+        ]
+            .filter(Boolean)
+            .join(" · ");
     }
 }

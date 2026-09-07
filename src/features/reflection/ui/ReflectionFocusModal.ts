@@ -78,28 +78,19 @@ export class ReflectionFocusModal extends Modal {
         const stressLabel = getStressLevelLabel(this.wellbeing.stressLevel);
         const emotionCategoryLabel = getEmotionCategoryLabel(this.wellbeing.emotionCategory);
         if (stressLabel || emotionCategoryLabel || mood) {
-            const reminder = contentEl.createDiv({ cls: "fn-reflection-mood-card" });
-            const header = reminder.createDiv({ cls: "fn-reflection-mood-head" });
-            header.createSpan({ cls: "fn-reflection-mood-emoji", text: mood?.emoji ?? " " });
-            const headText = header.createDiv({ cls: "fn-reflection-mood-title" });
-            headText.createDiv({ cls: "fn-reflection-mood-name", text: "Emotional Wellbeing" });
-            if (stressLabel) {
-                headText.createDiv({
-                    cls: "fn-reflection-mood-quadrant",
-                    text: `Stress: ${stressLabel}`,
-                });
-            }
-            if (mood) {
-                reminder.createDiv({
-                    cls: "fn-reflection-mood-def",
-                    text: `Emotion: ${mood.name}${emotionCategoryLabel ? ` (${emotionCategoryLabel})` : ""}`,
-                });
-            } else if (emotionCategoryLabel) {
-                reminder.createDiv({
-                    cls: "fn-reflection-mood-def",
-                    text: `Emotion: ${emotionCategoryLabel}`,
-                });
-            }
+            const reminder = contentEl.createDiv({ cls: "fn-reflection-wellbeing-context" });
+            reminder.createSpan({ cls: "fn-reflection-wellbeing-label", text: "Wellbeing" });
+            reminder.createSpan({
+                cls: "fn-reflection-wellbeing-value",
+                text: [
+                    stressLabel ? `Stress ${stressLabel}` : "",
+                    mood
+                        ? `${mood.emoji} ${mood.name}${emotionCategoryLabel ? ` · ${emotionCategoryLabel}` : ""}`
+                        : emotionCategoryLabel,
+                ]
+                    .filter(Boolean)
+                    .join(" · "),
+            });
         }
 
         // ---- 2. Big rich editor -------------------------------------------

@@ -5,7 +5,10 @@ import { parseObjectReferences } from "../../../domain/ObjectReference.ts";
 import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData";
 import type { ContextSourceSettings } from "../../../../object-notes/domain/ContextSourceSettings";
 import type { ScannedFocusSession } from "../../../../focus-session/domain/FocusSessionBlockScan.ts";
-import { type DesktopScheduledItemCreateContext, renderDesktopCreateTargetSection } from "./DesktopCreateTargetSection.ts";
+import {
+    type DesktopScheduledItemCreateContext,
+    renderDesktopCreateTargetSection,
+} from "./DesktopCreateTargetSection.ts";
 import { renderDesktopDetailSection } from "./DesktopDetailSection.ts";
 import { renderDesktopFocusSessionsSection } from "./DesktopFocusSessionsSection.ts";
 import { renderDesktopFocusSummarySection } from "./DesktopFocusSummarySection.ts";
@@ -13,6 +16,7 @@ import type { FormattedFocusSummary } from "../../domain/ScheduledItemFocusSumma
 import { renderDesktopReflectionSection } from "./DesktopTaskReflectionSection.ts";
 import { renderDesktopTemporalSection } from "./DesktopTemporalSection.ts";
 import type { DateTimeInput } from "../../../../../infrastructure/obsidian/datetime/DateTimeInput.ts";
+import { renderFocusDisclosure } from "../FocusDisclosure.ts";
 
 export type { DesktopScheduledItemCreateContext } from "./DesktopCreateTargetSection.ts";
 
@@ -81,12 +85,21 @@ export class DesktopScheduledItemForm {
             changedAndRender: () => this.changedAndRender(),
             onEventStartChanged: (value) => this.options.onPlannedStartChange?.(value),
             onManageTimeboxes: this.options.onManageTimeboxes,
+            renderAfterDue: this.options.data.kind === "task" ? () => this.renderDescription(container) : undefined,
         });
-        this.renderDescription(container);
-        if (this.options.focusSummary) renderDesktopFocusSummarySection(container, this.options.focusSummary);
-        if (this.options.focusSessions && this.options.onEditFocusSession) {
-            renderDesktopFocusSessionsSection(container, { sessions: this.options.focusSessions, onEdit: this.options.onEditFocusSession });
-        }
+        if (this.options.data.kind !== "task") this.renderDescription(container);
+        renderFocusDisclosure(container, {
+            summary: this.options.focusSummary,
+            sessions: this.options.focusSessions,
+            renderBody: (body) => {
+                if (this.options.focusSummary) renderDesktopFocusSummarySection(body, this.options.focusSummary);
+                if (this.options.focusSessions && this.options.onEditFocusSession)
+                    renderDesktopFocusSessionsSection(body, {
+                        sessions: this.options.focusSessions,
+                        onEdit: this.options.onEditFocusSession,
+                    });
+            },
+        });
         if (this.options.mode === "edit" || this.options.mode === "create") {
             this.reflectionNotesController = renderDesktopReflectionSection(container, {
                 app: this.options.app,
@@ -167,10 +180,7 @@ export class DesktopScheduledItemForm {
     }
 
     private renderIdentity(container: HTMLElement): void {
-        const title = new Setting(container)
-            .setName("Title")
-            .setDesc("The portable Task or Event title.")
-            .setClass("fn-scheduled-item-form-wide-field");
+        const title = new Setting(container).setName("Title").setClass("fn-scheduled-item-form-wide-field");
         title.addText((text) =>
             text
                 .setPlaceholder("Add title")

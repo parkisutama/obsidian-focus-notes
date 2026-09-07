@@ -19,6 +19,7 @@ import { planTaskDayReferences, type TaskDayReferenceTimebox } from "../../domai
 import { describeTaskTimeboxWarnings } from "../../domain/TaskTimeboxWarningLabel.ts";
 import type { FocusNotesSettings } from "../../../../settings/domain/FocusNotesSettings.ts";
 import { DateTimeInput } from "../../../../../infrastructure/obsidian/datetime/DateTimeInput.ts";
+import { editTaskLine, parseTaskLineEdit } from "../../domain/TaskLineEditor.ts";
 
 export interface TimeboxManagerOptions {
     snapshot: LedgerRecordSnapshot;
@@ -40,6 +41,7 @@ export class TimeboxManagerModal extends Modal {
     private snapshot: LedgerRecordSnapshot;
     private originalBlock: ScheduledItemBlock | null = null;
     private timeboxes: TaskTimebox[] = [];
+    private reminders: string[] = [];
     private editingId: string | null;
     private confirmingDeleteId: string | null = null;
     private errorMessage = "";
@@ -49,7 +51,7 @@ export class TimeboxManagerModal extends Modal {
         app: App,
         private readonly getSettings: () => FocusNotesSettings,
         private readonly options: TimeboxManagerOptions,
-        private readonly onComplete: () => void,
+        private readonly onComplete: (snapshot: LedgerRecordSnapshot, reminders: string[]) => void,
     ) {
         super(app);
         this.snapshot = options.snapshot;
@@ -71,6 +73,8 @@ export class TimeboxManagerModal extends Modal {
         const parsed = parseScheduledItemBlock(this.snapshot.rawBlock);
         this.originalBlock = parsed.status === "parsed" ? parsed.block : null;
         this.timeboxes = parsed.status === "parsed" ? parsed.block.timeboxes : [];
+        const task = parsed.status === "parsed" ? parseTaskLineEdit(parsed.block.firstLine) : null;
+        this.reminders = task?.status === "parsed" ? [...task.edit.reminders] : [];
     }
 
     private destroyDateTimePickers(): void {
@@ -82,7 +86,7 @@ export class TimeboxManagerModal extends Modal {
         this.destroyDateTimePickers();
         const { contentEl } = this;
         contentEl.empty();
-        contentEl.createEl("h2", { text: "Manage timeboxes" });
+        contentEl.createEl("h2", { text: "Planning" });
         if (this.errorMessage) {
             contentEl.createDiv({
                 cls: "fn-scheduled-item-form-error",
@@ -90,15 +94,51 @@ export class TimeboxManagerModal extends Modal {
                 attr: { role: "alert", "aria-live": "polite" },
             });
         }
-        if (this.timeboxes.length === 0) {
-            contentEl.createDiv({ text: "No timeboxes yet." });
-        }
-        for (const timebox of this.timeboxes) this.renderRow(contentEl, timebox);
-        this.renderAddForm(contentEl);
+        this.renderReminders(contentEl);
+        const timeboxes = contentEl.createEl("details", { cls: "fn-planning-section", attr: { open: "" } });
+        timeboxes.createEl("summary", { text: `Timeboxes · ${this.timeboxes.length}` });
+        const timeboxBody = timeboxes.createDiv({ cls: "fn-planning-section-body" });
+        if (this.timeboxes.length === 0) timeboxBody.createDiv({ cls: "fn-planning-empty", text: "No timeboxes yet." });
+        for (const timebox of this.timeboxes) this.renderRow(timeboxBody, timebox);
+        this.renderAddForm(timeboxBody);
         const actions = contentEl.createDiv({ cls: "fn-timeline-modal-actions" });
         actions
-            .createEl("button", { text: "Close", attr: { type: "button" } })
+            .createEl("button", { text: "Back to task", attr: { type: "button" } })
             .addEventListener("click", () => this.close());
+    }
+
+    private renderReminders(container: HTMLElement): void {
+        const details = container.createEl("details", { cls: "fn-planning-section", attr: { open: "" } });
+        details.createEl("summary", { text: `Reminders · ${this.reminders.length}` });
+        const body = details.createDiv({ cls: "fn-planning-section-body" });
+        const add = new Setting(body).setName("New reminder");
+        add.settingEl.addClass("fn-planning-add-row");
+        let next = "";
+        this.renderDateTimeField(add.controlEl, "When", "", (value) => (next = value));
+        add.addButton((button) =>
+            button
+                .setIcon("plus")
+                .setTooltip("Add reminder")
+                .onClick(() => {
+                    if (!next) return;
+                    this.reminders.push(next);
+                    void this.persist();
+                }),
+        );
+        for (const [index, reminder] of this.reminders.entries()) {
+            const row = new Setting(body).setName(reminder);
+            row.settingEl.addClass("fn-reminder-row");
+            if (isPastReminder(reminder)) row.settingEl.addClass("is-past");
+            row.addButton((button) =>
+                button
+                    .setIcon("trash")
+                    .setTooltip("Delete reminder")
+                    .onClick(() => {
+                        this.reminders.splice(index, 1);
+                        void this.persist();
+                    }),
+            );
+        }
     }
 
     private renderRow(container: HTMLElement, timebox: TaskTimebox): void {
@@ -106,9 +146,8 @@ export class TimeboxManagerModal extends Modal {
             this.renderEditRow(container, timebox);
             return;
         }
-        const setting = new Setting(container)
-            .setName(`${timebox.start} – ${timebox.end}`)
-            .setDesc(`Status: ${STATUS_LABELS[timebox.status]}`);
+        const setting = new Setting(container).setName(`${timebox.start} – ${timebox.end}`);
+        setting.settingEl.addClass("fn-timebox-row");
         setting.addDropdown((dropdown) =>
             dropdown
                 .addOptions(STATUS_LABELS)
@@ -116,10 +155,13 @@ export class TimeboxManagerModal extends Modal {
                 .onChange((value) => this.applyStatus(timebox.timeboxId, value as TaskTimeboxStatus)),
         );
         setting.addButton((button) =>
-            button.setButtonText("Edit").onClick(() => {
-                this.editingId = timebox.timeboxId;
-                this.render();
-            }),
+            button
+                .setIcon("pencil")
+                .setTooltip("Edit timebox")
+                .onClick(() => {
+                    this.editingId = timebox.timeboxId;
+                    this.render();
+                }),
         );
         if (this.confirmingDeleteId === timebox.timeboxId) {
             setting.addButton((button) =>
@@ -142,6 +184,7 @@ export class TimeboxManagerModal extends Modal {
         let start = timebox.start;
         let end = timebox.end;
         const setting = new Setting(container).setName("Edit timebox");
+        setting.settingEl.addClass("fn-timebox-editor-row");
         this.renderDateTimeField(setting.controlEl, "Start", timebox.start, (value) => {
             start = value;
         });
@@ -183,19 +226,18 @@ export class TimeboxManagerModal extends Modal {
     private renderAddForm(container: HTMLElement): void {
         let start = "";
         let end = "";
-        const setting = new Setting(container).setName("Add timebox");
-        this.renderDateTimeField(setting.controlEl, "Start", "", (value) => {
+        const editor = container.createDiv({ cls: "fn-timebox-editor-row fn-timebox-add-row" });
+        editor.createDiv({ cls: "fn-timebox-editor-title", text: "New timebox" });
+        const controls = editor.createDiv({ cls: "fn-timebox-add-controls" });
+        this.renderDateTimeField(controls, "Start", "", (value) => {
             start = value;
         });
-        this.renderDateTimeField(setting.controlEl, "End", "", (value) => {
+        controls.createSpan({ cls: "fn-timebox-separator", text: "–", attr: { "aria-hidden": "true" } });
+        this.renderDateTimeField(controls, "End", "", (value) => {
             end = value;
         });
-        setting.addButton((button) =>
-            button
-                .setCta()
-                .setButtonText("Add")
-                .onClick(() => this.applyAdd({ start, end })),
-        );
+        const add = controls.createEl("button", { cls: "mod-cta", text: "Add", attr: { type: "button" } });
+        add.addEventListener("click", () => this.applyAdd({ start, end }));
     }
 
     private applyAdd(interval: { start: string; end: string }): void {
@@ -253,9 +295,13 @@ export class TimeboxManagerModal extends Modal {
     private async persist(): Promise<void> {
         const original = this.originalBlock;
         if (!original) return;
+        const parsedTask = parseTaskLineEdit(original.firstLine);
+        if (parsedTask.status !== "parsed") return;
+        const firstLine = editTaskLine(original.firstLine, { ...parsedTask.edit, reminders: this.reminders });
+        if (firstLine.status !== "ready") return;
         const previousTimeboxes = toProjectionTimeboxes(original.timeboxes);
         const result = await saveScheduledItemBlock(this.app, this.snapshot, {
-            firstLine: original.firstLine,
+            firstLine: firstLine.line,
             description: original.description,
             detailNote: original.detailNote,
             timeboxes: this.timeboxes,
@@ -317,8 +363,13 @@ export class TimeboxManagerModal extends Modal {
         if (captured.status !== "captured") return;
         this.snapshot = captured.snapshot;
         this.loadFromSnapshot();
-        this.onComplete();
+        this.onComplete(this.snapshot, [...this.reminders]);
     }
+}
+
+function isPastReminder(value: string): boolean {
+    const parsed = Date.parse(value.replace(" ", "T"));
+    return Number.isFinite(parsed) && parsed < Date.now();
 }
 
 function toProjectionTimeboxes(timeboxes: readonly TaskTimebox[]): TaskDayReferenceTimebox[] {

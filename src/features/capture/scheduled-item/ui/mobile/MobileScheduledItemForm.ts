@@ -17,6 +17,7 @@ import type { ScannedFocusSession } from "../../../../focus-session/domain/Focus
 import { renderMobileFocusSessionsSection } from "./MobileFocusSessionsSection.ts";
 import { renderMobileFocusSummarySection } from "./MobileFocusSummarySection.ts";
 import type { FormattedFocusSummary } from "../../domain/ScheduledItemFocusSummary.ts";
+import { renderFocusDisclosure } from "../FocusDisclosure.ts";
 
 export type { MobileScheduledItemCreateContext } from "./MobileSupplementalSections.ts";
 
@@ -29,18 +30,16 @@ export interface MobileScheduledItemFormOptions {
     createContext?: MobileScheduledItemCreateContext;
     defaultDetailNotesFolder?: string;
     getContextSources(): ContextSourceSettings[];
-    /** Object Sources allowed as Task "Save to" destinations. Only consulted when data.kind === "task". */
     getAllowedTaskSources?(): ContextSourceSettings[];
     onChange(data: ScheduledItemFormData): void;
     onSubmit(): void;
     onCancel(): void;
-    /** Switch the capture kind without requiring the user to close and reopen the form. Create mode only. */
     onSwitchKind?(kind: "inbox" | "event" | "task"): void;
     onPlannedStartChange?(value: string): void;
     onManageTimeboxes?(): void;
     focusSessions?: ScannedFocusSession[];
     onEditFocusSession?(session: ScannedFocusSession): void;
-    focusSummary?: FormattedFocusSummary | null; // Task 61/63's shared summary, pre-computed by the caller
+    focusSummary?: FormattedFocusSummary | null;
 }
 
 export class MobileScheduledItemForm extends Component {
@@ -52,7 +51,9 @@ export class MobileScheduledItemForm extends Component {
     private recovery = false;
     private errorMessage = "";
 
-    constructor(private readonly options: MobileScheduledItemFormOptions) { super(); }
+    constructor(private readonly options: MobileScheduledItemFormOptions) {
+        super();
+    }
 
     open(owner?: Component): void {
         if (this.rootEl) return;
@@ -137,12 +138,22 @@ export class MobileScheduledItemForm extends Component {
             rerender: () => this.rerender(),
             onEventStartChanged: (value) => this.options.onPlannedStartChange?.(value),
             onManageTimeboxes: () => this.options.onManageTimeboxes?.(),
+            renderAfterDue: this.options.data.kind === "task" ? () => this.renderDescription(body) : undefined,
         });
-        this.renderDescription(body);
-        if (this.options.focusSummary) renderMobileFocusSummarySection(body, this.options.focusSummary);
-        if (this.options.focusSessions && this.options.onEditFocusSession) {
-            renderMobileFocusSessionsSection(body, this.options.focusSessions, this.options.onEditFocusSession);
-        }
+        if (this.options.data.kind !== "task") this.renderDescription(body);
+        renderFocusDisclosure(body, {
+            summary: this.options.focusSummary,
+            sessions: this.options.focusSessions,
+            renderBody: (focusBody) => {
+                if (this.options.focusSummary) renderMobileFocusSummarySection(focusBody, this.options.focusSummary);
+                if (this.options.focusSessions && this.options.onEditFocusSession)
+                    renderMobileFocusSessionsSection(
+                        focusBody,
+                        this.options.focusSessions,
+                        this.options.onEditFocusSession,
+                    );
+            },
+        });
         if (this.options.mode === "edit" || this.options.mode === "create") {
             this.reflectionController = renderMobileReflectionSection(body, {
                 app: this.options.app,
@@ -229,7 +240,7 @@ export class MobileScheduledItemForm extends Component {
         this.options.onChange(this.options.data);
     }
 
-    private rerender(): void {
+    rerender(): void {
         this.options.onChange(this.options.data);
         this.render();
     }
@@ -275,8 +286,7 @@ export class MobileScheduledItemForm extends Component {
             viewport.addEventListener("resize", update);
             viewport.addEventListener("scroll", update);
             // focusin fires before the on-screen keyboard finishes opening, so the initial
-            // reveal() scrolls against pre-keyboard viewport bounds. Re-run it once the
-            // keyboard's actual size lands via visualViewport's own resize event.
+            // Re-run after visualViewport receives the keyboard's final size.
             viewport.addEventListener("resize", reveal);
             this.register(() => {
                 viewport.removeEventListener("resize", update);

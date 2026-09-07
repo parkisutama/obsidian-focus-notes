@@ -6,7 +6,7 @@ import {
 } from "../../application/DetailNotePromotion.ts";
 import { EventTaskWriter } from "../../../../../infrastructure/obsidian/capture/EventTaskWriter.ts";
 import type { HubNoteRef } from "../../domain/EventTaskRecord";
-import type { LedgerRecordSnapshot } from "../../domain/LedgerRecordSource.ts";
+import { captureLedgerRecord, type LedgerRecordSnapshot } from "../../domain/LedgerRecordSource.ts";
 import { MobileScheduledItemForm } from "./MobileScheduledItemForm.ts";
 import { readContextSuggestionNotes } from "../../../../../infrastructure/obsidian/suggestions/ObsidianInboxSuggestionSource.ts";
 import {
@@ -23,7 +23,7 @@ import {
     runTaskDayProjection,
     retryTaskDayProjectionRuntime,
 } from "../../../../../infrastructure/obsidian/capture/TaskDayProjectionRuntime.ts";
-import { TimeboxManagerMobileScreen } from "./TimeboxManagerMobileScreen.ts";
+import { PlanningManagerModal } from "../PlanningManagerModal.ts";
 import {
     retryScheduledItemEditRelated,
     type ScheduledItemEditSubmissionResult,
@@ -70,7 +70,7 @@ export class ScheduledItemMobileEditScreen extends Component {
     constructor(
         private readonly app: App,
         private readonly getSettings: () => FocusNotesSettings,
-        private readonly snapshot: LedgerRecordSnapshot,
+        private snapshot: LedgerRecordSnapshot,
         kind: "task" | "event",
         title: string,
         private readonly onComplete: () => void,
@@ -110,14 +110,12 @@ export class ScheduledItemMobileEditScreen extends Component {
     }
 
     private openFocusSessionEdit(session: ScannedFocusSession): void {
-        const onComplete = this.onComplete;
-        this.close();
         new FocusSessionEditModal(
             this.app,
             this.snapshot,
             session,
             () => this.getSettings().inbox.contextSources,
-            onComplete,
+            () => void this.refreshAfterChildEdit(),
         ).open();
     }
 
@@ -129,14 +127,35 @@ export class ScheduledItemMobileEditScreen extends Component {
         if (this.data.kind !== "task") return;
         const due = this.data.due ? { date: this.data.due, hasTime: this.data.due.includes(" ") } : null;
         const { title, completed } = this.data;
-        const onComplete = this.onComplete;
-        this.close();
-        new TimeboxManagerMobileScreen(
+        new PlanningManagerModal(
             this.app,
             this.getSettings,
             { snapshot: this.snapshot, title, completed, due },
-            onComplete,
+            (snapshot, reminders) => {
+                this.snapshot = snapshot;
+                if (this.data.kind === "task" && this.original.kind === "task") {
+                    this.data.reminders = [...reminders];
+                    this.original.reminders = [...reminders];
+                }
+                this.renderer?.rerender();
+                this.onComplete();
+            },
         ).open();
+    }
+
+    private async refreshAfterChildEdit(): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(this.snapshot.filePath);
+        if (!isTFile(file)) return;
+        const content = await this.app.vault.read(file);
+        const captured = captureLedgerRecord(content, {
+            filePath: this.snapshot.filePath,
+            lineNumber: this.snapshot.lineNumber,
+            rawLine: this.snapshot.rawLine,
+        });
+        if (captured.status !== "captured") return;
+        this.snapshot = captured.snapshot;
+        this.renderer?.rerender();
+        this.onComplete();
     }
 
     close(): void {
@@ -264,7 +283,11 @@ export class ScheduledItemMobileEditScreen extends Component {
                           return start && end ? [{ start, end, status: timebox.status }] : [];
                       })
                     : [];
-            return summarizeScheduledItemFocus({ kind: "task", start: null, end: null, allDay: false }, timeboxes, sessions);
+            return summarizeScheduledItemFocus(
+                { kind: "task", start: null, end: null, allDay: false },
+                timeboxes,
+                sessions,
+            );
         }
         const start = parseLocalDateTime(this.data.start, this.data.allDay);
         const end = !this.data.allDay && this.data.end ? parseLocalDateTime(this.data.end, false) : null;

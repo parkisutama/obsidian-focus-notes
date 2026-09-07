@@ -7,7 +7,7 @@ import {
 } from "../../application/DetailNotePromotion.ts";
 import { EventTaskWriter } from "../../../../../infrastructure/obsidian/capture/EventTaskWriter";
 import type { HubNoteRef } from "../../domain/EventTaskRecord";
-import type { LedgerRecordSnapshot } from "../../domain/LedgerRecordSource.ts";
+import { captureLedgerRecord, type LedgerRecordSnapshot } from "../../domain/LedgerRecordSource.ts";
 import { readContextSuggestionNotes } from "../../../../../infrastructure/obsidian/suggestions/ObsidianInboxSuggestionSource";
 import {
     createObsidianLinkFormatter,
@@ -69,7 +69,7 @@ export class ScheduledItemDesktopEditModal extends Modal {
     constructor(
         app: App,
         private readonly getSettings: () => FocusNotesSettings,
-        private readonly snapshot: LedgerRecordSnapshot,
+        private snapshot: LedgerRecordSnapshot,
         kind: "task" | "event",
         title: string,
         private readonly onComplete: () => void,
@@ -123,16 +123,14 @@ export class ScheduledItemDesktopEditModal extends Modal {
      * overwriting the session edit with stale in-memory state.
      */
     private openFocusSessionEdit(session: ScannedFocusSession): void {
-        const onComplete = this.onComplete;
         const snapshot = this.snapshot;
         const getSettings = this.getSettings;
-        this.close();
         new FocusSessionEditModal(
             this.app,
             snapshot,
             session,
             () => getSettings().inbox.contextSources,
-            onComplete,
+            () => void this.refreshAfterChildEdit(),
         ).open();
     }
 
@@ -144,14 +142,35 @@ export class ScheduledItemDesktopEditModal extends Modal {
         if (this.data.kind !== "task") return;
         const due = this.data.due ? { date: this.data.due, hasTime: this.data.due.includes(" ") } : null;
         const { title, completed } = this.data;
-        const onComplete = this.onComplete;
-        this.close();
         new TimeboxManagerModal(
             this.app,
             this.getSettings,
             { snapshot: this.snapshot, title, completed, due },
-            onComplete,
+            (snapshot, reminders) => {
+                this.snapshot = snapshot;
+                if (this.data.kind === "task" && this.original.kind === "task") {
+                    this.data.reminders = [...reminders];
+                    this.original.reminders = [...reminders];
+                }
+                this.render();
+                this.onComplete();
+            },
         ).open();
+    }
+
+    private async refreshAfterChildEdit(): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(this.snapshot.filePath);
+        if (!isTFile(file)) return;
+        const content = await this.app.vault.read(file);
+        const captured = captureLedgerRecord(content, {
+            filePath: this.snapshot.filePath,
+            lineNumber: this.snapshot.lineNumber,
+            rawLine: this.snapshot.rawLine,
+        });
+        if (captured.status !== "captured") return;
+        this.snapshot = captured.snapshot;
+        this.render();
+        this.onComplete();
     }
 
     private async submit(): Promise<void> {
@@ -286,7 +305,11 @@ export class ScheduledItemDesktopEditModal extends Modal {
                           return start && end ? [{ start, end, status: timebox.status }] : [];
                       })
                     : [];
-            return summarizeScheduledItemFocus({ kind: "task", start: null, end: null, allDay: false }, timeboxes, sessions);
+            return summarizeScheduledItemFocus(
+                { kind: "task", start: null, end: null, allDay: false },
+                timeboxes,
+                sessions,
+            );
         }
         const start = parseLocalDateTime(this.data.start, this.data.allDay);
         const end = !this.data.allDay && this.data.end ? parseLocalDateTime(this.data.end, false) : null;

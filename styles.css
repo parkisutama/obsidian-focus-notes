@@ -636,6 +636,14 @@ body.fn-mobile-event-screen-open .suggestion-container {
     font-size: var(--font-ui-smaller);
 }
 
+.focus-notes-purpose .setting-item-name {
+    font-weight: 600;
+}
+
+.focus-notes-purpose .setting-item-description {
+    display: none;
+}
+
 .focus-notes-duration-row {
     display: flex;
     align-items: center;
@@ -1116,6 +1124,38 @@ body.fn-mobile-event-screen-open .suggestion-container {
     padding: 12px;
     background: var(--background-secondary);
 }
+.fn-wellbeing-disclosure {
+    padding: 0;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+}
+.fn-wellbeing-disclosure-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+}
+.fn-wellbeing-disclosure-summary .focus-notes-modal-label {
+    margin: 0;
+}
+.fn-wellbeing-disclosure-value {
+    min-width: 0;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    text-align: right;
+}
+.fn-wellbeing-disclosure-body {
+    padding: 0 10px 10px;
+}
+.fn-wellbeing-disclosure-body .fn-wellbeing-picker {
+    border: 0;
+    padding: 8px 0 0;
+    background: transparent;
+}
 .fn-wellbeing-group {
     display: flex;
     flex-direction: column;
@@ -1126,6 +1166,36 @@ body.fn-mobile-event-screen-open .suggestion-container {
     font-size: var(--font-ui-smaller);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+}
+.fn-wellbeing-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.fn-wellbeing-current {
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+    font-weight: 600;
+}
+.fn-wellbeing-stress-slider {
+    display: block;
+    inline-size: 100% !important;
+    max-inline-size: none;
+    width: 100%;
+    margin: 2px 0 0;
+    accent-color: var(--interactive-accent);
+}
+.fn-wellbeing-stress-labels {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    color: var(--text-faint);
+    font-size: var(--font-ui-smaller);
+}
+.fn-wellbeing-stress-labels span:not(:first-child):not(:last-child) {
+    text-align: center;
+}
+.fn-wellbeing-stress-labels span:last-child {
+    text-align: right;
 }
 .fn-wellbeing-segment-row {
     display: grid;
@@ -2362,7 +2432,42 @@ body.fn-mobile-event-screen-open .suggestion-container {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+    padding: 8px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+}
+.fn-focus-disclosure {
+    min-width: 0;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+}
+.fn-focus-disclosure-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+}
+.fn-focus-disclosure-summary .focus-notes-modal-label {
+    margin: 0;
+}
+.fn-focus-disclosure-value {
+    min-width: 0;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    text-align: right;
+}
+.fn-focus-disclosure-body {
+    min-width: 0;
+    padding: 0 10px 10px;
+}
+.fn-focus-summary-title {
+    margin: 8px 0 4px;
+    font-size: var(--font-ui-medium);
 }
 .fn-focus-summary-headline {
     color: var(--text-normal);
@@ -2380,6 +2485,21 @@ body.fn-mobile-event-screen-open .suggestion-container {
     gap: 4px;
     margin-bottom: 8px;
 }
+.fn-focus-sessions-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+}
+.fn-focus-sessions-header h3 {
+    margin: 0;
+    font-size: var(--font-ui-medium);
+}
+.fn-focus-sessions-count {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
 .fn-focus-sessions-row {
     display: flex;
     align-items: center;
@@ -2388,6 +2508,11 @@ body.fn-mobile-event-screen-open .suggestion-container {
     padding: 4px 8px;
     border-radius: 6px;
     background: var(--background-secondary);
+    font-size: var(--font-ui-smaller);
+}
+.fn-focus-sessions-row button {
+    min-height: 28px;
+    padding: 2px 8px;
     font-size: var(--font-ui-smaller);
 }
 .fn-focus-sessions-summary {
@@ -2406,6 +2531,9 @@ body.fn-mobile-event-screen-open .suggestion-container {
     display: grid;
     gap: var(--size-4-3);
     width: min(44rem, 100%);
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .fn-scheduled-item-form-header {
@@ -2830,6 +2958,28 @@ body.fn-mobile-event-screen-open .suggestion-container {
     padding: 12px 14px;
     background: var(--background-secondary);
     margin-bottom: 16px;
+}
+.fn-reflection-wellbeing-context {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    border-left: 2px solid var(--interactive-accent);
+    background: var(--background-secondary);
+    font-size: var(--font-ui-smaller);
+}
+.fn-reflection-wellbeing-label {
+    color: var(--text-faint);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.fn-reflection-wellbeing-value {
+    overflow: hidden;
+    color: var(--text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .fn-reflection-mood-head {
     display: flex;
@@ -3955,6 +4105,164 @@ body.fn-mobile-event-screen-open .suggestion-container {
     width: 100%;
 }
 
+.fn-timebox-manager-modal {
+    width: min(42rem, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+}
+.fn-timebox-manager-modal .modal-content {
+    width: auto;
+    min-width: 0;
+}
+.fn-planning-section {
+    border-top: 1px solid var(--background-modifier-border);
+}
+.fn-planning-section > summary {
+    padding: 12px 0;
+    font-weight: 600;
+    cursor: pointer;
+}
+.fn-planning-section-body {
+    padding: 0 0 10px 12px;
+}
+.fn-planning-empty {
+    padding: 4px 0 10px;
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+}
+
+.fn-timebox-manager-modal .fn-timebox-row,
+.fn-timebox-manager-mobile .fn-timebox-row {
+    min-height: 42px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+.fn-timebox-manager-modal .setting-item.fn-timebox-row,
+.fn-timebox-manager-modal .setting-item.fn-reminder-row,
+.fn-timebox-manager-modal .setting-item.fn-planning-add-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+.fn-timebox-manager-modal .fn-timebox-row .setting-item-info {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.fn-timebox-manager-modal :is(.fn-timebox-row, .fn-reminder-row) .setting-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.fn-timebox-manager-modal :is(.fn-timebox-row, .fn-reminder-row, .fn-planning-add-row) .setting-item-control {
+    flex: 0 0 auto;
+    width: auto;
+    flex-wrap: nowrap;
+}
+.fn-timebox-manager-modal :is(.fn-timebox-row, .fn-reminder-row) button {
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    padding: 0;
+}
+.fn-planning-add-row .fn-timebox-datetime-field {
+    flex-direction: row;
+    align-items: center;
+}
+.fn-planning-add-row .fn-timebox-datetime-label {
+    display: none;
+}
+.fn-timebox-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+.fn-timebox-row-actions select {
+    flex: 1 1 auto;
+}
+.fn-timebox-editor-row {
+    display: flex;
+    align-items: end;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 10px 0;
+}
+.fn-timebox-manager-modal .setting-item.fn-timebox-editor-row {
+    flex-direction: row;
+    align-items: center;
+}
+.fn-timebox-manager-modal .fn-timebox-editor-row .setting-item-info {
+    flex: 0 0 auto;
+}
+.fn-timebox-manager-modal .fn-timebox-editor-row .setting-item-control {
+    flex: 1 1 auto;
+    width: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+}
+.fn-timebox-editor-row .fn-datetime-today,
+.fn-timebox-editor-row .fn-datetime-clear {
+    display: none;
+}
+.fn-timebox-editor-row .fn-datetime-input {
+    width: min(132px, 100%);
+}
+.fn-timebox-editor-row > .setting-item {
+    flex: 1 1 13rem;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+}
+.fn-timebox-editor-title {
+    flex: 1 0 100%;
+    font-size: var(--font-ui-small);
+    font-weight: 600;
+}
+.fn-timebox-add-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+}
+.fn-timebox-add-controls .fn-timebox-datetime-field {
+    min-width: 0;
+    margin-right: 0;
+}
+.fn-timebox-add-controls .fn-datetime-input-wrap,
+.fn-timebox-add-controls .fn-datetime-input {
+    width: 100%;
+    min-width: 0;
+}
+.fn-timebox-add-controls > button {
+    align-self: end;
+}
+.fn-timebox-separator {
+    align-self: center;
+    color: var(--text-faint);
+}
+
+.fn-compact-disclosure {
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+.fn-compact-disclosure > summary {
+    padding: 10px 0;
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+    font-weight: 600;
+    cursor: pointer;
+}
+.fn-compact-disclosure-body {
+    padding: 0 0 6px 14px;
+}
+.fn-reminder-row.is-past {
+    opacity: 0.55;
+}
+.fn-reminder-row.is-past:hover,
+.fn-reminder-row.is-past:focus-within {
+    opacity: 0.85;
+}
+
 /* ---- Custom date/time picker (DateTimeInput, wraps flatpickr) ----------- */
 /* Replaces native <input type="date"/"time"/"datetime-local">: its display
  * format follows the OS/Electron process locale, which a plugin can't
@@ -3967,7 +4275,7 @@ body.fn-mobile-event-screen-open .suggestion-container {
     display: flex;
     align-items: center;
     gap: 4px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 .fn-datetime-input {
     padding: 6px 10px;
@@ -4016,6 +4324,84 @@ body.fn-mobile-event-screen-open .suggestion-container {
     flex: 1 1 auto;
     width: auto;
     min-width: 0;
+}
+
+.fn-mobile-event-screen .fn-datetime-input-wrap {
+    width: 100%;
+}
+.fn-mobile-event-screen .fn-datetime-today,
+.fn-mobile-event-screen .fn-datetime-clear {
+    min-width: auto;
+    padding-inline: 6px;
+}
+
+@media (max-width: 420px) {
+    .fn-timebox-manager-modal {
+        width: calc(100vw - 16px);
+        max-width: calc(100vw - 16px);
+    }
+    .fn-timebox-manager-modal .modal-content {
+        padding-inline: 12px;
+    }
+    .fn-planning-section-body {
+        padding-left: 6px;
+    }
+    .fn-timebox-manager-modal .setting-item.fn-timebox-row,
+    .fn-timebox-manager-modal .setting-item.fn-reminder-row {
+        gap: 6px;
+    }
+    .fn-timebox-manager-modal .fn-timebox-row .setting-item-control {
+        gap: 4px;
+    }
+    .fn-timebox-manager-modal .fn-timebox-row select {
+        max-width: 104px;
+    }
+    .fn-timebox-manager-modal .setting-item.fn-timebox-editor-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .fn-timebox-manager-modal .fn-timebox-editor-row .setting-item-control {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .fn-timebox-editor-row {
+        align-items: stretch;
+    }
+    .fn-timebox-editor-row > .setting-item {
+        flex: 1 1 0;
+    }
+    .fn-timebox-add-controls {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    }
+    .fn-timebox-add-controls .fn-timebox-separator {
+        display: none;
+    }
+    .fn-wellbeing-disclosure-summary,
+    .fn-focus-disclosure-summary {
+        align-items: flex-start;
+    }
+    .fn-wellbeing-picker {
+        padding: 10px;
+    }
+    .fn-wellbeing-segment-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .fn-wellbeing-state-grid {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+}
+
+body.fn-minimal-block-ids :is(.cm-blockid, .blockid) {
+    opacity: 0;
+    cursor: copy;
+    transition: opacity 120ms ease;
+}
+body.fn-minimal-block-ids :is(.cm-line, .markdown-preview-view li):hover :is(.cm-blockid, .blockid),
+body.fn-minimal-block-ids :is(.cm-blockid, .blockid):hover,
+body.fn-minimal-block-ids :is(.cm-blockid, .blockid):focus-visible {
+    opacity: 0.72;
 }
 
 /* Field label for Add/Edit timebox's date/time inputs. */

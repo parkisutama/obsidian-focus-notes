@@ -131,8 +131,9 @@ export class TimeboxManagerMobileScreen extends Component {
             this.renderEditRow(container, timebox);
             return;
         }
-        container.createDiv({ cls: "fn-mobile-scheduled-context", text: `${timebox.start} – ${timebox.end}` });
-        const statusRow = container.createDiv();
+        const card = container.createDiv({ cls: "fn-timebox-row" });
+        card.createDiv({ cls: "fn-mobile-scheduled-context", text: `${timebox.start} – ${timebox.end}` });
+        const statusRow = card.createDiv({ cls: "fn-timebox-row-actions" });
         const select = statusRow.createEl("select", { attr: { "aria-label": "Timebox status" } });
         for (const status of Object.keys(STATUS_LABELS) as TaskTimeboxStatus[]) {
             const option = select.createEl("option", { text: STATUS_LABELS[status], value: status });
@@ -159,15 +160,16 @@ export class TimeboxManagerMobileScreen extends Component {
         let end = timebox.end;
         const fields = new MobileFormFields((change) => change());
         this.fields.push(fields);
-        fields.dateTime(container, "Start", timebox.start, true, (value) => {
+        const editor = container.createDiv({ cls: "fn-timebox-editor-row" });
+        fields.dateTime(editor, "Start", timebox.start, true, (value) => {
             start = value ?? "";
         });
-        fields.dateTime(container, "End", timebox.end, true, (value) => {
+        fields.dateTime(editor, "End", timebox.end, true, (value) => {
             end = value ?? "";
         });
-        const save = container.createEl("button", { text: "Save", attr: { type: "button" } });
+        const save = editor.createEl("button", { text: "Save", attr: { type: "button" } });
         save.addEventListener("click", () => this.applyEdit(timebox.timeboxId, { start, end }));
-        const cancel = container.createEl("button", { text: "Cancel", attr: { type: "button" } });
+        const cancel = editor.createEl("button", { text: "Cancel", attr: { type: "button" } });
         cancel.addEventListener("click", () => {
             this.editingId = null;
             this.render();
@@ -177,13 +179,16 @@ export class TimeboxManagerMobileScreen extends Component {
     private renderAddForm(container: HTMLElement, fields: MobileFormFields): void {
         let start = "";
         let end = "";
-        fields.dateTime(container, "New timebox start", null, true, (value) => {
+        const editor = container.createDiv({ cls: "fn-timebox-editor-row fn-timebox-add-row" });
+        editor.createDiv({ cls: "fn-timebox-editor-title", text: "New timebox" });
+        fields.dateTime(editor, "Start", null, true, (value) => {
             start = value ?? "";
         });
-        fields.dateTime(container, "New timebox end", null, true, (value) => {
+        editor.createSpan({ cls: "fn-timebox-separator", text: "–", attr: { "aria-hidden": "true" } });
+        fields.dateTime(editor, "End", null, true, (value) => {
             end = value ?? "";
         });
-        const add = container.createEl("button", { text: "Add timebox", cls: "mod-cta", attr: { type: "button" } });
+        const add = editor.createEl("button", { text: "Add", cls: "mod-cta", attr: { type: "button" } });
         add.addEventListener("click", () => this.applyAdd({ start, end }));
     }
 

@@ -3,6 +3,11 @@ import { ContextNotesController } from "../../../moment/ui/InboxNotesController.
 import type { ScheduledItemFormData } from "../../domain/ScheduledItemFormData.ts";
 import type { ContextSourceSettings } from "../../../../object-notes/domain/ContextSourceSettings.ts";
 import { EmotionalWellbeingPicker } from "../../../../reflection/ui/EmotionalWellbeingPicker.ts";
+import { getMood } from "../../../../reflection/domain/MoodReference.ts";
+import {
+    getEmotionCategoryLabel,
+    getStressLevelLabel,
+} from "../../../../reflection/domain/EmotionalWellbeingReference.ts";
 
 export function renderMobileReflectionSection(
     container: HTMLElement,
@@ -14,10 +19,23 @@ export function renderMobileReflectionSection(
         update(change: () => void): void;
     },
 ): ContextNotesController {
-    const wellbeing = new Setting(container).setName("Emotional Wellbeing").setDesc("Optional Reflection context.");
+    const wellbeing = container.createEl("details", {
+        cls: "focus-notes-modal-section fn-wellbeing-disclosure",
+    });
+    if (!hasWellbeing(options.data)) wellbeing.setAttr("open", "");
+    const summary = wellbeing.createEl("summary", { cls: "fn-wellbeing-disclosure-summary" });
+    summary.createSpan({ cls: "focus-notes-modal-label", text: "Emotional Wellbeing" });
+    const summaryValue = summary.createSpan({
+        cls: "fn-wellbeing-disclosure-value",
+        text: summarizeWellbeing(options.data),
+    });
+    const wellbeingBody = wellbeing.createDiv({ cls: "fn-wellbeing-disclosure-body" });
     new EmotionalWellbeingPicker(
-        wellbeing.controlEl,
-        (value) => options.update(() => Object.assign(options.data, value)),
+        wellbeingBody,
+        (value) => {
+            options.update(() => Object.assign(options.data, value));
+            summaryValue.setText(summarizeWellbeing(options.data));
+        },
         {
             stressLevel: options.data.stressLevel,
             emotionCategory: options.data.emotionCategory,
@@ -38,4 +56,22 @@ export function renderMobileReflectionSection(
         referenceFormat: "markdown-link",
         onChange: (value) => options.update(() => (options.data.reflectionNotes = value)),
     });
+}
+
+function hasWellbeing(data: ScheduledItemFormData): boolean {
+    return Boolean(data.stressLevel || data.emotionCategory || data.emotionKey);
+}
+
+function summarizeWellbeing(data: ScheduledItemFormData): string {
+    const stress = getStressLevelLabel(data.stressLevel);
+    const emotion = getEmotionCategoryLabel(data.emotionCategory);
+    const mood = getMood(data.emotionKey);
+    if (!stress && !emotion && !mood) return "Not set";
+    return [
+        stress ? `Stress ${stress}` : "",
+        emotion ? `Emotion ${emotion}` : "",
+        mood ? `Mood ${mood.emoji} ${mood.name}` : "",
+    ]
+        .filter(Boolean)
+        .join(" · ");
 }

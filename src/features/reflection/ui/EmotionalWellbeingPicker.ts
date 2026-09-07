@@ -21,7 +21,6 @@ export class EmotionalWellbeingPicker {
     private emotionKey: string | null = null;
     private emotionStatesEl!: HTMLElement;
     private summaryEl!: HTMLElement;
-    private stressButtons = new Map<StressLevel, HTMLElement>();
     private categoryButtons = new Map<EmotionCategory, HTMLElement>();
 
     constructor(
@@ -37,7 +36,6 @@ export class EmotionalWellbeingPicker {
         this.renderEmotionCategories();
         this.emotionStatesEl = this.container.createDiv({ cls: "fn-wellbeing-states" });
         this.summaryEl = this.container.createDiv({ cls: "fn-mood-summary" });
-        this.refreshStressButtons();
         this.refreshCategoryButtons();
         this.renderEmotionStates();
         this.refreshSummary();
@@ -45,16 +43,38 @@ export class EmotionalWellbeingPicker {
 
     private renderStress(): void {
         const group = this.container.createDiv({ cls: "fn-wellbeing-group" });
-        group.createDiv({ cls: "fn-wellbeing-group-label", text: "Stress" });
-        const row = group.createDiv({ cls: "fn-wellbeing-segment-row" });
-        for (const option of STRESS_OPTIONS) {
-            const btn = row.createEl("button", {
-                cls: "fn-wellbeing-segment",
-                text: option.label,
-            });
-            btn.addEventListener("click", () => this.setStressLevel(option.level));
-            this.stressButtons.set(option.level, btn);
-        }
+        const header = group.createDiv({ cls: "fn-wellbeing-group-header" });
+        header.createDiv({ cls: "fn-wellbeing-group-label", text: "Stress" });
+        const value = header.createSpan({
+            cls: "fn-wellbeing-current",
+            text: getStressLevelLabel(this.stressLevel) || "Not set",
+        });
+        const slider = group.createEl("input", {
+            cls: "fn-wellbeing-stress-slider",
+            type: "range",
+            attr: {
+                min: "0",
+                max: String(STRESS_OPTIONS.length),
+                step: "1",
+                value: String(
+                    this.stressLevel ? STRESS_OPTIONS.findIndex((item) => item.level === this.stressLevel) + 1 : 0,
+                ),
+                "aria-label": "Stress level",
+                "aria-valuetext": getStressLevelLabel(this.stressLevel) || "Not set",
+            },
+        });
+        const labels = group.createDiv({ cls: "fn-wellbeing-stress-labels", attr: { "aria-hidden": "true" } });
+        labels.createSpan({ text: "None" });
+        for (const option of STRESS_OPTIONS) labels.createSpan({ text: option.label });
+        slider.addEventListener("input", () => {
+            const index = Number(slider.value) - 1;
+            this.stressLevel = index >= 0 ? (STRESS_OPTIONS[index]?.level ?? null) : null;
+            const label = getStressLevelLabel(this.stressLevel) || "Not set";
+            value.setText(label);
+            slider.setAttribute("aria-valuetext", label);
+            this.emitChange();
+            this.refreshSummary();
+        });
     }
 
     private renderEmotionCategories(): void {
@@ -69,13 +89,6 @@ export class EmotionalWellbeingPicker {
             btn.addEventListener("click", () => this.setEmotionCategory(option.category));
             this.categoryButtons.set(option.category, btn);
         }
-    }
-
-    private setStressLevel(level: StressLevel): void {
-        this.stressLevel = this.stressLevel === level ? null : level;
-        this.refreshStressButtons();
-        this.emitChange();
-        this.refreshSummary();
     }
 
     private setEmotionCategory(category: EmotionCategory): void {
@@ -125,12 +138,6 @@ export class EmotionalWellbeingPicker {
         return chip;
     }
 
-    private refreshStressButtons(): void {
-        for (const [level, btn] of this.stressButtons) {
-            btn.toggleClass("active", level === this.stressLevel);
-        }
-    }
-
     private refreshCategoryButtons(): void {
         for (const [category, btn] of this.categoryButtons) {
             btn.toggleClass("active", category === this.emotionCategory);
@@ -167,7 +174,6 @@ export class EmotionalWellbeingPicker {
             this.stressLevel = null;
             this.emotionCategory = null;
             this.emotionKey = null;
-            this.refreshStressButtons();
             this.refreshCategoryButtons();
             this.renderEmotionStates();
             this.emitChange();
