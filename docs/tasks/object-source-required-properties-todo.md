@@ -34,8 +34,10 @@ acceptance criteria, risks, and verification details.
 
 - [x] Task 7: Linter-format-preserving fixture coverage shared across all three enforcement paths.
       `pnpm run check` green (643 tests).
-- [ ] Task 8: Documentation, changelog, and spec/ADR closeout.
-- [ ] Checkpoint C: `check:ci` green, real desktop acceptance, documentation and changelog current.
+- [x] Task 8: Documentation, changelog, and spec/ADR closeout. `check:ci` green (643 tests). Archive move
+      to `docs/archive/` deliberately deferred until Checkpoint C's real desktop acceptance closes.
+- [ ] Checkpoint C: `check:ci` green (done); real desktop acceptance in an actual Obsidian vault still
+      outstanding — the only remaining gate before this branch is release-ready.
 
 ## Explicitly deferred
 

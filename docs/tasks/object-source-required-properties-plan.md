@@ -405,7 +405,7 @@ in the block changes.
 
 **Estimated scope:** Small. Landed as one commit.
 
-### Task 8: Documentation, changelog, and spec/ADR closeout
+### Task 8: Documentation, changelog, and spec/ADR closeout — mostly done
 
 **Priority:** P3
 
@@ -415,23 +415,28 @@ traceability note, and move the spec/plan/todo trio into `docs/archive/{specs,ta
 
 **Acceptance criteria:**
 
-- [ ] `docs/current-state.md`'s "Model data canonical" / feature table mentions Object Source required
-      properties.
-- [ ] `docs/reference/code-architecture-baseline.md` reflects the new modules
-      (`TemplaterApi.ts`, `RequiredPropertyResolution.ts`, `RequiredPropertyGaps.ts`,
-      `RepairObjectNotes.ts`, `RequiredPropertyRepairWatcher.ts`) and their dependency direction.
-- [ ] `CHANGELOG.md` `[Unreleased]` § Added describes the user-facing capability.
-- [ ] `docs/spec-object-source-required-properties.md` Status section records implementation completion
+- [x] `docs/current-state.md`'s feature table mentions Object Source required properties.
+- [x] `docs/reference/code-architecture-baseline.md` reflects the new modules
+      (`TemplaterApi.ts`, `RequiredPropertyResolution.ts`, `RequiredPropertyGaps.ts`, `RepairObjectNotes.ts`,
+      `RequiredPropertyRepairWatcher.ts`, `RequiredPropertySchema.ts`, `ObjectNoteTemplate.ts`) and notes the
+      two deviations from the original plan (`ContextSourceFilter.ts` kept, not deleted; `PropertySuggest`
+      added to `Suggesters.ts`).
+- [x] `CHANGELOG.md` `[Unreleased]` § Added describes the user-facing capability.
+- [x] `docs/spec-object-source-required-properties.md` Status section records implementation completion
       and links the ADR.
+- [ ] Move the spec/plan/todo trio into `docs/archive/{specs,tasks}/` — **deliberately not done yet**: this
+      repo's archive convention is for fully shipped work, and Checkpoint C's real desktop acceptance is
+      still outstanding. Archiving now would misrepresent status.
 
 **Verification:**
 
-- [ ] `pnpm run docs:build` passes.
-- [ ] `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` passes.
+- [x] `pnpm run docs:build` passes.
+- [x] `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` passes (643 tests; format, lint, verify:version,
+      typecheck, production build, artifact verification, docs build all green).
 
 **Dependencies:** Tasks 4, 7.
 
-**Files likely touched:**
+**Files touched:**
 
 - `docs/current-state.md`
 - `docs/reference/code-architecture-baseline.md`
@@ -439,14 +444,16 @@ traceability note, and move the spec/plan/todo trio into `docs/archive/{specs,ta
 - `docs/spec-object-source-required-properties.md`
 - `docs/README.md` (index entry)
 
-**Estimated scope:** Small.
+**Estimated scope:** Small. Landed as one commit; archive move deferred to Checkpoint C.
 
 ## Checkpoint C — Release-ready slice
 
-- [ ] `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` passes.
+- [x] `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` passes.
 - [ ] Manual desktop acceptance: define a two-property schema, create a note, run repair on an
-      intentionally drifted existing note, edit a note by hand to remove a property and reopen it.
-- [ ] Documentation and changelog reflect the shipped capability.
+      intentionally drifted existing note, edit a note by hand to remove a property and reopen it. **Not
+      verifiable from this environment** — requires a real Obsidian install with the built plugin loaded
+      into an actual vault. This is the one remaining gate before this branch is release-ready.
+- [x] Documentation and changelog reflect the shipped capability.
 
 ## Risks and mitigations
 
