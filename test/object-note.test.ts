@@ -62,6 +62,108 @@ test("creates an Object Note from its source template and enforces the source pr
     assert.deepEqual(frontmatter, { type: "place" });
 });
 
+function fakeCreateApp(files: Map<string, unknown>, frontmatter: Record<string, unknown>, plugins?: unknown): App {
+    return {
+        vault: {
+            getAbstractFileByPath: (path: string) => files.get(path) ?? null,
+            createFolder: async (path: string) => files.set(path, { path, children: [] }),
+            create: async (path: string) => {
+                const file = { path, extension: "md", stat: {} };
+                files.set(path, file);
+                return file;
+            },
+        },
+        fileManager: {
+            processFrontMatter: async (_file: unknown, mutate: (value: Record<string, unknown>) => void) =>
+                mutate(frontmatter),
+        },
+        plugins,
+    } as unknown as App;
+}
+
+const multiPropertySource: ContextSourceSettings = {
+    id: "places",
+    name: "Places",
+    icon: "map-pin",
+    folders: ["Objects/Places"],
+    requiredProperties: [
+        { property: "type", identityValue: "place", defaultValue: "unused" },
+        { property: "createdOn", identityValue: null, defaultValue: "{{date}}" },
+        { property: "region", identityValue: null, defaultValue: "<% tp.file.folder() %>" },
+    ],
+    relatedHeading: "Related log",
+    templatePath: "",
+    placement: "flat",
+    enabled: true,
+};
+
+test("stamps every schema property, not just the identity one, in one write", async () => {
+    const frontmatter: Record<string, unknown> = {};
+    const app = fakeCreateApp(new Map(), frontmatter, { plugins: {} });
+
+    await createObjectNote(app, multiPropertySource, {
+        name: "Kantor Jakarta",
+        folder: "Objects/Places",
+        createdAt: new Date(2026, 7, 3, 14, 5),
+        placement: "flat",
+    });
+
+    assert.deepEqual(frontmatter, {
+        type: "place",
+        createdOn: "2026-08-03",
+        region: "<% tp.file.folder() %>",
+    });
+});
+
+test("resolves a Templater-syntax default through Templater when it is installed", async () => {
+    const frontmatter: Record<string, unknown> = {};
+    const app = fakeCreateApp(new Map(), frontmatter, {
+        plugins: {
+            "templater-obsidian": {
+                templater: {
+                    create_running_config: () => ({}),
+                    parse_template: async (_config: unknown, content: string) => `resolved(${content})`,
+                },
+            },
+        },
+    });
+
+    await createObjectNote(app, multiPropertySource, {
+        name: "Kantor Jakarta",
+        folder: "Objects/Places",
+        createdAt: new Date(2026, 7, 3, 14, 5),
+        placement: "flat",
+    });
+
+    assert.equal(frontmatter.region, "resolved(<% tp.file.folder() %>)");
+});
+
+test("creates a note with no frontmatter write when the schema is empty", async () => {
+    const files = new Map<string, unknown>();
+    let processFrontMatterCalls = 0;
+    const app = {
+        vault: {
+            getAbstractFileByPath: (path: string) => files.get(path) ?? null,
+            createFolder: async (path: string) => files.set(path, { path, children: [] }),
+            create: async (path: string) => {
+                const file = { path, extension: "md", stat: {} };
+                files.set(path, file);
+                return file;
+            },
+        },
+        fileManager: {
+            processFrontMatter: async () => {
+                processFrontMatterCalls += 1;
+            },
+        },
+    } as unknown as App;
+    const source: ContextSourceSettings = { ...multiPropertySource, requiredProperties: [] };
+
+    await createObjectNote(app, source, { name: "Kantor Jakarta", folder: "Objects/Places", placement: "flat" });
+
+    assert.equal(processFrontMatterCalls, 0);
+});
+
 test("expands portable Object Note template tokens", () => {
     const createdAt = new Date(2026, 7, 3, 14, 5);
     assert.equal(

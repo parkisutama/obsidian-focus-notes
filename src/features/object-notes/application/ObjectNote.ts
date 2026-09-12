@@ -1,8 +1,8 @@
 import type { App, TFile } from "obsidian";
-import { identityEntry } from "../domain/ContextSourceScope.ts";
 import type { ContextSourceSettings, ObjectNotePlacement } from "../domain/ContextSourceSettings";
 import { expandObjectNoteTemplate } from "../domain/ObjectNoteTemplate.ts";
 import { isTFile } from "../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
+import { resolveRequiredPropertyValue } from "../../../infrastructure/obsidian/object-notes/RequiredPropertyResolution.ts";
 import { ensureFolderPath } from "../../../infrastructure/obsidian/vault/VaultFolders.ts";
 
 export { expandObjectNoteTemplate } from "../domain/ObjectNoteTemplate.ts";
@@ -59,14 +59,18 @@ export async function createObjectNote(
         if (!isTFile(templateFile)) throw new Error(`Template note not found: ${source.templatePath}`);
         template = await app.vault.read(templateFile);
     }
-    const created = await app.vault.create(
-        path,
-        expandObjectNoteTemplate(template, input.name.trim() || "Untitled", input.createdAt ?? new Date()),
-    );
-    const identity = identityEntry(source);
-    if (identity) {
+    const title = input.name.trim() || "Untitled";
+    const createdAt = input.createdAt ?? new Date();
+    const created = await app.vault.create(path, expandObjectNoteTemplate(template, title, createdAt));
+    if (source.requiredProperties.length > 0) {
+        const context = { title, createdAt, targetFile: created };
+        const resolved = await Promise.all(
+            source.requiredProperties.map(
+                async (entry) => [entry.property, await resolveRequiredPropertyValue(app, entry, context)] as const,
+            ),
+        );
         await app.fileManager.processFrontMatter(created, (frontmatter) => {
-            frontmatter[identity.property] = identity.value;
+            for (const [property, value] of resolved) frontmatter[property] = value;
         });
     }
     return created;
