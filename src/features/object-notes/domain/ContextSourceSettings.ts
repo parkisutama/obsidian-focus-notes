@@ -1,5 +1,5 @@
 import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
-import type { ContextSourceFilter } from "./ContextSourceFilter";
+import type { RequiredPropertySchema } from "./RequiredPropertySchema";
 
 export type ObjectNotePlacement = "flat" | "folder-note";
 
@@ -8,10 +8,11 @@ export interface ContextSourceSettings {
     name: string;
     icon: string;
     folders: string[];
-    filter: ContextSourceFilter | null;
+    /** Required frontmatter schema; at most one entry has a non-null identityValue. */
+    requiredProperties: RequiredPropertySchema[];
     /** Whether folders[] is required for a note to match this source. */
     matchByFolder: boolean;
-    /** Whether filter is required for a note to match this source. */
+    /** Whether the schema's identity entry (if any) is required for a note to match this source. */
     matchByProperty: boolean;
     relatedHeading: string;
     /** Where a new backlink bullet is inserted under relatedHeading. */

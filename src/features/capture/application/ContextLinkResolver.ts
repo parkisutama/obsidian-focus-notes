@@ -1,4 +1,8 @@
-import { isPathInContextSourceFolder, matchesContextFilter } from "../../object-notes/domain/ContextSourceScope.ts";
+import {
+    identityEntry,
+    isPathInContextSourceFolder,
+    matchesContextFilter,
+} from "../../object-notes/domain/ContextSourceScope.ts";
 import type { ContextSourceSettings } from "../../object-notes/domain/ContextSourceSettings";
 import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
 
@@ -163,8 +167,9 @@ function findSource(
     sources.forEach((source, sourceIndex) => {
         if (!source.enabled) return;
         if (!source.matchByFolder && !source.matchByProperty) return;
-        if (source.matchByProperty && !matchesContextFilter(note.properties, source.filter)) return;
-        const filterSpecificity = source.matchByProperty && source.filter ? 1 : 0;
+        const identity = identityEntry(source);
+        if (source.matchByProperty && !matchesContextFilter(note.properties, identity)) return;
+        const filterSpecificity = source.matchByProperty && identity ? 1 : 0;
         if (!source.matchByFolder) {
             matches.push({ source, folderLength: 0, filterSpecificity, sourceIndex });
             return;

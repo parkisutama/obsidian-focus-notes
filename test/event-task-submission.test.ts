@@ -249,7 +249,7 @@ test("writes contextual Inbox logs using its own temporal record", async () => {
             name: "People",
             icon: "users",
             folders: ["People"],
-            filter: null,
+            requiredProperties: [],
             matchByFolder: true,
             matchByProperty: true,
             relatedHeading: "Interactions",

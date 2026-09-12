@@ -1,5 +1,6 @@
 import type { TimelineSourceGroup } from "./Timeline";
 import { isFileInTimelineSource, type TimelineTargetAlignment } from "./TimelineSourceAlignment.ts";
+import { identityEntry } from "../../object-notes/domain/ContextSourceScope.ts";
 import type { ContextSourceSettings } from "../../object-notes/domain/ContextSourceSettings";
 
 export function buildTimelineSourceGroups(
@@ -26,7 +27,7 @@ export function buildTimelineSourceGroups(
             id: `object:${source.id}`,
             name: source.name,
             folders: source.folders.map(normalizeFolder).filter(Boolean),
-            filter: source.filter,
+            filter: identityEntry(source),
         }))
         .filter((source) => source.folders.length > 0);
     return [...folderGroups, ...objectGroups];

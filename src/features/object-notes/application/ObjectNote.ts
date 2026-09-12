@@ -1,4 +1,5 @@
 import type { App, TFile } from "obsidian";
+import { identityEntry } from "../domain/ContextSourceScope.ts";
 import type { ContextSourceSettings, ObjectNotePlacement } from "../domain/ContextSourceSettings";
 import { isTFile } from "../../../infrastructure/obsidian/vault/ObsidianFileTypes.ts";
 import { ensureFolderPath } from "../../../infrastructure/obsidian/vault/VaultFolders.ts";
@@ -66,9 +67,10 @@ export async function createObjectNote(
         path,
         expandObjectNoteTemplate(template, input.name.trim() || "Untitled", input.createdAt ?? new Date()),
     );
-    if (source.filter) {
+    const identity = identityEntry(source);
+    if (identity) {
         await app.fileManager.processFrontMatter(created, (frontmatter) => {
-            frontmatter[source.filter?.property ?? "type"] = source.filter?.value;
+            frontmatter[identity.property] = identity.value;
         });
     }
     return created;

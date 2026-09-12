@@ -149,12 +149,13 @@ test("clones Object Source state during settings merge", () => {
     const second = mergeSettingsWithDefaults({});
 
     first.inbox.contextSources[0]?.folders.push("Private");
-    if (first.inbox.contextSources[2]?.filter) first.inbox.contextSources[2].filter.value = "changed";
+    const firstIdentity = first.inbox.contextSources[2]?.requiredProperties[0];
+    if (firstIdentity) firstIdentity.identityValue = "changed";
 
     assert.deepEqual(second.inbox.contextSources[0]?.folders, ["People"]);
-    assert.equal(second.inbox.contextSources[2]?.filter?.value, "activity");
+    assert.equal(second.inbox.contextSources[2]?.requiredProperties[0]?.identityValue, "activity");
     assert.deepEqual(DEFAULT_SETTINGS.inbox.contextSources[0]?.folders, ["People"]);
-    assert.equal(DEFAULT_SETTINGS.inbox.contextSources[2]?.filter?.value, "activity");
+    assert.equal(DEFAULT_SETTINGS.inbox.contextSources[2]?.requiredProperties[0]?.identityValue, "activity");
 });
 
 test("uses Activities & Tasks only when no Event capture heading was previously saved", () => {

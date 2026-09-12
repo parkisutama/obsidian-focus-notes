@@ -17,7 +17,7 @@ test("records a bounded synthetic baseline and reuses warm candidates", () => {
         name: "Activities",
         icon: "activity",
         folders: ["Persona"],
-        filter: { property: "type", value: "activity" },
+        requiredProperties: [{ property: "type", identityValue: "activity", defaultValue: "activity" }],
         matchByFolder: true,
         matchByProperty: true,
         relatedHeading: "Activity log",

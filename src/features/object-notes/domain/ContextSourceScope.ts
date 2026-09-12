@@ -1,3 +1,4 @@
+import type { ContextSourceFilter } from "./ContextSourceFilter";
 import type { ContextSourceSettings } from "./ContextSourceSettings";
 
 /** A source folder owns its descendants and an optional sibling folder note named after the folder. */
@@ -8,9 +9,15 @@ export function isPathInContextSourceFolder(path: string, folder: string): boole
     return normalizedPath === `${normalizedFolder}.md` || normalizedPath.startsWith(`${normalizedFolder}/`);
 }
 
+/** The one requiredProperties entry (if any) used for matching and exact-value stamping. */
+export function identityEntry(source: Pick<ContextSourceSettings, "requiredProperties">): ContextSourceFilter | null {
+    const entry = source.requiredProperties.find((candidate) => candidate.identityValue !== null);
+    return entry ? { property: entry.property, value: entry.identityValue as string } : null;
+}
+
 export function matchesContextFilter(
     properties: Record<string, unknown> | undefined,
-    filter: ContextSourceSettings["filter"],
+    filter: ContextSourceFilter | null,
 ): boolean {
     if (!filter) return true;
     const actual = properties?.[filter.property];
@@ -27,14 +34,14 @@ export function matchesContextFilter(
  */
 export function contextSourceMatchesNote(
     note: { path: string; properties?: Record<string, unknown> },
-    source: Pick<ContextSourceSettings, "folders" | "filter" | "matchByFolder" | "matchByProperty">,
+    source: Pick<ContextSourceSettings, "folders" | "requiredProperties" | "matchByFolder" | "matchByProperty">,
 ): boolean {
     if (!source.matchByFolder && !source.matchByProperty) return false;
     if (source.matchByFolder) {
         const roots = source.folders.map((folder) => folder.trim()).filter(Boolean);
         if (roots.length === 0 || !roots.some((root) => isPathInContextSourceFolder(note.path, root))) return false;
     }
-    if (source.matchByProperty && !matchesContextFilter(note.properties, source.filter)) return false;
+    if (source.matchByProperty && !matchesContextFilter(note.properties, identityEntry(source))) return false;
     return true;
 }
 

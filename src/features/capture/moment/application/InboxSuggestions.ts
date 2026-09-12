@@ -66,12 +66,12 @@ export class ContextSuggestionIndex {
 
     private getCandidates(sources: ContextSourceSettings[]): ContextSuggestion[] {
         const key = JSON.stringify(
-            sources.map(({ id, name, icon, folders, filter, enabled, matchByFolder, matchByProperty }) => ({
+            sources.map(({ id, name, icon, folders, requiredProperties, enabled, matchByFolder, matchByProperty }) => ({
                 id,
                 name,
                 icon,
                 folders,
-                filter,
+                requiredProperties,
                 enabled,
                 matchByFolder,
                 matchByProperty,

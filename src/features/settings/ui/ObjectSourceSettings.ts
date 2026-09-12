@@ -3,6 +3,7 @@ import { createContextSource, findSharedFolderConflicts } from "../../object-not
 import { normalizeInboxFolders } from "../../capture/moment/domain/InboxFolderSettings";
 import { FileSuggest, FolderSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
 import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
+import { identityEntry } from "../../object-notes/domain/ContextSourceScope.ts";
 import type { ContextSourceSettings, ObjectNotePlacement } from "../../object-notes/domain/ContextSourceSettings";
 import { contextSelectField, contextTextField } from "./SettingsFormFields";
 import type { SettingsRenderContext } from "./SettingsRenderContext";
@@ -134,13 +135,20 @@ function renderContextSource(
         ctx.redisplay();
     });
 
-    let filterProperty = source.filter?.property ?? "";
-    let filterValue = source.filter?.value ?? "";
+    const identityFilter = identityEntry(source);
+    let filterProperty = identityFilter?.property ?? "";
+    let filterValue = identityFilter?.value ?? "";
     const saveFilter = async (): Promise<void> => {
-        source.filter =
+        source.requiredProperties =
             filterProperty.trim() && filterValue.trim()
-                ? { property: filterProperty.trim(), value: filterValue.trim() }
-                : null;
+                ? [
+                      {
+                          property: filterProperty.trim(),
+                          identityValue: filterValue.trim(),
+                          defaultValue: filterValue.trim(),
+                      },
+                  ]
+                : [];
         await ctx.saveSettings();
     };
     const fields = card.createDiv({ cls: "fn-context-source-grid" });

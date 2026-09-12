@@ -1,4 +1,5 @@
 import type { ContextSourceSettings, InboxSettings } from "../../object-notes/domain/ContextSourceSettings";
+import type { RequiredPropertySchema } from "../../object-notes/domain/RequiredPropertySchema";
 import type { FocusNotesSettings } from "./FocusNotesSettings";
 
 export const DEFAULT_SETTINGS: FocusNotesSettings = {
@@ -88,7 +89,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 name: "People",
                 icon: "user",
                 folders: ["People"],
-                filter: null,
+                requiredProperties: [],
                 matchByFolder: true,
                 matchByProperty: true,
                 relatedHeading: "Interactions",
@@ -103,7 +104,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 name: "Places",
                 icon: "map-pin",
                 folders: ["Place"],
-                filter: null,
+                requiredProperties: [],
                 matchByFolder: true,
                 matchByProperty: true,
                 relatedHeading: "Related log",
@@ -118,7 +119,7 @@ export const DEFAULT_SETTINGS: FocusNotesSettings = {
                 name: "Activities",
                 icon: "activity",
                 folders: ["Activities"],
-                filter: { property: "type", value: "activity" },
+                requiredProperties: [{ property: "type", identityValue: "activity", defaultValue: "activity" }],
                 matchByFolder: true,
                 matchByProperty: true,
                 relatedHeading: "Activity log",
@@ -227,15 +228,16 @@ function normalizeContextSources(
         const occurrence = (usedIds.get(baseId) ?? 0) + 1;
         usedIds.set(baseId, occurrence);
         const folders = normalizeContextFolders(Array.isArray(raw.folders) ? raw.folders : []);
-        const filter = raw.filter && typeof raw.filter === "object" ? raw.filter : null;
-        const property = stringValue(filter?.property).trim();
-        const value = stringValue(filter?.value).trim();
+        const requiredProperties = normalizeRequiredProperties(
+            raw as Partial<ContextSourceSettings> & { filter?: unknown },
+        );
+        const identityValue = requiredProperties.find((entry) => entry.identityValue !== null)?.identityValue ?? "";
         result.push({
             id: occurrence === 1 ? baseId : `${baseId}-${occurrence}`,
             name: stringValue(raw.name).trim() || baseId,
             icon: stringValue(raw.icon).trim() || "link",
             folders,
-            filter: property && value ? { property, value } : null,
+            requiredProperties,
             matchByFolder: raw.matchByFolder !== false,
             matchByProperty: raw.matchByProperty !== false,
             relatedHeading: stringValue(raw.relatedHeading).trim() || "Related log",
@@ -245,7 +247,7 @@ function normalizeContextSources(
             enabled: raw.enabled === true,
             includeInTimeline:
                 raw.includeInTimeline === true ||
-                (raw.includeInTimeline === undefined && ["activity", "project"].includes(value.toLowerCase())),
+                (raw.includeInTimeline === undefined && ["activity", "project"].includes(identityValue.toLowerCase())),
         });
     }
     return result;
@@ -255,6 +257,43 @@ type LegacyInboxSettings = Partial<InboxSettings> & {
     peopleFolders?: string[];
     placeFolders?: string[];
 };
+
+/**
+ * Accepts either today's `requiredProperties` shape or the legacy single `filter`
+ * shape, so migration from a pre-schema install and re-normalization of an
+ * already-migrated install both go through one deterministic path.
+ */
+function normalizeRequiredProperties(raw: {
+    requiredProperties?: unknown;
+    filter?: unknown;
+}): RequiredPropertySchema[] {
+    if (Array.isArray(raw.requiredProperties)) return normalizeRequiredPropertyList(raw.requiredProperties);
+    const legacyFilter =
+        raw.filter && typeof raw.filter === "object" ? (raw.filter as { property?: unknown; value?: unknown }) : null;
+    const property = stringValue(legacyFilter?.property).trim();
+    const value = stringValue(legacyFilter?.value).trim();
+    return property && value ? [{ property, identityValue: value, defaultValue: value }] : [];
+}
+
+function normalizeRequiredPropertyList(list: unknown[]): RequiredPropertySchema[] {
+    let identityClaimed = false;
+    const result: RequiredPropertySchema[] = [];
+    for (const candidate of list) {
+        if (!candidate || typeof candidate !== "object") continue;
+        const raw = candidate as Partial<RequiredPropertySchema>;
+        const property = stringValue(raw.property).trim();
+        if (!property) continue;
+        const rawIdentity = typeof raw.identityValue === "string" ? raw.identityValue.trim() : "";
+        const isIdentity = !identityClaimed && rawIdentity.length > 0;
+        if (isIdentity) identityClaimed = true;
+        result.push({
+            property,
+            identityValue: isIdentity ? rawIdentity : null,
+            defaultValue: stringValue(raw.defaultValue).trim(),
+        });
+    }
+    return result;
+}
 
 function normalizeVaultFilePath(path: string): string {
     const normalized = path

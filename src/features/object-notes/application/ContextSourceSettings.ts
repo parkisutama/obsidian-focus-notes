@@ -1,3 +1,4 @@
+import { identityEntry } from "../domain/ContextSourceScope.ts";
 import type { ContextSourceSettings } from "../domain/ContextSourceSettings";
 
 export function createContextSource(existing: readonly ContextSourceSettings[]): ContextSourceSettings {
@@ -13,7 +14,7 @@ export function createContextSource(existing: readonly ContextSourceSettings[]):
         name: "New object",
         icon: "link",
         folders: [],
-        filter: null,
+        requiredProperties: [],
         matchByFolder: true,
         matchByProperty: true,
         relatedHeading: "Related log",
@@ -46,7 +47,7 @@ export function findSharedFolderConflicts(sources: readonly ContextSourceSetting
     const conflicts = new Map<string, string[]>();
     for (const { label, sources: sharedSources } of sourcesByFolder.values()) {
         if (sharedSources.length < 2) continue;
-        const filters = sharedSources.map((source) => (source.matchByProperty ? source.filter : null));
+        const filters = sharedSources.map((source) => (source.matchByProperty ? identityEntry(source) : null));
         const property = filters[0]?.property.trim().toLowerCase();
         const values = filters.map((filter) => filter?.value.trim().toLowerCase());
         const isDisjoint =

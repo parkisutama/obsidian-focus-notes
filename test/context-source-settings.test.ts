@@ -28,7 +28,7 @@ test("migrates legacy People and Place folders and adds Activities", () => {
     assert.equal("placeFolders" in merged.inbox, false);
 });
 
-test("normalizes duplicate IDs, invalid folders, and incomplete filters deterministically", () => {
+test("normalizes duplicate IDs, invalid folders, and incomplete legacy filters deterministically", () => {
     const source = {
         id: "My Source",
         name: "  Books  ",
@@ -49,7 +49,7 @@ test("normalizes duplicate IDs, invalid folders, and incomplete filters determin
             name: "Books",
             icon: "link",
             folders: ["Library"],
-            filter: null,
+            requiredProperties: [],
             matchByFolder: true,
             matchByProperty: true,
             relatedHeading: "Related log",
@@ -64,7 +64,7 @@ test("normalizes duplicate IDs, invalid folders, and incomplete filters determin
             name: "Books",
             icon: "link",
             folders: ["Library"],
-            filter: null,
+            requiredProperties: [],
             matchByFolder: true,
             matchByProperty: true,
             relatedHeading: "Related log",
@@ -90,7 +90,7 @@ test("keeps an empty source list safe and no longer requires a folder to be enab
                     name: "Book",
                     icon: "book",
                     folders: [],
-                    filter: null,
+                    requiredProperties: [],
                     relatedHeading: "Mentions",
                     enabled: true,
                 },
@@ -123,7 +123,7 @@ test("drops malformed values without throwing, leaving a source that matches not
         name: "source",
         icon: "link",
         folders: [],
-        filter: null,
+        requiredProperties: [],
         matchByFolder: true,
         matchByProperty: true,
         relatedHeading: "Related log",
@@ -135,7 +135,7 @@ test("drops malformed values without throwing, leaving a source that matches not
     });
 });
 
-test("preserves a valid custom Book source and property filter", () => {
+test("migrates a legacy single filter into one identity entry in requiredProperties", () => {
     const merged = mergeSettingsWithDefaults({
         inbox: {
             ...DEFAULT_SETTINGS.inbox,
@@ -159,7 +159,7 @@ test("preserves a valid custom Book source and property filter", () => {
         name: "Books",
         icon: "book-open",
         folders: ["Library/Books"],
-        filter: { property: "type", value: "book" },
+        requiredProperties: [{ property: "type", identityValue: "book", defaultValue: "book" }],
         matchByFolder: true,
         matchByProperty: true,
         relatedHeading: "Reading log",
@@ -169,6 +169,57 @@ test("preserves a valid custom Book source and property filter", () => {
         enabled: true,
         includeInTimeline: false,
     });
+});
+
+test("passes an already-migrated requiredProperties schema through unchanged (idempotent)", () => {
+    const schema = [
+        { property: "type", identityValue: "book", defaultValue: "book" },
+        { property: "region", identityValue: null, defaultValue: "unknown" },
+    ];
+    const merged = mergeSettingsWithDefaults({
+        inbox: {
+            ...DEFAULT_SETTINGS.inbox,
+            contextSources: [
+                {
+                    id: "books",
+                    name: "Books",
+                    icon: "book-open",
+                    folders: ["Library/Books"],
+                    requiredProperties: schema,
+                    relatedHeading: "Reading log",
+                    templatePath: "Templates/Book.md",
+                    enabled: true,
+                },
+            ],
+        },
+    });
+
+    assert.deepEqual(merged.inbox.contextSources[0]?.requiredProperties, schema);
+});
+
+test("keeps only the first entry as identity when malformed input claims more than one", () => {
+    const merged = mergeSettingsWithDefaults({
+        inbox: {
+            ...DEFAULT_SETTINGS.inbox,
+            contextSources: [
+                {
+                    id: "books",
+                    name: "Books",
+                    folders: ["Library"],
+                    requiredProperties: [
+                        { property: "type", identityValue: "book", defaultValue: "" },
+                        { property: "status", identityValue: "active", defaultValue: "" },
+                    ],
+                    enabled: true,
+                },
+            ],
+        },
+    });
+
+    assert.deepEqual(merged.inbox.contextSources[0]?.requiredProperties, [
+        { property: "type", identityValue: "book", defaultValue: "" },
+        { property: "status", identityValue: null, defaultValue: "" },
+    ]);
 });
 
 test("creates a disabled object source with a stable unique ID", () => {
@@ -182,7 +233,7 @@ test("creates a disabled object source with a stable unique ID", () => {
         name: "New object",
         icon: "link",
         folders: [],
-        filter: null,
+        requiredProperties: [],
         matchByFolder: true,
         matchByProperty: true,
         relatedHeading: "Related log",
@@ -248,10 +299,20 @@ test("allows a shared folder only when one property has distinct object values",
         enabled: true,
     };
     const valid = [
-        { ...base, id: "projects", name: "Projects", filter: { property: "type", value: "project" } },
-        { ...base, id: "activities", name: "Activities", filter: { property: "type", value: "activity" } },
+        {
+            ...base,
+            id: "projects",
+            name: "Projects",
+            requiredProperties: [{ property: "type", identityValue: "project", defaultValue: "project" }],
+        },
+        {
+            ...base,
+            id: "activities",
+            name: "Activities",
+            requiredProperties: [{ property: "type", identityValue: "activity", defaultValue: "activity" }],
+        },
     ];
-    const ambiguous = [valid[0], { ...base, id: "general", name: "General", filter: null }];
+    const ambiguous = [valid[0], { ...base, id: "general", name: "General", requiredProperties: [] }];
 
     assert.deepEqual(findSharedFolderConflicts(valid), new Map());
     assert.deepEqual(findSharedFolderConflicts(ambiguous), new Map([["Objects", ["projects", "general"]]]));
@@ -264,7 +325,7 @@ test("a source with matchByFolder off does not trigger folder-collision warnings
         matchByProperty: true,
         relatedHeading: "Related log",
         enabled: true,
-        filter: null,
+        requiredProperties: [],
     };
     const sources = [
         { ...base, id: "projects", name: "Projects", matchByFolder: true },
@@ -279,7 +340,7 @@ test("normalizeContextSources defaults matchByFolder/matchByProperty to true whe
         inbox: {
             ...DEFAULT_SETTINGS.inbox,
             contextSources: [
-                { id: "legacy", name: "Legacy", folders: ["Legacy"], filter: null, enabled: true },
+                { id: "legacy", name: "Legacy", folders: ["Legacy"], requiredProperties: [], enabled: true },
                 {
                     id: "explicit-off",
                     name: "Off",
