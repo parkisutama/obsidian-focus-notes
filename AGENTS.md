@@ -63,18 +63,25 @@ pnpm run docs:dev        # preview docs lokal
 2. Kalau requirement teknis masih underspecified (siapa, kenapa, definisi sukses,
    constraint belum jelas) -> `interview-me` dulu. JANGAN mengasumsikan sendiri lalu
    langsung menulis spec.
-3. `spec-driven-development`: SPECIFY -> PLAN -> TASKS -> IMPLEMENT. Ikuti pola historis
+3. Begitu diskusi (skill PM dan/atau `interview-me`) selesai dan intent sudah dikonfirmasi
+   eksplisit oleh manusia -> SEBELUM menulis artefak perencanaan pertama (ADR atau spec),
+   buat branch baru dulu (`feature/`, `fix/`, `chore/`, `refactor/` per § Git & Release).
+   Semua file ADR/spec/plan/todo untuk fitur tersebut dibuat dan dikembangkan di branch
+   itu, bukan di `main`. Kalau artefak sudah terlanjur ditulis di `main` sebelum branch
+   dibuat, pindahkan (branch baru dari posisi saat ini; jangan commit dulu di `main`)
+   begitu pelanggaran ini disadari.
+4. `spec-driven-development`: SPECIFY -> PLAN -> TASKS -> IMPLEMENT. Ikuti pola historis
    di `docs/archive/specs/` dan `docs/archive/tasks/` untuk format spec/plan/todo. Tidak
    lanjut fase berikutnya tanpa validasi eksplisit dari manusia di fase sebelumnya.
-4. `planning-and-task-breakdown`: urai jadi vertical slice, bukan horizontal layer.
+5. `planning-and-task-breakdown`: urai jadi vertical slice, bukan horizontal layer.
    Checkpoint verifikasi tiap 2-3 task lewat `pnpm run check`.
-5. `incremental-implementation`: tiap slice -> Implement -> Test -> `pnpm run check` ->
+6. `incremental-implementation`: tiap slice -> Implement -> Test -> `pnpm run check` ->
    Commit -> slice berikutnya.
-6. Kalau perubahan menyentuh dependency direction, API publik Obsidian (command id,
+7. Kalau perubahan menyentuh dependency direction, API publik Obsidian (command id,
    view type, compatibility identifier), atau behavior user-facing yang mengubah format
    Markdown di vault -> `documentation-and-adrs`: tulis ADR baru di
    `docs/reference/decisions/` (format lihat ADR-001) SEBELUM implementasi.
-7. Setelah implementasi selesai -> update `docs/current-state.md` dan
+8. Setelah implementasi selesai -> update `docs/current-state.md` dan
    `docs/reference/code-architecture-baseline.md` yang relevan. Tidak ada mekanisme
    otomatis untuk ini — wajib manual.
 
