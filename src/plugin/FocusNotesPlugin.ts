@@ -16,6 +16,7 @@ import {
     repairOrphanProjectionReferences,
     runProjectionReconciliation,
 } from "../infrastructure/obsidian/capture/ProjectionReconciliationRunner.ts";
+import { repairObjectNoteProperties } from "../infrastructure/obsidian/object-notes/RepairObjectNotes.ts";
 
 /**
  * Plugin shell.
@@ -125,6 +126,14 @@ export default class FocusNotesPlugin extends Plugin {
         });
 
         this.addCommand({
+            id: "repair-object-note-properties",
+            name: "Repair Object Note properties",
+            callback: () => {
+                void this.runObjectNotePropertyRepair();
+            },
+        });
+
+        this.addCommand({
             id: "repair-orphan-projection-references",
             name: "Repair orphaned Daily projection references",
             checkCallback: (checking) => {
@@ -226,6 +235,16 @@ export default class FocusNotesPlugin extends Plugin {
         }
         new Notice(parts.join(". "));
         console.info("[Focus Notes] Projection reconciliation summary", summary);
+    }
+
+    private async runObjectNotePropertyRepair(): Promise<void> {
+        new Notice("Repairing Object Note properties…");
+        const summary = await repairObjectNoteProperties(this.app, this.settings.inbox.contextSources);
+        new Notice(
+            summary.filesRepaired > 0
+                ? `Repaired ${summary.filesRepaired} note(s); filled ${summary.propertiesAdded} required propert${summary.propertiesAdded === 1 ? "y" : "ies"}.`
+                : "No Object Notes needed repair.",
+        );
     }
 
     private async repairOrphanReferences(): Promise<void> {
