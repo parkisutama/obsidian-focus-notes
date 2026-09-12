@@ -7,7 +7,7 @@ referensi aktif, situs publik, dan catatan implementasi historis.
 
 - [Current State](current-state.md) — fitur, arsitektur, model data, dan legacy.
 - [Usage Workflow](usage-workflow.md) — alur penggunaan plugin dari capture sampai Timeline.
-- [Changelog](changelog.md) — ringkasan perubahan dan keputusan besar.
+- [Changelog](../CHANGELOG.md) — format Keep a Changelog, root repository, sumber kebenaran rilis.
 - [Archive](archive/README.md) — plan, todo, dan spec yang sudah selesai.
 
 ## Public documentation
@@ -41,6 +41,7 @@ Jalankan `pnpm run docs:dev` untuk menulis secara lokal dan `pnpm run docs:build
 
 - [Mobile keyboard troubleshooting handover](archive/handovers/mobile-modal-keyboard-troubleshooting-handover.md) — bukti dan konteks debugging mobile.
 - [Focus Timeline implementation blueprint](archive/ideas/focus-timeline-implementation-blueprint.md) — blueprint historis Timeline; bukan status implementasi terkini.
+- [Development log (archived)](archive/dev-log.md) — catatan naratif pengembangan sebelum adopsi Keep a Changelog.
 
 ## Documentation gaps
 
@@ -48,7 +49,6 @@ Fondasi VitePress dan contoh awal setiap kategori sudah tersedia. Dokumentasi be
 
 - Panduan pengguna terpisah untuk instalasi, timer/logging, Inbox, Event, Task, Timeline, target note, dan troubleshooting.
 - Panduan developer untuk arsitektur, lifecycle Obsidian, persistence, format Markdown, testing, release, dan kontribusi.
-- Changelog berorientasi dampak pengguna.
 - Checklist acceptance desktop dan mobile yang dapat diulang.
 - Catatan kompatibilitas yang membuktikan `minAppVersion`.
 

@@ -1,14 +1,18 @@
 ---
-title: Focus Notes — Changelog
+title: Focus Notes — Development log (archived)
 created: 2026-09-03T00:00
-modified: 2026-09-03T00:00
+modified: 2026-09-12T00:00
 tags:
   - focus-notes
-  - changelog
   - history
 ---
 
-# Focus Notes — Changelog
+> Diarsipkan 2026-09-12. Catatan naratif ini mendahului adopsi
+> [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Perubahan baru dicatat di
+> `/CHANGELOG.md` pada root repository, bukan di sini. File ini dipertahankan sebagai
+> konteks historis pengembangan, bukan sumber kebenaran rilis.
+
+# Focus Notes — Development log (archived)
 
 ## 2026-09-03 — Documentation archive
 
