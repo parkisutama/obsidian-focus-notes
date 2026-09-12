@@ -23,6 +23,18 @@ Mulai dari commit berikutnya yang mengubah perilaku user-facing, tambahkan entri
 sini pada commit yang sama, dikelompokkan sebagai berikut sesuai kebutuhan:
 
 ### Added
+
+- Object Source required-property schema: setiap Object Source kini bisa mendeklarasikan
+  daftar frontmatter property wajib (bukan hanya satu identity property), masing-masing
+  dengan default value (token statis `{{title}}`/`{{date}}`/`{{time}}`, atau ekspresi
+  Templater `<% %>` opsional bila plugin Templater terpasang). Property yang hilang
+  otomatis dilengkapi saat: (1) Object Note baru dibuat, (2) command "Repair Object Note
+  properties" dijalankan, dan (3) note yang cocok dibuka atau disimpan. Semua penulisan
+  bersifat additive-only (tidak pernah menimpa/mengubah urutan property yang sudah ada),
+  sehingga kompatibel dengan Obsidian Linter. Lihat
+  [ADR-002](docs/reference/decisions/002-object-source-required-property-schema.md) dan
+  [spesifikasi](docs/spec-object-source-required-properties.md).
+
 ### Changed
 ### Deprecated
 ### Removed

@@ -23,6 +23,8 @@ Jalankan `pnpm run docs:dev` untuk menulis secara lokal dan `pnpm run docs:build
 
 - [Development status](development-status.md) — snapshot kesiapan engineering, fitur, dokumentasi, dan gate sebelum merge.
 - [ADR-001: Use VitePress for project documentation](reference/decisions/001-use-vitepress-for-documentation.md) — keputusan tooling dan struktur publikasi dokumentasi.
+- [ADR-002: Object Source required-property schema](reference/decisions/002-object-source-required-property-schema.md) — keputusan mengganti single identity filter Object Source dengan skema required-property, plus Templater sebagai soft dependency.
+- [Object Source required properties](spec-object-source-required-properties.md) — kontrak teknis skema required-property: domain model, resolusi default value, tiga titik enforcement (create/repair/auto-repair), dan kompatibilitas Obsidian Linter. Lihat juga [rencana implementasi](tasks/object-source-required-properties-plan.md) dan [checklist](tasks/object-source-required-properties-todo.md).
 - [Persona-rooted contextual activity system](ideas/persona-rooted-contextual-activity-system.md) — arah produk untuk capture Daily Notes, object context yang extensible, Focus Timeline, promosi, dan historical related logs.
 - [Persona-rooted implementation plan](archive/tasks/persona-contextual-activity-plan.md) — dependency graph dan acceptance criteria historis.
 - [Code quality remediation](archive/specs/spec-code-quality-remediation.md) — kontrak historis.

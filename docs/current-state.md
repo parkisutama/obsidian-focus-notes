@@ -32,7 +32,8 @@ projection atau log terkait, bukan pemilik data canonical.
 | Detail | Detail note opsional sebagai child terakhir |
 | Mobile | Form dan flow terpisah dari desktop, termasuk keyboard handling |
 | Formatting | Preview/apply eksplisit, conflict-safe, idempotent, tidak berjalan otomatis |
-| Settings | Target capture, periodical notes, object sources, timeline, dan focus |
+| Object Notes | Tiap Object Source punya skema required-property (`requiredProperties`), bukan hanya satu identity property; ditegakkan saat create, lewat command "Repair Object Note properties", dan otomatis saat note yang cocok dibuka/disimpan. Default value mendukung token statis serta Templater opsional (soft dependency) |
+| Settings | Target capture, periodical notes, object sources (termasuk skema required-property), timeline, dan focus |
 
 ## Arsitektur runtime
 
