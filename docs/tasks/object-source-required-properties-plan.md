@@ -302,47 +302,65 @@ sharing one folder.
 
 **Estimated scope:** Medium. Landed as one commit.
 
-### Task 6: Auto-repair watcher on note open/save
+### Task 6: Auto-repair watcher on note open/save — done
 
 **Priority:** P1
 
 **Description:** New watcher, structurally parallel to `TaskReferenceCheckboxWatcher`, listening to
 `workspace.on("file-open")` and `vault.on("modify")`. For a file matching an enabled source, it computes
 gaps via Task 5's function and writes them through `processFrontMatter`, guarded by a
-`WriteSuppressionTracker` instance so its own write never re-triggers itself.
+`WriteSuppressionTracker` instance so its own write never re-triggers itself. Placed under
+`infrastructure/obsidian/object-notes/` (next to `RepairObjectNotes.ts`/`RequiredPropertyResolution.ts`)
+rather than `infrastructure/obsidian/capture/` as originally planned, for cohesion with the other new
+object-notes infrastructure modules.
 
 **Acceptance criteria:**
 
-- [ ] Opening a matching note with a missing required property gets it filled automatically.
-- [ ] Saving (i.e. a genuine user `modify`) a matching note with a missing property gets it filled.
-- [ ] The watcher's own `processFrontMatter` write does not cause a second repair pass (no infinite loop).
-- [ ] A note that does not match any enabled source is never touched.
-- [ ] A note that already satisfies its schema produces no write at all (no-op is silent, not a
+- [x] Opening a matching note with a missing required property gets it filled automatically.
+- [x] Saving (i.e. a genuine user `modify`) a matching note with a missing property gets it filled.
+- [x] The watcher's own `processFrontMatter` write does not cause a second repair pass (no infinite loop) —
+      proven directly by pre-suppressing a path and asserting zero writes.
+- [x] A note that does not match any enabled source is never touched.
+- [x] A note that already satisfies its schema produces no write at all (no-op is silent, not a
       no-op write).
+
+**Known limitation discovered during implementation (tooling, not design):** Node's native TypeScript
+stripping (`node --test`) does not support TypeScript constructor parameter-property shorthand
+(`private readonly x: T` inline in a constructor signature) — it throws `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`
+at import time. `TaskReferenceCheckboxWatcher.ts` already uses that syntax, but no test imports and runs it
+directly (only text-matches it via `readFile`), so this was never caught. This watcher declares its fields
+explicitly and assigns them in the constructor body instead, since its tests do instantiate it directly.
+Not fixed in `TaskReferenceCheckboxWatcher.ts` itself — out of this feature's scope.
 
 **Verification:**
 
-- [ ] Unit tests mirroring `test/task-reference-checkbox-watcher-wiring.test.ts`'s wiring-verification
-      style, plus direct tests of the watcher class covering the loop-prevention scenario explicitly.
-- [ ] `pnpm test` and `pnpm run build` pass.
+- [x] A wiring test (`test/required-property-repair-watcher-wiring.test.ts`) mirrors
+      `test/task-reference-checkbox-watcher-wiring.test.ts`'s text-matching style for the plugin's
+      `registerEvent` calls.
+- [x] Direct behavioral tests of the watcher class (`test/required-property-repair-watcher.test.ts`) cover
+      gap-filling, non-Markdown files, non-matching notes, an already-satisfied schema, and the
+      loop-prevention scenario explicitly.
+- [x] `pnpm run check` passes (639 tests).
 
 **Dependencies:** Tasks 1, 2, 5 (shares gap computation).
 
-**Files likely touched:**
+**Files touched:**
 
-- `src/infrastructure/obsidian/capture/RequiredPropertyRepairWatcher.ts` (new, named by analogy to
-  `TaskReferenceCheckboxWatcher.ts`)
-- `src/plugin/FocusNotesPlugin.ts` (wire `registerEvent` calls)
+- `src/infrastructure/obsidian/object-notes/RequiredPropertyRepairWatcher.ts` (new)
+- `src/plugin/FocusNotesPlugin.ts` (wires both `vault.on("modify")` and `workspace.on("file-open")`)
 - `test/required-property-repair-watcher.test.ts` (new)
+- `test/required-property-repair-watcher-wiring.test.ts` (new)
 
-**Estimated scope:** Medium.
+**Estimated scope:** Medium. Landed as one commit.
 
 ## Checkpoint B — Full enforcement surface works end to end
 
-- [ ] `pnpm run check` passes.
-- [ ] Creating an Object Note, running "Repair Object Notes", and opening/saving a drifted note all
-      converge to the same schema-complete frontmatter.
-- [ ] Settings UI can define a real multi-property schema and it round-trips through save/reload.
+- [x] `pnpm run check` passes.
+- [x] Creating an Object Note, running "Repair Object Notes", and opening/saving a drifted note all
+      converge to the same schema-complete frontmatter (Tasks 2, 3, 5, 6 all landed).
+- [ ] Settings UI can define a real multi-property schema and it round-trips through save/reload — pending
+      Task 4; a schema can currently only be authored by hand-editing persisted settings JSON or through
+      the single-identity-row UI kept from before Task 1.
 
 ## Phase 2 — Hardening
 

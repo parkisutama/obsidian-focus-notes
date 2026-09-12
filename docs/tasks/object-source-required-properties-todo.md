@@ -17,7 +17,9 @@ acceptance criteria, risks, and verification details.
 - [x] Task 5: `computeRequiredPropertyGaps` + "Repair Object Notes" command. `pnpm run check` green
       (633 tests). Known limitation: can't repair a note missing exactly the property a
       `matchByProperty: true` source relies on for matching — see plan.
-- [ ] Task 6: Auto-repair watcher on note open/save.
+- [x] Task 6: Auto-repair watcher on note open/save. `pnpm run check` green (639 tests). Discovered that
+      Node's native TS stripping rejects constructor parameter properties, unlike esbuild — worked around
+      in this watcher; not fixed in the pre-existing `TaskReferenceCheckboxWatcher.ts`.
 
 ## P2 — Authoring surface
 
