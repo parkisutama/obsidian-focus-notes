@@ -1,0 +1,409 @@
+# Implementation Plan: Object Source required-property schema
+
+## Overview
+
+Implement [the approved spec](../spec-object-source-required-properties.md) following
+[ADR-002](../reference/decisions/002-object-source-required-property-schema.md). The work replaces
+`ContextSourceSettings.filter` (one identity property) with `requiredProperties` (a schema list, of which
+at most one entry is the identity), then builds one shared "compute what's missing, resolve its value"
+function that feeds three enforcement points: note creation, a manual "Repair Object Notes" command, and
+automatic repair on note open/save.
+
+The type/migration change is foundational and touches eight existing files at once (`ObjectNote.ts`,
+`ContextSourceScope.ts`, `ContextLinkResolver.ts`, `InboxSuggestions.ts`, `Timeline.ts`,
+`TimelineSourceGroups.ts`, `ObjectSourceSettings.ts`, `SettingsDefaults.ts`), so it must land as one
+reviewed commit before anything else builds on it — splitting it further would leave the build
+non-compiling mid-slice. Everything after that follows normal vertical-slice sequencing.
+
+## Priority model
+
+| Priority | Meaning | Outcome |
+|---|---|---|
+| P0 | Foundation | Domain type change and settings migration land without changing observable behavior |
+| P1 | Core enforcement | Creation, manual repair, and auto-repair all fill schema gaps consistently |
+| P2 | Authoring surface | Settings UI lets a user actually define a multi-property schema |
+| P3 | Hardening | Linter-compatibility fixture, docs, changelog |
+
+## Architecture decisions
+
+(Carried from the spec; repeated here so this plan is self-contained for implementation.)
+
+- `RequiredPropertySchema { property, identityValue, defaultValue }` replaces the `filter` field on
+  `ContextSourceSettings`. `ContextSourceFilter.ts` (the `{ property, value }` matching pair) is kept
+  unchanged — `Timeline.ts`/`TimelineSourceGroup` still use it directly and need no edits. Matching
+  (`matchesContextFilter`, `contextSourceMatchesNote`) derives that pair via a new `identityEntry(source)`
+  helper from whichever `requiredProperties` entry has a non-null `identityValue`; behavior for migrated
+  sources is unchanged.
+- Default-value resolution lives in `infrastructure/obsidian/` (it calls the optional Templater plugin),
+  not `domain/`. `computeRequiredPropertyGaps` (presence check only) stays in `domain/`.
+- All writes go through `processFrontMatter` and only ever add a currently-absent key — never reorder,
+  reformat, or overwrite an existing key/value, and never touch note body. This is both the Linter-
+  compatibility mechanism and the auto-repair idempotency mechanism.
+- Auto-repair reuses the existing `WriteSuppressionTracker` pattern from `TaskReferenceCheckboxWatcher` to
+  avoid reacting to its own write.
+- Manual repair follows the existing `repair-orphan-projection-references` command shape in
+  `FocusNotesPlugin.ts`.
+
+## Dependency graph
+
+```text
+Task 1: RequiredPropertySchema + migration (touches 8 files)
+    ├─→ Task 2: Default-value resolution (tokens + optional Templater)
+    │       ├─→ Task 3: Extend creation stamping to full schema
+    │       ├─→ Task 5: computeRequiredPropertyGaps + "Repair Object Notes" command
+    │       └─→ Task 6: Auto-repair watcher on open/save
+    └─→ Task 4: Settings UI — required-properties list editor
+Tasks 3, 5, 6 ─→ Task 7: Linter-format-preserving fixture coverage
+Tasks 4, 7 ─→ Task 8: Documentation, changelog, spec/ADR status update
+```
+
+Tasks 3, 4, 5, and 6 may proceed in parallel once Tasks 1 and 2 are reviewed commits; each is an
+independently testable vertical slice. Task 6 shares its gap-computation call with Task 5 but does not
+depend on Task 5's command registration.
+
+## Phase 0 — Foundation
+
+### Task 1: Replace `ContextSourceSettings.filter` with `RequiredPropertySchema` and migrate settings — done
+
+**Priority:** P0
+
+**Description:** Introduce `RequiredPropertySchema`/`requiredProperties` on `ContextSourceSettings`, add
+an `identityEntry()` helper, and update every direct consumer to use it instead of `.filter`. Add the
+lossless migration in `SettingsDefaults.ts`. `ContextSourceFilter.ts` is kept unchanged (see below) rather
+than deleted, since `Timeline.ts`/`TimelineSourceGroup` still legitimately need that exact matching-pair
+shape independent of the settings schema.
+
+**Acceptance criteria:**
+
+- [x] `ContextSourceSettings.requiredProperties: RequiredPropertySchema[]` replaces `filter`.
+      `ContextSourceFilter.ts` is unchanged — it's reused as the type `identityEntry()` derives, not
+      deleted; `Timeline.ts` needed no edits as a result.
+- [x] `identityEntry(source)` returns the one entry with non-null `identityValue` (mapped to
+      `{ property, value }`), or `null`.
+- [x] `matchesContextFilter`/`contextSourceMatchesNote` behavior is unchanged for a source migrated from a
+      single `filter` (folder-only, property-only, and combined matching all still pass).
+- [x] Existing settings with `filter: { property, value }` migrate to
+      `requiredProperties: [{ property, identityValue: value, defaultValue: value }]`; settings with
+      `filter: null` migrate to `requiredProperties: []`; settings already shaped with
+      `requiredProperties` pass through unchanged (idempotent migration, including defensively demoting a
+      second malformed identity claim to `identityValue: null`).
+- [x] The three built-in default sources (People, Places, Activities) keep exactly their current single
+      identity property as their only schema entry.
+
+**Verification:**
+
+- [x] `test/context-source-settings.test.ts` covers migration from `filter`-shaped and
+      `requiredProperties`-shaped persisted state, the `filter: null` case, idempotent re-normalization,
+      and the malformed-double-identity defensive case.
+- [x] All existing `ContextSourceScope`/`ContextLinkResolver`/`InboxSuggestions`/`Timeline`/state-store
+      tests remain green after being updated to construct `requiredProperties` instead of `filter`.
+- [x] `pnpm run check` passes: format, lint, `verify:version`, `typecheck`, and all 611 tests (`node --test`).
+
+**Dependencies:** None.
+
+**Files touched:**
+
+- `src/features/object-notes/domain/ContextSourceSettings.ts`
+- `src/features/object-notes/domain/RequiredPropertySchema.ts` (new)
+- `src/features/object-notes/domain/ContextSourceScope.ts` (added `identityEntry`)
+- `src/features/object-notes/application/ObjectNote.ts`
+- `src/features/object-notes/application/ContextSourceSettings.ts`
+- `src/features/capture/application/ContextLinkResolver.ts`
+- `src/features/capture/moment/application/InboxSuggestions.ts`
+- `src/features/timeline/domain/TimelineSourceGroups.ts` (derives `identityEntry`; `Timeline.ts` untouched)
+- `src/features/settings/ui/ObjectSourceSettings.ts` (single-row UI kept behaviorally identical; the
+  multi-row editor is still Task 4)
+- `src/features/settings/domain/SettingsDefaults.ts`
+- `test/context-source-settings.test.ts`, `test/object-note.test.ts`, `test/context-link-resolver.test.ts`,
+  `test/context-suggestions-performance.test.ts`, `test/event-task-submission.test.ts`,
+  `test/inbox-suggestions.test.ts`, `test/scheduled-item-create-related.test.ts`,
+  `test/scheduled-item-edit-submission.test.ts`, `test/state-store.test.ts`,
+  `test/timeline-source-groups.test.ts`
+
+**Estimated scope:** Medium–Large; mechanical but touched many files (8 source files + 10 test files, plus
+one new domain file). Landed as one slice, not yet committed.
+
+## Checkpoint A — Foundation compiles and matches today's behavior
+
+- [x] `pnpm run check` passes.
+- [x] No observable behavior change for any existing Object Source (matching, suggestions, Timeline
+      source grouping all unchanged) — confirmed by the full existing test suite passing unmodified in
+      assertions (only fixture construction changed from `filter` to `requiredProperties`).
+- [ ] Migration fixtures reviewed by the user before any enforcement logic is built on top.
+
+## Phase 1 — Core enforcement
+
+### Task 2: Default-value resolution (tokens + optional Templater)
+
+**Priority:** P1
+
+**Description:** Add `resolveRequiredPropertyValue(app, entry, context)` and the isolated
+`getTemplaterApi(app)` probe module. Reuses `expandObjectNoteTemplate`'s existing token behavior for the
+non-Templater path.
+
+**Acceptance criteria:**
+
+- [ ] Identity entries resolve to `identityValue` verbatim, ignoring `defaultValue`.
+- [ ] Non-identity entries expand `{{title}}`/`{{date}}`/`{{time}}` exactly like
+      `expandObjectNoteTemplate` does today.
+- [ ] When a default contains `<% ... %>` and Templater is installed/enabled, the expression is resolved
+      through Templater's public API.
+- [ ] When a default contains `<% ... %>` and Templater is absent, unavailable, or throws, the raw
+      expanded string is returned and `console.warn("[Focus Notes] ...")` is logged; nothing throws.
+- [ ] `getTemplaterApi` never imports Templater's package (it doesn't exist as a dependency) — it only
+      reads `app.plugins.plugins["templater-obsidian"]` defensively.
+
+**Verification:**
+
+- [ ] Unit tests cover: identity entry, static tokens only, Templater present and resolving, Templater
+      present and throwing, Templater absent with `<% %>` in the default, no `<% %>` present (Templater
+      probe skipped entirely).
+- [ ] `pnpm run typecheck` and `pnpm test` pass.
+
+**Dependencies:** Task 1.
+
+**Files likely touched:**
+
+- `src/infrastructure/obsidian/templater/TemplaterApi.ts` (new)
+- `src/infrastructure/obsidian/object-notes/RequiredPropertyResolution.ts` (new)
+- `test/templater-api.test.ts` (new)
+- `test/required-property-resolution.test.ts` (new)
+
+**Estimated scope:** Medium.
+
+### Task 3: Extend Object Note creation to stamp the full schema
+
+**Priority:** P1
+
+**Description:** `createObjectNote` stamps every `requiredProperties` entry (not just the identity one),
+using Task 2's resolver, in one `processFrontMatter` call.
+
+**Acceptance criteria:**
+
+- [ ] A newly created Object Note gets every schema property, identity and non-identity, in one write.
+- [ ] A source with an empty `requiredProperties` list creates a note exactly as before (no empty
+      frontmatter mutation call).
+- [ ] Existing single-identity-property creation behavior (today's only case) is unchanged byte-for-byte.
+
+**Verification:**
+
+- [ ] Extend `test/object-note.test.ts` with a multi-property schema fixture (identity + token default +
+      Templater-syntax default, Templater both present and absent).
+- [ ] `pnpm test` and `pnpm run build` pass.
+
+**Dependencies:** Tasks 1, 2.
+
+**Files likely touched:**
+
+- `src/features/object-notes/application/ObjectNote.ts`
+- `test/object-note.test.ts`
+
+**Estimated scope:** Small.
+
+### Task 4: Settings UI — required-properties list editor
+
+**Priority:** P2
+
+**Description:** Replace the single Property/Value row in `ObjectSourceSettings.ts` with an editable list
+(property name with autocomplete from existing vault frontmatter properties, identity toggle exclusive
+across the list, default value field disabled when identity is set), matching the folder-list add/remove
+interaction already present in the same file.
+
+**Acceptance criteria:**
+
+- [ ] Add/remove required-property rows.
+- [ ] Marking a row as identity clears any previously-marked identity row in the same source (at most one
+      identity entry, enforced in the UI).
+- [ ] Property-name field offers autocomplete sourced from the vault's existing frontmatter property
+      names.
+- [ ] Default-value field is disabled when the row is the identity entry.
+
+**Verification:**
+
+- [ ] Manual desktop check in a real vault: add a source with two required properties (one identity, one
+      default-token), confirm settings persist and reopen correctly.
+- [ ] `pnpm run typecheck` and `pnpm run build` pass (no dedicated unit tests for this settings-tab UI
+      module today, consistent with the rest of `ObjectSourceSettings.ts`).
+
+**Dependencies:** Task 1.
+
+**Files likely touched:**
+
+- `src/features/settings/ui/ObjectSourceSettings.ts`
+- possibly a small property-name suggester alongside `FolderSuggest`/`FileSuggest` in
+  `src/infrastructure/obsidian/suggestions/Suggesters.ts`
+
+**Estimated scope:** Medium.
+
+### Task 5: `computeRequiredPropertyGaps` + "Repair Object Notes" command
+
+**Priority:** P1
+
+**Description:** Pure gap-computation function in `domain/`, plus a new command
+(`repair-object-note-properties`) that scans `app.vault.getMarkdownFiles()`, matches each against enabled
+sources via `contextSourceMatchesNote`, resolves and writes gaps, and reports a summary `Notice`.
+
+**Acceptance criteria:**
+
+- [ ] `computeRequiredPropertyGaps(source, currentProperties)` returns exactly the schema entries whose
+      property key is absent from `currentProperties`; present-but-falsy values (e.g. `false`, `0`,
+      `""`) are not gaps.
+- [ ] The command changes nothing for notes that already satisfy their matched source's schema.
+- [ ] A note matching multiple enabled sources gets the union of all matched sources' gaps filled.
+- [ ] Summary `Notice` reports files touched and properties added.
+
+**Verification:**
+
+- [ ] Pure tests for `computeRequiredPropertyGaps` covering absent, present, and falsy-but-present values.
+- [ ] Integration-style test for the repair command using a fake vault (mirroring
+      `test/object-note.test.ts`'s fake `App`), covering: nothing to repair, single-source gap fill,
+      multi-source union, and a Linter-formatted-frontmatter fixture (see Task 7).
+- [ ] `pnpm test` and `pnpm run build` pass.
+
+**Dependencies:** Tasks 1, 2.
+
+**Files likely touched:**
+
+- `src/features/object-notes/domain/RequiredPropertyGaps.ts` (new)
+- `src/infrastructure/obsidian/object-notes/RepairObjectNotes.ts` (new)
+- `src/plugin/FocusNotesPlugin.ts` (register command)
+- `test/required-property-gaps.test.ts` (new)
+- `test/repair-object-notes.test.ts` (new)
+
+**Estimated scope:** Medium.
+
+### Task 6: Auto-repair watcher on note open/save
+
+**Priority:** P1
+
+**Description:** New watcher, structurally parallel to `TaskReferenceCheckboxWatcher`, listening to
+`workspace.on("file-open")` and `vault.on("modify")`. For a file matching an enabled source, it computes
+gaps via Task 5's function and writes them through `processFrontMatter`, guarded by a
+`WriteSuppressionTracker` instance so its own write never re-triggers itself.
+
+**Acceptance criteria:**
+
+- [ ] Opening a matching note with a missing required property gets it filled automatically.
+- [ ] Saving (i.e. a genuine user `modify`) a matching note with a missing property gets it filled.
+- [ ] The watcher's own `processFrontMatter` write does not cause a second repair pass (no infinite loop).
+- [ ] A note that does not match any enabled source is never touched.
+- [ ] A note that already satisfies its schema produces no write at all (no-op is silent, not a
+      no-op write).
+
+**Verification:**
+
+- [ ] Unit tests mirroring `test/task-reference-checkbox-watcher-wiring.test.ts`'s wiring-verification
+      style, plus direct tests of the watcher class covering the loop-prevention scenario explicitly.
+- [ ] `pnpm test` and `pnpm run build` pass.
+
+**Dependencies:** Tasks 1, 2, 5 (shares gap computation).
+
+**Files likely touched:**
+
+- `src/infrastructure/obsidian/capture/RequiredPropertyRepairWatcher.ts` (new, named by analogy to
+  `TaskReferenceCheckboxWatcher.ts`)
+- `src/plugin/FocusNotesPlugin.ts` (wire `registerEvent` calls)
+- `test/required-property-repair-watcher.test.ts` (new)
+
+**Estimated scope:** Medium.
+
+## Checkpoint B — Full enforcement surface works end to end
+
+- [ ] `pnpm run check` passes.
+- [ ] Creating an Object Note, running "Repair Object Notes", and opening/saving a drifted note all
+      converge to the same schema-complete frontmatter.
+- [ ] Settings UI can define a real multi-property schema and it round-trips through save/reload.
+
+## Phase 2 — Hardening
+
+### Task 7: Linter-format-preserving fixture coverage
+
+**Priority:** P3
+
+**Description:** Add one shared fixture (a frontmatter block styled the way Obsidian Linter formats it —
+sorted keys, single-quoted strings, `tags: []` empty-array style) exercised against all three enforcement
+paths (creation, manual repair, auto-repair), asserting only the missing key(s) are added and nothing else
+in the block changes.
+
+**Acceptance criteria:**
+
+- [ ] The shared fixture is reused (not duplicated three times) across creation, repair-command, and
+      watcher tests.
+- [ ] Existing formatting in the fixture is byte-for-byte unchanged aside from the newly added key(s).
+
+**Verification:**
+
+- [ ] New or extended tests in `test/object-note.test.ts`, `test/repair-object-notes.test.ts`, and
+      `test/required-property-repair-watcher.test.ts` reference the shared fixture.
+- [ ] `pnpm test` passes.
+
+**Dependencies:** Tasks 3, 5, 6.
+
+**Files likely touched:**
+
+- `test/support/linter-formatted-frontmatter.ts` (new shared fixture)
+- `test/object-note.test.ts`, `test/repair-object-notes.test.ts`, `test/required-property-repair-watcher.test.ts`
+
+**Estimated scope:** Small.
+
+### Task 8: Documentation, changelog, and spec/ADR closeout
+
+**Priority:** P3
+
+**Description:** Update `docs/current-state.md` and `docs/reference/code-architecture-baseline.md` per
+`AGENTS.md` step 7, add a `CHANGELOG.md` `[Unreleased]` entry, flip the spec's Status to implemented with a
+traceability note, and move the spec/plan/todo trio into `docs/archive/{specs,tasks}/` once shipped.
+
+**Acceptance criteria:**
+
+- [ ] `docs/current-state.md`'s "Model data canonical" / feature table mentions Object Source required
+      properties.
+- [ ] `docs/reference/code-architecture-baseline.md` reflects the new modules
+      (`TemplaterApi.ts`, `RequiredPropertyResolution.ts`, `RequiredPropertyGaps.ts`,
+      `RepairObjectNotes.ts`, `RequiredPropertyRepairWatcher.ts`) and their dependency direction.
+- [ ] `CHANGELOG.md` `[Unreleased]` § Added describes the user-facing capability.
+- [ ] `docs/spec-object-source-required-properties.md` Status section records implementation completion
+      and links the ADR.
+
+**Verification:**
+
+- [ ] `pnpm run docs:build` passes.
+- [ ] `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` passes.
+
+**Dependencies:** Tasks 4, 7.
+
+**Files likely touched:**
+
+- `docs/current-state.md`
+- `docs/reference/code-architecture-baseline.md`
+- `CHANGELOG.md`
+- `docs/spec-object-source-required-properties.md`
+- `docs/README.md` (index entry)
+
+**Estimated scope:** Small.
+
+## Checkpoint C — Release-ready slice
+
+- [ ] `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` passes.
+- [ ] Manual desktop acceptance: define a two-property schema, create a note, run repair on an
+      intentionally drifted existing note, edit a note by hand to remove a property and reopen it.
+- [ ] Documentation and changelog reflect the shipped capability.
+
+## Risks and mitigations
+
+(Carried from the spec.)
+
+| Risk | Impact | Mitigation |
+|---|---|---|
+| Auto-repair watcher re-triggers itself via its own `processFrontMatter` write | High | Reuse `WriteSuppressionTracker`; explicit loop-prevention test in Task 6 |
+| Bulk "Repair Object Notes" rewrites many files with no preview | Medium | Additive-only writes plus a summary `Notice`; accepted without dry-run per human sign-off |
+| Templater API shape changes or plugin absent | Medium | Isolated `TemplaterApi.ts` probe; failure degrades to raw string, never throws |
+| Migration loses or duplicates an existing identity property | High | Task 1's fixture coverage for filter-present, filter-null, already-migrated states |
+| Obsidian Linter races with this feature's writes | Medium | Additive-only writes (Task 1–6 constraint) plus Task 7's dedicated fixture |
+
+## Human review gates
+
+1. After Checkpoint A, before any enforcement logic (Tasks 2–6) is built on top of the migrated schema.
+2. After Checkpoint B, before hardening/documentation closeout begins.
+3. Before merging to `main`, after real desktop acceptance of create/repair/auto-repair against a live
+   vault.
