@@ -22,7 +22,7 @@ Jalankan `pnpm run docs:dev` untuk menulis secara lokal dan `pnpm run docs:build
 ## Source of truth
 
 - [Development status](development-status.md) — snapshot kesiapan engineering, fitur, dokumentasi, dan gate sebelum merge.
-- [ADR-001: Use VitePress for project documentation](decisions/001-use-vitepress-for-documentation.md) — keputusan tooling dan struktur publikasi dokumentasi.
+- [ADR-001: Use VitePress for project documentation](reference/decisions/001-use-vitepress-for-documentation.md) — keputusan tooling dan struktur publikasi dokumentasi.
 - [Persona-rooted contextual activity system](ideas/persona-rooted-contextual-activity-system.md) — arah produk untuk capture Daily Notes, object context yang extensible, Focus Timeline, promosi, dan historical related logs.
 - [Persona-rooted implementation plan](archive/tasks/persona-contextual-activity-plan.md) — dependency graph dan acceptance criteria historis.
 - [Code quality remediation](archive/specs/spec-code-quality-remediation.md) — kontrak historis.
