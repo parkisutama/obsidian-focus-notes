@@ -3,6 +3,7 @@ import test from "node:test";
 import type { App, TFile } from "obsidian";
 import { repairObjectNoteProperties } from "../src/infrastructure/obsidian/object-notes/RepairObjectNotes.ts";
 import type { ContextSourceSettings } from "../src/features/object-notes/domain/ContextSourceSettings.ts";
+import { assertAdditiveOnly, LINTER_FORMATTED_FRONTMATTER } from "./support/linter-formatted-frontmatter.ts";
 
 function makeFile(path: string, basename: string): TFile {
     return { path, basename, extension: "md", stat: { ctime: Date.UTC(2026, 7, 3, 14, 5) } } as unknown as TFile;
@@ -104,6 +105,16 @@ test("never overwrites a value already present, even if stale metadata suggested
     await repairObjectNoteProperties(app, [placesSource]);
 
     assert.equal(writes.get(file.path)?.region, "already set by the user");
+});
+
+test("only appends the missing gap, leaving Linter-formatted frontmatter otherwise untouched", async () => {
+    const file = makeFile("Objects/Places/Kantor.md", "Kantor");
+    const before = { type: "place", ...LINTER_FORMATTED_FRONTMATTER };
+    const { app, writes } = makeApp([file], new Map([[file.path, before]]));
+
+    await repairObjectNoteProperties(app, [placesSource]);
+
+    assertAdditiveOnly(before, writes.get(file.path) ?? {}, ["region"]);
 });
 
 test("ignores disabled sources and notes that match no source", async () => {

@@ -4,6 +4,7 @@ import type { App, TFile } from "obsidian";
 import { RequiredPropertyRepairWatcher } from "../src/infrastructure/obsidian/object-notes/RequiredPropertyRepairWatcher.ts";
 import { WriteSuppressionTracker } from "../src/infrastructure/obsidian/capture/WriteSuppressionTracker.ts";
 import type { ContextSourceSettings } from "../src/features/object-notes/domain/ContextSourceSettings.ts";
+import { assertAdditiveOnly, LINTER_FORMATTED_FRONTMATTER } from "./support/linter-formatted-frontmatter.ts";
 
 function makeFile(path: string, extension = "md"): TFile {
     return {
@@ -90,6 +91,26 @@ test("does nothing when the schema is already satisfied", async () => {
     await watcher.handleFile(makeFile("Objects/Places/Kantor.md"));
 
     assert.equal(calls, 0);
+});
+
+test("only appends the missing gap, leaving Linter-formatted frontmatter otherwise untouched", async () => {
+    const before = { type: "place", ...LINTER_FORMATTED_FRONTMATTER };
+    let written: Record<string, unknown> = {};
+    const app = {
+        metadataCache: { getFileCache: () => ({ frontmatter: before }) },
+        fileManager: {
+            processFrontMatter: async (_f: TFile, mutate: (value: Record<string, unknown>) => void) => {
+                const frontmatter = { ...before };
+                mutate(frontmatter);
+                written = frontmatter;
+            },
+        },
+    } as unknown as App;
+    const watcher = new RequiredPropertyRepairWatcher(app, () => [placesSource], new WriteSuppressionTracker());
+
+    await watcher.handleFile(makeFile("Objects/Places/Kantor.md"));
+
+    assertAdditiveOnly(before, written, ["region"]);
 });
 
 test("never re-enters while its own write is suppressed, avoiding an infinite modify loop", async () => {

@@ -8,6 +8,7 @@ import {
     getCreatableObjectSources,
 } from "../src/features/object-notes/application/ObjectNote.ts";
 import type { ContextSourceSettings } from "../src/features/object-notes/domain/ContextSourceSettings.ts";
+import { assertAdditiveOnly, LINTER_FORMATTED_FRONTMATTER } from "./support/linter-formatted-frontmatter.ts";
 
 test("builds a safe Object Note path inside a configured source folder", () => {
     assert.equal(buildObjectNotePath("Place", "Kantor: Jakarta/Utara", "flat"), "Place/Kantor_ Jakarta_Utara.md");
@@ -136,6 +137,21 @@ test("resolves a Templater-syntax default through Templater when it is installed
     });
 
     assert.equal(frontmatter.region, "resolved(<% tp.file.folder() %>)");
+});
+
+test("appends required properties without disturbing a template's existing Linter-formatted frontmatter", async () => {
+    const before = { ...LINTER_FORMATTED_FRONTMATTER };
+    const frontmatter: Record<string, unknown> = { ...before };
+    const app = fakeCreateApp(new Map(), frontmatter, { plugins: {} });
+
+    await createObjectNote(app, multiPropertySource, {
+        name: "Kantor Jakarta",
+        folder: "Objects/Places",
+        createdAt: new Date(2026, 7, 3, 14, 5),
+        placement: "flat",
+    });
+
+    assertAdditiveOnly(before, frontmatter, ["type", "createdOn", "region"]);
 });
 
 test("creates a note with no frontmatter write when the schema is empty", async () => {
