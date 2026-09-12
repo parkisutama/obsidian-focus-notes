@@ -2,8 +2,8 @@
 
 ## Overview
 
-Implement [the approved spec](../spec-object-source-required-properties.md) following
-[ADR-002](../reference/decisions/002-object-source-required-property-schema.md). The work replaces
+Implement [the approved spec](../specs/spec-object-source-required-properties.md) following
+[ADR-002](../../reference/decisions/002-object-source-required-property-schema.md). The work replaces
 `ContextSourceSettings.filter` (one identity property) with `requiredProperties` (a schema list, of which
 at most one entry is the identity), then builds one shared "compute what's missing, resolve its value"
 function that feeds three enforcement points: note creation, a manual "Repair Object Notes" command, and

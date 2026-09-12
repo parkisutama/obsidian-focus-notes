@@ -33,7 +33,7 @@ sini pada commit yang sama, dikelompokkan sebagai berikut sesuai kebutuhan:
   bersifat additive-only (tidak pernah menimpa/mengubah urutan property yang sudah ada),
   sehingga kompatibel dengan Obsidian Linter. Lihat
   [ADR-002](docs/reference/decisions/002-object-source-required-property-schema.md) dan
-  [spesifikasi](docs/spec-object-source-required-properties.md).
+  [spesifikasi](docs/archive/specs/spec-object-source-required-properties.md).
 
 ### Changed
 ### Deprecated

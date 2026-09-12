@@ -2,11 +2,11 @@
 
 ## Status
 
-- Approved 2026-09-12 following [ADR-002](reference/decisions/002-object-source-required-property-schema.md).
+- Approved 2026-09-12 following [ADR-002](../../reference/decisions/002-object-source-required-property-schema.md).
 - Tasks 1–7 (all planned tasks except final closeout) are implemented and covered by automated tests;
   `pnpm run check` is green (643 tests: format, lint, `verify:version`, typecheck, full suite). See
-  [the implementation plan](tasks/object-source-required-properties-plan.md) and
-  [checklist](tasks/object-source-required-properties-todo.md) for per-task traceability and two
+  [the implementation plan](../tasks/object-source-required-properties-plan.md) and
+  [checklist](../tasks/object-source-required-properties-todo.md) for per-task traceability and two
   documented limitations found during implementation (identity-property matching can't self-heal a note
   missing exactly that property; Templater's undocumented API shape is unverified without a real vault).
 - Task 8 (documentation/changelog closeout) is done. Real desktop acceptance — using the new settings UI
