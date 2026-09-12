@@ -213,40 +213,42 @@ using Task 2's resolver, in one `processFrontMatter` call.
 
 **Estimated scope:** Small.
 
-### Task 4: Settings UI — required-properties list editor
+### Task 4: Settings UI — required-properties list editor — done
 
 **Priority:** P2
 
 **Description:** Replace the single Property/Value row in `ObjectSourceSettings.ts` with an editable list
-(property name with autocomplete from existing vault frontmatter properties, identity toggle exclusive
+(property name with autocomplete from existing vault frontmatter properties, identity value exclusive
 across the list, default value field disabled when identity is set), matching the folder-list add/remove
 interaction already present in the same file.
 
 **Acceptance criteria:**
 
-- [ ] Add/remove required-property rows.
-- [ ] Marking a row as identity clears any previously-marked identity row in the same source (at most one
-      identity entry, enforced in the UI).
-- [ ] Property-name field offers autocomplete sourced from the vault's existing frontmatter property
-      names.
-- [ ] Default-value field is disabled when the row is the identity entry.
+- [x] Add/remove required-property rows.
+- [x] Setting a row's Identity value clears any previously-set identity value on another row in the same
+      source (at most one identity entry, enforced in the UI, not just documented).
+- [x] Property-name field offers autocomplete sourced from the vault's existing frontmatter property
+      names, via a new `PropertySuggest` reading `MetadataCache`'s undocumented `getAllPropertyInfos`
+      defensively (not part of the typed `obsidian` package, same treatment as Templater's API in Task 2).
+- [x] Default-value field is disabled when the row is the identity entry.
 
 **Verification:**
 
 - [ ] Manual desktop check in a real vault: add a source with two required properties (one identity, one
-      default-token), confirm settings persist and reopen correctly.
-- [ ] `pnpm run typecheck` and `pnpm run build` pass (no dedicated unit tests for this settings-tab UI
-      module today, consistent with the rest of `ObjectSourceSettings.ts`).
+      default-token), confirm settings persist and reopen correctly. **Still pending** — not verifiable
+      from this environment; deferred to Checkpoint C.
+- [x] `pnpm run check` passes (639 tests; no dedicated unit tests for this settings-tab UI module, same as
+      the rest of `ObjectSourceSettings.ts` today).
 
 **Dependencies:** Task 1.
 
-**Files likely touched:**
+**Files touched:**
 
 - `src/features/settings/ui/ObjectSourceSettings.ts`
-- possibly a small property-name suggester alongside `FolderSuggest`/`FileSuggest` in
-  `src/infrastructure/obsidian/suggestions/Suggesters.ts`
+- `src/infrastructure/obsidian/suggestions/Suggesters.ts` (new `PropertySuggest`)
+- `styles.css` (new `.fn-context-source-properties`/`-property-list`/`-property-row`/`-add-property` rules)
 
-**Estimated scope:** Medium.
+**Estimated scope:** Medium. Landed as one commit.
 
 ### Task 5: `computeRequiredPropertyGaps` + "Repair Object Notes" command — done
 
@@ -358,9 +360,10 @@ Not fixed in `TaskReferenceCheckboxWatcher.ts` itself — out of this feature's 
 - [x] `pnpm run check` passes.
 - [x] Creating an Object Note, running "Repair Object Notes", and opening/saving a drifted note all
       converge to the same schema-complete frontmatter (Tasks 2, 3, 5, 6 all landed).
-- [ ] Settings UI can define a real multi-property schema and it round-trips through save/reload — pending
-      Task 4; a schema can currently only be authored by hand-editing persisted settings JSON or through
-      the single-identity-row UI kept from before Task 1.
+- [x] Settings UI can define a real multi-property schema — implemented in Task 4; round-trip through
+      save/reload is proven by `pnpm run check`'s settings-migration tests, but real-vault desktop
+      interaction (typing into the new rows in an actual Obsidian window) is still unverified — deferred
+      to Checkpoint C.
 
 ## Phase 2 — Hardening
 

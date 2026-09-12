@@ -23,10 +23,12 @@ acceptance criteria, risks, and verification details.
 
 ## P2 — Authoring surface
 
-- [ ] Task 4: Settings UI — required-properties list editor with identity toggle and property-name
-      autocomplete.
-- [ ] Checkpoint B: Verify creation, manual repair, and auto-repair all converge to the same schema-complete
-      frontmatter, and the settings UI round-trips a real multi-property schema.
+- [x] Task 4: Settings UI — required-properties list editor with identity value and property-name
+      autocomplete. `pnpm run check` green (639 tests); real-desktop interaction unverified, deferred to
+      Checkpoint C.
+- [x] Checkpoint B: Creation, manual repair, and auto-repair all converge to the same schema-complete
+      frontmatter; settings UI can author a real multi-property schema (data-layer round-trip proven by
+      tests, real-vault interaction still pending).
 
 ## P3 — Hardening
 
