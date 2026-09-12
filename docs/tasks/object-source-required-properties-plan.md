@@ -133,43 +133,56 @@ one new domain file). Landed as one slice, not yet committed.
 
 ## Phase 1 — Core enforcement
 
-### Task 2: Default-value resolution (tokens + optional Templater)
+### Task 2: Default-value resolution (tokens + optional Templater) — done
 
 **Priority:** P1
 
 **Description:** Add `resolveRequiredPropertyValue(app, entry, context)` and the isolated
 `getTemplaterApi(app)` probe module. Reuses `expandObjectNoteTemplate`'s existing token behavior for the
-non-Templater path.
+non-Templater path. `expandObjectNoteTemplate` moved from `object-notes/application/ObjectNote.ts` to
+`object-notes/domain/ObjectNoteTemplate.ts` (re-exported from its old path) so this infrastructure module
+could reuse it without creating an infrastructure-to-application import cycle — not called out in the
+original plan, but required by the existing architecture-boundary direction.
 
 **Acceptance criteria:**
 
-- [ ] Identity entries resolve to `identityValue` verbatim, ignoring `defaultValue`.
-- [ ] Non-identity entries expand `{{title}}`/`{{date}}`/`{{time}}` exactly like
+- [x] Identity entries resolve to `identityValue` verbatim, ignoring `defaultValue`.
+- [x] Non-identity entries expand `{{title}}`/`{{date}}`/`{{time}}` exactly like
       `expandObjectNoteTemplate` does today.
-- [ ] When a default contains `<% ... %>` and Templater is installed/enabled, the expression is resolved
-      through Templater's public API.
-- [ ] When a default contains `<% ... %>` and Templater is absent, unavailable, or throws, the raw
+- [x] When a default contains `<% ... %>` and Templater is installed/enabled, the expression is resolved
+      through Templater's public API (`create_running_config`/`parse_template`, adapted defensively —
+      the exact real-world shape of Templater's undocumented API is unverified without a live vault; see
+      Checkpoint B's manual acceptance step).
+- [x] When a default contains `<% ... %>` and Templater is absent, unavailable, or throws, the raw
       expanded string is returned and `console.warn("[Focus Notes] ...")` is logged; nothing throws.
-- [ ] `getTemplaterApi` never imports Templater's package (it doesn't exist as a dependency) — it only
+- [x] `getTemplaterApi` never imports Templater's package (it doesn't exist as a dependency) — it only
       reads `app.plugins.plugins["templater-obsidian"]` defensively.
 
 **Verification:**
 
-- [ ] Unit tests cover: identity entry, static tokens only, Templater present and resolving, Templater
+- [x] Unit tests cover: identity entry, static tokens only, Templater present and resolving, Templater
       present and throwing, Templater absent with `<% %>` in the default, no `<% %>` present (Templater
-      probe skipped entirely).
-- [ ] `pnpm run typecheck` and `pnpm test` pass.
+      probe skipped entirely — proven by a fake `App` whose `plugins` getter throws if touched).
+- [x] `pnpm run check` passes (621 tests).
 
 **Dependencies:** Task 1.
 
-**Files likely touched:**
+**Files touched:**
 
 - `src/infrastructure/obsidian/templater/TemplaterApi.ts` (new)
 - `src/infrastructure/obsidian/object-notes/RequiredPropertyResolution.ts` (new)
+- `src/features/object-notes/domain/ObjectNoteTemplate.ts` (new; extracted from `ObjectNote.ts`)
+- `src/features/object-notes/application/ObjectNote.ts` (re-exports the moved function)
 - `test/templater-api.test.ts` (new)
 - `test/required-property-resolution.test.ts` (new)
 
-**Estimated scope:** Medium.
+**Estimated scope:** Medium. Landed as one commit.
+
+**Known limitation:** Templater's `create_running_config(templateFile, targetFile, runMode)` /
+`parse_template(config, content)` signature and its `RunMode` numeric values are not part of a published,
+versioned API — the adapter's choice of `4` for "dynamic processor" mode is a best-effort assumption that
+can only be confirmed against a real installed Templater plugin, not from automated tests alone. Flagged
+for the real-vault acceptance pass in Task 8 / Checkpoint C.
 
 ### Task 3: Extend Object Note creation to stamp the full schema
 
