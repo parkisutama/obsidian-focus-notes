@@ -17,6 +17,8 @@ import {
     runProjectionReconciliation,
 } from "../infrastructure/obsidian/capture/ProjectionReconciliationRunner.ts";
 import { repairObjectNoteProperties } from "../infrastructure/obsidian/object-notes/RepairObjectNotes.ts";
+import { RequiredPropertyRepairWatcher } from "../infrastructure/obsidian/object-notes/RequiredPropertyRepairWatcher.ts";
+import { WriteSuppressionTracker } from "../infrastructure/obsidian/capture/WriteSuppressionTracker.ts";
 
 /**
  * Plugin shell.
@@ -48,6 +50,22 @@ export default class FocusNotesPlugin extends Plugin {
         this.registerEvent(
             this.app.vault.on("modify", (file) => {
                 if (file instanceof TFile) void taskReferenceCheckboxWatcher.handleModify(file);
+            }),
+        );
+
+        const requiredPropertyRepairWatcher = new RequiredPropertyRepairWatcher(
+            this.app,
+            () => this.settings.inbox.contextSources,
+            new WriteSuppressionTracker(),
+        );
+        this.registerEvent(
+            this.app.vault.on("modify", (file) => {
+                if (file instanceof TFile) void requiredPropertyRepairWatcher.handleFile(file);
+            }),
+        );
+        this.registerEvent(
+            this.app.workspace.on("file-open", (file) => {
+                if (file instanceof TFile) void requiredPropertyRepairWatcher.handleFile(file);
             }),
         );
 
