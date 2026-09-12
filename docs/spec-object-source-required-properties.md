@@ -243,6 +243,7 @@ requiredProperties: raw.filter
 | Migration loses or duplicates an existing identity property | High | Pure migration function with fixture coverage for filter-present, filter-null, and already-migrated `requiredProperties` states |
 | Two enabled sources both require the same property with conflicting defaults on an overlapping folder | Low (documented, not solved) | Existing shared-folder conflict warning in `ObjectSourceSettings.ts` remains the mitigation; no new conflict UI is added by this spec |
 | Obsidian Linter also reformats frontmatter/body on save, racing with this feature's writes | Medium | Writes are additive-only (never reorder/reformat/overwrite existing keys or touch body content), so repeated passes from either plugin converge regardless of ordering |
+| A source with `matchByProperty: true` can't be repaired for the one note missing exactly its identity property, since `contextSourceMatchesNote` won't recognize the note as belonging to that source until the property is already correct | Medium (discovered in Task 5) | Documented limitation, not solved: changing shared matching semantics would affect Timeline/Inbox-suggestion/ContextLinkResolver matching, where requiring an already-correct property is intended disambiguation for sources sharing a folder. Sources matched purely by folder (or with `matchByProperty` off) are unaffected. |
 
 ## Deferred directions
 

@@ -248,7 +248,7 @@ interaction already present in the same file.
 
 **Estimated scope:** Medium.
 
-### Task 5: `computeRequiredPropertyGaps` + "Repair Object Notes" command
+### Task 5: `computeRequiredPropertyGaps` + "Repair Object Notes" command — done
 
 **Priority:** P1
 
@@ -258,32 +258,49 @@ sources via `contextSourceMatchesNote`, resolves and writes gaps, and reports a 
 
 **Acceptance criteria:**
 
-- [ ] `computeRequiredPropertyGaps(source, currentProperties)` returns exactly the schema entries whose
+- [x] `computeRequiredPropertyGaps(source, currentProperties)` returns exactly the schema entries whose
       property key is absent from `currentProperties`; present-but-falsy values (e.g. `false`, `0`,
       `""`) are not gaps.
-- [ ] The command changes nothing for notes that already satisfy their matched source's schema.
-- [ ] A note matching multiple enabled sources gets the union of all matched sources' gaps filled.
-- [ ] Summary `Notice` reports files touched and properties added.
+- [x] The command changes nothing for notes that already satisfy their matched source's schema.
+- [x] A note matching multiple enabled sources gets the union of all matched sources' gaps filled
+      (first-matched source's value wins for a property required by more than one source).
+- [x] Summary `Notice` reports files touched and properties added, following the existing
+      `rebuildProjections`/`repairOrphanReferences` command pattern in `FocusNotesPlugin.ts`.
+
+**Known limitation (discovered during implementation, not previously called out in the spec):** repair
+reuses `contextSourceMatchesNote` unchanged, so a source with `matchByProperty: true` only "matches" a note
+that **already** carries the correct identity property value. A note missing exactly that identity property
+is therefore not recognized as belonging to the source at all, and repair cannot rescue it — this only
+affects sources whose matching relies on the very property that's missing; a source matched purely by
+folder (or with `matchByProperty` off) has no such gap. Changing `contextSourceMatchesNote`'s semantics to
+work around this was rejected: that function is shared with Timeline/Inbox-suggestion/ContextLinkResolver
+matching, where requiring an already-correct property is the intended disambiguation behavior for sources
+sharing one folder.
 
 **Verification:**
 
-- [ ] Pure tests for `computeRequiredPropertyGaps` covering absent, present, and falsy-but-present values.
-- [ ] Integration-style test for the repair command using a fake vault (mirroring
-      `test/object-note.test.ts`'s fake `App`), covering: nothing to repair, single-source gap fill,
-      multi-source union, and a Linter-formatted-frontmatter fixture (see Task 7).
-- [ ] `pnpm test` and `pnpm run build` pass.
+- [x] Pure tests for `computeRequiredPropertyGaps` covering absent, present, falsy-but-present values, and
+      an empty schema (`test/required-property-gaps.test.ts`).
+- [x] Integration-style tests for the repair command using a fake vault: nothing to repair, single-source
+      gap fill, multi-source union with shared-property dedup, never overwriting an existing value even
+      against stale metadata, and disabled/non-matching sources being ignored
+      (`test/repair-object-notes.test.ts`). The dedicated Linter-formatted-frontmatter fixture is still
+      Task 7's job, shared across all three enforcement paths.
+- [x] `pnpm run check` passes (633 tests).
 
 **Dependencies:** Tasks 1, 2.
 
-**Files likely touched:**
+**Files touched:**
 
 - `src/features/object-notes/domain/RequiredPropertyGaps.ts` (new)
 - `src/infrastructure/obsidian/object-notes/RepairObjectNotes.ts` (new)
-- `src/plugin/FocusNotesPlugin.ts` (register command)
+- `src/plugin/FocusNotesPlugin.ts` (registers `repair-object-note-properties`, calling
+  `runObjectNotePropertyRepair()` — named distinctly from the imported function per the file's existing
+  convention, e.g. `rebuildProjections()`/`runProjectionReconciliation()`)
 - `test/required-property-gaps.test.ts` (new)
 - `test/repair-object-notes.test.ts` (new)
 
-**Estimated scope:** Medium.
+**Estimated scope:** Medium. Landed as one commit.
 
 ### Task 6: Auto-repair watcher on note open/save
 
