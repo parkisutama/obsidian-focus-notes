@@ -27,7 +27,8 @@
         "verify:artifacts": "node scripts/verify-build-artifacts.mjs",
         "package:plugin": "node scripts/package-plugin.mjs",
         "check": "pnpm run format:check && pnpm run lint && pnpm run verify:version && pnpm run typecheck && pnpm run test",
-        "check:ci": "pnpm run check && pnpm run build && pnpm run verify:artifacts && pnpm run docs:build"
+        "check:ci": "pnpm run check && pnpm run build && pnpm run verify:artifacts && pnpm run docs:build",
+        "prepare": "husky"
     },
     "keywords": [
         "obsidian",
@@ -41,8 +42,11 @@
     "license": "MIT",
     "devDependencies": {
         "@biomejs/biome": "2.5.12",
+        "@commitlint/cli": "^21.2.2",
+        "@commitlint/config-conventional": "^21.2.2",
         "@types/node": "^26.4.1",
         "esbuild": "0.28.2",
+        "husky": "^9.1.7",
         "obsidian": "1.13.1",
         "tslib": "^2.8.1",
         "typescript": "^7.0.2",

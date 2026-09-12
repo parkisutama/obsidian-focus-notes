@@ -14,6 +14,32 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
+    commitlint:
+        name: Conventional Commits gate
+        if: github.event_name == 'pull_request'
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: 24
+
+            - name: Enable pnpm through Corepack
+              run: corepack enable
+
+            - name: Install locked dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Lint every commit on this pull request
+              run: pnpm exec commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
+
     quality:
         name: Node 24 quality gate
         runs-on: ubuntu-latest
