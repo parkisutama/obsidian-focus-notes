@@ -64,6 +64,43 @@ export class FolderSuggest extends AbstractInputSuggest<TFolder> {
 }
 
 /**
+ * Frontmatter property-name suggester, sourced from every property already used in the vault.
+ *
+ * `getAllPropertyInfos` is an undocumented `MetadataCache` method (used unofficially by several
+ * community plugins) that isn't part of the typed `obsidian` package surface, so it's read
+ * defensively here rather than assumed to exist.
+ */
+export class PropertySuggest extends AbstractInputSuggest<string> {
+    constructor(
+        app: App,
+        private inputEl: HTMLInputElement,
+    ) {
+        super(app, inputEl);
+    }
+
+    getSuggestions(query: string): string[] {
+        const lower = query.toLowerCase();
+        return this.vaultPropertyNames()
+            .filter((name) => name.toLowerCase().includes(lower))
+            .slice(0, 20);
+    }
+
+    renderSuggestion(property: string, el: HTMLElement): void {
+        el.setText(property);
+    }
+
+    selectSuggestion(property: string): void {
+        applyInputSuggestion(this.inputEl, property);
+        this.close();
+    }
+
+    private vaultPropertyNames(): string[] {
+        const metadataCache = this.app.metadataCache as unknown as { getAllPropertyInfos?: () => object };
+        return Object.keys(metadataCache.getAllPropertyInfos?.() ?? {}).sort();
+    }
+}
+
+/**
  * Heading suggester scoped to the file currently named in another input.
  *
  * The dependency on the file path is passed as a thunk so suggestions stay

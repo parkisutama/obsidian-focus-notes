@@ -1,9 +1,8 @@
 import { Setting, setIcon, ToggleComponent } from "obsidian";
 import { createContextSource, findSharedFolderConflicts } from "../../object-notes/application/ContextSourceSettings";
 import { normalizeInboxFolders } from "../../capture/moment/domain/InboxFolderSettings";
-import { FileSuggest, FolderSuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
+import { FileSuggest, FolderSuggest, PropertySuggest } from "../../../infrastructure/obsidian/suggestions/Suggesters";
 import type { InsertPosition } from "../../../shared/markdown/InsertPosition";
-import { identityEntry } from "../../object-notes/domain/ContextSourceScope.ts";
 import type { ContextSourceSettings, ObjectNotePlacement } from "../../object-notes/domain/ContextSourceSettings";
 import { contextSelectField, contextTextField } from "./SettingsFormFields";
 import type { SettingsRenderContext } from "./SettingsRenderContext";
@@ -135,22 +134,6 @@ function renderContextSource(
         ctx.redisplay();
     });
 
-    const identityFilter = identityEntry(source);
-    let filterProperty = identityFilter?.property ?? "";
-    let filterValue = identityFilter?.value ?? "";
-    const saveFilter = async (): Promise<void> => {
-        source.requiredProperties =
-            filterProperty.trim() && filterValue.trim()
-                ? [
-                      {
-                          property: filterProperty.trim(),
-                          identityValue: filterValue.trim(),
-                          defaultValue: filterValue.trim(),
-                      },
-                  ]
-                : [];
-        await ctx.saveSettings();
-    };
     const fields = card.createDiv({ cls: "fn-context-source-grid" });
     contextTextField(fields, "Object label", "Books", source.name, async (value) => {
         source.name = value.trim() || source.id;
@@ -181,16 +164,6 @@ function renderContextSource(
             await ctx.saveSettings();
             ctx.redisplay();
         });
-    const propertyField = contextTextField(fields, "Property", "type", filterProperty, async (value) => {
-        filterProperty = value;
-        await saveFilter();
-    });
-    const valueField = contextTextField(fields, "Value", "book", filterValue, async (value) => {
-        filterValue = value;
-        await saveFilter();
-    });
-    propertyField.disabled = !source.matchByProperty;
-    valueField.disabled = !source.matchByProperty;
     contextTextField(fields, "Log heading", "Reading log", source.relatedHeading, async (value) => {
         source.relatedHeading = value.replace(/^#+\s*/, "").trim() || "Related log";
         await ctx.saveSettings();
@@ -255,6 +228,103 @@ function renderContextSource(
     }
 
     renderContextSourceFolders(card, source, ctx);
+    renderRequiredProperties(card, source, ctx);
+}
+
+function renderRequiredProperties(
+    container: HTMLElement,
+    source: ContextSourceSettings,
+    ctx: SettingsRenderContext,
+): void {
+    const section = container.createDiv({ cls: "fn-context-source-properties" });
+    section.createEl("span", { cls: "fn-context-source-folders-label", text: "Required properties" });
+    section.createEl("p", {
+        cls: "setting-item-description",
+        text:
+            "Each property listed here is enforced on this source's notes: filled in on creation, by " +
+            '"Repair Object Note properties", and automatically when a matching note is opened or saved. ' +
+            "Give a row an Identity value to also use it for Match by property above — at most one row can " +
+            "be Identity; every other row only needs a Default value, which may use {{title}}, {{date}}, " +
+            "{{time}}, or a Templater <% %> expression.",
+    });
+    const list = section.createDiv({ cls: "fn-context-source-property-list" });
+    let suggesters: PropertySuggest[] = [];
+
+    const renderRows = (): void => {
+        for (const suggester of suggesters) suggester.close();
+        suggesters = [];
+        list.empty();
+
+        source.requiredProperties.forEach((entry, index) => {
+            const row = list.createDiv({ cls: "fn-context-source-property-row" });
+
+            const propertyInput = row.createEl("input", {
+                type: "text",
+                attr: { placeholder: "type", "aria-label": `${source.name} required property ${index + 1} name` },
+            });
+            propertyInput.value = entry.property;
+            propertyInput.addEventListener("change", async () => {
+                entry.property = propertyInput.value.trim();
+                await ctx.saveSettings();
+            });
+            suggesters.push(new PropertySuggest(ctx.app, propertyInput));
+
+            const identityInput = row.createEl("input", {
+                type: "text",
+                attr: {
+                    placeholder: "Identity value (e.g. place)",
+                    "aria-label": `${source.name} required property ${index + 1} identity value`,
+                },
+            });
+            identityInput.value = entry.identityValue ?? "";
+            identityInput.addEventListener("change", async () => {
+                const value = identityInput.value.trim();
+                if (value) {
+                    for (const other of source.requiredProperties) {
+                        if (other !== entry) other.identityValue = null;
+                    }
+                }
+                entry.identityValue = value || null;
+                await ctx.saveSettings();
+                renderRows();
+            });
+
+            const defaultInput = row.createEl("input", {
+                type: "text",
+                attr: {
+                    placeholder: "unknown, {{date}}, or <% tp... %>",
+                    "aria-label": `${source.name} required property ${index + 1} default value`,
+                },
+            });
+            defaultInput.value = entry.defaultValue;
+            defaultInput.disabled = entry.identityValue !== null;
+            defaultInput.addEventListener("change", async () => {
+                entry.defaultValue = defaultInput.value;
+                await ctx.saveSettings();
+            });
+
+            const remove = row.createEl("button", {
+                cls: "clickable-icon",
+                attr: { "aria-label": `Remove ${source.name} required property ${index + 1}` },
+            });
+            setIcon(remove, "x");
+            remove.addEventListener("click", async () => {
+                source.requiredProperties.splice(index, 1);
+                await ctx.saveSettings();
+                renderRows();
+            });
+        });
+
+        const add = list.createEl("button", { text: "+ Add required property", cls: "fn-context-source-add-property" });
+        add.addEventListener("click", () => {
+            source.requiredProperties.push({ property: "", identityValue: null, defaultValue: "" });
+            renderRows();
+            const inputs = list.querySelectorAll<HTMLInputElement>("input");
+            inputs.item(inputs.length - 3)?.focus();
+        });
+    };
+
+    renderRows();
 }
 
 function renderContextSourceFolders(
