@@ -13,7 +13,7 @@ acceptance criteria, risks, and verification details.
 
 - [x] Task 2: Default-value resolution (tokens + optional Templater). `pnpm run check` green (621 tests).
       Templater's exact undocumented API shape is unverified without a real vault — flagged for Checkpoint C.
-- [ ] Task 3: Extend Object Note creation to stamp the full schema.
+- [x] Task 3: Extend Object Note creation to stamp the full schema. `pnpm run check` green (624 tests).
 - [ ] Task 5: `computeRequiredPropertyGaps` + "Repair Object Notes" command.
 - [ ] Task 6: Auto-repair watcher on note open/save.
 

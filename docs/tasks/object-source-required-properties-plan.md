@@ -184,7 +184,7 @@ versioned API — the adapter's choice of `4` for "dynamic processor" mode is a 
 can only be confirmed against a real installed Templater plugin, not from automated tests alone. Flagged
 for the real-vault acceptance pass in Task 8 / Checkpoint C.
 
-### Task 3: Extend Object Note creation to stamp the full schema
+### Task 3: Extend Object Note creation to stamp the full schema — done
 
 **Priority:** P1
 
@@ -193,20 +193,20 @@ using Task 2's resolver, in one `processFrontMatter` call.
 
 **Acceptance criteria:**
 
-- [ ] A newly created Object Note gets every schema property, identity and non-identity, in one write.
-- [ ] A source with an empty `requiredProperties` list creates a note exactly as before (no empty
+- [x] A newly created Object Note gets every schema property, identity and non-identity, in one write.
+- [x] A source with an empty `requiredProperties` list creates a note exactly as before (no empty
       frontmatter mutation call).
-- [ ] Existing single-identity-property creation behavior (today's only case) is unchanged byte-for-byte.
+- [x] Existing single-identity-property creation behavior (today's only case) is unchanged byte-for-byte.
 
 **Verification:**
 
-- [ ] Extend `test/object-note.test.ts` with a multi-property schema fixture (identity + token default +
-      Templater-syntax default, Templater both present and absent).
-- [ ] `pnpm test` and `pnpm run build` pass.
+- [x] Extended `test/object-note.test.ts` with a multi-property schema fixture (identity + token default +
+      Templater-syntax default, Templater both present and absent) and an empty-schema no-op case.
+- [x] `pnpm run check` passes (624 tests).
 
 **Dependencies:** Tasks 1, 2.
 
-**Files likely touched:**
+**Files touched:**
 
 - `src/features/object-notes/application/ObjectNote.ts`
 - `test/object-note.test.ts`
