@@ -1,3 +1,7 @@
+---
+diataxis: how-to
+---
+
 # Pastikan capture muncul di Focus Timeline
 
 Focus Timeline membaca Event dan Task hanya dari folder sumber yang terbatas. Pembatasan ini menjaga indexing tetap cepat dan mencegah pemindaian seluruh vault.

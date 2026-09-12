@@ -1,3 +1,7 @@
+---
+diataxis: tutorial
+---
+
 # Jalankan sesi fokus pertama
 
 Tutorial ini membawa Anda dari membuka Focus Notes sampai menyimpan satu catatan sesi fokus ke vault.
@@ -44,5 +48,5 @@ Buka note tujuan yang terlihat pada panel. Entri sesi ditulis mengikuti target d
 
 ## Langkah berikutnya
 
-- Gunakan [Inbox quick capture](../how-to/capture-to-inbox.md) ketika Anda perlu menangkap konteks tanpa memulai timer.
-- Lihat [peta fitur untuk developer](../../developer/reference/feature-map.md#timer-dan-session-logging) untuk mengetahui komponen yang membentuk alur ini.
+- Gunakan [Inbox quick capture](./capture-to-inbox.md) ketika Anda perlu menangkap konteks tanpa memulai timer.
+- Lihat [peta fitur untuk developer](../developer/reference/feature-map.md#timer-dan-session-logging) untuk mengetahui komponen yang membentuk alur ini.

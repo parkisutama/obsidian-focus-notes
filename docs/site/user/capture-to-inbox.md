@@ -1,3 +1,7 @@
+---
+diataxis: how-to
+---
+
 # Tangkap ide atau konteks dengan cepat ke Inbox
 
 Gunakan Inbox ketika Anda ingin mencatat sesuatu sekarang dan mengorganisasikannya nanti.
@@ -28,4 +32,4 @@ Pilih **Save**, lalu periksa bullet baru di bawah heading tujuan. Jika target ti
 
 ## Referensi implementasi
 
-Lihat [Inbox quick capture pada peta fitur](../../developer/reference/feature-map.md#inbox-quick-capture) untuk kontrak target, suggestion, dan output Markdown yang mendasari alur ini.
+Lihat [Inbox quick capture pada peta fitur](../developer/reference/feature-map.md#inbox-quick-capture) untuk kontrak target, suggestion, dan output Markdown yang mendasari alur ini.

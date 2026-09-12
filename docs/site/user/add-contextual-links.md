@@ -1,3 +1,7 @@
+---
+diataxis: how-to
+---
+
 # Hubungkan capture dengan People, Places, atau Activity
 
 Gunakan contextual link ketika Inbox, Event, atau Task menyebut objek yang ingin Anda temukan kembali, seperti seseorang, tempat, atau aktivitas berulang.

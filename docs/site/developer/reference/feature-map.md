@@ -1,3 +1,7 @@
+---
+diataxis: reference
+---
+
 # Peta fitur
 
 Halaman ini memetakan perilaku user ke pemilik implementasi utama. Ini adalah titik awal reference, bukan pengganti dokumentasi API setiap modul.

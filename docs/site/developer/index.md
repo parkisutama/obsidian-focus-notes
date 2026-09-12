@@ -6,7 +6,7 @@ Bagian developer menjelaskan alasan sistem dibentuk seperti sekarang dan menyedi
 
 Explanation membangun pemahaman konseptual. Gunakan ketika Anda perlu mengetahui alasan di balik batas modul, aliran data, atau keputusan desain.
 
-- [Model dokumentasi](explanation/documentation-model.md)
+- [Model dokumentasi](documentation-model.md)
 
 ## Reference
 

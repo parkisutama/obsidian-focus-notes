@@ -22,14 +22,14 @@ export default defineConfig({
                 },
                 {
                     text: "Tutorial",
-                    items: [{ text: "Sesi fokus pertama", link: "/user/tutorials/first-focus-session" }],
+                    items: [{ text: "Sesi fokus pertama", link: "/user/first-focus-session" }],
                 },
                 {
                     text: "How-to",
                     items: [
-                        { text: "Tangkap ide ke Inbox", link: "/user/how-to/capture-to-inbox" },
-                        { text: "Tambahkan contextual links", link: "/user/how-to/add-contextual-links" },
-                        { text: "Selaraskan capture dan Timeline", link: "/user/how-to/align-capture-with-timeline" },
+                        { text: "Tangkap ide ke Inbox", link: "/user/capture-to-inbox" },
+                        { text: "Tambahkan contextual links", link: "/user/add-contextual-links" },
+                        { text: "Selaraskan capture dan Timeline", link: "/user/align-capture-with-timeline" },
                     ],
                 },
             ],
@@ -43,7 +43,7 @@ export default defineConfig({
                     items: [
                         {
                             text: "Model dokumentasi",
-                            link: "/developer/explanation/documentation-model",
+                            link: "/developer/documentation-model",
                         },
                     ],
                 },
