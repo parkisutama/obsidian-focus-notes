@@ -378,24 +378,32 @@ in the block changes.
 
 **Acceptance criteria:**
 
-- [ ] The shared fixture is reused (not duplicated three times) across creation, repair-command, and
-      watcher tests.
-- [ ] Existing formatting in the fixture is byte-for-byte unchanged aside from the newly added key(s).
+- [x] The shared fixture (`LINTER_FORMATTED_FRONTMATTER` + `assertAdditiveOnly`) is reused, not
+      duplicated three times, across creation, repair-command, and watcher tests.
+- [x] Existing formatting in the fixture — key values and their relative order — is unchanged aside
+      from the newly added key(s). Note: the fakes for all three writers operate on the already-parsed
+      frontmatter object, not raw YAML text, so "formatting" here means object key order/values, which is
+      the only level these tests can observe; actual YAML text (quote style, line wrapping) is Obsidian's
+      own serializer's responsibility, untouched by this feature either way.
 
 **Verification:**
 
-- [ ] New or extended tests in `test/object-note.test.ts`, `test/repair-object-notes.test.ts`, and
+- [x] New tests in `test/object-note.test.ts`, `test/repair-object-notes.test.ts`, and
       `test/required-property-repair-watcher.test.ts` reference the shared fixture.
-- [ ] `pnpm test` passes.
+- [x] `pnpm run check` passes (643 tests). Note:
+      `test/support/linter-formatted-frontmatter.ts` is itself picked up and trivially "passed" by
+      `node --test`'s directory-based discovery (any file under a directory literally named `test` is a
+      candidate, regardless of subdirectory), since it has zero `test()` calls; harmless, just an extra
+      line in the report.
 
 **Dependencies:** Tasks 3, 5, 6.
 
-**Files likely touched:**
+**Files touched:**
 
 - `test/support/linter-formatted-frontmatter.ts` (new shared fixture)
 - `test/object-note.test.ts`, `test/repair-object-notes.test.ts`, `test/required-property-repair-watcher.test.ts`
 
-**Estimated scope:** Small.
+**Estimated scope:** Small. Landed as one commit.
 
 ### Task 8: Documentation, changelog, and spec/ADR closeout
 

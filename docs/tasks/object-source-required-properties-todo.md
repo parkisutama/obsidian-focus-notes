@@ -32,7 +32,8 @@ acceptance criteria, risks, and verification details.
 
 ## P3 — Hardening
 
-- [ ] Task 7: Linter-format-preserving fixture coverage shared across all three enforcement paths.
+- [x] Task 7: Linter-format-preserving fixture coverage shared across all three enforcement paths.
+      `pnpm run check` green (643 tests).
 - [ ] Task 8: Documentation, changelog, and spec/ADR closeout.
 - [ ] Checkpoint C: `check:ci` green, real desktop acceptance, documentation and changelog current.
 
