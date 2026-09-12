@@ -36,8 +36,8 @@ acceptance criteria, risks, and verification details.
       `pnpm run check` green (643 tests).
 - [x] Task 8: Documentation, changelog, and spec/ADR closeout. `check:ci` green (643 tests). Archive move
       to `docs/archive/` deliberately deferred until Checkpoint C's real desktop acceptance closes.
-- [ ] Checkpoint C: `check:ci` green (done); real desktop acceptance in an actual Obsidian vault still
-      outstanding — the only remaining gate before this branch is release-ready.
+- [x] Checkpoint C: `check:ci` green; real desktop acceptance confirmed by the user (2026-09-12). Branch
+      ready to merge to `main`.
 
 ## Explicitly deferred
 

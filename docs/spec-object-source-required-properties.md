@@ -9,10 +9,10 @@
   [checklist](tasks/object-source-required-properties-todo.md) for per-task traceability and two
   documented limitations found during implementation (identity-property matching can't self-heal a note
   missing exactly that property; Templater's undocumented API shape is unverified without a real vault).
-- Task 8 (this closeout) records documentation/changelog updates. Real desktop acceptance — actually using
-  the new settings UI and Templater integration in a live Obsidian vault — remains outside what an
-  automated gate can certify and is **not yet done**; this spec/plan/todo trio stays in its active location
-  rather than moving to `docs/archive/` until that acceptance pass closes Checkpoint C.
+- Task 8 (documentation/changelog closeout) is done. Real desktop acceptance — using the new settings UI
+  and Templater integration in a live Obsidian vault — is outside what an automated gate can certify; the
+  user confirmed it behaves as expected (2026-09-12), closing Checkpoint C. This spec/plan/todo trio moves
+  to `docs/archive/{specs,tasks}/` as part of merging this branch to `main`.
 
 ## Objective
 

@@ -449,11 +449,14 @@ traceability note, and move the spec/plan/todo trio into `docs/archive/{specs,ta
 ## Checkpoint C — Release-ready slice
 
 - [x] `OBSIDIAN_VAULT_PLUGIN_PATH= pnpm run check:ci` passes.
-- [ ] Manual desktop acceptance: define a two-property schema, create a note, run repair on an
-      intentionally drifted existing note, edit a note by hand to remove a property and reopen it. **Not
-      verifiable from this environment** — requires a real Obsidian install with the built plugin loaded
-      into an actual vault. This is the one remaining gate before this branch is release-ready.
+- [x] Manual desktop acceptance confirmed by the user (2026-09-12): real Obsidian vault, behavior matches
+      expectations. Not independently re-verified in this environment (no live Obsidian install available
+      here) — recorded on the user's word, consistent with this repo's existing pattern of trusting
+      operator-reported acceptance where automated tooling cannot reach.
 - [x] Documentation and changelog reflect the shipped capability.
+
+Checkpoint C is closed as of 2026-09-12. This spec/plan/todo trio moves to `docs/archive/{specs,tasks}/`
+ahead of merging this branch to `main`, per `AGENTS.md` § After shipping a feature.
 
 ## Risks and mitigations
 

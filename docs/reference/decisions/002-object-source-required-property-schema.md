@@ -2,7 +2,11 @@
 
 ## Status
 
-Proposed — pending human review before implementation begins.
+Accepted and implemented on `feature/object-source-required-properties`. All 8 planned tasks landed with
+`pnpm run check:ci` green; real-desktop acceptance in an actual Obsidian vault confirmed by the user
+(2026-09-12) before merge to `main`. See
+[the spec](../../spec-object-source-required-properties.md) and
+[implementation plan](../../tasks/object-source-required-properties-plan.md) for traceability.
 
 ## Date
 
